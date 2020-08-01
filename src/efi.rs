@@ -218,9 +218,9 @@ pub mod proto {
     #[repr(C)]
     #[allow(non_snake_case)]
     pub struct SimpleTextOutput {
-        pub Reset: extern "C" fn(this: *const SimpleTextOutput, extended_verification: bool) -> usize,
-        pub OutputString: extern "C" fn(this: *const SimpleTextOutput, string: *const u16) -> usize,
-        pub TestString: extern "C" fn(this: *const SimpleTextOutput, string: *const u16) -> usize,
+        pub Reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> usize,
+        pub OutputString: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
+        pub TestString: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
         QueryMode: usize,
         SetMode: usize,
         SetAttribute: usize,
