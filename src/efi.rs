@@ -211,18 +211,41 @@ impl BootServices {
 }
 
 #[repr(C)]
+pub struct GUID(
+    u32,
+    u16,
+    u16,
+    [u8; 4]
+);
+
+impl GUID {
+    pub const fn from(n: u128) -> Self {
+        GUID(
+            (n >> 96) as u32,
+            (n >> 80) as u16,
+            (n >> 64) as u16,
+            (n as u32).to_be_bytes(),
+        )
+    }
+}
+
+impl From<u128> for GUID {
+    fn from(n: u128) -> Self { GUID::from(n) }
+}
+
+#[repr(C)]
 pub struct ConfigurationTable {
-    vendor_guid: u128,
+    pub vendor_guid: GUID,
     vendor_table: usize,
 }
 
 impl ConfigurationTable {
-    const ACPI_20_GUID: u128 = 0x8868e871e4f111d3bc220080c73c8881;
-    const ACPI_GUID: u128 = 0xeb9d2d302d8811d39a160090273fc14d;
-    const SAL_SYSTEM_GUID: u128 = 0xeb9d2d322d8811d39a160090273fc14d;
-    const SMBIOS_GUID: u128 = 0xeb9d2d312d8811d39a160090273fc14d;
-    const SMBIOS3_GUID: u128 = 0xf2fd154497944a2c992ee5bbcf20e394;
-    const MPS_GUID: u128 = 0xeb9d2d2f2d8811d39a160090273fc14d;
+    pub const ACPI_20_GUID:    GUID = GUID::from(0x8868e871_e4f1_11d3_bc22_0080c73c8881);
+    pub const ACPI_GUID:       GUID = GUID::from(0xeb9d2d30_2d88_11d3_9a16_0090273fc14d);
+    pub const SAL_SYSTEM_GUID: GUID = GUID::from(0xeb9d2d32_2d88_11d3_9a16_0090273fc14d);
+    pub const SMBIOS_GUID:     GUID = GUID::from(0xeb9d2d31_2d88_11d3_9a16_0090273fc14d);
+    pub const SMBIOS3_GUID:    GUID = GUID::from(0xf2fd1544_9794_4a2c_992e_e5bbcf20e394);
+    pub const MPS_GUID:        GUID = GUID::from(0xeb9d2d2f_2d88_11d3_9a16_0090273fc14d);
     // TODO: ... more defined in sect. 4.6
 }
 
