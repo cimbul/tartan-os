@@ -5,7 +5,8 @@ set -e
 uefi_app="$1"
 hd_img="$2"
 if [ -z "$uefi_app" ] || [ -z "$hd_img" ]; then
-    echo "USAGE: $0 INPUT.EFI OUTPUT.IMG"
+    echo "USAGE: $0 INPUT.EFI OUTPUT.IMG" >&2
+    exit 1
 fi
 
 boot_dir="$(mktemp -d 2>/dev/null || mktemp -d -t 'boot_dir')"
