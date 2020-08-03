@@ -23,26 +23,51 @@ impl Revision {
     const LATEST: Revision = Revision::V2_80;
 }
 
-#[repr(usize)]
-pub enum Status {
-    // Appendix D
-    Success = 0,
+pub type Result = core::result::Result<Status, Status>;
 
-    WarnUnknownGlyph = 1,
-    WarnDeleteFailure = 2,
-    WarnWriteFailure = 3,
-    WarnBufferTooSmall = 4,
-    WarnStaleData = 5,
-    WarnFileSystem = 6,
-    WarnResetRequired = 7,
-
-    LoadError = Status::ERROR_BIT | 1,
-    InvalidParameter = Status::ERROR_BIT | 2,
-    // TODO: ... more defined
-}
+#[repr(transparent)]
+#[derive(PartialEq, Eq)]
+pub struct Status(usize);
 
 impl Status {
-    const ERROR_BIT: usize = 0x1usize.reverse_bits(); // high bit
+    // Appendix D
+    pub const SUCCESS: Status = Status(0);
+
+    pub const WARN_UNKNOWN_GLYPH: Status = Status(1);
+    pub const WARN_DELETE_FAILURE: Status = Status(2);
+    pub const WARN_WRITE_FAILURE: Status = Status(3);
+    pub const WARN_BUFFER_TOO_SMALL: Status = Status(4);
+    pub const WARN_STALE_DATA: Status = Status(5);
+    pub const WARN_FILE_SYSTEM: Status = Status(6);
+    pub const WARN_RESET_REQUIRED: Status = Status(7);
+
+    pub const ERROR_BIT: usize = 0x1usize.reverse_bits(); // high bit
+    pub const LOAD_ERROR: Status = Status(Status::ERROR_BIT | 1);
+    pub const INVALID_PARAMETER: Status = Status(Status::ERROR_BIT | 2);
+    // TODO: ... more defined
+
+    pub fn is_error(&self) -> bool {
+        (self.0 & Status::ERROR_BIT) == 0
+    }
+
+    pub fn is_warning(&self) -> bool {
+        *self != Status::SUCCESS && !self.is_error()
+}
+
+    pub fn into_result(self) -> Result {
+        if self.is_error() {
+            Err(self)
+}
+        else {
+            Ok(self)
+        }
+    }
+}
+
+impl From<Status> for Result {
+    fn from(status: Status) -> Self {
+        status.into_result()
+    }
 }
 
 #[repr(C)]
@@ -214,9 +239,9 @@ pub mod proto {
 
     #[repr(C)]
     pub struct SimpleTextOutput {
-        pub reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> usize,
-        pub output_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
-        pub test_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
+        pub reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> Status,
+        pub output_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
+        pub test_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
         query_mode: usize,
         set_mode: usize,
         set_attribute: usize,
