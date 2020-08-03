@@ -20,7 +20,7 @@ pub enum Revision {
 }
 
 impl Revision {
-    const LATEST: Revision = Revision::V2_80;
+    pub const LATEST: Revision = Revision::V2_80;
 }
 
 pub type Result = core::result::Result<Status, Status>;
@@ -97,7 +97,7 @@ pub struct SystemTable {
 }
 
 impl SystemTable {
-    const SIGNATURE: u64 = 0x5453595320494249;
+    pub const SIGNATURE: u64 = 0x5453595320494249;
 }
 
 #[repr(C)]
@@ -132,7 +132,7 @@ pub struct RuntimeServices {
 }
 
 impl RuntimeServices {
-    const SIGNATURE: u64 = 0x56524553544e5552;
+    pub const SIGNATURE: u64 = 0x56524553544e5552;
 }
 
 #[repr(C)]
@@ -207,7 +207,7 @@ pub struct BootServices {
 }
 
 impl BootServices {
-    const SIGNATURE: u64 = 0x56524553544f4f42;
+    pub const SIGNATURE: u64 = 0x56524553544f4f42;
 }
 
 #[repr(C)]
@@ -271,16 +271,16 @@ pub mod proto {
         clear_screen: usize,
         set_cursor_position: usize,
         enable_cursor: usize,
-        mode: SimpleTextOutputMode,
+        pub mode: SimpleTextOutputMode,
     }
 
     #[repr(C)]
     pub struct SimpleTextOutputMode {
-        max_mode: i32,
-        mode: i32,
-        attribute: i32,
-        cursor_column: i32,
-        cursor_row: i32,
-        cursor_visible: bool,
+        pub max_mode: i32,
+        pub mode: i32,
+        pub attribute: i32,
+        pub cursor_column: i32,
+        pub cursor_row: i32,
+        pub cursor_visible: bool,
     }
 }
