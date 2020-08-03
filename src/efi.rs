@@ -76,35 +76,34 @@ impl SystemTable {
 }
 
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct RuntimeServices {
     pub header: TableHeader,
 
     // Time Services
-    GetTime: usize,
-    SetTime: usize,
-    GetWakeupTime: usize,
-    SetWakeupTime: usize,
+    get_time: usize,
+    set_time: usize,
+    get_wakeup_time: usize,
+    set_wakeup_time: usize,
 
     // Virtual Memory Services
-    SetVirtualAddressMap: usize,
-    ConvertPointer: usize,
+    set_virtual_address_map: usize,
+    convert_pointer: usize,
 
     // Variable Services
-    GetVariable: usize,
-    GetNextVariableName: usize,
-    SetVariable: usize,
+    get_variable: usize,
+    get_next_variable_name: usize,
+    set_variable: usize,
 
     // Miscellaneous Services
-    GetNextHighMonotonicCount: usize,
-    ResetSystem: usize,
+    get_next_high_monotonic_count: usize,
+    reset_system: usize,
 
     // UEFI 2.0 Capsule Services
-    UpdateCapsule: usize,
-    QueryCapsuleCapabilities: usize,
+    update_capsule: usize,
+    query_capsule_capabilities: usize,
 
     // Miscellaneous UEFI 2.0 Service
-    QueryVariableInfo: usize,
+    query_variable_info: usize,
 }
 
 impl RuntimeServices {
@@ -112,75 +111,74 @@ impl RuntimeServices {
 }
 
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct BootServices {
     pub header: TableHeader,
 
     // Task Priority Services
-    RaiseTPM: usize,
-    RestoreTPL: usize,
+    raise_tpm: usize,
+    restore_tpl: usize,
 
     // Memory Services
-    AllocatePages: usize,
-    FreePages: usize,
-    GetMemoryMap: usize,
-    AllocatePool: usize,
-    FreePool: usize,
+    allocate_pages: usize,
+    free_pages: usize,
+    get_memory_map: usize,
+    allocate_pool: usize,
+    free_pool: usize,
 
     // Event & Timer Services
-    CreateEvent: usize,
-    SetTimer: usize,
-    WaitForEvent: usize,
-    SignalEvent: usize,
-    CloseEvent: usize,
-    CheckEvent: usize,
+    create_event: usize,
+    set_timer: usize,
+    wait_for_event: usize,
+    signal_event: usize,
+    close_event: usize,
+    check_event: usize,
 
     // Protocol Handler Services
-    InstallProtocolInterface: usize,
-    ReinstallProtocolInterface: usize,
-    UninstallProtocolInterface: usize,
-    HandleProtocol: usize,
+    install_protocol_interface: usize,
+    reinstall_protocol_interface: usize,
+    uninstall_protocol_interface: usize,
+    handle_protocol: usize,
     reserved: usize,
-    RegisterProtocolNotify: usize,
-    LocateHandle: usize,
-    LocateDevicePath: usize,
-    InstallConfigurationTable: usize,
+    register_protocol_notify: usize,
+    locate_handle: usize,
+    locate_device_path: usize,
+    install_configuration_table: usize,
 
     // Image Services
-    LoadImage: usize,
-    StartImage: usize,
-    Exit: usize,
-    UnloadImage: usize,
-    ExitBootServices: usize,
+    load_image: usize,
+    start_image: usize,
+    exit: usize,
+    unload_image: usize,
+    exit_boot_services: usize,
 
     // Miscellaneous Services
-    GetNextMonotonicCount: usize,
-    Stall: usize,
-    SetWatchdogTimer: usize,
+    get_next_monotonic_count: usize,
+    stall: usize,
+    set_watchdog_timer: usize,
 
     // Driver Support Services
-    ConnectController: usize,
-    DisconnectController: usize,
+    connect_controller: usize,
+    disconnect_controller: usize,
 
     // Open and Close Protocol Services
-    OpenProtocol: usize,
-    CloseProtocol: usize,
-    OpenProtocolInformation: usize,
+    open_protocol: usize,
+    close_protocol: usize,
+    open_protocol_information: usize,
 
     // Library Services
-    ProtocolsPerHandle: usize,
-    LocateHandleBuffer: usize,
-    LocateProtocol: usize,
-    InstallMultipleProtocolInterfaces: usize,
-    UninstallMultipleProtocolInterfaces: usize,
+    protocols_per_handle: usize,
+    locate_handle_buffer: usize,
+    locate_protocol: usize,
+    install_multiple_protocol_interfaces: usize,
+    uninstall_multiple_protocol_interfaces: usize,
 
     // 32-bit CRC Services
-    CalculateCrc32: usize,
+    calculate_crc32: usize,
 
     // Miscellaneous Services
-    CopyMem: usize,
-    SetMem: usize,
-    CreateEventEx: usize,
+    copy_mem: usize,
+    set_mem: usize,
+    create_event_ex: usize,
 }
 
 impl BootServices {
@@ -205,28 +203,26 @@ impl ConfigurationTable {
 
 pub mod proto {
     #[repr(C)]
-    #[allow(non_snake_case)]
     pub struct SimpleTextInput {
-        Reset: usize,
-        ReadKeyStroke: usize,
-        WaitForKey: usize,
-        SetState: usize,
-        RegisterKeyNotify: usize,
-        UnregisterKeyNotify: usize,
+        reset: usize,
+        read_key_stroke: usize,
+        wait_for_key: usize,
+        set_state: usize,
+        register_key_notify: usize,
+        unregister_key_notify: usize,
     }
 
     #[repr(C)]
-    #[allow(non_snake_case)]
     pub struct SimpleTextOutput {
-        pub Reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> usize,
-        pub OutputString: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
-        pub TestString: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
-        QueryMode: usize,
-        SetMode: usize,
-        SetAttribute: usize,
-        ClearScreen: usize,
-        SetCursorPosition: usize,
-        EnableCursor: usize,
+        pub reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> usize,
+        pub output_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
+        pub test_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> usize,
+        query_mode: usize,
+        set_mode: usize,
+        set_attribute: usize,
+        clear_screen: usize,
+        set_cursor_position: usize,
+        enable_cursor: usize,
         mode: SimpleTextOutputMode,
     }
 

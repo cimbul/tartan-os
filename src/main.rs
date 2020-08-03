@@ -15,7 +15,7 @@ fn efi_main(_image_handle: Handle, system_table: &SystemTable) -> ! {
 
     unsafe {
         let out = system_table.console_out.as_ref().unwrap();
-        let output_string = out.OutputString;
+        let output_string = out.output_string;
         output_string(out, hello.as_ptr());
     }
 
