@@ -1,8 +1,9 @@
 #![no_std]
-#![no_main]
+#![cfg_attr(not(test), no_main)]
 
 extern crate rlibc;
 
+#[cfg(not(test))]
 use core::panic::PanicInfo;
 use efi::{Handle, Result, Status, SystemTable};
 use utf16_lit::utf16_null;
@@ -28,6 +29,7 @@ fn main(_image_handle: Handle, system_table: &SystemTable) -> Result {
     loop { }
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic_handler(_: &PanicInfo) -> ! {
     loop {}

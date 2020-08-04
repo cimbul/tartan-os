@@ -26,28 +26,57 @@ impl Revision {
 pub type Result = core::result::Result<Status, Status>;
 
 #[repr(transparent)]
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Status(usize);
 
 impl Status {
     // Appendix D
     pub const SUCCESS: Status = Status(0);
 
-    pub const WARN_UNKNOWN_GLYPH: Status = Status(1);
-    pub const WARN_DELETE_FAILURE: Status = Status(2);
-    pub const WARN_WRITE_FAILURE: Status = Status(3);
+    pub const WARN_UNKNOWN_GLYPH:    Status = Status(1);
+    pub const WARN_DELETE_FAILURE:   Status = Status(2);
+    pub const WARN_WRITE_FAILURE:    Status = Status(3);
     pub const WARN_BUFFER_TOO_SMALL: Status = Status(4);
-    pub const WARN_STALE_DATA: Status = Status(5);
-    pub const WARN_FILE_SYSTEM: Status = Status(6);
-    pub const WARN_RESET_REQUIRED: Status = Status(7);
+    pub const WARN_STALE_DATA:       Status = Status(5);
+    pub const WARN_FILE_SYSTEM:      Status = Status(6);
+    pub const WARN_RESET_REQUIRED:   Status = Status(7);
 
     pub const ERROR_BIT: usize = 0x1usize.reverse_bits(); // high bit
-    pub const LOAD_ERROR: Status = Status(Status::ERROR_BIT | 1);
-    pub const INVALID_PARAMETER: Status = Status(Status::ERROR_BIT | 2);
-    // TODO: ... more defined
+    pub const LOAD_ERROR:           Status = Status(Status::ERROR_BIT | 1);
+    pub const INVALID_PARAMETER:    Status = Status(Status::ERROR_BIT | 2);
+    pub const UNSUPPORTED:          Status = Status(Status::ERROR_BIT | 3);
+    pub const BAD_BUFFER_SIZE:      Status = Status(Status::ERROR_BIT | 4);
+    pub const BUFFER_TOO_SMALL:     Status = Status(Status::ERROR_BIT | 5);
+    pub const NOT_READY:            Status = Status(Status::ERROR_BIT | 6);
+    pub const DEVICE_ERROR:         Status = Status(Status::ERROR_BIT | 7);
+    pub const WRITE_PROTECTED:      Status = Status(Status::ERROR_BIT | 8);
+    pub const OUT_OF_RESOURCES:     Status = Status(Status::ERROR_BIT | 9);
+    pub const VOLUME_CORRUPTED:     Status = Status(Status::ERROR_BIT | 10);
+    pub const VOLUME_FULL:          Status = Status(Status::ERROR_BIT | 11);
+    pub const NO_MEDIA:             Status = Status(Status::ERROR_BIT | 12);
+    pub const MEDIA_CHANGED:        Status = Status(Status::ERROR_BIT | 13);
+    pub const NOT_FOUND:            Status = Status(Status::ERROR_BIT | 14);
+    pub const ACCESS_DENIED:        Status = Status(Status::ERROR_BIT | 15);
+    pub const NO_RESPONSE:          Status = Status(Status::ERROR_BIT | 16);
+    pub const NO_MAPPING:           Status = Status(Status::ERROR_BIT | 17);
+    pub const TIMEOUT:              Status = Status(Status::ERROR_BIT | 18);
+    pub const NOT_STARTED:          Status = Status(Status::ERROR_BIT | 19);
+    pub const ALREADY_STARTED:      Status = Status(Status::ERROR_BIT | 20);
+    pub const ABORTED:              Status = Status(Status::ERROR_BIT | 21);
+    pub const ICMP_ERROR:           Status = Status(Status::ERROR_BIT | 22);
+    pub const TFTP_ERROR:           Status = Status(Status::ERROR_BIT | 23);
+    pub const PROTOCOL_ERROR:       Status = Status(Status::ERROR_BIT | 24);
+    pub const INCOMPATIBLE_VERSION: Status = Status(Status::ERROR_BIT | 25);
+    pub const SECURITY_VIOLATION:   Status = Status(Status::ERROR_BIT | 26);
+    pub const CRC_ERROR:            Status = Status(Status::ERROR_BIT | 27);
+    pub const END_OF_MEDIA:         Status = Status(Status::ERROR_BIT | 28);
+    pub const END_OF_FILE:          Status = Status(Status::ERROR_BIT | 31);
+    pub const INVALID_LANGUAGE:     Status = Status(Status::ERROR_BIT | 32);
+    pub const COMPROMISED_DATA:     Status = Status(Status::ERROR_BIT | 33);
+    pub const HTTP_ERROR:           Status = Status(Status::ERROR_BIT | 35);
 
     pub fn is_error(&self) -> bool {
-        (self.0 & Status::ERROR_BIT) == 0
+        (self.0 & Status::ERROR_BIT) != 0
     }
 
     pub fn is_warning(&self) -> bool {
@@ -67,6 +96,83 @@ impl Status {
 impl From<Status> for Result {
     fn from(status: Status) -> Self {
         status.into_result()
+    }
+}
+
+#[cfg(test)]
+mod test_status {
+    use super::*;
+
+    #[test]
+    fn test_equality() {
+        let status = Status(1);
+        assert_eq!(status, Status::WARN_UNKNOWN_GLYPH);
+        assert_ne!(status, Status::SUCCESS);
+        assert_ne!(status, Status::LOAD_ERROR);
+    }
+
+    #[test]
+    fn test_is_error() {
+        assert_eq!(false, Status::SUCCESS.is_error());
+
+        assert_eq!(false, Status::WARN_UNKNOWN_GLYPH.is_error());
+        assert_eq!(false, Status::WARN_FILE_SYSTEM.is_error());
+        assert_eq!(false, Status::WARN_RESET_REQUIRED.is_error());
+
+        assert_eq!(true, Status::LOAD_ERROR.is_error());
+        assert_eq!(true, Status::ACCESS_DENIED.is_error());
+        assert_eq!(true, Status::HTTP_ERROR.is_error());
+
+        if cfg!(target_pointer_width="32") {
+            assert_eq!(Status(0x0000_0000).is_error(), false);
+            assert_eq!(Status(0x0000_0001).is_error(), false);
+            assert_eq!(Status(0x7fff_ffff).is_error(), false);
+            assert_eq!(Status(0x8000_0000).is_error(), true);
+            assert_eq!(Status(0xffff_ffff).is_error(), true);
+        }
+        else {
+            assert_eq!(Status(0x0000_0000_0000_0000).is_error(), false);
+            assert_eq!(Status(0x0000_0000_0000_0001).is_error(), false);
+            assert_eq!(Status(0x7fff_ffff_ffff_ffff).is_error(), false);
+            assert_eq!(Status(0x8000_0000_0000_0000).is_error(), true);
+            assert_eq!(Status(0xffff_ffff_ffff_ffff).is_error(), true);
+        }
+    }
+
+    #[test]
+    fn test_is_warning() {
+        assert_eq!(false, Status::SUCCESS.is_warning());
+
+        assert_eq!(true, Status::WARN_UNKNOWN_GLYPH.is_warning());
+        assert_eq!(true, Status::WARN_FILE_SYSTEM.is_warning());
+        assert_eq!(true, Status::WARN_RESET_REQUIRED.is_warning());
+
+        assert_eq!(false, Status::LOAD_ERROR.is_warning());
+        assert_eq!(false, Status::ACCESS_DENIED.is_warning());
+        assert_eq!(false, Status::HTTP_ERROR.is_warning());
+
+        if cfg!(target_pointer_width="32") {
+            assert_eq!(Status(0x0000_0000).is_warning(), false);
+            assert_eq!(Status(0x0000_0001).is_warning(), true);
+            assert_eq!(Status(0x7fff_ffff).is_warning(), true);
+            assert_eq!(Status(0x8000_0000).is_warning(), false);
+            assert_eq!(Status(0xffff_ffff).is_warning(), false);
+        }
+        else {
+            assert_eq!(Status(0x0000_0000_0000_0000).is_warning(), false);
+            assert_eq!(Status(0x0000_0000_0000_0001).is_warning(), true);
+            assert_eq!(Status(0x7fff_ffff_ffff_ffff).is_warning(), true);
+            assert_eq!(Status(0x8000_0000_0000_0000).is_warning(), false);
+            assert_eq!(Status(0xffff_ffff_ffff_ffff).is_warning(), false);
+        }
+    }
+
+    #[test]
+    fn test_into_result() {
+        assert_eq!(Status::SUCCESS.into_result(), Ok(Status::SUCCESS));
+        assert_eq!(Status::WARN_FILE_SYSTEM.into_result(), Ok(Status::WARN_FILE_SYSTEM));
+        assert_eq!(Status::LOAD_ERROR.into_result(), Err(Status::LOAD_ERROR));
+        assert_eq!(Status::HTTP_ERROR.into_result(), Err(Status::HTTP_ERROR));
     }
 }
 
@@ -211,11 +317,12 @@ impl BootServices {
 }
 
 #[repr(C)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct GUID(
     u32,
     u16,
     u16,
-    [u8; 4]
+    [u8; 8]
 );
 
 impl GUID {
@@ -224,13 +331,40 @@ impl GUID {
             (n >> 96) as u32,
             (n >> 80) as u16,
             (n >> 64) as u16,
-            (n as u32).to_be_bytes(),
+            (n as u64).to_be_bytes(),
         )
     }
 }
 
 impl From<u128> for GUID {
     fn from(n: u128) -> Self { GUID::from(n) }
+}
+
+#[cfg(test)]
+mod test_guid {
+    use super::*;
+
+    #[test]
+    fn test_from_u128() {
+        let guid = GUID::from(0x01020304_0506_0708_0910_111213141516);
+        assert_eq!(guid.0, 0x0102_0304);
+        assert_eq!(guid.1, 0x0506);
+        assert_eq!(guid.2, 0x0708);
+        assert_eq!(guid.3, [
+            0x09u8, 0x10u8, 0x11u8, 0x12u8,
+            0x13u8, 0x14u8, 0x15u8, 0x16u8,
+        ]);
+    }
+
+    #[test]
+    fn test_equality() {
+        let guid_a = GUID::from(0xcf04d973_15f7_400b_b53b_82929911d09c);
+        let guid_b = GUID::from(0xcf04d973_15f7_400b_b53b_82929911d09c);
+        let guid_c = GUID::from(0x028c338c_0b14_4687_9ad7_14cba520b645);
+        assert_eq!(guid_a, guid_b);
+        assert_ne!(guid_a, guid_c);
+        assert_ne!(guid_b, guid_c);
+    }
 }
 
 #[repr(C)]

@@ -1,3 +1,6 @@
+[alias]
+"test-host" = "test -Z build-std=core,alloc,std --target x86_64-apple-darwin"
+
 [build]
 target = "x86_64-unknown-uefi"
 
