@@ -2,25 +2,29 @@
 
 #![allow(unused)]
 
-pub type Handle = usize;
+#[repr(transparent)]
+#[derive(PartialEq, Eq)]
+pub struct Handle(usize);
 
-pub enum Revision {
-    V2_80 = (2 << 16) | 80,
-    V2_70 = (2 << 16) | 70,
-    V2_60 = (2 << 16) | 60,
-    V2_50 = (2 << 16) | 50,
-    V2_40 = (2 << 16) | 40,
-    V2_31 = (2 << 16) | 31,
-    V2_30 = (2 << 16) | 30,
-    V2_20 = (2 << 16) | 20,
-    V2_10 = (2 << 16) | 10,
-    V2_00 = (2 << 16) | 00,
-    V1_10 = (1 << 16) | 10,
-    V1_02 = (1 << 16) | 02,
-}
+#[repr(transparent)]
+#[derive(PartialEq, Eq)]
+pub struct Revision(pub u32);
 
 impl Revision {
     pub const LATEST: Revision = Revision::V2_80;
+
+    pub const V2_80: Revision = Revision((2 << 16) | 80);
+    pub const V2_70: Revision = Revision((2 << 16) | 70);
+    pub const V2_60: Revision = Revision((2 << 16) | 60);
+    pub const V2_50: Revision = Revision((2 << 16) | 50);
+    pub const V2_40: Revision = Revision((2 << 16) | 40);
+    pub const V2_31: Revision = Revision((2 << 16) | 31);
+    pub const V2_30: Revision = Revision((2 << 16) | 30);
+    pub const V2_20: Revision = Revision((2 << 16) | 20);
+    pub const V2_10: Revision = Revision((2 << 16) | 10);
+    pub const V2_00: Revision = Revision( 2 << 16      );
+    pub const V1_10: Revision = Revision((1 << 16) | 10);
+    pub const V1_02: Revision = Revision((1 << 16) |  2);
 }
 
 pub type Result = core::result::Result<Status, Status>;
@@ -179,7 +183,7 @@ mod test_status {
 #[repr(C)]
 pub struct TableHeader {
     pub signature: u64,
-    pub revision: u32,
+    pub revision: Revision,
     pub header_size: u32,
     pub crc32: u32,
     reserved: u32,
