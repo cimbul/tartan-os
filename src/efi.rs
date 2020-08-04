@@ -87,12 +87,12 @@ impl Status {
 
     pub fn is_warning(self) -> bool {
         self != Status::SUCCESS && !self.is_error()
-}
+    }
 
     pub fn into_result(self) -> Result {
         if self.is_error() {
             Err(self)
-}
+        }
         else {
             Ok(self)
         }
