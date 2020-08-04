@@ -6,9 +6,10 @@ extern crate rlibc;
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
+use core::ffi::c_void;
 use core::fmt::Write;
 use efi::{Handle, Result, Status, SystemTable};
-use efi::proto::SimpleTextOutput;
+use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 
 mod efi;
 
@@ -61,11 +62,24 @@ fn efi_main(image_handle: Handle, system_table: &SystemTable) -> Status {
     }
 }
 
-fn main(_image_handle: Handle, system_table: &SystemTable) -> Result {
+fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
     unsafe {
         let mut out = OutputStream::new(&*system_table.console_out);
 
         if writeln_cr!(out, "Hello, world!\r\nWhat's up?").is_err() {
+            return out.last_result;
+        }
+
+        let loaded_image: *const LoadedImage = core::ptr::null();
+        let boot_services = &*system_table.boot_services;
+        (boot_services.handle_protocol)(
+            image_handle,
+            &LoadedImage::PROTOCOL_ID,
+            &mut (loaded_image as *const c_void),
+        ).into_result()?;
+
+        let image_base = (*loaded_image).image_base;
+        if writeln_cr!(out, "Image base: {:p}", image_base).is_err() {
             return out.last_result;
         }
     }

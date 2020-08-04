@@ -2,6 +2,8 @@
 
 #![allow(unused)]
 
+use core::ffi::c_void;
+
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Handle(usize);
@@ -272,7 +274,11 @@ pub struct BootServices {
     install_protocol_interface: usize,
     reinstall_protocol_interface: usize,
     uninstall_protocol_interface: usize,
-    handle_protocol: usize,
+    pub handle_protocol: extern "C" fn(
+        handle: Handle,
+        protocol: &GUID,
+        interface: *mut *const c_void,
+    ) -> Status,
     reserved: usize,
     register_protocol_notify: usize,
     locate_handle: usize,
@@ -388,7 +394,38 @@ impl ConfigurationTable {
     // TODO: ... more defined in sect. 4.6
 }
 
+// TODO: The width of this type really isn't clear. The UEFI spec defines it as a C enum
+// with fewer than 256 values. The text refers to reserved ranges up to 0xFFFFFFFF,
+// implying that it is at least 32 bits. From what I can tell, MSVC (which UEFI borrows a
+// lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.
+#[repr(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MemoryType(u32);
+
+impl MemoryType {
+    const RESERVED:                    MemoryType = MemoryType(0);
+    const LOADER_CODE:                 MemoryType = MemoryType(1);
+    const LOADER_DATA:                 MemoryType = MemoryType(2);
+    const BOOT_SERVICES_CODE:          MemoryType = MemoryType(3);
+    const BOOT_SERVICES_DATA:          MemoryType = MemoryType(4);
+    const CONVENTIONAL_MEMORY:         MemoryType = MemoryType(5);
+    const UNUSABLE_MEMORY:             MemoryType = MemoryType(6);
+    const ACPI_RECLAIM_MEMORY:         MemoryType = MemoryType(7);
+    const ACPI_MEMORY_NVS:             MemoryType = MemoryType(8);
+    const MEMORY_MAPPED_IO:            MemoryType = MemoryType(9);
+    const MEMORY_MAPPED_IO_PORT_SPACE: MemoryType = MemoryType(10);
+    const PAL_CODE:                    MemoryType = MemoryType(11);
+    const PERSISTENT_MEMORY:           MemoryType = MemoryType(12);
+}
+
 pub mod proto {
+    use super::{GUID, Handle, MemoryType, Status, SystemTable};
+    use core::ffi::c_void;
+
+    pub trait Protocol {
+        const PROTOCOL_ID: GUID;
+    }
+
     #[repr(C)]
     pub struct SimpleTextInput {
         reset: usize,
@@ -421,5 +458,33 @@ pub mod proto {
         pub cursor_column: i32,
         pub cursor_row: i32,
         pub cursor_visible: bool,
+    }
+
+    #[repr(C)]
+    pub struct LoadedImage {
+        pub revision: u32,
+        pub parent_handle: Handle,
+        pub system_table: *const SystemTable,
+
+        pub device_handle: Handle,
+        device_path_protocol: usize, // TODO: type
+        _reserved: usize,
+
+        pub load_options_size: u32,
+        pub load_options: *const c_void,
+
+        pub image_base: *mut c_void,
+        pub image_size: u64,
+        pub image_code_type: MemoryType,
+        pub image_data_type: MemoryType,
+        pub unload: extern "C" fn(handle: Handle) -> Status,
+    }
+
+    impl Protocol for LoadedImage {
+        const PROTOCOL_ID: GUID = GUID::from(0x5b1b31a1_9562_11d2_8e3f_00a0c969723b);
+    }
+
+    impl LoadedImage {
+        pub const LATEST_REVISION: u32 = 0x1000;
     }
 }
