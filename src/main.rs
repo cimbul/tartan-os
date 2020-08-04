@@ -1,5 +1,6 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
+#![deny(clippy::pedantic)]
 
 extern crate rlibc;
 

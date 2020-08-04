@@ -45,7 +45,7 @@ impl Status {
     pub const WARN_FILE_SYSTEM:      Status = Status(6);
     pub const WARN_RESET_REQUIRED:   Status = Status(7);
 
-    pub const ERROR_BIT: usize = 0x1usize.reverse_bits(); // high bit
+    pub const ERROR_BIT: usize = 0x1_usize.reverse_bits(); // high bit
     pub const LOAD_ERROR:           Status = Status(Status::ERROR_BIT | 1);
     pub const INVALID_PARAMETER:    Status = Status(Status::ERROR_BIT | 2);
     pub const UNSUPPORTED:          Status = Status(Status::ERROR_BIT | 3);
@@ -207,7 +207,7 @@ pub struct SystemTable {
 }
 
 impl SystemTable {
-    pub const SIGNATURE: u64 = 0x5453595320494249;
+    pub const SIGNATURE: u64 = 0x5453_5953_2049_4249;
 }
 
 #[repr(C)]
@@ -242,7 +242,7 @@ pub struct RuntimeServices {
 }
 
 impl RuntimeServices {
-    pub const SIGNATURE: u64 = 0x56524553544e5552;
+    pub const SIGNATURE: u64 = 0x5652_4553_544e_5552;
 }
 
 #[repr(C)]
@@ -317,7 +317,7 @@ pub struct BootServices {
 }
 
 impl BootServices {
-    pub const SIGNATURE: u64 = 0x56524553544f4f42;
+    pub const SIGNATURE: u64 = 0x5652_4553_544f_4f42;
 }
 
 #[repr(C)]
@@ -331,6 +331,7 @@ pub struct GUID(
 
 impl GUID {
     pub const fn from(n: u128) -> Self {
+        #[allow(clippy::cast_possible_truncation)]
         GUID(
             (n >> 96) as u32,
             (n >> 80) as u16,
@@ -355,8 +356,8 @@ mod test_guid {
         assert_eq!(guid.1, 0x0506);
         assert_eq!(guid.2, 0x0708);
         assert_eq!(guid.3, [
-            0x09u8, 0x10u8, 0x11u8, 0x12u8,
-            0x13u8, 0x14u8, 0x15u8, 0x16u8,
+            0x09_u8, 0x10_u8, 0x11_u8, 0x12_u8,
+            0x13_u8, 0x14_u8, 0x15_u8, 0x16_u8,
         ]);
     }
 

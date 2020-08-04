@@ -1,4 +1,5 @@
 #![no_std]
+#![deny(clippy::pedantic)]
 
 #[cfg(test)]
 mod tests {
