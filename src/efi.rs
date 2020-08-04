@@ -3,11 +3,11 @@
 #![allow(unused)]
 
 #[repr(transparent)]
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Handle(usize);
 
 #[repr(transparent)]
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Revision(pub u32);
 
 impl Revision {
@@ -30,7 +30,7 @@ impl Revision {
 pub type Result = core::result::Result<Status, Status>;
 
 #[repr(transparent)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Status(usize);
 
 impl Status {
@@ -79,12 +79,12 @@ impl Status {
     pub const COMPROMISED_DATA:     Status = Status(Status::ERROR_BIT | 33);
     pub const HTTP_ERROR:           Status = Status(Status::ERROR_BIT | 35);
 
-    pub fn is_error(&self) -> bool {
+    pub fn is_error(self) -> bool {
         (self.0 & Status::ERROR_BIT) != 0
     }
 
-    pub fn is_warning(&self) -> bool {
-        *self != Status::SUCCESS && !self.is_error()
+    pub fn is_warning(self) -> bool {
+        self != Status::SUCCESS && !self.is_error()
 }
 
     pub fn into_result(self) -> Result {
@@ -321,7 +321,7 @@ impl BootServices {
 }
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GUID(
     u32,
     u16,

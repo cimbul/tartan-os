@@ -14,8 +14,7 @@ mod efi;
 #[no_mangle]
 fn efi_main(image_handle: Handle, system_table: &SystemTable) -> Status {
     match main(image_handle, system_table) {
-        Err(status) => status,
-        Ok(status) => status,
+        Err(status) | Ok(status) => status,
     }
 }
 
