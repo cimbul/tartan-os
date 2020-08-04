@@ -1,5 +1,6 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
+#![feature(panic_info_message)]
 #![deny(clippy::pedantic)]
 
 extern crate rlibc;
@@ -11,14 +12,9 @@ use core::fmt::Write;
 use efi::{Handle, Result, Status, SystemTable};
 use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 
-mod efi;
+static mut SYSTEM_TABLE_STATIC: Option<&SystemTable> = None;
 
-// built-in writeln macro uses LF but no CR
-macro_rules! writeln_cr {
-    [$out:expr, $($arg:expr),*] => {
-        write!($out, $($arg),*).and_then(|_| write!($out, "\r\n"))
-    }
-}
+mod efi;
 
 struct OutputStream<'a> {
     out: &'a SimpleTextOutput,
@@ -43,6 +39,12 @@ impl Write for OutputStream<'_> {
     }
 
     fn write_char(&mut self, c: char) -> core::fmt::Result {
+        // Automatically translate LF to CRLF. Internally-used panic strings can contain
+        // line breaks (e.g., assert_eq!), and this ensures they are formatted correctly.
+        if c == '\n' {
+            self.write_char('\r')?;
+        }
+
         // Two for UTF-16 code point (possibly a surrogate pair). One for null terminator.
         let mut buffer = [0_u16; 3];
         c.encode_utf16(&mut buffer);
@@ -56,7 +58,11 @@ impl Write for OutputStream<'_> {
 }
 
 #[no_mangle]
-fn efi_main(image_handle: Handle, system_table: &SystemTable) -> Status {
+fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> Status {
+    unsafe {
+        SYSTEM_TABLE_STATIC = Some(system_table);
+    }
+
     match main(image_handle, system_table) {
         Err(status) | Ok(status) => status,
     }
@@ -66,7 +72,7 @@ fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
     unsafe {
         let mut out = OutputStream::new(&*system_table.console_out);
 
-        if writeln_cr!(out, "Hello, world!\r\nWhat's up?").is_err() {
+        if writeln!(out, "Hello, world!\nWhat's up?").is_err() {
             return out.last_result;
         }
 
@@ -79,7 +85,7 @@ fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
         ).into_result()?;
 
         let image_base = (*loaded_image).image_base;
-        if writeln_cr!(out, "Image base: {:p}", image_base).is_err() {
+        if writeln!(out, "Image base: {:p}", image_base).is_err() {
             return out.last_result;
         }
     }
@@ -89,6 +95,24 @@ fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
 
 #[cfg(not(test))]
 #[panic_handler]
-fn panic_handler(_: &PanicInfo) -> ! {
+fn panic_handler(info: &PanicInfo) -> ! {
+    // Not much we can do with Err results in a panic handler
+    #[allow(unused_must_use)]
+
+    unsafe {
+        if let Some(system_table) = SYSTEM_TABLE_STATIC {
+            let mut out = OutputStream::new(&*system_table.console_out);
+            writeln!(out, "!!! Panic !!!");
+            match info.location() {
+                Some(location) => writeln!(out, "Location: {}", location),
+                None => writeln!(out, "No location information"),
+            };
+            match info.message() {
+                Some(arguments) => core::fmt::write(&mut out, *arguments),
+                None => writeln!(out, "No additional message"),
+            };
+        }
+    }
+
     loop {}
 }
