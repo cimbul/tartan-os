@@ -201,9 +201,9 @@ pub struct SystemTable {
     pub console_out_handle: Handle,
     pub console_out: *const proto::SimpleTextOutput,
     pub std_err_handle: Handle,
-    pub std_err: proto::SimpleTextOutput,
-    pub runtime_services: RuntimeServices,
-    pub boot_services: BootServices,
+    pub std_err: *const proto::SimpleTextOutput,
+    pub runtime_services: *const RuntimeServices,
+    pub boot_services: *const BootServices,
     pub config_entry_count: usize,
     pub config_table: *const ConfigurationTable,
 }
@@ -252,7 +252,7 @@ pub struct BootServices {
     pub header: TableHeader,
 
     // Task Priority Services
-    raise_tpm: usize,
+    raise_tpl: usize,
     restore_tpl: usize,
 
     // Memory Services
