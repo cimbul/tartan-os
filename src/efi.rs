@@ -3,13 +3,17 @@
 #![allow(unused)]
 
 use core::ffi::c_void;
+use core::fmt;
+use core::mem::size_of;
+use core::slice;
+use crc_any::CRCu32;
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Handle(usize);
 
 #[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Revision(pub u32);
 
 impl Revision {
@@ -27,6 +31,51 @@ impl Revision {
     pub const V2_00: Revision = Revision( 2 << 16      );
     pub const V1_10: Revision = Revision((1 << 16) | 10);
     pub const V1_02: Revision = Revision((1 << 16) |  2);
+}
+
+impl Revision {
+    pub fn major_version(self) -> u16 {
+        #![allow(clippy::cast_possible_truncation)]
+        (self.0 >> 16) as u16
+    }
+
+    pub fn minor_version(self) -> u16 {
+        #![allow(clippy::cast_possible_truncation)]
+        (self.0 as u16) / 10
+    }
+
+    pub fn fix_version(self) -> u16 {
+        #![allow(clippy::cast_possible_truncation)]
+        (self.0 as u16) % 10
+    }
+}
+
+impl fmt::Display for Revision {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}.{}.{}",
+            self.major_version(),
+            self.minor_version(),
+            self.fix_version(),
+        )
+    }
+}
+
+#[cfg(test)]
+mod test_revision {
+    use super::*;
+
+    #[test]
+    fn test_components() {
+        assert_eq!(Revision::V1_02.major_version(), 1);
+        assert_eq!(Revision::V1_02.minor_version(), 0);
+        assert_eq!(Revision::V1_02.fix_version(), 2);
+
+        assert_eq!(Revision::V2_31.major_version(), 2);
+        assert_eq!(Revision::V2_31.minor_version(), 3);
+        assert_eq!(Revision::V2_31.fix_version(), 1);
+    }
 }
 
 pub type Result = core::result::Result<Status, Status>;
@@ -182,6 +231,77 @@ mod test_status {
     }
 }
 
+pub trait Table {
+    const SIGNATURE: u64;
+    const MIN_REVISION: Revision;
+
+    fn header(&self) -> &TableHeader;
+    fn header_mut(&mut self) -> &mut TableHeader;
+
+    fn verify(&mut self) where Self: Sized {
+        self.verify_signature();
+        self.verify_revision();
+        self.verify_size();
+        self.verify_crc32();
+    }
+
+    fn verify_signature(&self) {
+        let actual_signature = self.header().signature;
+        assert!(
+            actual_signature == Self::SIGNATURE,
+            "Signature mismatch. Expected {:x}, received {:x}",
+            actual_signature,
+            Self::SIGNATURE,
+        )
+    }
+
+    fn verify_revision(&self) {
+        let actual_revision = self.header().revision;
+        assert!(
+            actual_revision >= Self::MIN_REVISION,
+            "Revision {} older than minimum supported revision {}",
+            actual_revision,
+            Self::MIN_REVISION,
+        )
+    }
+
+    fn verify_size(&self) where Self: Sized {
+        let actual_size = self.header().header_size as usize;
+        assert!(
+            actual_size >= size_of::<Self>(),
+            "Header size {} was less than expected {} bytes",
+            actual_size,
+            size_of::<Self>(),
+        )
+    }
+
+    fn verify_crc32(&mut self) {
+        let mut header = self.header_mut();
+        let size = header.header_size;
+        let orig_remainder = header.crc32;
+        header.crc32 = 0;
+
+        let mut crc = CRCu32::crc32();
+        unsafe {
+            crc.digest(slice::from_raw_parts(
+                self as *const Self as *const u8,
+                size as usize,
+            ));
+        }
+
+        header = self.header_mut();
+        header.crc32 = orig_remainder;
+
+        let actual_remainder = crc.get_crc();
+        assert!(
+            actual_remainder == orig_remainder,
+            "Calculated CRC {:x} does not match listed value {:x}",
+            actual_remainder,
+            orig_remainder,
+        )
+    }
+}
+
 #[repr(C)]
 pub struct TableHeader {
     pub signature: u64,
@@ -192,24 +312,27 @@ pub struct TableHeader {
 }
 
 #[repr(C)]
-pub struct SystemTable {
+pub struct SystemTable<'a> {
     pub header: TableHeader,
     pub firmware_vendor: *const u16,
     pub firmware_revision: u32,
     pub console_in_handle: Handle,
-    pub console_in: *const proto::SimpleTextInput,
+    pub console_in: &'a proto::SimpleTextInput,
     pub console_out_handle: Handle,
-    pub console_out: *const proto::SimpleTextOutput,
+    pub console_out: &'a proto::SimpleTextOutput,
     pub std_err_handle: Handle,
-    pub std_err: *const proto::SimpleTextOutput,
-    pub runtime_services: *const RuntimeServices,
-    pub boot_services: *const BootServices,
+    pub std_err: &'a proto::SimpleTextOutput,
+    pub runtime_services: &'a mut RuntimeServices,
+    pub boot_services: &'a mut BootServices,
     pub config_entry_count: usize,
     pub config_table: *const ConfigurationTable,
 }
 
-impl SystemTable {
-    pub const SIGNATURE: u64 = 0x5453_5953_2049_4249;
+impl Table for SystemTable<'_> {
+    const SIGNATURE: u64 = 0x5453_5953_2049_4249;
+    const MIN_REVISION: Revision = Revision::V2_00;
+    fn header(&self) -> &TableHeader { &self.header }
+    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
@@ -243,8 +366,11 @@ pub struct RuntimeServices {
     query_variable_info: usize,
 }
 
-impl RuntimeServices {
-    pub const SIGNATURE: u64 = 0x5652_4553_544e_5552;
+impl Table for RuntimeServices {
+    const SIGNATURE: u64 = 0x5652_4553_544e_5552;
+    const MIN_REVISION: Revision = Revision::V2_00;
+    fn header(&self) -> &TableHeader { &self.header }
+    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
@@ -322,8 +448,11 @@ pub struct BootServices {
     create_event_ex: usize,
 }
 
-impl BootServices {
-    pub const SIGNATURE: u64 = 0x5652_4553_544f_4f42;
+impl Table for BootServices {
+    const SIGNATURE: u64 = 0x5652_4553_544f_4f42;
+    const MIN_REVISION: Revision = Revision::V2_00;
+    fn header(&self) -> &TableHeader { &self.header }
+    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
@@ -461,10 +590,10 @@ pub mod proto {
     }
 
     #[repr(C)]
-    pub struct LoadedImage {
+    pub struct LoadedImage<'a> {
         pub revision: u32,
         pub parent_handle: Handle,
-        pub system_table: *const SystemTable,
+        pub system_table: *const SystemTable<'a>,
 
         pub device_handle: Handle,
         device_path_protocol: usize, // TODO: type
@@ -480,11 +609,11 @@ pub mod proto {
         pub unload: extern "C" fn(handle: Handle) -> Status,
     }
 
-    impl Protocol for LoadedImage {
+    impl Protocol for LoadedImage<'_> {
         const PROTOCOL_ID: GUID = GUID::from(0x5b1b31a1_9562_11d2_8e3f_00a0c969723b);
     }
 
-    impl LoadedImage {
+    impl LoadedImage<'_> {
         pub const LATEST_REVISION: u32 = 0x1000;
     }
 }

@@ -10,3 +10,4 @@ publish = false
 [dependencies]
 rlibc = "1.0.0"
 utf16_lit = "1.0.0"
+crc-any = {version = "2.3.5", default-features = false}

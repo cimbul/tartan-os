@@ -9,12 +9,20 @@ extern crate rlibc;
 use core::panic::PanicInfo;
 use core::ffi::c_void;
 use core::fmt::Write;
-use efi::{Handle, Result, Status, SystemTable};
+use efi::{Handle, Result, Status, SystemTable, Table};
 use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 
-static mut SYSTEM_TABLE_STATIC: Option<&SystemTable> = None;
+static mut SYSTEM_TABLE_STATIC: Option<*mut SystemTable> = None;
 
 mod efi;
+
+macro_rules! writeln_result {
+    [$out:ident, $($args:expr),*] => {
+        match writeln!($out, $($args),*) {
+            _ => $out.last_result
+        }
+    }
+}
 
 struct OutputStream<'a> {
     out: &'a SimpleTextOutput,
@@ -58,7 +66,7 @@ impl Write for OutputStream<'_> {
 }
 
 #[no_mangle]
-fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> Status {
+fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {
     unsafe {
         SYSTEM_TABLE_STATIC = Some(system_table);
     }
@@ -68,16 +76,20 @@ fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> Status 
     }
 }
 
-fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
+fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
     unsafe {
         let mut out = OutputStream::new(&*system_table.console_out);
 
-        if writeln!(out, "Hello, world!\nWhat's up?").is_err() {
-            return out.last_result;
-        }
+        writeln_result!(out, "Hello, world!\nWhat's up?")?;
+
+        writeln_result!(out, "Verifying system tables...")?;
+        system_table.verify();
+        system_table.runtime_services.verify();
+        system_table.boot_services.verify();
+        writeln_result!(out, "Verified!")?;
 
         let loaded_image: *const LoadedImage = core::ptr::null();
-        let boot_services = &*system_table.boot_services;
+        let boot_services = &system_table.boot_services;
         (boot_services.handle_protocol)(
             image_handle,
             &LoadedImage::PROTOCOL_ID,
@@ -85,9 +97,7 @@ fn main(image_handle: Handle, system_table: &SystemTable) -> Result {
         ).into_result()?;
 
         let image_base = (*loaded_image).image_base;
-        if writeln!(out, "Image base: {:p}", image_base).is_err() {
-            return out.last_result;
-        }
+        writeln_result!(out, "Image base: {:p}", image_base)?;
     }
 
     loop { }
@@ -101,7 +111,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
 
     unsafe {
         if let Some(system_table) = SYSTEM_TABLE_STATIC {
-            let mut out = OutputStream::new(&*system_table.console_out);
+            let mut out = OutputStream::new((*system_table).console_out);
             writeln!(out, "!!! Panic !!!");
             match info.location() {
                 Some(location) => writeln!(out, "Location: {}", location),
