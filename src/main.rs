@@ -1,6 +1,7 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
 #![feature(panic_info_message)]
+#![feature(ptr_offset_from)]
 #![deny(clippy::pedantic)]
 
 extern crate rlibc;

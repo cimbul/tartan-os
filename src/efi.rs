@@ -2,6 +2,7 @@
 
 #![allow(unused)]
 
+use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
 use core::mem::size_of;
@@ -236,9 +237,8 @@ pub trait Table {
     const MIN_REVISION: Revision;
 
     fn header(&self) -> &TableHeader;
-    fn header_mut(&mut self) -> &mut TableHeader;
 
-    fn verify(&mut self) where Self: Sized {
+    fn verify(&self) where Self: Sized {
         self.verify_signature();
         self.verify_revision();
         self.verify_size();
@@ -275,23 +275,35 @@ pub trait Table {
         )
     }
 
-    fn verify_crc32(&mut self) {
-        let mut header = self.header_mut();
+    fn verify_crc32(&self) {
+        const CRC_FIELD_LENGTH: usize = size_of::<u32>();
+
+        let header = self.header();
         let size = header.header_size;
-        let orig_remainder = header.crc32;
-        header.crc32 = 0;
+        let start_address = self as *const Self as *const u8;
+        let crc_field_address = &header.crc32 as *const u32 as *const u8;
 
         let mut crc = CRCu32::crc32();
         unsafe {
+            // Digest start of header until right before CRC value
             crc.digest(slice::from_raw_parts(
-                self as *const Self as *const u8,
-                size as usize,
+                start_address,
+                crc_field_address.offset_from(start_address).try_into().unwrap(),
+            ));
+
+            // Replace CRC field with zeros
+            crc.digest(&[0_u8; CRC_FIELD_LENGTH]);
+
+            // Digest rest of header starting past end of CRC field
+            let crc_field_end = crc_field_address.add(CRC_FIELD_LENGTH);
+            let end_address = start_address.add(size as usize);
+            crc.digest(slice::from_raw_parts(
+                crc_field_end,
+                end_address.offset_from(crc_field_end).try_into().unwrap(),
             ));
         }
 
-        header = self.header_mut();
-        header.crc32 = orig_remainder;
-
+        let orig_remainder = header.crc32;
         let actual_remainder = crc.get_crc();
         assert!(
             actual_remainder == orig_remainder,
@@ -322,8 +334,8 @@ pub struct SystemTable<'a> {
     pub console_out: &'a proto::SimpleTextOutput,
     pub std_err_handle: Handle,
     pub std_err: &'a proto::SimpleTextOutput,
-    pub runtime_services: &'a mut RuntimeServices,
-    pub boot_services: &'a mut BootServices,
+    pub runtime_services: &'a RuntimeServices,
+    pub boot_services: &'a BootServices,
     pub config_entry_count: usize,
     pub config_table: *const ConfigurationTable,
 }
@@ -332,7 +344,6 @@ impl Table for SystemTable<'_> {
     const SIGNATURE: u64 = 0x5453_5953_2049_4249;
     const MIN_REVISION: Revision = Revision::V2_00;
     fn header(&self) -> &TableHeader { &self.header }
-    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
@@ -370,7 +381,6 @@ impl Table for RuntimeServices {
     const SIGNATURE: u64 = 0x5652_4553_544e_5552;
     const MIN_REVISION: Revision = Revision::V2_00;
     fn header(&self) -> &TableHeader { &self.header }
-    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
@@ -452,7 +462,6 @@ impl Table for BootServices {
     const SIGNATURE: u64 = 0x5652_4553_544f_4f42;
     const MIN_REVISION: Revision = Revision::V2_00;
     fn header(&self) -> &TableHeader { &self.header }
-    fn header_mut(&mut self) -> &mut TableHeader { &mut self.header }
 }
 
 #[repr(C)]
