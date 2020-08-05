@@ -2,6 +2,7 @@
 
 #![allow(unused)]
 
+use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
@@ -392,11 +393,32 @@ pub struct BootServices {
     restore_tpl: usize,
 
     // Memory Services
-    allocate_pages: usize,
-    free_pages: usize,
-    get_memory_map: unsafe extern "C" fn(),
-    allocate_pool: usize,
-    free_pool: usize,
+    // NOTE: Physical addresses are represented as u64 even on 32-bit systems
+    pub allocate_pages: unsafe extern "C" fn(
+        allocate_type: AllocateType,
+        memory_type: MemoryType,
+        page_count: usize,
+        physical_address: *mut u64,
+    ) -> Status,
+    pub free_pages: unsafe extern "C" fn(
+        physical_address: u64,
+        page_count: usize,
+    ) -> Status,
+    pub get_memory_map: unsafe extern "C" fn(
+        map_size: &mut usize,
+        map: *mut c_void,
+        map_key: &mut usize,
+        descriptor_size: &mut usize,
+        descriptor_version: &mut u32,
+    ) -> Status,
+    pub allocate_pool: unsafe extern "C" fn(
+        pool_type: MemoryType,
+        size: usize,
+        buffer: *mut *mut c_void,
+    ) -> Status,
+    pub free_pool: unsafe extern "C" fn(
+        buffer: *mut c_void,
+    ) -> Status,
 
     // Event & Timer Services
     create_event: usize,
@@ -532,6 +554,16 @@ impl ConfigurationTable {
     // TODO: ... more defined in sect. 4.6
 }
 
+#[repr(C)]
+pub struct MemoryDescriptor {
+    pub memory_type: MemoryType,
+    // NOTE: Addresses represented as u64 even on 32-bit systems
+    pub physical_start: u64,
+    pub virtual_start: u64,
+    pub page_count: u64,
+    pub attributes: MemoryAttributes,
+}
+
 // TODO: The width of this type really isn't clear. The UEFI spec defines it as a C enum
 // with fewer than 256 values. The text refers to reserved ranges up to 0xFFFFFFFF,
 // implying that it is at least 32 bits. From what I can tell, MSVC (which UEFI borrows a
@@ -541,19 +573,51 @@ impl ConfigurationTable {
 pub struct MemoryType(u32);
 
 impl MemoryType {
-    const RESERVED:                    MemoryType = MemoryType(0);
-    const LOADER_CODE:                 MemoryType = MemoryType(1);
-    const LOADER_DATA:                 MemoryType = MemoryType(2);
-    const BOOT_SERVICES_CODE:          MemoryType = MemoryType(3);
-    const BOOT_SERVICES_DATA:          MemoryType = MemoryType(4);
-    const CONVENTIONAL_MEMORY:         MemoryType = MemoryType(5);
-    const UNUSABLE_MEMORY:             MemoryType = MemoryType(6);
-    const ACPI_RECLAIM_MEMORY:         MemoryType = MemoryType(7);
-    const ACPI_MEMORY_NVS:             MemoryType = MemoryType(8);
-    const MEMORY_MAPPED_IO:            MemoryType = MemoryType(9);
-    const MEMORY_MAPPED_IO_PORT_SPACE: MemoryType = MemoryType(10);
-    const PAL_CODE:                    MemoryType = MemoryType(11);
-    const PERSISTENT_MEMORY:           MemoryType = MemoryType(12);
+    pub const RESERVED:              MemoryType = MemoryType(0);
+    pub const LOADER_CODE:           MemoryType = MemoryType(1);
+    pub const LOADER_DATA:           MemoryType = MemoryType(2);
+    pub const BOOT_SERVICES_CODE:    MemoryType = MemoryType(3);
+    pub const BOOT_SERVICES_DATA:    MemoryType = MemoryType(4);
+    pub const RUNTIME_SERVICES_CODE: MemoryType = MemoryType(5);
+    pub const RUNTIME_SERVICES_DATA: MemoryType = MemoryType(6);
+    pub const CONVENTIONAL:          MemoryType = MemoryType(7);
+    pub const UNUSABLE:              MemoryType = MemoryType(8);
+    pub const ACPI_RECLAIM:          MemoryType = MemoryType(9);
+    pub const ACPI_NVS:              MemoryType = MemoryType(10);
+    pub const MAPPED_IO:             MemoryType = MemoryType(11);
+    pub const MAPPED_IO_PORT_SPACE:  MemoryType = MemoryType(12);
+    pub const PAL_CODE:              MemoryType = MemoryType(13);
+    pub const PERSISTENT:            MemoryType = MemoryType(14);
+}
+
+// TODO: Same caveat as MemoryType
+#[repr(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AllocateType(u32);
+
+impl AllocateType {
+    pub const ANY_ADDRESS:   AllocateType = AllocateType(0);
+    pub const MAX_ADDRESS:   AllocateType = AllocateType(1);
+    pub const EXACT_ADDRESS: AllocateType = AllocateType(2);
+}
+
+bitflags! {
+    pub struct MemoryAttributes: u64 {
+        const SUPPORTS_UNCACHEABLE     = 0x0000_0000_0000_0001_u64;
+        const SUPPORTS_WRITE_COMBINING = 0x0000_0000_0000_0002_u64;
+        const SUPPORTS_WRITE_THROUGH   = 0x0000_0000_0000_0004_u64;
+        const SUPPORTS_WRITE_BACK      = 0x0000_0000_0000_0008_u64;
+        const SUPPORTS_UNCACHEABLE_SEM = 0x0000_0000_0000_0010_u64;
+        const SUPPORTS_WRITE_PROTECT   = 0x0000_0000_0000_1000_u64;
+        const SUPPORTS_READ_PROTECT    = 0x0000_0000_0000_2000_u64;
+        const SUPPORTS_EXEC_PROTECT    = 0x0000_0000_0000_4000_u64;
+        const NONVOLATILE              = 0x0000_0000_0000_8000_u64;
+        const MORE_RELIABLE            = 0x0000_0000_0001_0000_u64;
+        const SUPPORTS_READ_ONLY       = 0x0000_0000_0002_0000_u64;
+        const SPECIFIC_PURPOSE         = 0x0000_0000_0004_0000_u64;
+        const SUPPORTS_CPU_CRYPTO      = 0x0000_0000_0008_0000_u64;
+        const RUNTIME                  = 0x8000_0000_0000_0000_u64;
+    }
 }
 
 pub mod proto {
