@@ -13,10 +13,10 @@ use core::panic::PanicInfo;
 
 use alloc::string::String;
 use core::alloc::{GlobalAlloc, Layout};
-use core::ptr;
 use core::ffi::c_void;
 use core::fmt::Write;
-use efi::{Handle, MemoryType, Result, Status, SystemTable, Table};
+use core::ptr;
+use efi::{BootServices, Handle, MemoryMap, MemoryType, Result, Status, SystemTable, Table};
 use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 
 static mut SYSTEM_TABLE_STATIC: Option<*mut SystemTable> = None;
@@ -110,9 +110,61 @@ fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
 
         writeln_result!(out, "Attempting heap allocation")?;
         writeln_result!(out, "Testing... {}", String::from("Success!"))?;
+
+        writeln_result!(out, "Fetching memory map")?;
+        let memory_map = get_memory_map(boot_services)?;
+        writeln_result!(out,
+            "Got memory map: size = {} bytes ({} per descriptor), version {}, key = {}",
+            memory_map.raw_map.len(),
+            memory_map.descriptor_size,
+            memory_map.descriptor_version,
+            memory_map.key
+        )?;
+        for (i, descriptor) in memory_map.unsafe_iter().enumerate() {
+            writeln_result!(out,
+                "Region {}: {:x} => {:x} + {:3x} pages, {:?}",
+                i,
+                descriptor.physical_start,
+                descriptor.virtual_start,
+                descriptor.page_count,
+                descriptor.memory_type
+            )?;
+        }
     }
 
     loop { }
+}
+
+fn get_memory_map(boot_services: &BootServices) -> core::result::Result<MemoryMap, Status> {
+    let mut memory_map_size = 0_usize;
+    let mut memory_map = MemoryMap::new();
+
+    loop {
+        memory_map.raw_map.resize(memory_map_size, 0);
+
+        let result = unsafe {
+            (boot_services.get_memory_map)(
+                &mut memory_map_size,
+                memory_map.raw_map.as_mut_ptr() as *mut c_void,
+                &mut memory_map.key,
+                &mut memory_map.descriptor_size,
+                &mut memory_map.descriptor_version,
+            ).into_result()
+        };
+        match result {
+            Ok(_) => break,
+            Err(Status::BUFFER_TOO_SMALL) =>
+                // Allow room for another entry since we have to reallocate the buffer
+                memory_map_size += memory_map.descriptor_size,
+            Err(e) => return Err(e),
+        }
+    };
+
+    // Trim anything that wasn't used
+    memory_map.raw_map.resize(memory_map_size, 0);
+
+    memory_map.verify();
+    Ok(memory_map)
 }
 
 #[cfg(not(test))]

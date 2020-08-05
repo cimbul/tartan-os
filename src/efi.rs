@@ -2,10 +2,12 @@
 
 #![allow(unused)]
 
+use alloc::vec::Vec;
 use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
+use core::iter;
 use core::mem::size_of;
 use core::slice;
 use crc_any::CRCu32;
@@ -562,6 +564,70 @@ pub struct MemoryDescriptor {
     pub virtual_start: u64,
     pub page_count: u64,
     pub attributes: MemoryAttributes,
+}
+
+// NOTE: Not strictly part of UEFI API. Might belong in another module.
+pub struct MemoryMap {
+    pub raw_map: Vec<u8>,
+    pub key: usize,
+    pub descriptor_size: usize,
+    pub descriptor_version: u32,
+}
+
+impl MemoryMap {
+    pub const MIN_VERSION: u32 = 1;
+
+    pub fn new() -> Self {
+        MemoryMap {
+            raw_map: Vec::new(),
+            key: 0,
+            descriptor_size: 0,
+            descriptor_version: 0,
+        }
+    }
+
+    pub fn verify(&self) {
+        self.verify_version();
+        self.verify_descriptor_size();
+        self.verify_map_size();
+    }
+
+    pub fn verify_version(&self) {
+        assert!(
+            self.descriptor_version >= Self::MIN_VERSION,
+            "Descriptor version {} less than required version {}",
+            self.descriptor_version,
+            Self::MIN_VERSION,
+        );
+    }
+
+    pub fn verify_descriptor_size(&self) {
+        assert!(
+            self.descriptor_size >= size_of::<MemoryDescriptor>(),
+            "Descriptor size {} shorter than required {} bytes",
+            self.descriptor_size,
+            size_of::<MemoryDescriptor>(),
+        );
+    }
+
+    pub fn verify_map_size(&self) {
+        assert!(
+            self.raw_map.len() % self.descriptor_size == 0,
+            "Memory map total size {} is not a multiple of descriptor size {}",
+            self.raw_map.len(),
+            self.descriptor_size,
+        );
+    }
+
+    pub unsafe fn unsafe_iter<'a>(&'a self)
+        -> impl Iterator<Item = &MemoryDescriptor> + 'a
+    {
+        #![allow(clippy::cast_ptr_alignment)]
+        const SIZE: usize = size_of::<MemoryDescriptor>();
+        self.raw_map.as_slice()
+            .chunks_exact(self.descriptor_size)
+            .map(|raw| (raw.as_ptr() as *const MemoryDescriptor).as_ref().unwrap())
+    }
 }
 
 // TODO: The width of this type really isn't clear. The UEFI spec defines it as a C enum
