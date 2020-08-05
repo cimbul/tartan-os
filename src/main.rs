@@ -81,18 +81,18 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
 
 fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
     unsafe {
-        let mut out = OutputStream::new(&*system_table.console_out);
+        let mut out = OutputStream::new(&*system_table.console_out.unwrap());
 
         writeln_result!(out, "Hello, world!\nWhat's up?")?;
 
         writeln_result!(out, "Verifying system tables...")?;
         system_table.verify();
         system_table.runtime_services.verify();
-        system_table.boot_services.verify();
+        system_table.boot_services.unwrap().verify();
         writeln_result!(out, "Verified!")?;
 
         let loaded_image: *const LoadedImage = core::ptr::null();
-        let boot_services = &system_table.boot_services;
+        let boot_services = system_table.boot_services.unwrap();
         (boot_services.handle_protocol)(
             image_handle,
             &LoadedImage::PROTOCOL_ID,
@@ -114,16 +114,18 @@ fn panic_handler(info: &PanicInfo) -> ! {
 
     unsafe {
         if let Some(system_table) = SYSTEM_TABLE_STATIC {
-            let mut out = OutputStream::new((*system_table).console_out);
-            writeln!(out, "!!! Panic !!!");
-            match info.location() {
-                Some(location) => writeln!(out, "Location: {}", location),
-                None => writeln!(out, "No location information"),
-            };
-            match info.message() {
-                Some(arguments) => core::fmt::write(&mut out, *arguments),
-                None => writeln!(out, "No additional message"),
-            };
+            if let Some(console_out) = (*system_table).console_out {
+                let mut out = OutputStream::new(console_out);
+                writeln!(out, "!!! Panic !!!");
+                match info.location() {
+                    Some(location) => writeln!(out, "Location: {}", location),
+                    None => writeln!(out, "No location information"),
+                };
+                match info.message() {
+                    Some(arguments) => core::fmt::write(&mut out, *arguments),
+                    None => writeln!(out, "No additional message"),
+                };
+            }
         }
     }
 
