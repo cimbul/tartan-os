@@ -384,7 +384,7 @@ pub struct BootServices {
     // Memory Services
     allocate_pages: usize,
     free_pages: usize,
-    get_memory_map: usize,
+    get_memory_map: unsafe extern "C" fn(),
     allocate_pool: usize,
     free_pool: usize,
 
@@ -400,7 +400,7 @@ pub struct BootServices {
     install_protocol_interface: usize,
     reinstall_protocol_interface: usize,
     uninstall_protocol_interface: usize,
-    pub handle_protocol: extern "C" fn(
+    pub handle_protocol: unsafe extern "C" fn(
         handle: Handle,
         protocol: &GUID,
         interface: *mut *const c_void,
@@ -567,9 +567,9 @@ pub mod proto {
 
     #[repr(C)]
     pub struct SimpleTextOutput {
-        pub reset: extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> Status,
-        pub output_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
-        pub test_string: extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
+        pub reset: unsafe extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> Status,
+        pub output_string: unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
+        pub test_string: unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
         query_mode: usize,
         set_mode: usize,
         set_attribute: usize,
@@ -606,7 +606,7 @@ pub mod proto {
         pub image_size: u64,
         pub image_code_type: MemoryType,
         pub image_data_type: MemoryType,
-        pub unload: extern "C" fn(handle: Handle) -> Status,
+        pub unload: unsafe extern "C" fn(handle: Handle) -> Status,
     }
 
     impl Protocol for LoadedImage<'_> {

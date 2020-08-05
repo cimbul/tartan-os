@@ -57,7 +57,9 @@ impl Write for OutputStream<'_> {
         let mut buffer = [0_u16; 3];
         c.encode_utf16(&mut buffer);
         let out = &self.out;
-        self.last_result = (out.output_string)(out, buffer.as_ptr()).into_result();
+        unsafe {
+            self.last_result = (out.output_string)(out, buffer.as_ptr()).into_result();
+        }
         match self.last_result {
             Ok(_) => Ok(()),
             Err(_) => Err(core::fmt::Error),
