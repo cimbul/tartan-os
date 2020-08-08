@@ -1,13 +1,10 @@
 // See EDK MdePkg/Include/Uefi/UefiSpec.h
 
-#![allow(unused)]
-
 use alloc::vec::Vec;
 use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
-use core::iter;
 use core::mem::size_of;
 use core::slice;
 use crc_any::CRCu32;
@@ -623,7 +620,6 @@ impl MemoryMap {
         -> impl Iterator<Item = &MemoryDescriptor> + 'a
     {
         #![allow(clippy::cast_ptr_alignment)]
-        const SIZE: usize = size_of::<MemoryDescriptor>();
         self.raw_map.as_slice()
             .chunks_exact(self.descriptor_size)
             .map(|raw| (raw.as_ptr() as *const MemoryDescriptor).as_ref().unwrap())
