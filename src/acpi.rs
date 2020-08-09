@@ -5,6 +5,8 @@ use bitflags::bitflags;
 use core::mem::size_of;
 use static_assertions::const_assert_eq;
 
+pub mod aml;
+
 
 #[repr(C, packed)]
 /// Root System Description Pointer (RSDP) used in ACPI 1.0
