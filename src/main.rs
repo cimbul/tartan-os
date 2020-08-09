@@ -22,6 +22,7 @@ use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 static mut SYSTEM_TABLE_STATIC: Option<*mut SystemTable> = None;
 
 pub mod efi;
+pub mod acpi;
 
 macro_rules! writeln_result {
     [$out:ident, $($args:expr),*] => {

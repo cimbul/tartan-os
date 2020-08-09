@@ -19,12 +19,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
 
 [[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
 name = "tartan-os"
 version = "0.1.0"
 dependencies = [
  "bitflags",
  "crc-any",
  "rlibc",
+ "static_assertions",
  "utf16_lit",
 ]
 
