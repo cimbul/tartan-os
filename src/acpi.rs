@@ -1,4 +1,6 @@
-// See ACPI spec v6.3 (Jan 2019)
+//! Support for Advanced Configuration and Power Interface
+//!
+//! See ACPI spec v6.3 (Jan 2019).
 // TODO: Handle endianness (all ACPI tables use little-endian)
 
 use bitflags::bitflags;
@@ -131,6 +133,7 @@ const_assert_eq!(276, size_of::<FixedDescription>());
 
 
 #[repr(C, packed)]
+/// Extended address structure defined in ACPI 2.0 to support 64-bit systems
 pub struct GenericAddress {
     address_space: AddressSpace,
     register_bit_width: u8,
@@ -143,6 +146,7 @@ const_assert_eq!(12, size_of::<GenericAddress>());
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Type of register address
 pub struct AddressSpace(u8);
 
 impl AddressSpace {
@@ -167,6 +171,7 @@ impl AddressSpace {
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Memory width used to read/write from a register
 pub struct AccessSize(u8);
 
 impl AccessSize {
@@ -179,6 +184,7 @@ impl AccessSize {
 
 
 bitflags! {
+    /// Support flags from Fixed ACPI Description Table
     pub struct FixedFlags: u32 {
         const X86_WBINVD_SUPPORTED                  = 1;
         const X86_WBINVD_REQUIRES_FLUSH             = 1 << 1;

@@ -1,4 +1,6 @@
-// See EDK MdePkg/Include/Uefi/UefiSpec.h
+//! Support for Unified Extensible Firmware Interface
+//!
+//! See EDK `MdePkg/Include/Uefi/UefiSpec.h`
 
 use ::alloc::vec::Vec;
 use bitflags::bitflags;
@@ -144,7 +146,7 @@ impl Status {
         self != Status::SUCCESS && !self.is_error()
     }
 
-    /// Wraps success *and* warning codes in `Ok`, and error codes in `Err`.
+    /// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].
     #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result {
         if self.is_error() {

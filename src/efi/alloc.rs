@@ -1,3 +1,6 @@
+//! [`BootServices`](super::BootServices)-based heap allocator to support the standard
+//! [alloc] crate.
+
 use core::alloc::{GlobalAlloc, Layout};
 use core::ffi::c_void;
 use core::ptr;

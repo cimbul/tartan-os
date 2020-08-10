@@ -1,10 +1,14 @@
+//! [`SimpleTextOutput`]-based [`Write`] implementation to support formatting macros.
+
 use core::fmt::Write;
 use super::{Result, Status};
 use super::proto::SimpleTextOutput;
 
 #[macro_export]
+/// Write formatted data to an [`OutputStream`] and return the last result, rather than a
+/// dumb [`core::fmt::Error`].
 macro_rules! writeln_result {
-    [$out:ident, $($args:expr),*] => {
+    [$out:ident, $($args:expr),* $(,)?] => {
         match writeln!($out, $($args),*) {
             _ => $out.last_result
         }
