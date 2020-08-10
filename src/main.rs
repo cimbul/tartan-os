@@ -10,72 +10,22 @@ extern crate alloc;
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
+#[cfg(not(test))]
+use tartan_os::efi::alloc::BootAllocator;
 
 use alloc::string::String;
-use core::alloc::{GlobalAlloc, Layout};
-use core::ffi::c_void;
+use core::alloc::Layout;
 use core::fmt::Write;
-use core::ptr;
-use tartan_os::efi::{BootServices, Handle, MemoryMap, MemoryType, Result, Status, SystemTable, Table};
-use tartan_os::efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
-
-static mut SYSTEM_TABLE_STATIC: Option<*mut SystemTable> = None;
-
-macro_rules! writeln_result {
-    [$out:ident, $($args:expr),*] => {
-        match writeln!($out, $($args),*) {
-            _ => $out.last_result
-        }
-    }
-}
-
-struct OutputStream<'a> {
-    out: &'a SimpleTextOutput,
-    last_result: Result,
-}
-
-impl<'a> OutputStream<'a> {
-    pub fn new(out: &'a SimpleTextOutput) -> Self {
-        OutputStream { out, last_result: Ok(Status::SUCCESS) }
-    }
-}
-
-impl Write for OutputStream<'_> {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        // TODO: Horribly inefficient, but simplest from a stack allocation perspective
-        for c in s.chars() {
-            if let e@Err(_) = self.write_char(c) {
-                return e;
-            }
-        };
-        Ok(())
-    }
-
-    fn write_char(&mut self, c: char) -> core::fmt::Result {
-        // Automatically translate LF to CRLF. Internally-used panic strings can contain
-        // line breaks (e.g., assert_eq!), and this ensures they are formatted correctly.
-        if c == '\n' {
-            self.write_char('\r')?;
-        }
-
-        // Two for UTF-16 code point (possibly a surrogate pair). One for null terminator.
-        let mut buffer = [0_u16; 3];
-        c.encode_utf16(&mut buffer);
-        let out = &self.out;
-        unsafe {
-            self.last_result = (out.output_string)(out, buffer.as_ptr()).into_result();
-        }
-        match self.last_result {
-            Ok(_) => Ok(()),
-            Err(_) => Err(core::fmt::Error),
-        }
-    }
-}
+use tartan_os::efi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
+use tartan_os::efi::proto::{LoadedImage, Protocol};
+use tartan_os::efi::io::OutputStream;
+use tartan_os::efi::global::SYSTEM_TABLE;
+use tartan_os::writeln_result;
 
 #[no_mangle]
 fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {
     unsafe {
-        SYSTEM_TABLE_STATIC = Some(system_table);
+        SYSTEM_TABLE = Some(system_table);
     }
 
     match main(image_handle, system_table) {
@@ -174,7 +124,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
     #[allow(unused_must_use)]
 
     unsafe {
-        if let Some(system_table) = SYSTEM_TABLE_STATIC {
+        if let Some(system_table) = SYSTEM_TABLE {
             if let Some(console_out) = (*system_table).console_out {
                 let mut out = OutputStream::new(console_out);
                 writeln!(out, "!!! Panic !!!");
@@ -196,102 +146,6 @@ fn panic_handler(info: &PanicInfo) -> ! {
 #[cfg(not(test))]
 #[global_allocator]
 static BOOT_ALLOCATOR: BootAllocator = BootAllocator;
-
-struct BootAllocator;
-
-impl BootAllocator {
-    // UEFI spec guarantees 8-byte alignment from allocate_pool()
-    const UEFI_ALIGNMENT: usize = 8;
-
-    const VOID_PTR_LAYOUT: Layout = Layout::new::<*const c_void>();
-
-    fn extend_layout_for_alignment(orig_layout: Layout) -> (Layout, usize) {
-        // To manually align the memory region, so we need extra space for:
-        //  * A place to store the original pointer that allocate_pool() gave us, so that
-        //    we can recover it for free_pool()
-        //  * One extra unit of alignment to accommodate any shifting we need to do to
-        //    align the pointer
-        let (saved_ptr_layout, saved_ptr_offset) =
-            orig_layout.extend(Self::VOID_PTR_LAYOUT)
-                .expect("Could not construct extended layout for alignment structure");
-        let adjusted_size = saved_ptr_layout.size() + saved_ptr_layout.align();
-        let adjusted_layout =
-            Layout::from_size_align(adjusted_size, saved_ptr_layout.align())
-                .expect("Could not construct extended layout for alignable allocation");
-        (adjusted_layout, saved_ptr_offset)
-    }
-
-    unsafe fn alloc(layout: Layout) -> *mut u8 {
-        let system_table = SYSTEM_TABLE_STATIC
-            .expect("System table not initialized");
-        let boot_services = (*system_table).boot_services
-            .expect("Boot services unavailable");
-
-        let (adjusted_layout, saved_ptr_offset) =
-            if layout.align() <= Self::UEFI_ALIGNMENT {
-                // allocate_pool() will give the proper alignment. No adjustment needed.
-                (layout, 0)
-            } else {
-                Self::extend_layout_for_alignment(layout)
-            };
-
-        let mut buffer: *mut c_void = ptr::null_mut();
-        (boot_services.allocate_pool)(
-            MemoryType::LOADER_DATA,
-            adjusted_layout.size(),
-            &mut buffer,
-        ).into_result().expect("allocate_pool() failed");
-
-        if adjusted_layout.align() > Self::UEFI_ALIGNMENT {
-            let orig_address = buffer as usize;
-            let align_offset = orig_address % adjusted_layout.align();
-            if align_offset != 0 {
-                // Shift to accommodate alignment
-                let shifted_ptr = orig_address + (adjusted_layout.align() - align_offset);
-                buffer = shifted_ptr as *mut c_void;
-            }
-            // Store the original pointer after the object we are allocating. This happens
-            // even if we didn't have make an alignment shift, because dealloc() has no
-            // way of telling whether we did.
-            let saved_ptr_ptr = (buffer as usize + saved_ptr_offset) as *mut *mut c_void;
-            *saved_ptr_ptr = orig_address as *mut c_void;
-        }
-
-        buffer.cast()
-    }
-
-    unsafe fn dealloc(buffer: *mut u8, layout: Layout) {
-        let system_table = SYSTEM_TABLE_STATIC
-            .expect("System table not initialized");
-        let boot_services = (*system_table).boot_services
-            .expect("Boot services unavailable");
-
-        let original_ptr: *mut c_void = if layout.align() <= Self::UEFI_ALIGNMENT {
-            // We gave Rust the pointer that came from allocate_pool() directly
-            buffer.cast()
-        } else {
-            // This pointer was manually aligned, which means it isn't the same as the
-            // pointer that allocate_pool() gave us. We have to recover the original
-            // pointer to pass to free_pool().
-            let (_, saved_ptr_offset) = Self::extend_layout_for_alignment(layout);
-            let saved_ptr_ptr = (buffer as usize + saved_ptr_offset) as *mut *mut c_void;
-            *saved_ptr_ptr
-        };
-
-        (boot_services.free_pool)(original_ptr).into_result()
-            .expect("Could not free memory");
-    }
-}
-
-unsafe impl GlobalAlloc for BootAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        BootAllocator::alloc(layout)
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        BootAllocator::dealloc(ptr, layout);
-    }
-}
 
 #[cfg(not(test))]
 #[alloc_error_handler]

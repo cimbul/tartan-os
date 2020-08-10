@@ -1,6 +1,6 @@
 // See EDK MdePkg/Include/Uefi/UefiSpec.h
 
-use alloc::vec::Vec;
+use ::alloc::vec::Vec;
 use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
@@ -8,6 +8,11 @@ use core::fmt;
 use core::mem::{size_of, align_of};
 use core::slice;
 use crc_any::CRCu32;
+
+pub mod alloc;
+pub mod global;
+#[macro_use]
+pub mod io;
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
