@@ -2,7 +2,6 @@
 #![cfg_attr(not(test), no_main)]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
-#![feature(ptr_offset_from)]
 #![deny(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
@@ -17,13 +16,10 @@ use core::alloc::{GlobalAlloc, Layout};
 use core::ffi::c_void;
 use core::fmt::Write;
 use core::ptr;
-use efi::{BootServices, Handle, MemoryMap, MemoryType, Result, Status, SystemTable, Table};
-use efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
+use tartan_os::efi::{BootServices, Handle, MemoryMap, MemoryType, Result, Status, SystemTable, Table};
+use tartan_os::efi::proto::{LoadedImage, Protocol, SimpleTextOutput};
 
 static mut SYSTEM_TABLE_STATIC: Option<*mut SystemTable> = None;
-
-pub mod efi;
-pub mod acpi;
 
 macro_rules! writeln_result {
     [$out:ident, $($args:expr),*] => {

@@ -1,10 +1,8 @@
 #![no_std]
+#![feature(ptr_offset_from)]
 #![deny(clippy::pedantic)]
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+extern crate alloc;
+
+pub mod efi;
+pub mod acpi;
