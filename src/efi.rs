@@ -139,6 +139,8 @@ impl Status {
         self != Status::SUCCESS && !self.is_error()
     }
 
+    /// Wraps success *and* warning codes in `Ok`, and error codes in `Err`.
+    #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result {
         if self.is_error() {
             Err(self)
@@ -279,9 +281,9 @@ pub trait Table {
         const CRC_FIELD_LENGTH: usize = size_of::<u32>();
 
         let header = self.header();
-        let size = header.header_size;
-        let start_address = self as *const Self as *const u8;
-        let crc_field_address = &header.crc32 as *const u32 as *const u8;
+        let size = header.header_size as usize;
+        let start_address = self as *const _ as *const u8;
+        let crc_field_address = &header.crc32 as *const _ as *const u8;
 
         let mut crc = CRCu32::crc32();
         unsafe {
@@ -296,7 +298,7 @@ pub trait Table {
 
             // Digest rest of header starting past end of CRC field
             let crc_field_end = crc_field_address.add(CRC_FIELD_LENGTH);
-            let end_address = start_address.add(size as usize);
+            let end_address = start_address.add(size);
             crc.digest(slice::from_raw_parts(
                 crc_field_end,
                 end_address.offset_from(crc_field_end).try_into().unwrap(),
@@ -642,6 +644,12 @@ impl MemoryMap {
         self.raw_map.as_slice()
             .chunks_exact(self.descriptor_size)
             .map(|raw| unsafe { &*raw.as_ptr().cast::<MemoryDescriptor>() })
+    }
+}
+
+impl Default for MemoryMap {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

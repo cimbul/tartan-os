@@ -4,6 +4,7 @@
 #![feature(panic_info_message)]
 #![feature(ptr_offset_from)]
 #![deny(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
 
 extern crate rlibc;
 extern crate alloc;
@@ -103,7 +104,7 @@ fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
         (boot_services.handle_protocol)(
             image_handle,
             &LoadedImage::PROTOCOL_ID,
-            &mut (loaded_image as *const c_void),
+            &mut (loaded_image.cast()),
         ).into_result()?;
 
         let image_base = (*loaded_image).image_base;

@@ -33,7 +33,7 @@ const_assert_eq!(36, size_of::<RootDescriptionPointerV2>());
 
 
 #[repr(C, packed)]
-/// Common table header defined as DESCRIPTION_HEADER in the spec
+/// Common table header defined as `DESCRIPTION_HEADER` in the spec
 pub struct DescriptionHeader {
     pub signature: [u8; 4],
     pub length: u32,

@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+#![allow(clippy::module_name_repetitions)]
 
 
 // 1. Table and Table Header
@@ -36,7 +36,7 @@ use alloc::vec::Vec;
 // 2. Name Objects
 //
 pub mod name {
-    use super::*;
+    use alloc::vec::Vec;
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
 
@@ -121,7 +121,7 @@ pub mod name {
 // 3. Data Objects
 //
 pub mod data {
-    use super::*;
+    use alloc::vec::Vec;
     use super::name::NameString;
     use super::term::TermArg;
 
@@ -232,7 +232,7 @@ pub mod data {
 // 5. Term Objects
 //
 pub mod term {
-    use super::*;
+    use alloc::vec::Vec;
     use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
     use super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
     use super::misc::{ArgObject, LocalObject};
@@ -1110,5 +1110,5 @@ pub mod misc {
     // DebugObj := DebugOp
     // DebugOp  := ExtOpPrefix 0x31
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct DebugObject { }
+    pub struct DebugObject;
 }
