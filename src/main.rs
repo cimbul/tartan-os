@@ -12,9 +12,10 @@ extern crate alloc;
 use core::panic::PanicInfo;
 #[cfg(not(test))]
 use tartan_os::efi::alloc::BootAllocator;
+#[cfg(not(test))]
+use core::alloc::Layout;
 
 use alloc::string::String;
-use core::alloc::Layout;
 use core::fmt::Write;
 use tartan_os::efi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
 use tartan_os::efi::proto::{LoadedImage, Protocol};
