@@ -17,4 +17,5 @@ target_dir="$(dirname "$executable")"
 qemu-system-x86_64 \
     -drive if=pflash,format=raw,unit=0,file="$qemu_prefix"/share/qemu/edk2-x86_64-code.fd,readonly=on \
     -drive if=ide,format=raw,file="$target_dir/tartan-os.img" \
+    -nographic \
     -net none
