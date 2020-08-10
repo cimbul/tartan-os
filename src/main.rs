@@ -121,7 +121,7 @@ fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
             memory_map.descriptor_version,
             memory_map.key
         )?;
-        for (i, descriptor) in memory_map.unsafe_iter().enumerate() {
+        for (i, descriptor) in memory_map.iter().enumerate() {
             writeln_result!(out,
                 "Region {}: {:x} => {:x} + {:3x} pages, {:?}",
                 i,
@@ -146,7 +146,9 @@ fn get_memory_map(boot_services: &BootServices) -> core::result::Result<MemoryMa
         let result = unsafe {
             (boot_services.get_memory_map)(
                 &mut memory_map_size,
-                memory_map.raw_map.as_mut_ptr() as *mut c_void,
+                // TODO: Make sure this is aligned properly. memory_map.verify() will
+                // check and panic if it isn't, but we should be able to ensure it.
+                memory_map.raw_map.as_mut_ptr().cast(),
                 &mut memory_map.key,
                 &mut memory_map.descriptor_size,
                 &mut memory_map.descriptor_version,

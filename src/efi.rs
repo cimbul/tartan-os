@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
-use core::mem::size_of;
+use core::mem::{size_of, align_of};
 use core::slice;
 use crc_any::CRCu32;
 
@@ -586,7 +586,7 @@ impl MemoryMap {
     pub fn verify(&self) {
         self.verify_version();
         self.verify_descriptor_size();
-        self.verify_map_size();
+        self.verify_map();
     }
 
     pub fn verify_version(&self) {
@@ -605,24 +605,43 @@ impl MemoryMap {
             self.descriptor_size,
             size_of::<MemoryDescriptor>(),
         );
+
+        assert!(
+            self.descriptor_size % align_of::<MemoryDescriptor>() == 0,
+            "Descriptor size {} not a multiple of the MemoryDescriptor struct alignment {}",
+            self.descriptor_size,
+            align_of::<MemoryDescriptor>(),
+        );
     }
 
-    pub fn verify_map_size(&self) {
+    pub fn verify_map(&self) {
         assert!(
             self.raw_map.len() % self.descriptor_size == 0,
             "Memory map total size {} is not a multiple of descriptor size {}",
             self.raw_map.len(),
             self.descriptor_size,
         );
+
+        assert!(
+            self.raw_map.as_ptr().align_offset(align_of::<MemoryDescriptor>()) == 0,
+            "Memory map at {:p} not aligned properly for dereferencing. Required: {:x}",
+            self.raw_map.as_ptr(),
+            align_of::<MemoryDescriptor>(),
+        );
     }
 
-    pub unsafe fn unsafe_iter<'a>(&'a self)
-        -> impl Iterator<Item = &MemoryDescriptor> + 'a
+    /// Iterate over memory descriptors contained in the map.
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &MemoryDescriptor> + 'a
     {
         #![allow(clippy::cast_ptr_alignment)]
+
+        // SAFETY: We check the pointer alignment in the verify() call. Since
+        // MemoryDescriptor is only composed of unsigned integer types, it is safe to
+        // interpret any sequence of bytes as a MemoryDescriptor.
+        self.verify();
         self.raw_map.as_slice()
             .chunks_exact(self.descriptor_size)
-            .map(|raw| (raw.as_ptr() as *const MemoryDescriptor).as_ref().unwrap())
+            .map(|raw| unsafe { &*raw.as_ptr().cast::<MemoryDescriptor>() })
     }
 }
 
