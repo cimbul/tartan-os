@@ -4,73 +4,23 @@
 #![allow(clippy::module_name_repetitions)]
 
 
-// 1. Table and Table Header
-//
-// AMLCode         := DefBlockHeader TermList
-//
-// Everything in DefBlockHeader just repeats the fixed DescriptionHeader struct used in
-// other tables, so there's no reason to write a parser for it.
-//
-// DefBlockHeader  := TableSignature TableLength SpecCompliance CheckSum OemID
-//                    OemTableID OemRevision CreatorID CreatorRevision
-//
-// TableSignature  := DWordData // As defined in section 5.2.3.
-// TableLength     := DWordData
-//     // Length of the table in bytes including
-//     // the block header.
-// SpecCompliance  := ByteData // The revision of the structure.
-// CheckSum        := ByteData // Byte checksum of the entire table.
-// OemID           := ByteData(6)
-//     // OEM ID of up to 6 characters. If the OEM
-//     // ID is shorter than 6 characters, it
-//     // can be terminated with a NULL
-//     // character.
-// OemTableID      := ByteData(8)
-//     // OEM Table ID of up to 8 characters. If
-//     // the OEM Table ID is shorter than 8
-//     // characters, it can be terminated with
-//     // a NULL character.
-// OemRevision     := DWordData // OEM Table Revision.
-// CreatorID       := DWordData // Vendor ID of the ASL compiler.
-// CreatorRevision := DWordData // Revision of the ASL compiler.
+pub mod parse;
 
 
-//
-// 2. Name Objects
-//
+/// Names of objects, arguments, and references
 pub mod name {
     use alloc::vec::Vec;
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
 
-    // LeadNameChar     := ‘A’-‘Z’ | ‘_’
-    // DigitChar        := ‘0’-‘9’
-    // NameChar         := DigitChar | LeadNameChar
-    //
-    // NameSeg          := <LeadNameChar NameChar NameChar NameChar>
-    //     // Notice that NameSegs shorter than 4 characters are filled with
-    //     // trailing underscores (‘_’s).
+    /// Four-character name segment, allowing underscores, uppercase letters, and digits
+    /// (except at the beginning).
+    ///
+    /// The ASL compiler uses underscores to pad the end of names shorter than 4 chars.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct NameSeg(pub [u8; 4]);
 
-    // NameString       := <RootChar NamePath> | <PrefixPath NamePath>
-    // PrefixPath       := Nothing | <‘^’ PrefixPath>
-    // NamePath         := NameSeg | DualNamePath | MultiNamePath | NullName
-    //
-    // RootChar         := ‘\’
-    // ParentPrefixChar := ‘^’
-    //
-    // NullName         := 0x00
-    // DualNamePath     := DualNamePrefix NameSeg NameSeg
-    // DualNamePrefix   := 0x2E
-    // MultiNamePath    := MultiNamePrefix SegCount NameSeg(SegCount)
-    // MultiNamePrefix  := 0x2F
-    //
-    // SegCount         := ByteData
-    //     // SegCount can be from 1 to 255. For example: MultiNamePrefix(35) is encoded
-    //     // as 0x2f 0x23 and followed by 35 NameSegs. So, the total encoding length will
-    //     // be 1 + 1 + 35*4 = 142. Notice that: DualNamePrefix NameSeg NameSeg has a
-    //     // smaller encoding than the encoding of: MultiNamePrefix(2) NameSeg NameSeg
+    /// Fully qualified object path, either absolute or relative.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct NameString {
         pub anchor: PathAnchor,
@@ -91,14 +41,14 @@ pub mod name {
         }
     }
 
-    // See grammar for NameString
+    /// Indicates whether a name is absolute or relative to the current or parent scope.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum PathAnchor {
         Root,
         Parent(usize),
     }
 
-    // SimpleName       := NameString | ArgObj | LocalObj
+    /// A named object or variable.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum SimpleName {
         Name(NameString),
@@ -106,7 +56,7 @@ pub mod name {
         Local(LocalObject),
     }
 
-    // SuperName        := SimpleName | DebugObj | Type6Opcode
+    /// A named object, variable, reference expression, or debug object.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum SuperName<'a> {
         Name(SimpleName),
@@ -114,50 +64,19 @@ pub mod name {
         Reference(&'a ReferenceExpressionOpcode<'a>),
     }
 
-    // Target           := SuperName | NullName
+    /// Location to store the result of an operation
     pub type Target<'a> = Option<SuperName<'a>>;
 }
 
 
 
-//
-// 3. Data Objects
-//
+/// Data resources
 pub mod data {
     use alloc::vec::Vec;
     use super::name::NameString;
     use super::term::TermArg;
 
-    // ComputationalData := ByteConst | WordConst | DWordConst | QWordConst | String |
-    //                      ConstObj | RevisionOp | DefBuffer
-    //
-    // ByteConst         := BytePrefix ByteData
-    // BytePrefix        := 0x0A
-    // WordConst         := WordPrefix WordData
-    // WordPrefix        := 0x0B
-    // DWordConst        := DWordPrefix DWordData
-    // DWordPrefix       := 0x0C
-    // QWordConst        := QWordPrefix QWordData
-    // QWordPrefix       := 0x0E
-    // String            := StringPrefix AsciiCharList NullChar
-    // StringPrefix      := 0x0D
-    //
-    // ConstObj          := ZeroOp | OneOp | OnesOp
-    // ByteList          := Nothing | <ByteData ByteList>
-    // ByteData          := 0x00 - 0xFF
-    // WordData          := ByteData[0:7] ByteData[8:15]
-    //     // 0x0000-0xFFFF
-    // DWordData         := WordData[0:15] WordData[16:31]
-    //     // 0x00000000-0xFFFFFFFF
-    // QWordData         := DWordData[0:31] DWordData[32:63]
-    //     // 0x0000000000000000-0xFFFFFFFFFFFFFFFF
-    // AsciiCharList     := Nothing | <AsciiChar AsciiCharList>
-    // AsciiChar         := 0x01 - 0x7F
-    // NullChar          := 0x00
-    // ZeroOp            := 0x00
-    // OneOp             := 0x01
-    // OnesOp            := 0xFF
-    // RevisionOp        := ExtOpPrefix 0x30
+    /// Single value resolved at compile time.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum ComputationalData<'a> {
         Byte(u8),
@@ -169,45 +88,38 @@ pub mod data {
         One,
         Ones,
         Revision,
-        Buffer(Buffer),
+        Buffer(Buffer<'a>),
     }
 
-    // DefBuffer           := BufferOp PkgLength BufferSize ByteList
-    // BufferOp            := 0x11
-    // BufferSize          := TermArg => Integer
+    /// Block of raw bytes, optionally initialized in whole or in part.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct Buffer {
-        pub size: u32,
-        pub initializer: Vec<u8>,
+    pub struct Buffer<'a> {
+        pub size: TermArg<'a>,
+        pub initializer: &'a [u8],
     }
 
-    // DefPackage          := PackageOp PkgLength NumElements PackageElementList
-    // PackageOp           := 0x12
-    // NumElements         := ByteData
+    /// Group of related data elements, optionally inititalized in whole or in part.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Package<'a> {
         pub count: u8,
         pub initializers: Vec<PackageElement<'a>>,
     }
 
-    // DefVarPackage       := VarPackageOp PkgLength VarNumElements PackageElementList
-    // VarPackageOp        := 0x13
-    // VarNumElements      := TermArg => Integer
+    /// Group of related data elements, with a number of elements only known at runtime.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VarPackage<'a> {
         pub count: TermArg<'a>,
         pub initializers: Vec<PackageElement<'a>>,
     }
 
-    // PackageElementList  := Nothing | <PackageElement PackageElementList>
-    // PackageElement      := DataRefObject | NameString
+    /// A name or reference that constitutes part of a [`Package`] (or [`VarPackage`]).
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum PackageElement<'a> {
         Ref(DataRefObject<'a>),
         Name(NameString),
     }
 
-    // DataObject        := ComputationalData | DefPackage | DefVarPackage
+    /// Data resolved at compile time, possibly grouped in a package.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum DataObject<'a> {
         Data(ComputationalData<'a>),
@@ -215,34 +127,25 @@ pub mod data {
         VarPackage(VarPackage<'a>),
     }
 
-    // DataRefObject     := DataObject | ObjectReference | DDBHandle
-    //
-    // From ASL grammar (19.2.4):
-    //
-    // DDBHandle       := Integer
-    // ObjectReference := Integer
+    // TODO: Description
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum DataRefObject<'a> {
         Data(DataObject<'a>),
         ObjectReference(u64),
-        DDBHandle(u64),
+        DefinitionBlockHandle(u64),
     }
 }
 
 
 
-//
-// 5. Term Objects
-//
+/// Top-level terms and opcodes.
 pub mod term {
     use alloc::vec::Vec;
     use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
     use super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
     use super::misc::{ArgObject, LocalObject};
 
-    // Object           := NameSpaceModifierObj | NamedObj
-    // TermObj          := Object | Type1Opcode | Type2Opcode
-    // TermList         := Nothing | <TermObj TermList>
+    /// Top-level, most general term type where the value (if any) is discarded.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum TermObject<'a> {
         Modifier(&'a NameSpaceModifier<'a>),
@@ -252,8 +155,7 @@ pub mod term {
     }
 
 
-    // TermArg          := Type2Opcode | DataObject | ArgObj | LocalObject
-    // TermArgList      := Nothing | <TermArg TermArgList>
+    /// Term that resolves to a value.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum TermArg<'a> {
         Expression(&'a ExpressionOpcode<'a>),
@@ -263,11 +165,7 @@ pub mod term {
     }
 
 
-    //
-    // 5.1 NameString Modifier Objects,
-    //
-
-    // NameSpaceModifierObj := DefAlias | DefName | DefScope
+    /// Term that attaches a name to its argument.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum NameSpaceModifier<'a> {
         // DefAlias             := AliasOp NameString NameString
@@ -284,12 +182,7 @@ pub mod term {
     }
 
 
-    //
-    // 5.2 Named Objects
-    //
-    // NamedObj := DefBankField | DefCreateBitField | DefCreateByteField | DefCreateDWordField |
-    //     DefCreateField | DefCreateQWordField | DefCreateWordField | DefDataRegion |
-    //     DefExternal | DefOpRegion | DefPowerRes | DefProcessor | DefThermalZone
+    /// Term that defines an object with a name.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum NamedObject<'a> {
         // DefBankField := BankFieldOp PkgLength NameString NameString BankValue FieldFlags FieldList
@@ -300,7 +193,7 @@ pub mod term {
             bank_name: NameString,
             bank_value: TermArg<'a>,
             flags: FieldFlags,
-            fields: Vec<FieldElement>,
+            fields: Vec<FieldElement<'a>>,
         },
 
         // DefCreateBitField    := CreateBitFieldOp SourceBuff BitIndex NameString
@@ -391,7 +284,7 @@ pub mod term {
         Field {
             region_name: NameString,
             flags: FieldFlags,
-            elements: Vec<FieldElement>,
+            elements: Vec<FieldElement<'a>>,
         },
 
         // DefIndexField        := IndexFieldOp PkgLength NameString NameString FieldFlags FieldList
@@ -400,7 +293,7 @@ pub mod term {
             index_name: NameString,
             data_name: AccessType,
             flags: FieldFlags,
-            elements: Vec<FieldElement>,
+            elements: Vec<FieldElement<'a>>,
         },
 
         // DefMethod            := MethodOp PkgLength NameString MethodFlags TermList
@@ -464,24 +357,7 @@ pub mod term {
         },
     }
 
-    // FieldFlags   := ByteData
-    //     // bit 0-3: AccessType
-    //     //          0    AnyAcc
-    //     //          1    ByteAcc
-    //     //          2    WordAcc
-    //     //          3    DWordAcc
-    //     //          4    QWordAcc
-    //     //          5    BufferAcc
-    //     //          6    Reserved
-    //     //          7-15 Reserved
-    //     // bit 4:   LockRule
-    //     //          0    NoLock
-    //     //          1    Lock
-    //     // bit 5-6: UpdateRule
-    //     //          0    Preserve
-    //     //          1    WriteAsOnes
-    //     //          2    WriteAsZeros
-    //     // bit 7:   Reserved (must be 0)
+    /// Rules for reading and writing a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct FieldFlags {
         pub access_type: AccessType,
@@ -489,21 +365,18 @@ pub mod term {
         pub update_rule: UpdateRule,
     }
 
-    // See grammar of FieldFlags.
-    //
-    // This does **not** match the "AccessType" production in the AML grammar, which is
-    // really a hybrid between the AccessType and AccessAttribute productions from the ASL
-    // grammar. See the AccessAttrib struct for the AML grammar.
+    /// Width used to access a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum AccessType {
         Any,
         Byte,
         Word,
         DWord,
+        QWord,
         Buffer,
     }
 
-    // See grammar of FieldFlags
+    /// Indicates what to do with unused bits when writing a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum UpdateRule {
         Preserve,
@@ -511,11 +384,9 @@ pub mod term {
         WriteAsZeros,
     }
 
-    // FieldList     := Nothing | <FieldElement FieldList>
-    // FieldElement  := NamedField | ReservedField | AccessField | ExtendedAccessField |
-    //                  ConnectField
+    /// A substructure of a field.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FieldElement {
+    pub enum FieldElement<'a> {
         // NamedField           := NameSeg PkgLength
         Named { name: NameSeg, bit_length: u32 },
 
@@ -541,40 +412,10 @@ pub mod term {
         // The ACPICA parser expects "BufferData" to be a DefBuffer op. Splitting this
         // into two enum variants to avoid another level of indirection.
         ConnectNamed(NameString),
-        ConnectBuffer(Buffer),
+        ConnectBuffer(Buffer<'a>),
     }
 
-    // The AML spec is kind of a mess here, and the same information can apparently be
-    // encoded in multiple ways. This enum reflects the ASL grammar. I don't know whether
-    // the compiler prefers one representation over the other, but we'll assume there is
-    // no real difference.
-    //
-    // AccessType    := ByteData
-    //     // Bits 0:3 - Same as AccessType bits of FieldFlags.
-    //     // Bits 4:5 - Reserved
-    //     // Bits 7:6 - 0 = AccessAttrib = Normal Access Attributes
-    //     //            1 = AccessAttrib = AttribBytes (x)
-    //     //            2 = AccessAttrib = AttribRawBytes (x)
-    //     //            3 = AccessAttrib = AttribRawProcessBytes (x)
-    //     //            x' is encoded as bits 0:7 of the AccessAttrib byte.
-    //
-    // AccessAttrib  := ByteData
-    //     // If AccessType is BufferAcc for the SMB or
-    //     // GPIO OpRegions, AccessAttrib can be one of
-    //     // the following values:
-    //     //    0x02   AttribQuick
-    //     //    0x04   AttribSendReceive
-    //     //    0x06   AttribByte
-    //     //    0x08   AttribWord
-    //     //    0x0A   AttribBlock
-    //     //    0x0C   AttribProcessCall
-    //     //    0x0D   AttribBlockProcessCall
-    //
-    // ExtendedAccessAttrib := ByteData
-    //     // 0x0B AttribBytes
-    //     // 0x0E AttribRawBytes
-    //     // 0x0F AttribRawProcess
-    //
+    /// Additional information about how a field is accessed.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum AccessAttrib {
         Quick,
@@ -589,12 +430,7 @@ pub mod term {
         RawProcessBytes(u8),
     }
 
-    // MethodFlags          := ByteData
-    //     // bit 0-2: ArgCount (0-7)
-    //     // bit 3:   SerializeFlag
-    //     //          0 NotSerialized
-    //     //          1 Serialized
-    //     // bit 4-7: SyncLevel (0x00-0x0f)
+    /// Information about how to call a method.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct MethodFlags {
         pub arg_count: u8,
@@ -602,19 +438,7 @@ pub mod term {
         pub sync_level: u8,
     }
 
-    // RegionSpace          := ByteData
-    //     // 0x00       SystemMemory
-    //     // 0x01       SystemIO
-    //     // 0x02       PCI_Config
-    //     // 0x03       EmbeddedControl
-    //     // 0x04       SMBus
-    //     // 0x05       SystemCMOS
-    //     // 0x06       PciBarTarget
-    //     // 0x07       IPMI
-    //     // 0x08       GeneralPurposeIO
-    //     // 0x09       GenericSerialBus
-    //     // 0x0A       PCC
-    //     // 0x80-0xFF: OEM Defined
+    /// Address space used to access a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum RegionSpace {
         SystemMemory,
@@ -632,19 +456,7 @@ pub mod term {
     }
 
 
-    //
-    // 5.3 Type 1 Opcodes
-    //
-    // From ASL grammar (19.2.5):
-    //
-    // A Type 1 opcode term does not return a value and can only be used standalone on a
-    // line of ASL code. Since these opcodes do not return a value they cannot be used as
-    // a term in an expression.
-    //
-    //
-    // Type1Opcode     := DefBreak | DefBreakPoint | DefContinue | DefFatal | DefIfElse |
-    //                    DefLoad | DefNoop | DefNotify | DefRelease | DefReset | DefReturn |
-    //                    DefSignal | DefSleep | DefStall | DefWhile
+    /// Terminal operation that does not evaluate to a value, a.k.a. "Type 1 Opcode."
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum StatementOpcode<'a> {
         // DefBreak        := BreakOp
@@ -680,7 +492,7 @@ pub mod term {
         // DefLoad         := LoadOp NameString DDBHandleObject
         // LoadOp          := ExtOpPrefix 0x20
         // DDBHandleObject := SuperName
-        Load { name: NameString, ddb_handle: SuperName<'a> },
+        Load { name: NameString, definition_block_handle: SuperName<'a> },
 
         // DefNoop         := NoopOp
         // NoopOp          := 0xA3
@@ -727,21 +539,7 @@ pub mod term {
     }
 
 
-    //
-    // 5.4 Type 2 Opcodes
-    //
-    // From ASL grammar (19.2.5):
-    //
-    // > A Type 2 opcode returns a value and can be used in an expression.
-    //
-
-    // Type6Opcode         := DefRefOf | DefDerefOf | DefIndex | ??UserTermObj
-    //
-    // From ASL grammar (19.2.5):
-    //
-    // > The Type 6 opcodes are a subset of Type 2 opcodes that return a Reference value
-    // > and can be used in an expression. They cannot be evaluated at compile time. Type
-    // > 6 also includes the UserTerm, which is a control method invocation.
+    /// Terminal operation that evaluates to a reference.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum ReferenceExpressionOpcode<'a> {
         // DefRefOf            := RefOfOp SuperName
@@ -763,21 +561,12 @@ pub mod term {
         MethodInvocation { source: NameString, args: Vec<TermArg<'a>> },
     }
 
-    // Type2Opcode := DefAcquire | DefAdd | DefAnd | DefBuffer | DefConcat |
-    //                DefConcatRes | DefCondRefOf | DefCopyObject | DefDecrement |
-    //                DefDerefOf | DefDivide | DefFindSetLeftBit | DefFindSetRightBit |
-    //                DefFromBCD | DefIncrement | DefIndex | DefLAnd | DefLEqual |
-    //                DefLGreater | DefLGreaterEqual | DefLLess | DefLLessEqual | DefMid |
-    //                DefLNot | DefLNotEqual | DefLoadTable | DefLOr | DefMatch | DefMod |
-    //                DefMultiply | DefNAnd | DefNOr | DefNot | DefObjectType | DefOr |
-    //                DefPackage | DefVarPackage | DefRefOf | DefShiftLeft | DefShiftRight |
-    //                DefSizeOf | DefStore | DefSubtract | DefTimer | DefToBCD | DefToBuffer |
-    //                DefToDecimalString | DefToHexString | DefToInteger | DefToString |
-    //                DefWait | DefXOr | MethodInvocation
+
+    /// Terminal operation that evaluates to a value or reference.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum ExpressionOpcode<'a> {
         RefExpression(ReferenceExpressionOpcode<'a>),
-        Buffer(Buffer),
+        Buffer(Buffer<'a>),
         Package(Package<'a>),
         VarPackage(VarPackage<'a>),
 
@@ -1006,13 +795,7 @@ pub mod term {
         BitwiseXor(TermArg<'a>, TermArg<'a>, Target<'a>),
     }
 
-    // MatchOpcode         := ByteData
-    //     // 0 MTR
-    //     // 1 MEQ
-    //     // 2 MLE
-    //     // 3 MLT
-    //     // 4 MGE
-    //     // 5 MGT
+    /// Type of comparison used for a branch in an [`ExpressionOpcode::Match`] expression.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum MatchOpcode {
         True,
@@ -1023,25 +806,7 @@ pub mod term {
         Greater,
     }
 
-    // Table 19-433 in the ACPI spec:
-    //   0   Uninitialized
-    //   1   Integer
-    //   2   String
-    //   3   Buffer
-    //   4   Package
-    //   5   Field Unit
-    //   6   Device
-    //   7   Event
-    //   8   Method
-    //   9   Mutex
-    //   10  Operation Region
-    //   11  Power Resource
-    //   12  Processor
-    //   13  Thermal Zone
-    //   14  Buffer Field
-    //   15  DDB Handle
-    //   16  Debug Object
-    //   >16 Reserved
+    /// Type ID returned by [`ExpressionOpcode::ObjectType`].
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum ObjectType {
         Uninitialized,
@@ -1066,18 +831,9 @@ pub mod term {
 
 
 
-//
-// 6. Miscellaneous Objects
-//
+/// Special symbols
 pub mod misc {
-    // ArgObj   := Arg0Op | Arg1Op | Arg2Op | Arg3Op | Arg4Op | Arg5Op | Arg6Op
-    // Arg0Op   := 0x68
-    // Arg1Op   := 0x69
-    // Arg2Op   := 0x6A
-    // Arg3Op   := 0x6B
-    // Arg4Op   := 0x6C
-    // Arg5Op   := 0x6D
-    // Arg6Op   := 0x6E
+    /// Symbol for a positional argument passed to the current method.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum ArgObject {
         Arg0,
@@ -1089,15 +845,7 @@ pub mod misc {
         Arg6,
     }
 
-    // LocalObj := Local0Op | Local1Op | Local2Op | Local3Op | Local4Op | Local5Op | Local6Op | Local7Op
-    // Local0Op := 0x60
-    // Local1Op := 0x61
-    // Local2Op := 0x62
-    // Local3Op := 0x63
-    // Local4Op := 0x64
-    // Local5Op := 0x65
-    // Local6Op := 0x66
-    // Local7Op := 0x67
+    /// Symbol for a variable local to the current method.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum LocalObject {
         Local0,
@@ -1110,8 +858,7 @@ pub mod misc {
         Local7,
     }
 
-    // DebugObj := DebugOp
-    // DebugOp  := ExtOpPrefix 0x31
+    /// Symbol representing debugger output device.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct DebugObject;
 }

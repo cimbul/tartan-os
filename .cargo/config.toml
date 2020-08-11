@@ -7,6 +7,12 @@ target = "x86_64-unknown-uefi"
 
 [target.x86_64-unknown-uefi]
 runner = "script/boot.sh"
+# Fix an error compiling the memchr crate with the default x86_64-unknown-uefi settings:
+#   https://github.com/rust-lang/rust/issues/61721
+# TODO: The default setting enables soft floats and disables MMX/SSE because those
+# instruction sets need explicit initialization. We need to perform that initialization
+# if the firmware doesn't.
+rustflags = ["-C", "target-feature=-soft-float"]
 
 [unstable]
 build-std = ["core", "alloc"]
