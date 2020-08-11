@@ -9,6 +9,7 @@ pub mod parse;
 
 /// Names of objects, arguments, and references
 pub mod name {
+    use alloc::boxed::Box;
     use alloc::vec::Vec;
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
@@ -61,7 +62,7 @@ pub mod name {
     pub enum SuperName<'a> {
         Name(SimpleName),
         Debug,
-        Reference(&'a ReferenceExpressionOpcode<'a>),
+        Reference(Box<ReferenceExpressionOpcode<'a>>),
     }
 
     /// Location to store the result of an operation
@@ -140,26 +141,27 @@ pub mod data {
 
 /// Top-level terms and opcodes.
 pub mod term {
+    use alloc::boxed::Box;
     use alloc::vec::Vec;
     use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
     use super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
     use super::misc::{ArgObject, LocalObject};
 
     /// Top-level, most general term type where the value (if any) is discarded.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum TermObject<'a> {
-        Modifier(&'a NameSpaceModifier<'a>),
-        Named(&'a NamedObject<'a>),
-        Statement(&'a StatementOpcode<'a>),
-        Expression(&'a ExpressionOpcode<'a>),
+        Modifier(Box<NameSpaceModifier<'a>>),
+        Named(Box<NamedObject<'a>>),
+        Statement(Box<StatementOpcode<'a>>),
+        Expression(Box<ExpressionOpcode<'a>>),
     }
 
 
     /// Term that resolves to a value.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum TermArg<'a> {
-        Expression(&'a ExpressionOpcode<'a>),
-        Data(&'a DataObject<'a>),
+        Expression(Box<ExpressionOpcode<'a>>),
+        Data(Box<DataObject<'a>>),
         Arg(ArgObject),
         Local(LocalObject),
     }

@@ -234,7 +234,7 @@ mod util {
 
 /// Name objects, defined in §20.2.2
 pub mod name {
-
+    use alloc::boxed::Box;
     use super::*;
     use super::util::*;
     use super::super::name::*;
@@ -537,8 +537,7 @@ pub mod name {
             alt((
                 map(SimpleName::parse, Self::Name),
                 value(Self::Debug, DebugObject::parse),
-                // TODO: Fix lifetimes
-                // map(ReferenceExpressionOpcode::parse, |r| Self::Reference(&r)),
+                map(ReferenceExpressionOpcode::parse, |r| Self::Reference(Box::new(r))),
             ))(i)
         });
     }
