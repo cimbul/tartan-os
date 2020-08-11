@@ -18,7 +18,7 @@ use core::convert::TryFrom;
 use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
-use nom::combinator::{all_consuming, map, value, verify};
+use nom::combinator::{all_consuming, flat_map, map, rest, value, verify};
 use nom::error::{ErrorKind, ParseError};
 use nom::number::complete as num;
 use nom::multi;
@@ -36,23 +36,107 @@ trait Parse<'a> where Self: Sized {
 mod util {
     use super::*;
 
-    #[macro_export]
     /// Defines a byte slice parser function, avoiding repetitive type parameters
+    #[macro_export]
     macro_rules! parser_fn {
+        // Shortcut assignment syntax
+        [
+            $( #[$meta:meta] )*
+            $vis:vis $name:ident
+                $( <$a:lifetime> )?
+                -> $ret_typ:ty
+                = $imp:expr
+        ] => {
+            parser_fn! {
+                $(#[$meta])* $vis $name($($a)? i) -> $ret_typ {
+                    ($imp)(i)
+                }
+            }
+        };
+
         // Use new lifetime parameter
-        [$(#[$meta:meta])* $vis:vis $name:ident ($input:ident) -> $ret_typ:ty $imp:block] => {
+        [
+            $( #[$meta:meta] )*
+            $vis:vis $name:ident ($input:ident)
+                -> $ret_typ:ty
+            $imp:block
+        ] => {
             $(#[$meta])*
-            $vis fn $name<'a, E: nom::error::ParseError<&'a [u8]>>(
+            $vis fn $name<'a, E: ::nom::error::ParseError<&'a [u8]>>(
                 $input: &'a [u8]
-            ) -> nom::IResult<&[u8], $ret_typ, E> $imp
+            ) -> ::nom::IResult<&[u8], $ret_typ, E> $imp
         };
 
         // Use lifetime from scope
-        [$(#[$meta:meta])* $vis:vis $name:ident ($a:lifetime $input:ident) -> $ret_typ:ty $imp:block] => {
+        [
+            $( #[$meta:meta] )*
+            $vis:vis $name:ident ($a:lifetime $input:ident)
+                -> $ret_typ:ty
+            $imp:block
+        ] => {
             $(#[$meta])*
-            $vis fn $name<E: nom::error::ParseError<&$a [u8]>>(
+            $vis fn $name<E: ::nom::error::ParseError<&$a [u8]>>(
                 $input: &$a [u8]
-            ) -> nom::IResult<&[u8], $ret_typ, E> $imp
+            ) -> ::nom::IResult<&[u8], $ret_typ, E> $imp
+        };
+    }
+
+    /// Parse struct fields in order using an initializer-like syntax
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[macro_use] extern crate tartan_os;
+    /// # use nom::IResult;
+    /// # use nom::character::complete::alphanumeric1;
+    /// # use nom::number::complete::le_u16;
+    /// #
+    /// type Parser<'a, T> = fn(&'a [u8]) -> IResult<&'a [u8], T, ()>;
+    ///
+    /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    /// struct Foo<'a> { a: u16, b: &'a [u8] };
+    ///
+    /// // Will parse `a`, then `b`, and return the struct if both succeed
+    /// let parse_foo: Parser<Foo> = struct_parser!(
+    ///     Foo {
+    ///         a: le_u16,
+    ///         b: alphanumeric1,
+    ///     }
+    /// );
+    ///
+    /// assert_eq!(
+    ///     parse_foo(b"\x34\x12Bar10"),
+    ///     Ok((b"" as &[u8], Foo { a: 0x1234, b: b"Bar10" }))
+    /// );
+    /// ```
+    #[macro_export]
+    macro_rules! struct_parser {
+        // Struct form
+        [
+            $struct:ident $( :: $struct_x:ident )* {
+                $( $field:ident : $parser:expr ),+
+                $(,)?
+            }
+        ] => {
+            |i| {
+                $( let (i, $field) = $parser(i)?; )+
+                let result = ($struct $(::$struct_x)* { $($field),+ });
+                Ok((i, result))
+            }
+        };
+
+        // Tuple form
+        [
+            $struct:ident $( :: $struct_x:ident )* (
+                $( $parser:expr ),+
+                $(,)?
+            )
+        ] => {
+            |i| {
+                let (i, t) = nom::sequence::tuple(( $($parser),+ ))(i)?;
+                let result = Fn::call(& $struct $(::$struct_x)*, t);
+                Ok((i, result))
+            }
         };
     }
 
@@ -357,27 +441,35 @@ pub mod name {
     /// SegCount         := ByteData
     /// ```
     impl<'a> Parse<'a> for NameString {
-        parser_fn!(parse('a i) -> Self {
-            parser_fn!(dual_name(i) -> Vec<NameSeg> {
-                let (i, _) = tag_byte(0x2e)(i)?;
-                multi::count(NameSeg::parse, 2)(i)
-            });
+        parser_fn! {
+            parse<'a> -> Self = struct_parser! {
+                NameString {
+                    anchor: PathAnchor::parse,
+                    path: alt((
+                        map(NameSeg::parse, |s| vec![s]),
+                        dual_name,
+                        multi_name,
+                        value(vec![], tag_byte(0x00)),
+                    )),
+                }
+            }
+        }
+    }
 
-            parser_fn!(multi_name(i) -> Vec<NameSeg> {
-                let (i, _) = tag_byte(0x2f)(i)?;
-                let (i, count) = num::le_u8(i)?;
-                multi::count(NameSeg::parse, count.into())(i)
-            });
+    parser_fn! {
+        /// See grammar for [`NameString`]
+        dual_name -> Vec<NameSeg> = preceded(
+            tag_byte(0x2e),
+            multi::count(NameSeg::parse, 2),
+        )
+    }
 
-            let (i, anchor) = PathAnchor::parse(i)?;
-            let (i, path) = alt((
-                map(NameSeg::parse, |s| vec![s]),
-                dual_name,
-                multi_name,
-                value(vec![], tag_byte(0x00))
-            ))(i)?;
-            Ok((i, NameString { anchor, path }))
-        });
+    parser_fn! {
+        /// See grammar for [`NameString`]
+        multi_name -> Vec<NameSeg> = preceded(
+            tag_byte(0x2f),
+            flat_map(num::le_u8, |n| multi::count(NameSeg::parse, n.into())),
+        )
     }
 
     #[cfg(test)]
@@ -473,14 +565,14 @@ pub mod name {
 
     /// See grammar for [`NameString`].
     impl<'a> Parse<'a> for PathAnchor {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 // Single root anchor, or
                 value(Self::Root, tag_byte(b'\\')),
                 // 0-n parent prefix anchors
                 map(multi::many0_count(tag_byte(b'^')), Self::Parent),
-            ))(i)
-        });
+            ))
+        }
     }
 
     #[cfg(test)]
@@ -517,13 +609,13 @@ pub mod name {
     /// SimpleName := NameString | ArgObj | LocalObj
     /// ```
     impl<'a> Parse<'a> for SimpleName {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 map(NameString::parse, Self::Name),
                 map(ArgObject::parse, Self::Arg),
                 map(LocalObject::parse, Self::Local),
-            ))(i)
-        });
+            ))
+        }
     }
 
 
@@ -533,13 +625,13 @@ pub mod name {
     /// SuperName := SimpleName | DebugObj | Type6Opcode
     /// ```
     impl<'a> Parse<'a> for SuperName<'a> {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 map(SimpleName::parse, Self::Name),
                 value(Self::Debug, DebugObject::parse),
                 map(ReferenceExpressionOpcode::parse, |r| Self::Reference(Box::new(r))),
-            ))(i)
-        });
+            ))
+        }
     }
 
 
@@ -549,12 +641,10 @@ pub mod name {
         /// ```text
         /// Target := SuperName | NullName
         /// ```
-        pub parse_target(i) -> Target {
-            alt((
-                value(None, tag_byte(0x00)),
-                map(SuperName::parse, Some),
-            ))(i)
-        }
+        pub parse_target -> Target = alt((
+            value(None, tag_byte(0x00)),
+            map(SuperName::parse, Some),
+        ))
     }
 }
 
@@ -604,8 +694,8 @@ pub mod data {
     /// RevisionOp        := ExtOpPrefix 0x30
     /// ```
     impl<'a> Parse<'a> for ComputationalData<'a> {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 map(preceded(tag_byte(0x0a), num::le_u8),  Self::Byte),
                 map(preceded(tag_byte(0x0b), num::le_u16), Self::Word),
                 map(preceded(tag_byte(0x0c), num::le_u32), Self::DWord),
@@ -617,8 +707,8 @@ pub mod data {
                 value(Self::Ones, tag_byte(0xff)),
                 value(Self::Revision, ext_op(tag_byte(0x30))),
                 map(Buffer::parse, Self::Buffer),
-            ))(i)
-        });
+            ))
+        }
     }
 
     #[cfg(test)]
@@ -703,13 +793,14 @@ pub mod data {
     /// BufferSize := TermArg => Integer
     /// ```
     impl<'a> Parse<'a> for Buffer<'a> {
-        parser_fn!(parse('a outer) -> Self {
-            in_package(|inner| {
-                let (initializer, size) = TermArg::parse(inner)?;
-                let buffer = Buffer { size, initializer };
-                Ok((&[], buffer))
-            })(outer)
-        });
+        parser_fn! {
+            parse<'a> -> Self = in_package(struct_parser! {
+                Buffer {
+                    size: TermArg::parse,
+                    initializer: rest,
+                }
+            })
+        }
     }
 
     /// Grammar:
@@ -720,14 +811,14 @@ pub mod data {
     /// NumElements := ByteData
     /// ```
     impl<'a> Parse<'a> for Package<'a> {
-        parser_fn!(parse('a outer) -> Self {
-            in_package(|inner| {
-                let (inner, count) = num::le_u8(inner)?;
-                let (inner, initializers) = multi::many0(PackageElement::parse)(inner)?;
-                let package = Package { count, initializers };
-                Ok((inner, package))
-            })(outer)
-        });
+        parser_fn! {
+            parse<'a> -> Self = in_package(struct_parser! {
+                Package {
+                    count: num::le_u8,
+                    initializers: multi::many0(PackageElement::parse),
+                }
+            })
+        }
     }
 
     /// Grammar:
@@ -738,14 +829,14 @@ pub mod data {
     /// VarNumElements := TermArg => Integer
     /// ```
     impl<'a> Parse<'a> for VarPackage<'a> {
-        parser_fn!(parse('a outer) -> Self {
-            in_package(|inner| {
-                let (inner, count) = TermArg::parse(inner)?;
-                let (inner, initializers) = multi::many0(PackageElement::parse)(inner)?;
-                let package = VarPackage { count, initializers };
-                Ok((inner, package))
-            })(outer)
-        });
+        parser_fn! {
+            parse<'a> -> Self = in_package(struct_parser! {
+                VarPackage {
+                    count: TermArg::parse,
+                    initializers: multi::many0(PackageElement::parse),
+                }
+            })
+        }
     }
 
     /// Grammar:
@@ -755,12 +846,12 @@ pub mod data {
     /// PackageElement     := DataRefObject | NameString
     /// ```
     impl<'a> Parse<'a> for PackageElement<'a> {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 map(DataRefObject::parse, Self::Ref),
                 map(NameString::parse, Self::Name),
-            ))(i)
-        });
+            ))
+        }
     }
 
     /// Grammar:
@@ -769,13 +860,13 @@ pub mod data {
     /// DataObject := ComputationalData | DefPackage | DefVarPackage
     /// ```
     impl<'a> Parse<'a> for DataObject<'a> {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 map(ComputationalData::parse, Self::Data),
                 map(Package::parse, Self::Package),
                 map(VarPackage::parse, Self::VarPackage),
-            ))(i)
-        });
+            ))
+        }
     }
 
     /// Grammar:
@@ -986,8 +1077,11 @@ mod package {
 /// Terms, defined in §20.2.5
 pub mod term {
     use super::*;
-    use super::super::term::*;
     use super::util::*;
+    use super::package::in_package;
+    use super::super::term::*;
+    use super::super::data::DataRefObject;
+    use super::super::name::NameString;
 
 
     /// Grammar:
@@ -1025,11 +1119,69 @@ pub mod term {
     /// NameSpaceModifierObj := DefAlias | DefName | DefScope
     /// ```
     impl<'a> Parse<'a> for NameSpaceModifier<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                parse_alias,
+                parse_name,
+                parse_scope,
+            ))
+        }
     }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefAlias := AliasOp NameString NameString
+        /// AliasOp  := 0x06
+        /// ```
+        parse_alias -> NameSpaceModifier<'a> = preceded(
+            tag_byte(0x06),
+            struct_parser!(
+                NameSpaceModifier::Alias {
+                    source: NameString::parse,
+                    alias: NameString::parse,
+                }
+            )
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefName := NameOp NameString DataRefObject
+        /// NameOp  := 0x08
+        /// ```
+        parse_name -> NameSpaceModifier<'a> = preceded(
+            tag_byte(0x08),
+            struct_parser! {
+                NameSpaceModifier::Name(
+                    NameString::parse,
+                    DataRefObject::parse,
+                )
+            },
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefScope := ScopeOp PkgLength NameString TermList
+        /// ScopeOp  := 0x10
+        /// ```
+        parse_scope -> NameSpaceModifier<'a> = preceded(
+            tag_byte(0x10),
+            in_package(struct_parser! {
+                NameSpaceModifier::Scope(
+                    NameString::parse,
+                    multi::many0(TermObject::parse),
+                )
+            })
+        )
+    }
+
 
 
     /// Grammar:
@@ -1244,15 +1396,16 @@ pub mod term {
     ///     // bit 4-7: SyncLevel (0x00-0x0f)
     /// ```
     impl<'a> Parse<'a> for MethodFlags {
-        parser_fn!(parse('a i) -> Self {
-            let (i, b) = num::le_u8(i)?;
-            let flags = MethodFlags {
-                arg_count:  b & 0b0000_0111,
-                serialized: b & 0b0000_1000 != 0,
-                sync_level: b >> 4,
-            };
-            Ok((i, flags))
-        });
+        parser_fn! {
+            parse<'a> -> Self = map(
+                num::le_u8,
+                |b| MethodFlags {
+                    arg_count:  b & 0b0000_0111,
+                    serialized: b & 0b0000_1000 != 0,
+                    sync_level: b >> 4,
+                }
+            )
+        }
     }
 
     #[cfg(test)]
@@ -1471,8 +1624,8 @@ pub mod misc {
     /// Arg6Op := 0x6E
     /// ```
     impl<'a> Parse<'a> for ArgObject {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 value(Self::Arg0, tag_byte(0x68)),
                 value(Self::Arg1, tag_byte(0x69)),
                 value(Self::Arg2, tag_byte(0x6a)),
@@ -1480,8 +1633,8 @@ pub mod misc {
                 value(Self::Arg4, tag_byte(0x6c)),
                 value(Self::Arg5, tag_byte(0x6d)),
                 value(Self::Arg6, tag_byte(0x6e)),
-            ))(i)
-        });
+            ))
+        }
     }
 
     #[cfg(test)]
@@ -1523,8 +1676,8 @@ pub mod misc {
     /// Local7Op := 0x67
     /// ```
     impl<'a> Parse<'a> for LocalObject {
-        parser_fn!(parse('a i) -> Self {
-            alt((
+        parser_fn! {
+            parse<'a> -> Self = alt((
                 value(Self::Local0, tag_byte(0x60)),
                 value(Self::Local1, tag_byte(0x61)),
                 value(Self::Local2, tag_byte(0x62)),
@@ -1533,8 +1686,8 @@ pub mod misc {
                 value(Self::Local5, tag_byte(0x65)),
                 value(Self::Local6, tag_byte(0x66)),
                 value(Self::Local7, tag_byte(0x67)),
-            ))(i)
-        });
+            ))
+        }
     }
 
 
@@ -1545,8 +1698,9 @@ pub mod misc {
     /// DebugOp  := ExtOpPrefix 0x31
     /// ```
     impl<'a> Parse<'a> for DebugObject {
-        parser_fn!(parse('a i) -> Self {
-            ext_op(value(DebugObject, tag_byte(0x31)))(i)
-        });
+        parser_fn! {
+            parse<'a> -> Self =
+                ext_op(value(DebugObject, tag_byte(0x31)))
+        }
     }
 }

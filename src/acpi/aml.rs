@@ -170,16 +170,13 @@ pub mod term {
     /// Term that attaches a name to its argument.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum NameSpaceModifier<'a> {
-        // DefAlias             := AliasOp NameString NameString
-        // AliasOp              := 0x06
+        /// Create a new `alias` for existing named `source` object.
         Alias { source: NameString, alias: NameString },
 
-        // DefName              := NameOp NameString DataRefObject
-        // NameOp               := 0x08
+        /// Attach a name to an anonymous data or reference.
         Name(NameString, DataRefObject<'a>),
 
-        // DefScope             := ScopeOp PkgLength NameString TermList
-        // ScopeOp              := 0x10
+        /// Evaluate the contained terms within a new scope.
         Scope(NameString, Vec<TermObject<'a>>),
     }
 
