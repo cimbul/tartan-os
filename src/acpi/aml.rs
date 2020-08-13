@@ -7,6 +7,15 @@
 pub mod parse;
 
 
+macro_rules! from_impl {
+    [$( <$a:lifetime> )? ($x:ident: $from:ty) -> $to:ty = $imp:expr] => {
+        impl$(<$a>)? From<$from> for $to {
+            fn from($x: $from) -> $to { $imp }
+        }
+    };
+}
+
+
 /// Names of objects, arguments, and references
 pub mod name {
     use alloc::boxed::Box;
@@ -14,12 +23,16 @@ pub mod name {
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
 
+
     /// Four-character name segment, allowing underscores, uppercase letters, and digits
     /// (except at the beginning).
     ///
     /// The ASL compiler uses underscores to pad the end of names shorter than 4 chars.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct NameSeg(pub [u8; 4]);
+
+    from_impl!((n: &[u8; 4]) -> NameSeg = NameSeg(*n));
+
 
     /// Fully qualified object path, either absolute or relative.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,18 +42,22 @@ pub mod name {
     }
 
     impl NameString {
-        pub fn new(path: Vec<NameSeg>) -> Self {
+        pub fn new(path: &[NameSeg]) -> Self {
             NameString::new_parent(0, path)
         }
 
-        pub fn new_root(path: Vec<NameSeg>) -> Self {
-            NameString { path, anchor: PathAnchor::Root }
+        pub fn new_root(path: &[NameSeg]) -> Self {
+            NameString { path: path.into(), anchor: PathAnchor::Root }
         }
 
-        pub fn new_parent(n: usize, path: Vec<NameSeg>) -> Self {
-            NameString { path, anchor: PathAnchor::Parent(n) }
+        pub fn new_parent(n: usize, path: &[NameSeg]) -> Self {
+            NameString { path: path.into(), anchor: PathAnchor::Parent(n) }
         }
     }
+
+    from_impl!((n: NameSeg) -> NameString = NameString::new(&[n]));
+    from_impl!((n: &[u8; 4]) -> NameString = NameSeg::from(n).into());
+
 
     /// Indicates whether a name is absolute or relative to the current or parent scope.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,6 +65,7 @@ pub mod name {
         Root,
         Parent(usize),
     }
+
 
     /// A named object or variable.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,6 +75,11 @@ pub mod name {
         Local(LocalObject),
     }
 
+    from_impl!((n: NameString) -> SimpleName = SimpleName::Name(n));
+    from_impl!((a: ArgObject) -> SimpleName = SimpleName::Arg(a));
+    from_impl!((l: LocalObject) -> SimpleName = SimpleName::Local(l));
+
+
     /// A named object, variable, reference expression, or debug object.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum SuperName<'a> {
@@ -64,6 +87,15 @@ pub mod name {
         Debug,
         Reference(Box<ReferenceExpressionOpcode<'a>>),
     }
+
+    from_impl!(<'a>(n: SimpleName) -> SuperName<'a> = SuperName::Name(n));
+    from_impl!(<'a>(n: NameString) -> SuperName<'a> = SimpleName::from(n).into());
+    from_impl!(<'a>(a: ArgObject) -> SuperName<'a> = SimpleName::from(a).into());
+    from_impl!(<'a>(l: LocalObject) -> SuperName<'a> = SimpleName::from(l).into());
+    from_impl!(
+        <'a>(r: ReferenceExpressionOpcode<'a>) -> SuperName<'a> =
+            SuperName::Reference(Box::new(r)));
+
 
     /// Location to store the result of an operation
     pub type Target<'a> = Option<SuperName<'a>>;
@@ -113,12 +145,17 @@ pub mod data {
         pub initializers: Vec<PackageElement<'a>>,
     }
 
+
     /// A name or reference that constitutes part of a [`Package`] (or [`VarPackage`]).
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum PackageElement<'a> {
         Ref(DataRefObject<'a>),
         Name(NameString),
     }
+
+    from_impl!(<'a>(r: DataRefObject<'a>) -> PackageElement<'a> = PackageElement::Ref(r));
+    from_impl!(<'a>(n: NameString) -> PackageElement<'a> = PackageElement::Name(n));
+
 
     /// Data resolved at compile time, possibly grouped in a package.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -128,6 +165,11 @@ pub mod data {
         VarPackage(VarPackage<'a>),
     }
 
+    from_impl!(<'a>(d: ComputationalData<'a>) -> DataObject<'a> = DataObject::Data(d));
+    from_impl!(<'a>(p: Package<'a>) -> DataObject<'a> = DataObject::Package(p));
+    from_impl!(<'a>(p: VarPackage<'a>) -> DataObject<'a> = DataObject::VarPackage(p));
+
+
     // TODO: Description
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum DataRefObject<'a> {
@@ -135,6 +177,11 @@ pub mod data {
         ObjectReference(u64),
         DefinitionBlockHandle(u64),
     }
+
+    from_impl!(<'a>(d: DataObject<'a>) -> DataRefObject<'a> = DataRefObject::Data(d));
+    from_impl!(<'a>(d: ComputationalData<'a>) -> DataRefObject<'a> = DataObject::from(d).into());
+    from_impl!(<'a>(p: Package<'a>) -> DataRefObject<'a> = DataObject::from(p).into());
+    from_impl!(<'a>(p: VarPackage<'a>) -> DataRefObject<'a> = DataObject::from(p).into());
 }
 
 
@@ -144,7 +191,7 @@ pub mod term {
     use alloc::boxed::Box;
     use alloc::vec::Vec;
     use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
-    use super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
+    use super::data::{ComputationalData, Buffer, DataRefObject, DataObject, Package, VarPackage};
     use super::misc::{ArgObject, LocalObject};
 
     /// Top-level, most general term type where the value (if any) is discarded.
@@ -156,6 +203,15 @@ pub mod term {
         Expression(Box<ExpressionOpcode<'a>>),
     }
 
+    from_impl!(<'a>(m: NameSpaceModifier<'a>) -> TermObject<'a> = TermObject::Modifier(Box::new(m)));
+    from_impl!(<'a>(n: NamedObject<'a>) -> TermObject<'a> = TermObject::Named(Box::new(n)));
+    from_impl!(<'a>(s: StatementOpcode<'a>) -> TermObject<'a> = TermObject::Statement(Box::new(s)));
+    from_impl!(<'a>(e: ExpressionOpcode<'a>) -> TermObject<'a> = TermObject::Expression(Box::new(e)));
+    from_impl!(<'a>(r: ReferenceExpressionOpcode<'a>) -> TermObject<'a> = ExpressionOpcode::from(r).into());
+    from_impl!(<'a>(b: Buffer<'a>) -> TermObject<'a> = ExpressionOpcode::from(b).into());
+    from_impl!(<'a>(p: Package<'a>) -> TermObject<'a> = ExpressionOpcode::from(p).into());
+    from_impl!(<'a>(p: VarPackage<'a>) -> TermObject<'a> = ExpressionOpcode::from(p).into());
+
 
     /// Term that resolves to a value.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -165,6 +221,17 @@ pub mod term {
         Arg(ArgObject),
         Local(LocalObject),
     }
+
+    from_impl!(<'a>(e: ExpressionOpcode<'a>) -> TermArg<'a> = TermArg::Expression(Box::new(e)));
+    from_impl!(<'a>(r: ReferenceExpressionOpcode<'a>) -> TermArg<'a> = ExpressionOpcode::from(r).into());
+    from_impl!(<'a>(b: Buffer<'a>) -> TermArg<'a> = ExpressionOpcode::from(b).into());
+    // NOTE: Package and VarPackage could be converted through DataObject instead
+    from_impl!(<'a>(p: Package<'a>) -> TermArg<'a> = ExpressionOpcode::from(p).into());
+    from_impl!(<'a>(p: VarPackage<'a>) -> TermArg<'a> = ExpressionOpcode::from(p).into());
+    from_impl!(<'a>(d: DataObject<'a>) -> TermArg<'a> = TermArg::Data(Box::new(d)));
+    from_impl!(<'a>(d: ComputationalData<'a>) -> TermArg<'a> = DataObject::from(d).into());
+    from_impl!(<'a>(a: ArgObject) -> TermArg<'a> = TermArg::Arg(a));
+    from_impl!(<'a>(l: LocalObject) -> TermArg<'a> = TermArg::Local(l));
 
 
     /// Term that attaches a name to its argument.
@@ -793,6 +860,15 @@ pub mod term {
         // XorOp               := 0x7F
         BitwiseXor(TermArg<'a>, TermArg<'a>, Target<'a>),
     }
+
+    from_impl!(
+        <'a>(r: ReferenceExpressionOpcode<'a>) -> ExpressionOpcode<'a> =
+            ExpressionOpcode::RefExpression(r));
+    from_impl!(<'a>(b: Buffer<'a>) -> ExpressionOpcode<'a> = ExpressionOpcode::Buffer(b));
+    from_impl!(<'a>(p: Package<'a>) -> ExpressionOpcode<'a> = ExpressionOpcode::Package(p));
+    from_impl!(<'a>(p: VarPackage<'a>) -> ExpressionOpcode<'a> = ExpressionOpcode::VarPackage(p));
+
+
 
     /// Type of comparison used for a branch in an [`ExpressionOpcode::Match`] expression.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -497,29 +497,29 @@ pub mod name {
 
         #[test]
         fn test_parse_null() {
-            assert_parses!(NS::parse, b"\0",   b"",  NS::new(vec![]));
-            assert_parses!(NS::parse, b"\0K",  b"K", NS::new(vec![]));
-            assert_parses!(NS::parse, b"^^\0", b"",  NS::new_parent(2, vec![]));
-            assert_parses!(NS::parse, b"\\\0", b"",  NS::new_root(vec![]));
+            assert_parses!(NS::parse, b"\0",   b"",  NS::new(&[]));
+            assert_parses!(NS::parse, b"\0K",  b"K", NS::new(&[]));
+            assert_parses!(NS::parse, b"^^\0", b"",  NS::new_parent(2, &[]));
+            assert_parses!(NS::parse, b"\\\0", b"",  NS::new_root(&[]));
         }
 
         #[test]
         fn test_parse_single() {
-            let ns = vec![NameSeg(*b"A123")];
-            assert_parses!(NS::parse, b"A123",    b"",  NS::new(ns.clone()));
-            assert_parses!(NS::parse, b"A1234",   b"4", NS::new(ns.clone()));
-            assert_parses!(NS::parse, b"^^^A123", b"",  NS::new_parent(3, ns.clone()));
-            assert_parses!(NS::parse, b"\\A123",  b"",  NS::new_root(ns.clone()));
+            let ns = &[NameSeg(*b"A123")];
+            assert_parses!(NS::parse, b"A123",    b"",  NS::new(ns));
+            assert_parses!(NS::parse, b"A1234",   b"4", NS::new(ns));
+            assert_parses!(NS::parse, b"^^^A123", b"",  NS::new_parent(3, ns));
+            assert_parses!(NS::parse, b"\\A123",  b"",  NS::new_root(ns));
         }
 
         #[test]
         fn test_parse_dual() {
-            let ns = vec![NameSeg(*b"A___"), NameSeg(*b"B___")];
-            assert_parses!(NS::parse, b"\x2eA___B___",     b"",     NS::new(ns.clone()));
-            assert_parses!(NS::parse, b"\x2eA___B___C",    b"C",    NS::new(ns.clone()));
-            assert_parses!(NS::parse, b"\x2eA___B___C___", b"C___", NS::new(ns.clone()));
-            assert_parses!(NS::parse, b"\\\x2eA___B___",   b"",     NS::new_root(ns.clone()));
-            assert_parses!(NS::parse, b"^^^\x2eA___B___",  b"",     NS::new_parent(3, ns.clone()));
+            let ns = &[NameSeg(*b"A___"), NameSeg(*b"B___")];
+            assert_parses!(NS::parse, b"\x2eA___B___",     b"",     NS::new(ns));
+            assert_parses!(NS::parse, b"\x2eA___B___C",    b"C",    NS::new(ns));
+            assert_parses!(NS::parse, b"\x2eA___B___C___", b"C___", NS::new(ns));
+            assert_parses!(NS::parse, b"\\\x2eA___B___",   b"",     NS::new_root(ns));
+            assert_parses!(NS::parse, b"^^^\x2eA___B___",  b"",     NS::new_parent(3, ns));
 
             assert_errors!(NS::parse, b"\x2eA___");
             assert_errors!(NS::parse, b"\x2eA___B");
@@ -535,30 +535,30 @@ pub mod name {
             let d = NameSeg(*b"D___");
 
             // Count = 0
-            assert_parses!(NS::parse, b"\x2f\x00",     b"",     NS::new(vec![]));
-            assert_parses!(NS::parse, b"\x2f\x00A___", b"A___", NS::new(vec![]));
-            assert_parses!(NS::parse, b"^^\x2f\x00",   b"",     NS::new_parent(2, vec![]));
-            assert_parses!(NS::parse, b"\\\x2f\x00",   b"",     NS::new_root(vec![]));
+            assert_parses!(NS::parse, b"\x2f\x00",     b"",     NS::new(&[]));
+            assert_parses!(NS::parse, b"\x2f\x00A___", b"A___", NS::new(&[]));
+            assert_parses!(NS::parse, b"^^\x2f\x00",   b"",     NS::new_parent(2, &[]));
+            assert_parses!(NS::parse, b"\\\x2f\x00",   b"",     NS::new_root(&[]));
 
             // Count = 1
             assert_errors!(NS::parse, b"\x2f\x01");
             assert_errors!(NS::parse, b"\x2f\x01A");
             assert_errors!(NS::parse, b"\x2f\x01A_");
             assert_errors!(NS::parse, b"\x2f\x01A__");
-            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::new(vec![a]));
-            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::new(vec![a]));
-            assert_parses!(NS::parse, b"\x2f\x01A___B",    b"B",    NS::new(vec![a]));
-            assert_parses!(NS::parse, b"\x2f\x01A___B___", b"B___", NS::new(vec![a]));
-            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::new(vec![a]));
+            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::from(a));
+            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::from(a));
+            assert_parses!(NS::parse, b"\x2f\x01A___B",    b"B",    NS::from(a));
+            assert_parses!(NS::parse, b"\x2f\x01A___B___", b"B___", NS::from(a));
+            assert_parses!(NS::parse, b"\x2f\x01A___",     b"",     NS::from(a));
 
             // Count = 4
             assert_errors!(NS::parse, b"\x2f\x04");
             assert_errors!(NS::parse, b"\x2f\x04A___B___C___D__");
-            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___",     b"",     NS::new(vec![a, b, c, d]));
-            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___E",    b"E",    NS::new(vec![a, b, c, d]));
-            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___E___", b"E___", NS::new(vec![a, b, c, d]));
-            assert_parses!(NS::parse, b"\\\x2f\x04A___B___C___D___",   b"",     NS::new_root(vec![a, b, c, d]));
-            assert_parses!(NS::parse, b"^\x2f\x04A___B___C___D___",    b"",     NS::new_parent(1, vec![a, b, c, d]));
+            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___",     b"",     NS::new(&[a, b, c, d]));
+            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___E",    b"E",    NS::new(&[a, b, c, d]));
+            assert_parses!(NS::parse, b"\x2f\x04A___B___C___D___E___", b"E___", NS::new(&[a, b, c, d]));
+            assert_parses!(NS::parse, b"\\\x2f\x04A___B___C___D___",   b"",     NS::new_root(&[a, b, c, d]));
+            assert_parses!(NS::parse, b"^\x2f\x04A___B___C___D___",    b"",     NS::new_parent(1, &[a, b, c, d]));
         }
     }
 
