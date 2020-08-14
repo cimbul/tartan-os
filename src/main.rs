@@ -1,5 +1,6 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
 #![deny(clippy::pedantic)]
@@ -29,12 +30,12 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
         SYSTEM_TABLE = Some(system_table);
     }
 
-    match main(image_handle, system_table) {
+    match efi_main_result(image_handle, system_table) {
         Err(status) | Ok(status) => status,
     }
 }
 
-fn main(image_handle: Handle, system_table: &mut SystemTable) -> Result {
+fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Result {
     unsafe {
         let mut out = OutputStream::new(&*system_table.console_out.unwrap());
 
@@ -153,3 +154,15 @@ static BOOT_ALLOCATOR: BootAllocator = BootAllocator;
 fn alloc_error(layout: Layout) -> ! {
     panic!("Allocating {} bytes failed", layout.size());
 }
+
+// Hack to get the binary to build on the host target.
+#[cfg(not(test))]
+#[lang = "eh_personality"]
+fn eh_personality() -> ! {
+    loop {}
+}
+
+// Hack to get the binary to build on the host target. It obviously doesn't do anything.
+#[cfg(not(test))]
+#[no_mangle]
+fn main(_: isize, _: *const *const u8) -> isize { 100 }
