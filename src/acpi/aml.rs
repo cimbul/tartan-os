@@ -251,47 +251,37 @@ pub mod term {
     /// Term that defines an object with a name.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum NamedObject<'a> {
-        // DefBankField := BankFieldOp PkgLength NameString NameString BankValue FieldFlags FieldList
-        // BankFieldOp  := ExtOpPrefix 0x87
-        // BankValue    := TermArg => Integer
+        /// Declare fields that can only be accessed after writing to a bank selector
         BankField {
             region_name: NameString,
             bank_name: NameString,
             bank_value: TermArg<'a>,
             flags: FieldFlags,
-            fields: Vec<FieldElement<'a>>,
+            elements: Vec<FieldElement<'a>>,
         },
 
-        // DefCreateBitField    := CreateBitFieldOp SourceBuff BitIndex NameString
-        // CreateBitFieldOp     := 0x8D
-        // SourceBuff           := TermArg => Buffer
-        // BitIndex             := TermArg => Integer
+        /// Declare a single-bit field within a buffer
         CreateBitField {
             source_buffer: TermArg<'a>,
             bit_index: TermArg<'a>,
             name: NameString,
         },
 
-        // DefCreateByteField   := CreateByteFieldOp SourceBuff ByteIndex NameString
-        // CreateByteFieldOp    := 0x8C
-        // ByteIndex            := TermArg => Integer
+        /// Create a one-byte-wide field within a buffer
         CreateByteField {
             source_buffer: TermArg<'a>,
             byte_index: TermArg<'a>,
             name: NameString,
         },
 
-        // DefCreateDWordField  := CreateDWordFieldOp SourceBuff ByteIndex NameString
-        // CreateDWordFieldOp   := 0x8A
+        /// Declare a four-byte-wide field within a buffer
         CreateDWordField {
             source_buffer: TermArg<'a>,
             byte_index: TermArg<'a>,
             name: NameString,
         },
 
-        // DefCreateField       := CreateFieldOp SourceBuff BitIndex NumBits NameString
-        // CreateFieldOp        := ExtOpPrefix 0x13
-        // NumBits              := TermArg => Integer
+        /// Declare an arbitrary-width field within a buffer
         CreateField {
             source_buffer: TermArg<'a>,
             bit_index: TermArg<'a>,
@@ -299,24 +289,21 @@ pub mod term {
             name: NameString
         },
 
-        // DefCreateQWordField  := CreateQWordFieldOp SourceBuff ByteIndex NameString
-        // CreateQWordFieldOp   := 0x8F
+        /// Declare an eight-byte-wide field within a buffer
         CreateQWordField {
             source_buffer: TermArg<'a>,
             byte_index: TermArg<'a>,
             name: NameString,
         },
 
-        // DefCreateWordField   := CreateWordFieldOp SourceBuff ByteIndex NameString
-        // CreateWordFieldOp    := 0x8B
+        /// Declare a two-byte-wide field within a buffer
         CreateWordField {
             source_buffer: TermArg<'a>,
             byte_index: TermArg<'a>,
             name: NameString,
         },
 
-        // DefDataRegion        := DataRegionOp NameString TermArg TermArg TermArg
-        // DataRegionOp         := ExOpPrefix 0x88
+        /// Allow an ACPI table indexed in the XSDT to be used as a set of fields
         DataTableRegion {
             name: NameString,
             signature: TermArg<'a>,
@@ -324,66 +311,52 @@ pub mod term {
             oem_table_id: TermArg<'a>,
         },
 
-        // DefDevice            := DeviceOp PkgLength NameString TermList
-        // DeviceOp             := ExtOpPrefix 0x82
+        /// Declare a device and its associated fields, methods, and sub-devices
         Device {
             name: NameString,
             body: Vec<TermObject<'a>>,
         },
 
-        // DefEvent             := EventOp NameString
-        // EventOp              := ExtOpPrefix 0x02
+        /// Declare a waitable synchronization object
         Event(NameString),
 
-        // DefExternal          := ExternalOp NameString ObjectType ArgumentCount
-        // ExternalOp           := 0x15
-        // ObjectType           := ByteData
-        // ArgumentCount        := ByteData (0 – 7)
+        /// Declare an object that is defined in another ACPI table
         External {
             name: NameString,
             object_type: ObjectType,
             argument_count: u8,
         },
 
-        // DefField             := FieldOp PkgLength NameString FieldFlags FieldList
-        // FieldOp              := ExtOpPrefix 0x81
+        /// Declare a group of fields
         Field {
             region_name: NameString,
             flags: FieldFlags,
             elements: Vec<FieldElement<'a>>,
         },
 
-        // DefIndexField        := IndexFieldOp PkgLength NameString NameString FieldFlags FieldList
-        // IndexFieldOp         := ExtOpPrefix 0x86
+        /// Declare a group of field that must be accessed by writing to an index
+        /// register and then reading/writing from a data register.
         IndexField {
             index_name: NameString,
-            data_name: AccessType,
+            data_name: NameString,
             flags: FieldFlags,
             elements: Vec<FieldElement<'a>>,
         },
 
-        // DefMethod            := MethodOp PkgLength NameString MethodFlags TermList
-        // MethodOp             := 0x14
+        /// Declare a control method
         Method {
             name: NameString,
             flags: MethodFlags,
             body: Vec<TermObject<'a>>,
         },
 
-        // DefMutex             := MutexOp NameString SyncFlags
-        // MutexOp              := ExtOpPrefix 0x01
-        // SyncFlags            := ByteData
-        //     // bit 0-3: SyncLevel (0x00-0x0f)
-        //     // bit 4-7: Reserved (must be 0)
+        /// Declare an acquirable mutex
         Mutex {
             name: NameString,
             sync_level: u8,
         },
 
-        // DefOpRegion          := OpRegionOp NameString RegionSpace RegionOffset RegionLen
-        // OpRegionOp           := ExtOpPrefix 0x80
-        // RegionOffset         := TermArg => Integer
-        // RegionLen            := TermArg => Integer
+        /// Declare an address space that can be used by fields
         OperationRegion {
             name: NameString,
             region_space: RegionSpace,
@@ -391,10 +364,7 @@ pub mod term {
             length: TermArg<'a>,
         },
 
-        // DefPowerRes          := PowerResOp PkgLength NameString SystemLevel ResourceOrder TermList
-        // PowerResOp           := ExtOpPrefix 0x84
-        // SystemLevel          := ByteData
-        // ResourceOrder        := WordData
+        /// Declare a power resource object
         PowerResource {
             name: NameString,
             system_level: u8,
@@ -402,11 +372,7 @@ pub mod term {
             body: Vec<TermObject<'a>>,
         },
 
-        // DefProcessor         := ProcessorOp PkgLength NameString ProcID PblkAddr PblkLen TermList
-        // ProcessorOp          := ExtOpPrefix 0x83
-        // ProcID               := ByteData
-        // PblkAddr             := DWordData
-        // PblkLen              := ByteData
+        /// Declare a processor and associated register block
         Processor {
             name: NameString,
             id: u8,
@@ -415,8 +381,7 @@ pub mod term {
             body: Vec<TermObject<'a>>,
         },
 
-        // DefThermalZone       := ThermalZoneOp PkgLength NameString TermList
-        // ThermalZoneOp        := ExtOpPrefix 0x85
+        /// Declare a thermal zone namespace
         ThermalZone {
             name: NameString,
             body: Vec<TermObject<'a>>,
@@ -453,37 +418,29 @@ pub mod term {
     /// A substructure of a field.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum FieldElement<'a> {
-        // NamedField           := NameSeg PkgLength
+        /// A named bitfield.
         Named { name: NameSeg, bit_length: u32 },
 
-        // ReservedField        := 0x00 PkgLength
-        //
-        // NOTE: Although the corresponding ASL "Offset" grammar uses an *absolute*
-        // *byte* offset, the ACPICA compiler seems to translate it into *relative* *bit*
-        // offset when it outputs AML.
+        /// Indicates that the next most significant `bit_length` bits of the field are
+        /// skipped.
         Reserved { bit_length: u32 },
 
-        // This combines two alternatives in the AML grammar that encode the same
-        // information. See the AccessAttrib struct.
-        //
-        // AccessField          := 0x01 AccessType AccessAttrib
-        // ExtendedAccessField  := 0x03 AccessType ExtendedAccessAttrib ??AccessLength
-        //
-        // The ACPICA AML parser expects "AccessLength" to be a byte.
-        // See `source/components/parser/psargs.c`.
+        /// Sets access information for **following** fields.
         AccessAs(AccessType, AccessAttrib),
 
-        // ConnectField         := <0x02 NameString> | <0x02 ??BufferData>
-        //
-        // The ACPICA parser expects "BufferData" to be a DefBuffer op. Splitting this
-        // into two enum variants to avoid another level of indirection.
+        /// Indicates that **following** fields should be accessed with the named
+        /// GPIO/Serial descriptor.
         ConnectNamed(NameString),
+
+        /// Indicates that **following** fields should be accessed with the GPIO/Serial
+        /// descriptor contained in the given buffer.
         ConnectBuffer(Buffer<'a>),
     }
 
     /// Additional information about how a field is accessed.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum AccessAttrib {
+        None,
         Quick,
         SendReceive,
         Byte,

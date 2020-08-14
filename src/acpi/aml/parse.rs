@@ -49,7 +49,8 @@ mod util {
         ] => {
             parser_fn! {
                 $(#[$meta])* $vis $name($($a)? i) -> $ret_typ {
-                    ($imp)(i)
+                    let parser = $imp;
+                    parser(i)
                 }
             }
         };
@@ -715,6 +716,7 @@ pub mod data {
     mod test_computational_data {
         use super::*;
         use super::ComputationalData as CD;
+        use super::super::super::misc::LocalObject;
 
         #[test]
         fn test_parse_byte() {
@@ -778,10 +780,51 @@ pub mod data {
         }
 
         #[test]
-        #[ignore]
         fn test_buffer() {
-            // TODO: Implement
-            unimplemented!();
+            assert_errors!(CD::parse, b"\x11");
+            assert_errors!(CD::parse, b"\x11\x00");
+            assert_errors!(CD::parse, b"\x11\x00\x00");
+
+            // Single-byte package length, single-byte size, no initializer
+            assert_parses!(CD::parse, b"\x11\x01\x00", b"", CD::Buffer(Buffer {
+                size: CD::Zero.into(),
+                initializer: &[],
+            }));
+            // Single-byte initializer
+            assert_parses!(CD::parse, b"\x11\x02\x00\x00", b"", CD::Buffer(Buffer {
+                size: CD::Zero.into(),
+                initializer: &[0x00],
+            }));
+            // Multi-byte initializer + trailing data
+            assert_parses!(CD::parse, b"\x11\x03\x00\xab\xcd\xef", b"\xef", CD::Buffer(Buffer {
+                size: CD::Zero.into(),
+                initializer: &[0xab, 0xcd],
+            }));
+            // Multi-byte size term
+            assert_parses!(CD::parse, b"\x11\x03\x0b\x0a\x00", b"", CD::Buffer(Buffer {
+                size: CD::Word(10).into(),
+                initializer: &[],
+            }));
+            // Single-byte size term
+            assert_parses!(CD::parse, b"\x11\x03\x62\x1f\xdb", b"", CD::Buffer(Buffer {
+                size: LocalObject::Local2.into(),
+                initializer: &[0x1f, 0xdb],
+            }));
+            // Multi-byte package length
+            assert_parses!(CD::parse, b"\x11\x46\x00\x62\x12\x34\x56\x78\x9a", b"", CD::Buffer(Buffer {
+                size: LocalObject::Local2.into(),
+                initializer: &[0x12, 0x34, 0x56, 0x78, 0x9a],
+            }));
+
+            // Not enough data for package length
+            assert_errors!(CD::parse, b"\x11\x46\x00\x62\x12\x34\x56\x78");
+
+            // Invalid term
+            assert_errors!(CD::parse, b"\x11\x01\x0b");
+            assert_errors!(CD::parse, b"\x11\x02\x0b\x00");
+
+            // Package length cuts off valid term
+            assert_errors!(CD::parse, b"\x11\x02\x0b\x00\x01");
         }
     }
 
@@ -794,12 +837,15 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for Buffer<'a> {
         parser_fn! {
-            parse<'a> -> Self = in_package(struct_parser! {
-                Buffer {
-                    size: TermArg::parse,
-                    initializer: rest,
-                }
-            })
+            parse<'a> -> Self = preceded(
+                tag_byte(0x11),
+                in_package(struct_parser! {
+                    Buffer {
+                        size: TermArg::parse,
+                        initializer: rest,
+                    }
+                })
+            )
         }
     }
 
@@ -812,12 +858,15 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for Package<'a> {
         parser_fn! {
-            parse<'a> -> Self = in_package(struct_parser! {
-                Package {
-                    count: num::le_u8,
-                    initializers: multi::many0(PackageElement::parse),
-                }
-            })
+            parse<'a> -> Self = preceded(
+                tag_byte(0x12),
+                in_package(struct_parser! {
+                    Package {
+                        count: num::le_u8,
+                        initializers: multi::many0(PackageElement::parse),
+                    }
+                })
+            )
         }
     }
 
@@ -830,12 +879,15 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for VarPackage<'a> {
         parser_fn! {
-            parse<'a> -> Self = in_package(struct_parser! {
-                VarPackage {
-                    count: TermArg::parse,
-                    initializers: multi::many0(PackageElement::parse),
-                }
-            })
+            parse<'a> -> Self = preceded(
+                tag_byte(0x13),
+                in_package(struct_parser! {
+                    VarPackage {
+                        count: TermArg::parse,
+                        initializers: multi::many0(PackageElement::parse),
+                    }
+                })
+            )
         }
     }
 
@@ -938,6 +990,7 @@ mod package {
         }
     }
 
+    /// Execute a parser inside a length-prefixed package
     pub fn in_package<'a, P, O, E>(
         inner_parser: P,
     ) -> impl Fn(&'a [u8]) -> IResult<&[u8], O, E>
@@ -1076,12 +1129,14 @@ mod package {
 
 /// Terms, defined in §20.2.5
 pub mod term {
+    use alloc::boxed::Box;
     use super::*;
     use super::util::*;
-    use super::package::in_package;
+    use super::package::{in_package, parse_package_length};
     use super::super::term::*;
-    use super::super::data::DataRefObject;
-    use super::super::name::NameString;
+    use super::super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
+    use super::super::misc::{ArgObject, LocalObject};
+    use super::super::name::{NameSeg, NameString};
 
 
     /// Grammar:
@@ -1092,10 +1147,14 @@ pub mod term {
     /// Object   := NameSpaceModifierObj | NamedObj
     /// ```
     impl<'a> Parse<'a> for TermObject<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                map(NameSpaceModifier::parse, |x| Self::Modifier(Box::new(x))),
+                map(NamedObject::parse,       |x| Self::Named(Box::new(x))),
+                map(StatementOpcode::parse,   |x| Self::Statement(Box::new(x))),
+                map(ExpressionOpcode::parse,  |x| Self::Expression(Box::new(x))),
+            ))
+        }
     }
 
 
@@ -1106,10 +1165,14 @@ pub mod term {
     /// TermArgList := Nothing | <TermArg TermArgList>
     /// ```
     impl<'a> Parse<'a> for TermArg<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                map(ExpressionOpcode::parse, |x| Self::Expression(Box::new(x))),
+                map(DataObject::parse,       |x| Self::Data(Box::new(x))),
+                map(ArgObject::parse,            Self::Arg),
+                map(LocalObject::parse,          Self::Local),
+            ))
+        }
     }
 
 
@@ -1192,11 +1255,1001 @@ pub mod term {
     ///     DefCreateWordField | DefDataRegion | DefExternal | DefOpRegion | DefPowerRes |
     ///     DefProcessor | DefThermalZone
     /// ```
+    ///
+    /// **NOTE**: The AML grammar does *not* list the following alternatives as part of
+    /// `NamedObj`, but they are defined in the same place as the others. They are also
+    /// valid alternatives for the `NamedObject` production in the ASL grammar, so it is
+    /// reasonable to assume they were omitted by mistake:
+    ///   * `DefDevice`
+    ///   * `DefEvent`
+    ///   * `DefField`
+    ///   * `DefIndexField`
+    ///   * `DefMethod`
+    ///   * `DefMutex`
     impl<'a> Parse<'a> for NamedObject<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                bank_field,
+                create_bit_field,
+                create_byte_field,
+                create_dword_field,
+                create_field,
+                create_qword_field,
+                create_word_field,
+                data_table_region,
+                device,
+                event,
+                external,
+                field,
+                index_field,
+                method,
+                mutex,
+                operation_region,
+                power_resource,
+                processor,
+                thermal_zone,
+            ))
+        }
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefBankField := BankFieldOp PkgLength NameString NameString BankValue FieldFlags FieldList
+        /// BankFieldOp  := ExtOpPrefix 0x87
+        /// BankValue    := TermArg => Integer
+        /// ```
+        bank_field -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x87)),
+            in_package(struct_parser! {
+                NamedObject::BankField {
+                    region_name: NameString::parse,
+                    bank_name: NameString::parse,
+                    bank_value: TermArg::parse,
+                    flags: FieldFlags::parse,
+                    elements: multi::many0(FieldElement::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateBitField    := CreateBitFieldOp SourceBuff BitIndex NameString
+        /// CreateBitFieldOp     := 0x8D
+        /// SourceBuff           := TermArg => Buffer
+        /// BitIndex             := TermArg => Integer
+        /// ```
+        create_bit_field -> NamedObject<'a> = preceded(
+            tag_byte(0x8d),
+            struct_parser! {
+                NamedObject::CreateBitField {
+                    source_buffer: TermArg::parse,
+                    bit_index: TermArg::parse,
+                    name: NameString::parse,
+                }
+            }
+        )
+    }
+
+    macro_rules! parse_create_sized_field {
+        [$(#[$meta:meta])* $parser_name:ident $struct:ident $tag:literal] => {
+            parser_fn! {
+                $(#[$meta])*
+                $parser_name -> NamedObject<'a> = preceded(
+                    tag_byte($tag),
+                    struct_parser! {
+                        NamedObject::$struct {
+                            source_buffer: TermArg::parse,
+                            byte_index: TermArg::parse,
+                            name: NameString::parse,
+                        }
+                    }
+                )
+            }
+        };
+    }
+
+    parse_create_sized_field! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateByteField   := CreateByteFieldOp SourceBuff ByteIndex NameString
+        /// CreateByteFieldOp    := 0x8C
+        /// ByteIndex            := TermArg => Integer
+        /// ```
+        create_byte_field CreateByteField 0x8c
+    }
+
+    parse_create_sized_field! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateWordField   := CreateWordFieldOp SourceBuff ByteIndex NameString
+        /// CreateWordFieldOp    := 0x8B
+        /// ```
+        create_word_field CreateWordField 0x8b
+    }
+
+    parse_create_sized_field! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateDWordField  := CreateDWordFieldOp SourceBuff ByteIndex NameString
+        /// CreateDWordFieldOp   := 0x8A
+        /// ```
+        create_dword_field CreateDWordField 0x8a
+    }
+
+    parse_create_sized_field! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateQWordField  := CreateQWordFieldOp SourceBuff ByteIndex NameString
+        /// CreateQWordFieldOp   := 0x8F
+        /// ```
+        create_qword_field CreateQWordField 0x8f
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefCreateField       := CreateFieldOp SourceBuff BitIndex NumBits NameString
+        /// CreateFieldOp        := ExtOpPrefix 0x13
+        /// NumBits              := TermArg => Integer
+        /// ```
+        create_field -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x13)),
+            struct_parser! {
+                NamedObject::CreateField {
+                    source_buffer: TermArg::parse,
+                    bit_index: TermArg::parse,
+                    num_bits: TermArg::parse,
+                    name: NameString::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefDataRegion        := DataRegionOp NameString TermArg TermArg TermArg
+        /// DataRegionOp         := ExtOpPrefix 0x88
+        /// ```
+        data_table_region -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x88)),
+            struct_parser! {
+                NamedObject::DataTableRegion {
+                    name: NameString::parse,
+                    signature: TermArg::parse,
+                    oem_id: TermArg::parse,
+                    oem_table_id: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefDevice            := DeviceOp PkgLength NameString TermList
+        /// DeviceOp             := ExtOpPrefix 0x82
+        /// ```
+        device -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x82)),
+            in_package(struct_parser! {
+                NamedObject::Device {
+                    name: NameString::parse,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefEvent             := EventOp NameString
+        /// EventOp              := ExtOpPrefix 0x02
+        /// ```
+        event -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x02)),
+            map(NameString::parse, NamedObject::Event),
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefExternal          := ExternalOp NameString ObjectType ArgumentCount
+        /// ExternalOp           := 0x15
+        /// ObjectType           := ByteData
+        /// ArgumentCount        := ByteData (0 – 7)
+        /// ```
+        external -> NamedObject<'a> = preceded(
+            tag_byte(0x15),
+            struct_parser! {
+                NamedObject::External {
+                    name: NameString::parse,
+                    object_type: ObjectType::parse,
+                    argument_count: verify(num::le_u8, |b| *b <= 7),
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefField             := FieldOp PkgLength NameString FieldFlags FieldList
+        /// FieldOp              := ExtOpPrefix 0x81
+        /// ```
+        field -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x81)),
+            in_package(struct_parser! {
+                NamedObject::Field {
+                    region_name: NameString::parse,
+                    flags: FieldFlags::parse,
+                    elements: multi::many0(FieldElement::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefIndexField        := IndexFieldOp PkgLength NameString NameString FieldFlags FieldList
+        /// IndexFieldOp         := ExtOpPrefix 0x86
+        /// ```
+        index_field -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x86)),
+            in_package(struct_parser! {
+                NamedObject::IndexField {
+                    index_name: NameString::parse,
+                    data_name: NameString::parse,
+                    flags: FieldFlags::parse,
+                    elements: multi::many0(FieldElement::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefMethod            := MethodOp PkgLength NameString MethodFlags TermList
+        /// MethodOp             := 0x14
+        /// ```
+        method -> NamedObject<'a> = preceded(
+            tag_byte(0x14),
+            in_package(struct_parser! {
+                NamedObject::Method {
+                    name: NameString::parse,
+                    flags: MethodFlags::parse,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefMutex             := MutexOp NameString SyncFlags
+        /// MutexOp              := ExtOpPrefix 0x01
+        /// SyncFlags            := ByteData
+        ///     // bit 0-3: SyncLevel (0x00-0x0f)
+        ///     // bit 4-7: Reserved (must be 0)
+        /// ```
+        mutex -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x01)),
+            struct_parser! {
+                NamedObject::Mutex {
+                    name: NameString::parse,
+                    sync_level: map(num::le_u8, |b| b & 0x0f),
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefOpRegion          := OpRegionOp NameString RegionSpace RegionOffset RegionLen
+        /// OpRegionOp           := ExtOpPrefix 0x80
+        /// RegionOffset         := TermArg => Integer
+        /// RegionLen            := TermArg => Integer
+        /// ```
+        operation_region -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x80)),
+            struct_parser! {
+                NamedObject::OperationRegion {
+                    name: NameString::parse,
+                    region_space: RegionSpace::parse,
+                    offset: TermArg::parse,
+                    length: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefPowerRes          := PowerResOp PkgLength NameString SystemLevel ResourceOrder TermList
+        /// PowerResOp           := ExtOpPrefix 0x84
+        /// SystemLevel          := ByteData
+        /// ResourceOrder        := WordData
+        /// ```
+        power_resource -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x84)),
+            in_package(struct_parser! {
+                NamedObject::PowerResource {
+                    name: NameString::parse,
+                    system_level: num::le_u8,
+                    resource_order: num::le_u16,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefProcessor         := ProcessorOp PkgLength NameString ProcID PblkAddr PblkLen TermList
+        /// ProcessorOp          := ExtOpPrefix 0x83
+        /// ProcID               := ByteData
+        /// PblkAddr             := DWordData
+        /// PblkLen              := ByteData
+        /// ```
+        processor -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x83)),
+            in_package(struct_parser! {
+                NamedObject::Processor {
+                    name: NameString::parse,
+                    id: num::le_u8,
+                    register_block_addr: num::le_u32,
+                    register_block_length: num::le_u8,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
+    }
+
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// DefThermalZone       := ThermalZoneOp PkgLength NameString TermList
+        /// ThermalZoneOp        := ExtOpPrefix 0x85
+        /// ```
+        thermal_zone -> NamedObject<'a> = preceded(
+            ext_op(tag_byte(0x85)),
+            in_package(struct_parser! {
+                NamedObject::ThermalZone {
+                    name: NameString::parse,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
+    }
+
+    #[cfg(test)]
+    mod test_named_object {
+        use super::*;
+        use super::NamedObject as N;
+        use super::super::super::data::ComputationalData;
+
+        #[test]
+        fn test_bank_field() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x87");
+            assert_errors!(N::parse, b"\x5b\x87\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x02\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x03\x00\x00\x00");
+
+            assert_errors!(N::parse, b"\x5b\x87\x03\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x05\x00\x00\x00\x00");
+
+            assert_parses!(N::parse, b"\x5b\x87\x04\x00\x00\x00\x00", b"", N::BankField {
+                region_name: NameString::new(&[]),
+                bank_name: NameString::new(&[]),
+                bank_value: ComputationalData::Zero.into(),
+                flags: FieldFlags {
+                    access_type: AccessType::Any,
+                    lock: false,
+                    update_rule: UpdateRule::Preserve
+                },
+                elements: vec![]
+            });
+
+            assert_parses!(N::parse, b"\x5b\x87\x0aA___B___\x6d\x55", b"", N::BankField {
+                region_name: b"A___".into(),
+                bank_name: b"B___".into(),
+                bank_value: ArgObject::Arg5.into(),
+                flags: FieldFlags {
+                    access_type: AccessType::Buffer,
+                    lock: true,
+                    update_rule: UpdateRule::WriteAsZeros
+                },
+                elements: vec![]
+            });
+
+            assert_parses!(N::parse,
+                //            rname
+                //            |   bname   flags
+                //        pkg |   |   bval|   element[0]          element[1]  rest
+                //        |   |   |   |   |   |                   |           |
+                b"\x5b\x87\x12B___\x00\x01\x24Z_F2\xc2\x4d\x0e\x94\x00\x4f\xd7A___\x03",
+                b"A___\x03",
+                N::BankField {
+                    region_name: b"B___".into(),
+                    bank_name: NameString::new(&[]),
+                    bank_value: ComputationalData::One.into(),
+                    flags: FieldFlags {
+                        access_type: AccessType::QWord,
+                        lock: false,
+                        update_rule: UpdateRule::WriteAsOnes,
+                    },
+                    elements: vec![
+                        FieldElement::Named { name: b"Z_F2".into(), bit_length: 0x0940_e4d2 },
+                        FieldElement::Reserved { bit_length: 0x0d7f },
+                    ],
+                },
+            );
+        }
+
+        #[test]
+        fn test_bit_field() {
+            assert_errors!(N::parse, b"\x8d");
+            assert_errors!(N::parse, b"\x8d\x00");
+            assert_errors!(N::parse, b"\x8d\x00\x00");
+            assert_parses!(N::parse, b"\x8d\x00\x00\x00", b"",
+                N::CreateBitField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    bit_index: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x8d\x6e\x0b\x3f\xec\\\x2eA___B___C___",
+                b"C___",
+                N::CreateBitField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    bit_index: ComputationalData::Word(0xec3f).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_byte_field() {
+            assert_errors!(N::parse, b"\x8c");
+            assert_errors!(N::parse, b"\x8c\x00");
+            assert_errors!(N::parse, b"\x8c\x00\x00");
+            assert_parses!(N::parse, b"\x8c\x00\x00\x00", b"",
+                N::CreateByteField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    byte_index: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x8c\x6e\x0b\x3f\xec\\\x2eA___B___C___",
+                b"C___",
+                N::CreateByteField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    byte_index: ComputationalData::Word(0xec3f).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_dword_field() {
+            assert_errors!(N::parse, b"\x8a");
+            assert_errors!(N::parse, b"\x8a\x00");
+            assert_errors!(N::parse, b"\x8a\x00\x00");
+            assert_parses!(N::parse, b"\x8a\x00\x00\x00", b"",
+                N::CreateDWordField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    byte_index: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x8a\x6e\x0b\x3f\xec\\\x2eA___B___C___",
+                b"C___",
+                N::CreateDWordField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    byte_index: ComputationalData::Word(0xec3f).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_create_field() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x13");
+            assert_errors!(N::parse, b"\x5b\x13\x00");
+            assert_errors!(N::parse, b"\x5b\x13\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x13\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x13\x00\x00\x00\x00", b"",
+                N::CreateField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    bit_index: ComputationalData::Zero.into(),
+                    num_bits: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x5b\x13\x6e\x0b\x3f\xec\x0a\x4c\\\x2eA___B___C___",
+                b"C___",
+                N::CreateField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    bit_index: ComputationalData::Word(0xec3f).into(),
+                    num_bits: ComputationalData::Byte(0x4c).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_qword_field() {
+            assert_errors!(N::parse, b"\x8f");
+            assert_errors!(N::parse, b"\x8f\x00");
+            assert_errors!(N::parse, b"\x8f\x00\x00");
+            assert_parses!(N::parse, b"\x8f\x00\x00\x00", b"",
+                N::CreateQWordField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    byte_index: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x8f\x6e\x0b\x3f\xec\\\x2eA___B___C___",
+                b"C___",
+                N::CreateQWordField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    byte_index: ComputationalData::Word(0xec3f).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_word_field() {
+            assert_errors!(N::parse, b"\x8b");
+            assert_errors!(N::parse, b"\x8b\x00");
+            assert_errors!(N::parse, b"\x8b\x00\x00");
+            assert_parses!(N::parse, b"\x8b\x00\x00\x00", b"",
+                N::CreateWordField {
+                    source_buffer: ComputationalData::Zero.into(),
+                    byte_index: ComputationalData::Zero.into(),
+                    name: NameString::new(&[]),
+                }
+            );
+            assert_parses!(N::parse,
+                b"\x8b\x6e\x0b\x3f\xec\\\x2eA___B___C___",
+                b"C___",
+                N::CreateWordField {
+                    source_buffer: ArgObject::Arg6.into(),
+                    byte_index: ComputationalData::Word(0xec3f).into(),
+                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                }
+            );
+        }
+
+        #[test]
+        fn test_data_region() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x88");
+            assert_errors!(N::parse, b"\x5b\x88\x00");
+            assert_errors!(N::parse, b"\x5b\x88\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x88\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x88\x00\x00\x00\x00", b"",
+                N::DataTableRegion {
+                    name: NameString::new(&[]),
+                    signature: ComputationalData::Zero.into(),
+                    oem_id: ComputationalData::Zero.into(),
+                    oem_table_id: ComputationalData::Zero.into(),
+                }
+            );
+            assert_parses!(N::parse, b"\x5b\x88\\_311\x0a\x42\xff\x6a\x94", b"\x94",
+                N::DataTableRegion {
+                    name: NameString::new_root(&[NameSeg(*b"_311")]),
+                    signature: ComputationalData::Byte(0x42).into(),
+                    oem_id: ComputationalData::Ones.into(),
+                    oem_table_id: ArgObject::Arg2.into(),
+                }
+            );
+        }
+
+        #[test]
+        fn test_device() {
+            assert_errors!(N::parse, b"\x5b\x82");
+            assert_errors!(N::parse, b"\x5b\x82\x00");
+            assert_errors!(N::parse, b"\x5b\x82\x01");
+            assert_errors!(N::parse, b"\x5b\x82\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x82\x01\x00", b"",
+                N::Device {
+                    name: NameString::new(&[]),
+                    body: vec![],
+                }
+            );
+            assert_parses!(N::parse,
+                //        pkg name  body[0]             body[1]                 rest
+                //        |   |     |                   |                       |
+                b"\x5b\x82\x14^^ABCD\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x62\x01",
+                N::Device {
+                    name: NameString::new_parent(2, &[NameSeg(*b"ABCD")]),
+                    body: vec![
+                        N::CreateBitField {
+                            source_buffer: LocalObject::Local3.into(),
+                            bit_index: ComputationalData::Byte(0x42).into(),
+                            name: NameString::from(b"_57Z"),
+                        }.into(),
+                        Buffer {
+                            size: ComputationalData::Byte(0x3d).into(),
+                            initializer: &[0xf5, 0x83],
+                        }.into(),
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_event() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x02");
+            assert_parses!(N::parse, b"\x5b\x02\x00", b"", N::Event(NameString::new(&[])));
+            assert_parses!(N::parse,
+                b"\x5b\x02\\\x2f\x03A___B___C___D___",
+                b"D___",
+                N::Event(
+                    NameString::new_root(&[
+                        NameSeg(*b"A___"),
+                        NameSeg(*b"B___"),
+                        NameSeg(*b"C___"),
+                    ])
+                )
+            );
+            assert_errors!(N::parse, b"\x5b\x02\\\x2f\x03A___B___");
+        }
+
+        #[test]
+        fn test_external() {
+            assert_errors!(N::parse, b"\x15");
+            assert_errors!(N::parse, b"\x15\x00");
+            assert_errors!(N::parse, b"\x15\x00\x00");
+            assert_parses!(N::parse, b"\x15\x00\x00\x00", b"", N::External {
+                name: NameString::new(&[]),
+                object_type: ObjectType::Uninitialized,
+                argument_count: 0,
+            });
+            assert_parses!(N::parse, b"\x15^_123\x10\x07\x94\x8b", b"\x94\x8b", N::External {
+                name: NameString::new_parent(1, &[NameSeg(*b"_123")]),
+                object_type: ObjectType::DebugObject,
+                argument_count: 0x07,
+            });
+
+            // Argument count too high
+            assert_errors!(N::parse, b"\x15\x00\x00\x08");
+        }
+
+        #[test]
+        fn test_field() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x81");
+            assert_errors!(N::parse, b"\x5b\x81\x00");
+            assert_errors!(N::parse, b"\x5b\x81\x02");
+            assert_errors!(N::parse, b"\x5b\x81\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x81\x02\x00");
+            assert_parses!(N::parse, b"\x5b\x81\x02\x00\x00", b"", N::Field {
+                region_name: NameString::new(&[]),
+                flags: FieldFlags {
+                    access_type: AccessType::Any,
+                    lock: false,
+                    update_rule: UpdateRule::Preserve,
+                },
+                elements: vec![],
+            });
+            assert_parses!(N::parse,
+                //                  flags
+                //        pkg rname |   element[0]          element[1]  rest
+                //        |   |     |   |                   |           |
+                b"\x5b\x81\x11\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
+                b"\x11\x15",
+                N::Field {
+                    region_name: NameString::new_root(&[NameSeg(*b"ABCD")]),
+                    flags: FieldFlags {
+                        access_type: AccessType::Buffer,
+                        lock: true,
+                        update_rule: UpdateRule::WriteAsOnes,
+                    },
+                    elements: vec![
+                        FieldElement::Reserved { bit_length: 0x098f_d853 },
+                        FieldElement::Named {
+                            name: NameSeg(*b"_B34"),
+                            bit_length: 0x0a8d
+                        }
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_index_field() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x86");
+            assert_errors!(N::parse, b"\x5b\x86\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x03");
+            assert_errors!(N::parse, b"\x5b\x86\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x03\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x02\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x03\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x86\x03\x00\x00\x00", b"", N::IndexField {
+                index_name: NameString::new(&[]),
+                data_name: NameString::new(&[]),
+                flags: FieldFlags {
+                    access_type: AccessType::Any,
+                    lock: false,
+                    update_rule: UpdateRule::Preserve,
+                },
+                elements: vec![],
+            });
+            assert_parses!(N::parse,
+                //            iname      flags
+                //        pkg |    dname |   element[0]          element[1]  rest
+                //        |   |    |     |   |                   |           |
+                b"\x5b\x86\x16^_987\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
+                b"\x11\x15",
+                N::IndexField {
+                    index_name: NameString::new_parent(1, &[NameSeg(*b"_987")]),
+                    data_name: NameString::new_root(&[NameSeg(*b"ABCD")]),
+                    flags: FieldFlags {
+                        access_type: AccessType::Buffer,
+                        lock: true,
+                        update_rule: UpdateRule::WriteAsOnes,
+                    },
+                    elements: vec![
+                        FieldElement::Reserved { bit_length: 0x098f_d853 },
+                        FieldElement::Named {
+                            name: NameSeg(*b"_B34"),
+                            bit_length: 0x0a8d
+                        }
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_method() {
+            assert_errors!(N::parse, b"\x14");
+            assert_errors!(N::parse, b"\x14\x00");
+            assert_errors!(N::parse, b"\x14\x01\x00");
+            assert_errors!(N::parse, b"\x14\x02\x00");
+            assert_parses!(N::parse, b"\x14\x02\x00\x00", b"",
+                N::Method {
+                    name: NameString::new(&[]),
+                    flags: MethodFlags {
+                        arg_count: 0,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: vec![],
+                }
+            );
+            assert_parses!(N::parse,
+                //              flags
+                //    pkg name  |   body[0]             body[1]                 rest
+                //    |   |     |   |                   |                       |
+                b"\x14\x15^^Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x62\x01",
+                N::Method {
+                    name: NameString::new_parent(2, &[NameSeg(*b"Z49F")]),
+                    flags: MethodFlags {
+                        arg_count: 0x7,
+                        serialized: true,
+                        sync_level: 0xf,
+                    },
+                    body: vec![
+                        N::CreateBitField {
+                            source_buffer: LocalObject::Local3.into(),
+                            bit_index: ComputationalData::Byte(0x42).into(),
+                            name: NameString::from(b"_57Z"),
+                        }.into(),
+                        Buffer {
+                            size: ComputationalData::Byte(0x3d).into(),
+                            initializer: &[0xf5, 0x83],
+                        }.into(),
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_mutex() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x01");
+            assert_errors!(N::parse, b"\x5b\x01\x00");
+            assert_parses!(N::parse, b"\x5b\x01\x00\x00", b"", N::Mutex {
+                name: NameString::new(&[]),
+                sync_level: 0,
+            });
+            assert_parses!(N::parse, b"\x5b\x01\\_BL8\x0f\x94\x7f", b"\x94\x7f", N::Mutex {
+                name: NameString::new_root(&[NameSeg(*b"_BL8")]),
+                sync_level: 0xf,
+            });
+        }
+
+        #[test]
+        fn test_operation_region() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x80");
+            assert_errors!(N::parse, b"\x5b\x80\x00");
+            assert_errors!(N::parse, b"\x5b\x80\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x80\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x80\x00\x00\x00\x00", b"",
+                N::OperationRegion {
+                    name: NameString::new(&[]),
+                    region_space: RegionSpace::SystemMemory,
+                    offset: ComputationalData::Zero.into(),
+                    length: ComputationalData::Zero.into(),
+                }
+            );
+            assert_parses!(N::parse,
+                //             rspace
+                //        name |   offset  len rest
+                //        |    |   |       |   |
+                b"\x5b\x80^_J8M\xe8\x0a\x8b\xff\x05\x11",
+                b"\x05\x11",
+                N::OperationRegion {
+                    name: NameString::new_parent(1, &[NameSeg(*b"_J8M")]),
+                    region_space: RegionSpace::OEMDefined(0xe8),
+                    offset: ComputationalData::Byte(0x8b).into(),
+                    length: ComputationalData::Ones.into(),
+                }
+            );
+        }
+
+        #[test]
+        fn test_power_resource() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x84");
+            assert_errors!(N::parse, b"\x5b\x84\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x04");
+            assert_errors!(N::parse, b"\x5b\x84\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x04\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x02\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x04\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x03\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x04\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x84\x04\x00\x00\x00\x00", b"",
+                N::PowerResource {
+                    name: NameString::new(&[]),
+                    system_level: 0x00,
+                    resource_order: 0x00,
+                    body: vec![],
+                }
+            );
+            assert_parses!(N::parse,
+                //                  slevel
+                //        pkg name  |   rorder  body[0]             body[1]                 rest
+                //        |   |     |   |       |                   |                       |
+                b"\x5b\x84\x16\\_487\x8f\xa2\x43\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x62\x01",
+                N::PowerResource {
+                    name: NameString::new_root(&[NameSeg(*b"_487")]),
+                    system_level: 0x8f,
+                    resource_order: 0x43a2,
+                    body: vec![
+                        N::CreateBitField {
+                            source_buffer: LocalObject::Local3.into(),
+                            bit_index: ComputationalData::Byte(0x42).into(),
+                            name: NameString::from(b"_57Z"),
+                        }.into(),
+                        Buffer {
+                            size: ComputationalData::Byte(0x3d).into(),
+                            initializer: &[0xf5, 0x83],
+                        }.into(),
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_processor() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x83");
+            assert_errors!(N::parse, b"\x5b\x83\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x02\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x03\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x04\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x05\x00\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x06\x00\x00\x00\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x83\x07\x00\x00\x00\x00\x00\x00\x00", b"",
+                N::Processor {
+                    name: NameString::new(&[]),
+                    id: 0x00,
+                    register_block_addr: 0x0000_0000,
+                    register_block_length: 0x00,
+                    body: vec![],
+                }
+            );
+            assert_parses!(N::parse,
+                //                                     rlen
+                //        pkg name id  raddr           |   body[0]                 body[1]     rest
+                //        |   |    |   |               |   |                       |           |
+                b"\x5b\x83\x17^_842\xf4\xa2\x83\x42\xed\xd2\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
+                b"EFGH",
+                N::Processor {
+                    name: NameString::new_parent(1, &[NameSeg(*b"_842")]),
+                    id: 0xf4,
+                    register_block_addr: 0xed42_83a2,
+                    register_block_length: 0xd2,
+                    body: vec![
+                        Buffer {
+                            size: ComputationalData::Byte(0x3d).into(),
+                            initializer: &[0xf5, 0x83],
+                        }.into(),
+                        N::Event(NameString::new(&[NameSeg(*b"ABCD")])).into(),
+                    ],
+                }
+            );
+        }
+
+        #[test]
+        fn test_thermal_zone() {
+            assert_errors!(N::parse, b"\x5b");
+            assert_errors!(N::parse, b"\x5b\x85");
+            assert_errors!(N::parse, b"\x5b\x85\x00");
+            assert_errors!(N::parse, b"\x5b\x85\x01");
+            assert_parses!(N::parse, b"\x5b\x85\x01\x00", b"",
+                N::ThermalZone {
+                    name: NameString::new(&[]),
+                    body: vec![],
+                }
+            );
+            assert_parses!(N::parse,
+                //        pkg name  body[0]                 body[1]     rest
+                //        |   |     |                       |           |
+                b"\x5b\x85\x11\\_F37\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
+                b"EFGH",
+                N::ThermalZone {
+                    name: NameString::new_root(&[NameSeg(*b"_F37")]),
+                    body: vec![
+                        Buffer {
+                            size: ComputationalData::Byte(0x3d).into(),
+                            initializer: &[0xf5, 0x83],
+                        }.into(),
+                        N::Event(NameString::new(&[NameSeg(*b"ABCD")])).into(),
+                    ],
+                }
+            );
+        }
     }
 
 
@@ -1225,11 +2278,15 @@ pub mod term {
     impl<'a> Parse<'a> for FieldFlags {
         parser_fn!(parse('a i) -> Self {
             let (i, b) = num::le_u8(i)?;
-            let access_type = AccessType::try_from(b & 0b0000_1111)
-                .map_err(|_| nom::Err::Error(E::from_error_kind(i, ErrorKind::Tag)))?;
-            let lock = b & 0b0001_0000 != 0;
-            let update_rule = UpdateRule::try_from((b & 0b0110_0000) >> 5)
-                .map_err(|_| nom::Err::Error(E::from_error_kind(i, ErrorKind::Tag)))?;
+            let access_type = match AccessType::try_from(b & 0x0f) {
+                Ok(a) => a,
+                Err(_) => return err(i, ErrorKind::Tag),
+            };
+            let lock = b & 0x10 != 0;
+            let update_rule = match UpdateRule::try_from((b & 0b0110_0000) >> 5) {
+                Ok(u) => u,
+                Err(_) => return err(i, ErrorKind::Tag),
+            };
             Ok((i, FieldFlags { access_type, lock, update_rule }))
         });
     }
@@ -1291,7 +2348,7 @@ pub mod term {
     ///
     /// This does **not** match the `AccessType` production in the AML grammar, which is
     /// really a hybrid between the `AccessType` and `AccessAttribute` productions from
-    /// the ASL grammar. See the [`AccessAttrib`] struct for the AML grammar.
+    /// the ASL grammar. See `parse_access_field` for that rule in the AML grammar.
     ///
     /// `AccessType` does not implement Parser because it is always part of a bitfield.
     impl TryFrom<u8> for AccessType {
@@ -1331,57 +2388,336 @@ pub mod term {
     /// Grammar:
     ///
     /// ```text
-    /// FieldList    := Nothing | <FieldElement FieldList>
-    /// FieldElement := NamedField | ReservedField | AccessField | ExtendedAccessField |
-    ///                 ConnectField
+    /// FieldList     := Nothing | <FieldElement FieldList>
+    /// FieldElement  := NamedField | ReservedField | AccessField | ExtendedAccessField |
+    ///                  ConnectField
+    ///
+    /// NamedField    := NameSeg PkgLength
+    /// ReservedField := 0x00 PkgLength
+    /// ConnectField  := <0x02 NameString> | <0x02 ??BufferData>
     /// ```
+    ///
+    /// Notes:
+    ///   * Although the ASL `Offset` grammar uses an absolute **byte** offset, the ACPICA
+    ///     compiler seems to translate it into relative **bit** offset when it outputs
+    ///     the `ReservedField` op in AML.
+    ///   * `AccessField` and `ExtendedAccessField` encode the same information and are
+    ///     merged into one enum variant. See [`access_field`] and
+    ///     [`extended_access_field`].
+    ///   * The ACPICA parser expects `BufferData` to be a `DefBuffer` op.
+    ///   * The `ConnectField` op in split into two enum variants to avoid another level
+    ///     of indirection.
     impl<'a> Parse<'a> for FieldElement<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                struct_parser!(
+                    Self::Named { name: NameSeg::parse, bit_length: parse_package_length }
+                ),
+                preceded(
+                    tag_byte(0x00),
+                    struct_parser!(Self::Reserved { bit_length: parse_package_length }),
+                ),
+                access_field,
+                extended_access_field,
+                preceded(
+                    tag_byte(0x02),
+                    alt((
+                        map(NameString::parse, Self::ConnectNamed),
+                        map(Buffer::parse,     Self::ConnectBuffer),
+                    )),
+                ),
+            ))
+        }
     }
 
+    parser_fn! {
+        /// Grammar:
+        ///
+        /// ```text
+        /// AccessField := 0x01 AccessType AccessAttrib
+        ///
+        /// AccessType  := ByteData
+        ///     // Bits 0:3 - Same as AccessType bits of FieldFlags.
+        ///     // Bits 4:5 - Reserved
+        ///     // Bits 7:6 - 0 = AccessAttrib = Normal Access Attributes
+        ///     //            1 = AccessAttrib = AttribBytes (x)
+        ///     //            2 = AccessAttrib = AttribRawBytes (x)
+        ///     //            3 = AccessAttrib = AttribRawProcessBytes (x)
+        ///     //            x' is encoded as bits 0:7 of the AccessAttrib byte.
+        ///
+        /// AccessAttrib  := ByteData
+        ///     // If AccessType is BufferAcc for the SMB or
+        ///     // GPIO OpRegions, AccessAttrib can be one of
+        ///     // the following values:
+        ///     //    0x02   AttribQuick
+        ///     //    0x04   AttribSendReceive
+        ///     //    0x06   AttribByte
+        ///     //    0x08   AttribWord
+        ///     //    0x0A   AttribBlock
+        ///     //    0x0C   AttribProcessCall
+        ///     //    0x0D   AttribBlockProcessCall
+        /// ```
+        access_field(i) -> FieldElement<'a> {
+            let (i, _) = tag_byte(0x01)(i)?;
+            let (i, first) = num::le_u8(i)?;
+            let (i, second) = num::le_u8(i)?;
 
-    /// The AML spec is kind of a mess here, and the same information can apparently be
-    /// encoded in multiple ways. This enum reflects the ASL grammar. I don't know whether
-    /// the compiler prefers one representation over the other, but we'll assume there is
-    /// no real difference.
-    ///
-    /// Grammar:
-    ///
-    /// ```text
-    /// AccessType    := ByteData
-    ///     // Bits 0:3 - Same as AccessType bits of FieldFlags.
-    ///     // Bits 4:5 - Reserved
-    ///     // Bits 7:6 - 0 = AccessAttrib = Normal Access Attributes
-    ///     //            1 = AccessAttrib = AttribBytes (x)
-    ///     //            2 = AccessAttrib = AttribRawBytes (x)
-    ///     //            3 = AccessAttrib = AttribRawProcessBytes (x)
-    ///     //            x' is encoded as bits 0:7 of the AccessAttrib byte.
-    ///
-    /// AccessAttrib  := ByteData
-    ///     // If AccessType is BufferAcc for the SMB or
-    ///     // GPIO OpRegions, AccessAttrib can be one of
-    ///     // the following values:
-    ///     //    0x02   AttribQuick
-    ///     //    0x04   AttribSendReceive
-    ///     //    0x06   AttribByte
-    ///     //    0x08   AttribWord
-    ///     //    0x0A   AttribBlock
-    ///     //    0x0C   AttribProcessCall
-    ///     //    0x0D   AttribBlockProcessCall
-    ///
-    /// ExtendedAccessAttrib := ByteData
-    ///     // 0x0B AttribBytes
-    ///     // 0x0E AttribRawBytes
-    ///     // 0x0F AttribRawProcess
-    /// ```
-    impl<'a> Parse<'a> for AccessAttrib {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+            let access_type = match AccessType::try_from(first & 0x0f) {
+                Ok(a) => a,
+                Err(_) => return err(i, ErrorKind::Tag),
+            };
+
+            let access_attrib = match first >> 6 {
+                1 => AccessAttrib::Bytes(second),
+                2 => AccessAttrib::RawBytes(second),
+                3 => AccessAttrib::RawProcessBytes(second),
+                0 => match second {
+                    0x0 => AccessAttrib::None,  // Note that we added this value
+                    0x2 => AccessAttrib::Quick,
+                    0x4 => AccessAttrib::SendReceive,
+                    0x6 => AccessAttrib::Byte,
+                    0x8 => AccessAttrib::Word,
+                    0xa => AccessAttrib::Block,
+                    0xc => AccessAttrib::ProcessCall,
+                    0xd => AccessAttrib::BlockProcessCall,
+                    _ => return err(i, ErrorKind::Tag)
+                }
+                _ => panic!("Somehow got a value >= 4 from a two bit field"),
+            };
+
+            Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
+        }
+    }
+
+    parser_fn! {
+        /// The AML spec is kind of a mess here, and this production seems to encode the
+        /// exact same information as `AccessField`, just not packed into bitfields. There
+        /// also isn't anything explicitly preventing `ExtendedAccessField` from using the
+        /// same packed representation that `AccessField` does, or from using the
+        /// "non-extended" attribute values from the `AccessAttrib` production.
+        ///
+        /// Grammar:
+        ///
+        /// ```text
+        /// ExtendedAccessField  := 0x03 AccessType ExtendedAccessAttrib ??AccessLength
+        /// ExtendedAccessAttrib := ByteData
+        ///     // 0x0B AttribBytes
+        ///     // 0x0E AttribRawBytes
+        ///     // 0x0F AttribRawProcess
+        /// ```
+        ///
+        /// The ACPICA AML parser expects `AccessLength` to be a byte. See
+        /// `source/components/parser/psargs.c`.
+        extended_access_field(i) -> FieldElement<'a> {
+            let (i, _) = tag_byte(0x03)(i)?;
+            let (i, type_byte) = num::le_u8(i)?;
+            let (i, attrib_byte) = num::le_u8(i)?;
+            let (i, length) = num::le_u8(i)?;
+
+            let access_type = match AccessType::try_from(type_byte & 0x0f) {
+                Ok(a) => a,
+                Err(_) => return err(i, ErrorKind::Tag),
+            };
+
+            // It's not clear whether it is legal to encode `Bytes`/`RawBytes`/
+            // `RawProcessBytes` the way that the `AccessField` production does. Assume
+            // that it isn't, and fail if the compiler tries.
+            if type_byte >> 6 != 0 {
+                return err(i, ErrorKind::Tag);
+            }
+
+            let access_attrib = match attrib_byte {
+                0x0b => AccessAttrib::Bytes(length),
+                0x0e => AccessAttrib::RawBytes(length),
+                0x0f => AccessAttrib::RawProcessBytes(length),
+                // Also not clear whether the values from the `AccessAttrib` production
+                // are legal here. Again, assume that they aren't.
+                _ => return err(i, ErrorKind::Tag),
+            };
+
+            Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
+        }
+    }
+
+    #[cfg(test)]
+    mod test_field_element {
+        use super::*;
+        use super::FieldElement as F;
+        use super::super::super::data::ComputationalData;
+
+        #[test]
+        fn test_misc_invalid() {
+            assert_errors!(F::parse, b"");
+            assert_errors!(F::parse, b"\xff");
+            assert_errors!(F::parse, b"\x04");
+        }
+
+        #[test]
+        fn test_named() {
+            // Incomplete
+            assert_errors!(F::parse, b"A");
+            assert_errors!(F::parse, b"ABCD");
+
+            assert_parses!(F::parse, b"ABCD\x00", b"", F::Named {
+                name: b"ABCD".into(),
+                bit_length: 0,
+            });
+            assert_parses!(F::parse, b"___1\x2d", b"", F::Named {
+                name: b"___1".into(),
+                bit_length: 0x2d,
+            });
+            assert_parses!(F::parse, b"X2__\xc7\x56\x34\x12zzz", b"zzz", F::Named {
+                name: b"X2__".into(),
+                bit_length: 0x0123_4567,
+            });
+
+            // Invalid name segment
+            assert_errors!(F::parse, b"1BCD\x00");
+            // Single segment only; path not allowed
+            assert_errors!(F::parse, b"^ABCD\x00");
+        }
+
+        #[test]
+        fn test_reserved() {
+            assert_errors!(F::parse, b"\x00");
+            assert_parses!(F::parse, b"\x00\x00",     b"",     F::Reserved { bit_length: 0x00 });
+            assert_parses!(F::parse, b"\x00\x3f\xd7", b"\xd7", F::Reserved { bit_length: 0x3f });
+            assert_parses!(F::parse,
+                b"\x00\xc7\x56\x34\x12",
+                b"",
+                F::Reserved { bit_length: 0x0123_4567 },
+            );
+        }
+
+        #[test]
+        fn test_access_as() {
+            assert_errors!(F::parse, b"\x01");
+            assert_errors!(F::parse, b"\x01\x00");
+            assert_parses!(F::parse, b"\x01\x00\x00", b"", F::AccessAs(
+                AccessType::Any,
+                AccessAttrib::None,
+            ));
+            assert_parses!(F::parse, b"\x01\xf5\xff", b"", F::AccessAs(
+                AccessType::Buffer,
+                AccessAttrib::RawProcessBytes(0xff),
+            ));
+            assert_parses!(F::parse, b"\x01\x03\x0a\xd5", b"\xd5", F::AccessAs(
+                AccessType::DWord,
+                AccessAttrib::Block,
+            ));
+            assert_parses!(F::parse, b"\x01\x81\x0a", b"", F::AccessAs(
+                AccessType::Byte,
+                AccessAttrib::RawBytes(0x0a),
+            ));
+            assert_parses!(F::parse, b"\x01\x42\xe9", b"", F::AccessAs(
+                AccessType::Word,
+                AccessAttrib::Bytes(0xe9),
+            ));
+
+            // Invalid access type
+            assert_errors!(F::parse, b"\x01\x06\x00");
+            assert_errors!(F::parse, b"\x01\x0b\x00");
+            assert_errors!(F::parse, b"\x01\x0f\x00");
+
+            // Invalid attribute
+            assert_errors!(F::parse, b"\x01\x00\x01");
+            assert_errors!(F::parse, b"\x01\x00\x03");
+            assert_errors!(F::parse, b"\x01\x00\x05");
+            assert_errors!(F::parse, b"\x01\x00\x07");
+            assert_errors!(F::parse, b"\x01\x00\x09");
+            assert_errors!(F::parse, b"\x01\x00\x0b");
+            assert_errors!(F::parse, b"\x01\x00\x0e");
+            assert_errors!(F::parse, b"\x01\x00\x0f");
+        }
+
+        #[test]
+        fn test_access_as_extended() {
+            assert_errors!(F::parse, b"\x03");
+            assert_errors!(F::parse, b"\x03\x00");
+            assert_errors!(F::parse, b"\x03\x00\x00");
+            assert_errors!(F::parse, b"\x03\x00\x0b");
+            assert_parses!(F::parse, b"\x03\x00\x0b\x00", b"", F::AccessAs(
+                AccessType::Any,
+                AccessAttrib::Bytes(0),
+            ));
+            assert_parses!(F::parse, b"\x03\x05\x0f\xff", b"", F::AccessAs(
+                AccessType::Buffer,
+                AccessAttrib::RawProcessBytes(0xff),
+            ));
+            assert_parses!(F::parse, b"\x03\x02\x0e\xc8\x3f", b"\x3f", F::AccessAs(
+                AccessType::Word,
+                AccessAttrib::RawBytes(0xc8),
+            ));
+
+            // Invalid access type
+            assert_errors!(F::parse, b"\x03\x06\x0b\x00");
+            assert_errors!(F::parse, b"\x03\x0d\x0b\x00");
+            assert_errors!(F::parse, b"\x03\x0f\x0b\x00");
+
+            // Invalid attributes
+            assert_errors!(F::parse, b"\x03\x00\x00\x00");
+            assert_errors!(F::parse, b"\x03\x00\x01\x00");
+            assert_errors!(F::parse, b"\x03\x00\x0c\x00");
+            assert_errors!(F::parse, b"\x03\x00\x0d\x00");
+        }
+
+        #[test]
+        fn test_connect_named() {
+            let abcd = NameSeg(*b"ABCD");
+            let x123 = NameSeg(*b"X123");
+
+            assert_errors!(F::parse, b"\x02");
+            assert_errors!(F::parse, b"\x02\xff");
+            assert_parses!(F::parse,
+                b"\x02\x00",
+                b"",
+                F::ConnectNamed(NameString::new(&[])),
+            );
+
+            assert_errors!(F::parse, b"\x02A");
+            assert_errors!(F::parse, b"\x02AB");
+            assert_errors!(F::parse, b"\x02ABC");
+            assert_parses!(F::parse,
+                b"\x02ABCD",
+                b"",
+                F::ConnectNamed(abcd.into()),
+            );
+            assert_parses!(F::parse,
+                b"\x02\\X123A567",
+                b"A567",
+                F::ConnectNamed(NameString::new_root(&[x123])),
+            );
+            assert_parses!(F::parse,
+                b"\x02^^^^\x2eABCDX123",
+                b"",
+                F::ConnectNamed(NameString::new_parent(4, &[abcd, x123])),
+            );
+
+            // Missing a name segment
+            assert_errors!(F::parse, b"\x02\x2eABCD");
+        }
+
+        #[test]
+        fn test_connect_buffer() {
+            assert_errors!(F::parse, b"\x02\x11");
+            assert_errors!(F::parse, b"\x02\x11\x00");
+            assert_errors!(F::parse, b"\x02\x11\x01");
+            assert_parses!(F::parse, b"\x02\x11\x01\x00", b"", F::ConnectBuffer(Buffer {
+                size: ComputationalData::Zero.into(),
+                initializer: &[],
+            }));
+            assert_parses!(F::parse, b"\x02\x11\x03\x01\x4d\xa9", b"", F::ConnectBuffer(Buffer {
+                size: ComputationalData::One.into(),
+                initializer: &[0x4d, 0xa9],
+            }));
+            assert_errors!(F::parse, b"\x02\x11\x03\x01\x4d");
+
+            // Could be interpreted as ASCII (like a NameSeg), but shouldn't be
+            assert_parses!(F::parse, b"\x02\x11\tbcdefgabc", b"", F::ConnectBuffer(Buffer {
+                size: LocalObject::Local2.into(),
+                initializer: b"cdefgabc",
+            }));
+        }
     }
 
 
@@ -1518,10 +2854,15 @@ pub mod term {
     ///                DefToInteger | DefToString | DefWait | DefXOr | MethodInvocation
     /// ```
     impl<'a> Parse<'a> for ExpressionOpcode<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            // TODO: Finish implementing
+            parse<'a> -> Self = alt((
+                // TODO: RefExpression
+                map(Buffer::parse, |b| Self::Buffer(b)),
+                map(Package::parse, |p| Self::Package(p)),
+                map(VarPackage::parse, |p| Self::VarPackage(p)),
+            ))
+        }
     }
 
 
@@ -1553,7 +2894,6 @@ pub mod term {
     }
 
 
-    // TODO: Does this actually need a parser?
     /// Values from Table 19-433:
     ///
     /// ```text
