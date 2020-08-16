@@ -17,6 +17,7 @@ use alloc::vec;
 use core::convert::TryFrom;
 use nom::IResult;
 use nom::branch::alt;
+use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
 use nom::error::{ErrorKind, ParseError};
 use nom::multi;
@@ -26,20 +27,33 @@ use self::state::ParserState;
 
 /// An object that can be parsed from AML bytecode
 trait Parse<'a> where Self: Sized {
-    fn parse<E: ParseError<ParserState<'a>>>(
+    fn parse<E: AMLParseError<'a>>(
         i: ParserState<'a>,
-    ) -> IResult<ParserState<'_>, Self, E>;
+    ) -> AMLParseResult<Self, E>;
 }
+
+
+/// Alias for type returned by AML parsers
+pub type AMLParseResult<'a, T, E> = IResult<ParserState<'a>, T, E>;
+
+
+/// Trait "alias" for error type used by AML parsers
+pub trait AMLParseError<'a>: state::ReplaceableParseError<&'a [u8], ParserState<'a>> { }
+
+impl<'a, T> AMLParseError<'a> for T
+where T: state::ReplaceableParseError<&'a [u8], ParserState<'a>> { }
 
 
 /// Parser context needed to disambiguate grammar
 pub mod state {
     use super::*;
     use super::super::name::NameSeg;
+    use core::borrow::Borrow;
     use nom::{
         AsBytes, Compare, CompareResult, ExtendInto, FindSubstring, FindToken, InputIter,
         InputLength, InputTake, Offset, ParseTo, Slice, UnspecializedInput
     };
+    use nom::error::VerboseError;
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -69,6 +83,34 @@ pub mod state {
                 method_signatures: vec![],
             }
         }
+
+        /// Wraps a byte-oriented parser to work with `ParserState`
+        pub fn lift<P, O, E>(
+            parser: P,
+        ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
+        where
+            P: Fn(&'a [u8]) -> IResult<&[u8], O, E::From>,
+            E: AMLParseError<'a>
+        {
+            move |input| {
+                match parser(input.data) {
+                    Ok((output_data, output_value)) => Ok((
+                        ParserState { data: output_data, ..input },
+                        output_value
+                    )),
+                    Err(nom::Err::Error(e)) =>
+                        Err(nom::Err::Error(E::replace_input(e, input))),
+                    Err(nom::Err::Failure(e)) =>
+                        Err(nom::Err::Failure(E::replace_input(e, input))),
+                    Err(nom::Err::Incomplete(e)) =>
+                        Err(nom::Err::Incomplete(e)),
+                }
+            }
+        }
+    }
+
+    impl Borrow<[u8]> for ParserState<'_> {
+        fn borrow(&self) -> &[u8] { self.data }
     }
 
     impl AsBytes for ParserState<'_> {
@@ -157,43 +199,43 @@ pub mod state {
     }
 
     impl UnspecializedInput for ParserState<'_> { }
-}
 
 
-/// Wraps a byte-oriented parser to work with [`ParserState`]
-macro_rules! lift {
-    [
-        $parser:ident
-        -> ($out:ty, $error_kind:expr)
-        = $nom_parser:expr
-    ] => {
-        pub fn $parser<'a, E: ParseError<ParserState<'a>>>(
-            i: ParserState<'a>
-        ) -> IResult<ParserState<'_>, $out, E> {
-            // Hopefully rustc is smart enough to optimize away the closure
-            let closure = lift!(|'a| -> ($out, $error_kind) = $nom_parser);
-            closure(i)
+    /// Helper trait used to convert a parser error from one input type to another.
+    ///
+    /// Used by [`ParserState::lift`].
+    pub trait ReplaceableParseError<F, T>: ParseError<T> {
+        type From: ParseError<F>;
+        fn replace_input(from: Self::From, input: T) -> Self;
+    }
+
+    impl<F, T> ReplaceableParseError<F, T> for (T, ErrorKind) {
+        type From = (F, ErrorKind);
+        fn replace_input(from: Self::From, input: T) -> Self {
+            (input, from.1)
         }
-    };
+    }
 
-    [
-        |$a:lifetime|
-        -> ($out:ty, $error_kind:expr)
-        = $nom_parser:expr
-    ] => {
-        move |i: ParserState<$a>| {
-            let result: IResult<_, _, ()> = $nom_parser(i.data);
-            match result {
-                Ok((data, n)) => Ok((ParserState { data, ..i }, n)),
-                Err(nom::Err::Error(_)) =>
-                    Err(nom::Err::Error(E::from_error_kind(i, $error_kind))),
-                Err(nom::Err::Failure(_)) =>
-                    Err(nom::Err::Failure(E::from_error_kind(i, $error_kind))),
-                Err(nom::Err::Incomplete(i)) =>
-                    Err(nom::Err::Incomplete(i)),
+    impl<F, T> ReplaceableParseError<F, T> for () {
+        type From = ();
+        fn replace_input(_: Self::From, _: T) -> Self {}
+    }
+
+    impl<F, T: Clone> ReplaceableParseError<F, T> for VerboseError<T> {
+        type From = VerboseError<F>;
+        fn replace_input(from: Self::From, input: T) -> Self {
+            Self {
+                // Replace *all* the inputs in the error list. This only makes sense if
+                // the original error was close to the same point in the input. That is a
+                // safe assumption in `ParserState::lift`, which is used primarily for
+                // adapting low-level byte parsers.
+                errors: from.errors
+                    .into_iter()
+                    .map(|(_, kind)| (input.clone(), kind))
+                    .collect()
             }
         }
-    };
+    }
 }
 
 
@@ -206,49 +248,28 @@ mod num {
     use super::*;
     use nom::number::complete as nom_num;
 
-    lift!(le_u8  -> (u8,  ErrorKind::Eof) = nom_num::le_u8);
-    lift!(le_u16 -> (u16, ErrorKind::Eof) = nom_num::le_u16);
-    lift!(le_u24 -> (u32, ErrorKind::Eof) = nom_num::le_u24);
-    lift!(le_u32 -> (u32, ErrorKind::Eof) = nom_num::le_u32);
-    lift!(le_u64 -> (u64, ErrorKind::Eof) = nom_num::le_u64);
-}
-
-
-/// Parsers from [`nom::bytes::complete`] wrapped to work with [`ParserState`].
-///
-/// Although the native parsers work with custom input types, their return types are
-/// `IResult<Input, Input, E>`. Since the parser state is meaningless in the output type,
-/// it is more natural to work with `IResult<Input, &[u8], E>`.
-mod bytes {
-    use super::*;
-    use nom::bytes::complete as nom_bytes;
-    use nom::ToUsize;
-
-    #[cfg(test)]
-    pub fn is_a<'a, E: ParseError<ParserState<'a>>>(
-        arr: &'a [u8]
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
-        lift!(|'a| -> (&'a [u8], ErrorKind::IsA) = nom_bytes::is_a(arr))
+    /// Define a function that wraps a byte-oriented parser to work with [`ParserState`]
+    macro_rules! lift {
+        // Simple parser
+        [
+            $parser:ident
+            -> $out:ty
+            = $nom_parser:expr
+        ] => {
+            pub fn $parser<'a, E: AMLParseError<'a>>(
+                i: ParserState<'a>
+            ) -> AMLParseResult<$out, E> {
+                // Hopefully rustc is smart enough to optimize away the closure
+                ParserState::lift($nom_parser)(i)
+            }
+        };
     }
 
-    pub fn take<'a, C: Copy + ToUsize, E: ParseError<ParserState<'a>>>(
-        count: C
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
-        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take(count))
-    }
-
-    pub fn take_till<'a, F: Copy + Fn(u8) -> bool, E: ParseError<ParserState<'a>>>(
-        cond: F
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
-        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take_till(cond))
-    }
-
-    #[cfg(test)]
-    pub fn take_while<'a, F: Copy + Fn(u8) -> bool, E: ParseError<ParserState<'a>>>(
-        cond: F
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
-        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take_while(cond))
-    }
+    lift!(le_u8  -> u8  = nom_num::le_u8);
+    lift!(le_u16 -> u16 = nom_num::le_u16);
+    lift!(le_u24 -> u32 = nom_num::le_u24);
+    lift!(le_u32 -> u32 = nom_num::le_u32);
+    lift!(le_u64 -> u64 = nom_num::le_u64);
 }
 
 
@@ -283,9 +304,9 @@ mod util {
             $imp:block
         ] => {
             $(#[$meta])*
-            $vis fn $name<'a, E: ::nom::error::ParseError<ParserState<'a>>>(
+            $vis fn $name<'a, E: AMLParseError<'a>>(
                 $input: ParserState<'a>
-            ) -> ::nom::IResult<ParserState<'_>, $ret_typ, E> $imp
+            ) -> AMLParseResult<$ret_typ, E> $imp
         };
 
         // Use lifetime from scope
@@ -296,9 +317,9 @@ mod util {
             $imp:block
         ] => {
             $(#[$meta])*
-            $vis fn $name<E: ::nom::error::ParseError<ParserState<$a>>>(
+            $vis fn $name<E: AMLParseError<$a>>(
                 $input: ParserState<$a>
-            ) -> ::nom::IResult<ParserState<'_>, $ret_typ, E> $imp
+            ) -> AMLParseResult<$ret_typ, E> $imp
         };
     }
 
@@ -428,7 +449,7 @@ mod util {
     /// with a one-byte string, but I didn't actually profile it.
     pub fn tag_byte<'a, E: ParseError<ParserState<'a>>>(
         b: u8,
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, u8, E> {
+    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<u8, E> {
         move |i: ParserState<'_>| {
             if i.data.is_empty() {
                 err(i, ErrorKind::Tag)
@@ -449,9 +470,9 @@ mod util {
     /// ```
     pub fn ext_op<'a, O, E, P>(
         p: P
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'a>, O, E>
+    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
     where
-        P: Fn(ParserState<'a>) -> IResult<ParserState<'a>, O, E>,
+        P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
         E: ParseError<ParserState<'a>>
     {
         preceded(tag_byte(0x5b), p)
@@ -467,7 +488,7 @@ mod util {
             let (i, _) = tag_byte(0x00)(i)?;
             // SAFETY: We just checked that this is ASCII, so it's also valid UTF-8
             let str_utf8 = unsafe {
-                core::str::from_utf8_unchecked(str_bytes)
+                core::str::from_utf8_unchecked(str_bytes.data)
             };
             Ok((i, str_utf8))
         }
@@ -496,7 +517,7 @@ mod util {
 
         #[test]
         fn test_ext_op() {
-            let ext_xyz = ext_op(bytes::is_a(b"XYZ"));
+            let ext_xyz = ext_op(ParserState::lift(bytes::is_a("XYZ")));
             assert_errors!(&ext_xyz, b"");
             assert_errors!(&ext_xyz, b"\xd8");
             assert_errors!(&ext_xyz, b"\x5b");
@@ -573,7 +594,8 @@ pub mod name {
                     && is_name_char(n[3])
             }
 
-            let (i, n) = verify(bytes::take(4_usize), is_name_seg)(i)?;
+            let (i, n_state) = verify(bytes::take(4_usize), is_name_seg)(i)?;
+            let n = n_state.data;
             Ok((i, NameSeg([n[0], n[1], n[2], n[3]])))
         });
     }
@@ -1063,7 +1085,7 @@ pub mod data {
                 in_package(struct_parser! {
                     Buffer {
                         size: TermArg::parse,
-                        initializer: map(rest, |r: ParserState| r.data),
+                        initializer: ParserState::lift(rest),
                     }
                 })
             )
@@ -1220,16 +1242,15 @@ mod package {
     /// Execute a parser inside a length-prefixed package
     pub fn in_package<'a, P, O, E>(
         inner_parser: P,
-    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, O, E>
+    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
     where
-        P: Fn(ParserState<'a>) -> IResult<ParserState<'_>, O, E>,
-        E: ParseError<ParserState<'a>>
+        P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
+        E: AMLParseError<'a>
     {
         move |i: ParserState<'a>| {
             let (i, package_length) = parse_package_length(i)?;
             let (i, package_data) = bytes::take(package_length)(i)?;
-            let package_state = ParserState { data: package_data, ..i.clone() };
-            let (_, parsed_package) = all_consuming(&inner_parser)(package_state)?;
+            let (_, parsed_package) = all_consuming(&inner_parser)(package_data)?;
             Ok((i, parsed_package))
         }
     }
@@ -1328,7 +1349,8 @@ mod package {
 
         #[test]
         fn test_package() {
-            let package_xyz = in_package(bytes::take_while(|b| b"XYZ".contains(&b)));
+            let package_xyz = in_package(
+                ParserState::lift(bytes::take_while(|b| b"XYZ".contains(&b))));
             assert_errors!(&package_xyz, b"");
             assert_parses!(&package_xyz, b"\x00", b"", b"");
             assert_errors!(&package_xyz, b"\x01");
@@ -1342,7 +1364,8 @@ mod package {
             assert_errors!(&package_xyz, b"\x02ZA");
 
             // Fails if inner parser requires more data
-            let package_take_4 = in_package::<_, _, ()>(bytes::take(4_usize));
+            let package_take_4 = in_package::<_, _, ()>(
+                ParserState::lift(bytes::take(4_usize)));
             assert_errors!(&package_take_4, b"\x00");
             assert_errors!(&package_take_4, b"\x01A");
             assert_errors!(&package_take_4, b"\x02AB");
