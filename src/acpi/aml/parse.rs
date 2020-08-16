@@ -36,7 +36,10 @@ trait Parse<'a> where Self: Sized {
 pub mod state {
     use super::*;
     use super::super::name::NameSeg;
-    use nom::{InputLength, Slice};
+    use nom::{
+        AsBytes, Compare, CompareResult, ExtendInto, FindSubstring, FindToken, InputIter,
+        InputLength, InputTake, Offset, ParseTo, Slice, UnspecializedInput
+    };
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -68,8 +71,80 @@ pub mod state {
         }
     }
 
+    impl AsBytes for ParserState<'_> {
+        fn as_bytes(&self) -> &[u8] { self.data }
+    }
+
+    impl<'a, T> Compare<T> for ParserState<'a> where &'a [u8]: Compare<T> {
+        fn compare(&self, t: T) -> CompareResult {
+            self.data.compare(t)
+        }
+        fn compare_no_case(&self, t: T) -> CompareResult {
+            self.data.compare_no_case(t)
+        }
+    }
+
+    impl<'a> ExtendInto for ParserState<'a> {
+        type Item = <&'a [u8] as ExtendInto>::Item;
+        type Extender = <&'a [u8] as ExtendInto>::Extender;
+        fn new_builder(&self) -> Self::Extender {
+            self.data.new_builder()
+        }
+        fn extend_into(&self, acc: &mut Self::Extender) {
+            self.data.extend_into(acc)
+        }
+    }
+
+    impl<'a, T> FindSubstring<T> for ParserState<'a> where &'a [u8]: FindSubstring<T> {
+        fn find_substring(&self, substr: T) -> Option<usize> {
+            self.data.find_substring(substr)
+        }
+    }
+
+    impl<'a, T> FindToken<T> for ParserState<'a> where &'a [u8]: FindToken<T> {
+        fn find_token(&self, t: T) -> bool { self.data.find_token(t) }
+    }
+
+    impl<'a> InputIter for ParserState<'a> {
+        type Item = <&'a [u8] as InputIter>::Item;
+        type Iter = <&'a [u8] as InputIter>::Iter;
+        type IterElem = <&'a [u8] as InputIter>::IterElem;
+        fn iter_indices(&self) -> Self::Iter {
+            self.data.iter_indices()
+        }
+        fn iter_elements(&self) -> Self::IterElem {
+            self.data.iter_elements()
+        }
+        fn position<P: Fn(Self::Item) -> bool>(&self, pred: P) -> Option<usize> {
+            self.data.position(pred)
+        }
+        fn slice_index(&self, i: usize) -> Option<usize> {
+            self.data.slice_index(i)
+        }
+    }
+
     impl InputLength for ParserState<'_> {
         fn input_len(&self) -> usize { self.data.input_len() }
+    }
+
+    impl InputTake for ParserState<'_> {
+        fn take(&self, c: usize) -> Self {
+            Self { data: self.data.take(c), ..self.clone() }
+        }
+        fn take_split(&self, c: usize) -> (Self, Self) {
+            let (data_a, data_b) = self.data.take_split(c);
+            let a = Self { data: data_a, ..self.clone() };
+            let b = Self { data: data_b, ..self.clone() };
+            (a, b)
+        }
+    }
+
+    impl Offset for ParserState<'_> {
+        fn offset(&self, second: &Self) -> usize { self.data.offset(second.data) }
+    }
+
+    impl<'a, R> ParseTo<R> for ParserState<'a> where &'a [u8]: ParseTo<R> {
+        fn parse_to(&self) -> Option<R> { self.data.parse_to() }
     }
 
     impl<'a, R> Slice<R> for ParserState<'a> where &'a [u8]: Slice<R> {
@@ -80,6 +155,8 @@ pub mod state {
             }
         }
     }
+
+    impl UnspecializedInput for ParserState<'_> { }
 }
 
 
