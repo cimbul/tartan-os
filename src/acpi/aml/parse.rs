@@ -17,19 +17,162 @@ use alloc::vec;
 use core::convert::TryFrom;
 use nom::IResult;
 use nom::branch::alt;
-use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
 use nom::error::{ErrorKind, ParseError};
-use nom::number::complete as num;
 use nom::multi;
 use nom::sequence::{preceded, tuple};
+use self::state::ParserState;
 
 
 /// An object that can be parsed from AML bytecode
 trait Parse<'a> where Self: Sized {
-    fn parse<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E>;
+    fn parse<E: ParseError<ParserState<'a>>>(
+        i: ParserState<'a>,
+    ) -> IResult<ParserState<'_>, Self, E>;
 }
 
+
+/// Parser context needed to disambiguate grammar
+pub mod state {
+    use super::*;
+    use super::super::name::NameSeg;
+    use nom::{InputLength, Slice};
+
+
+    /// Expected argument count for a method in the ACPI namespace.
+    ///
+    /// Needed because the grammar for method invocations is ambiguous without knowing the
+    /// exact number of argument terms expected.
+    #[derive(Debug, Default, Clone, PartialEq, Eq)]
+    pub struct MethodSignature {
+        pub name: Vec<NameSeg>,
+        pub arg_count: u8,
+    }
+
+
+    /// Input data plus context needed to disambiguate grammar
+    #[derive(Debug, Default, Clone, PartialEq, Eq)]
+    pub struct ParserState<'a> {
+        pub data: &'a [u8],
+        pub current_scope: Vec<NameSeg>,
+        pub method_signatures: Vec<MethodSignature>,
+    }
+
+    impl<'a> ParserState<'a> {
+        pub fn new(data: &'a [u8]) -> Self {
+            Self {
+                data,
+                current_scope: vec![],
+                method_signatures: vec![],
+            }
+        }
+    }
+
+    impl InputLength for ParserState<'_> {
+        fn input_len(&self) -> usize { self.data.input_len() }
+    }
+
+    impl<'a, R> Slice<R> for ParserState<'a> where &'a [u8]: Slice<R> {
+        fn slice(&self, r: R) -> Self {
+            Self {
+                data: self.data.slice(r),
+                ..self.clone()
+            }
+        }
+    }
+}
+
+
+/// Wraps a byte-oriented parser to work with [`ParserState`]
+macro_rules! lift {
+    [
+        $parser:ident
+        -> ($out:ty, $error_kind:expr)
+        = $nom_parser:expr
+    ] => {
+        pub fn $parser<'a, E: ParseError<ParserState<'a>>>(
+            i: ParserState<'a>
+        ) -> IResult<ParserState<'_>, $out, E> {
+            // Hopefully rustc is smart enough to optimize away the closure
+            let closure = lift!(|'a| -> ($out, $error_kind) = $nom_parser);
+            closure(i)
+        }
+    };
+
+    [
+        |$a:lifetime|
+        -> ($out:ty, $error_kind:expr)
+        = $nom_parser:expr
+    ] => {
+        move |i: ParserState<$a>| {
+            let result: IResult<_, _, ()> = $nom_parser(i.data);
+            match result {
+                Ok((data, n)) => Ok((ParserState { data, ..i }, n)),
+                Err(nom::Err::Error(_)) =>
+                    Err(nom::Err::Error(E::from_error_kind(i, $error_kind))),
+                Err(nom::Err::Failure(_)) =>
+                    Err(nom::Err::Failure(E::from_error_kind(i, $error_kind))),
+                Err(nom::Err::Incomplete(i)) =>
+                    Err(nom::Err::Incomplete(i)),
+            }
+        }
+    };
+}
+
+
+/// Parsers from [`nom::number::complete`] wrapped to work with [`ParserState`].
+///
+/// The native parsers only work with byte slices.
+mod num {
+    #![allow(clippy::missing_errors_doc)]
+
+    use super::*;
+    use nom::number::complete as nom_num;
+
+    lift!(le_u8  -> (u8,  ErrorKind::Eof) = nom_num::le_u8);
+    lift!(le_u16 -> (u16, ErrorKind::Eof) = nom_num::le_u16);
+    lift!(le_u24 -> (u32, ErrorKind::Eof) = nom_num::le_u24);
+    lift!(le_u32 -> (u32, ErrorKind::Eof) = nom_num::le_u32);
+    lift!(le_u64 -> (u64, ErrorKind::Eof) = nom_num::le_u64);
+}
+
+
+/// Parsers from [`nom::bytes::complete`] wrapped to work with [`ParserState`].
+///
+/// Although the native parsers work with custom input types, their return types are
+/// `IResult<Input, Input, E>`. Since the parser state is meaningless in the output type,
+/// it is more natural to work with `IResult<Input, &[u8], E>`.
+mod bytes {
+    use super::*;
+    use nom::bytes::complete as nom_bytes;
+    use nom::ToUsize;
+
+    #[cfg(test)]
+    pub fn is_a<'a, E: ParseError<ParserState<'a>>>(
+        arr: &'a [u8]
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
+        lift!(|'a| -> (&'a [u8], ErrorKind::IsA) = nom_bytes::is_a(arr))
+    }
+
+    pub fn take<'a, C: Copy + ToUsize, E: ParseError<ParserState<'a>>>(
+        count: C
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
+        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take(count))
+    }
+
+    pub fn take_till<'a, F: Copy + Fn(u8) -> bool, E: ParseError<ParserState<'a>>>(
+        cond: F
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
+        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take_till(cond))
+    }
+
+    #[cfg(test)]
+    pub fn take_while<'a, F: Copy + Fn(u8) -> bool, E: ParseError<ParserState<'a>>>(
+        cond: F
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, &'a [u8], E> {
+        lift!(|'a| -> (&'a [u8], ErrorKind::Eof) = nom_bytes::take_while(cond))
+    }
+}
 
 
 #[macro_use]
@@ -63,9 +206,9 @@ mod util {
             $imp:block
         ] => {
             $(#[$meta])*
-            $vis fn $name<'a, E: ::nom::error::ParseError<&'a [u8]>>(
-                $input: &'a [u8]
-            ) -> ::nom::IResult<&[u8], $ret_typ, E> $imp
+            $vis fn $name<'a, E: ::nom::error::ParseError<ParserState<'a>>>(
+                $input: ParserState<'a>
+            ) -> ::nom::IResult<ParserState<'_>, $ret_typ, E> $imp
         };
 
         // Use lifetime from scope
@@ -76,9 +219,9 @@ mod util {
             $imp:block
         ] => {
             $(#[$meta])*
-            $vis fn $name<E: ::nom::error::ParseError<&$a [u8]>>(
-                $input: &$a [u8]
-            ) -> ::nom::IResult<&[u8], $ret_typ, E> $imp
+            $vis fn $name<E: ::nom::error::ParseError<ParserState<$a>>>(
+                $input: ParserState<$a>
+            ) -> ::nom::IResult<ParserState<'_>, $ret_typ, E> $imp
         };
     }
 
@@ -149,7 +292,7 @@ mod util {
             let input = $input;
             let expected_rest = $rest;
             let expected_output = $output;
-            let result: nom::IResult<_, _, ()> = parser(input);
+            let result: nom::IResult<_, _, ()> = parser(ParserState::new(input));
             match result {
                 Err(_) => panic!(
                     "\nInput could not be parsed\n   input: {:?}\n  wanted: {:?}\n  parser: {}\n",
@@ -157,21 +300,21 @@ mod util {
                     expected_output,
                     stringify!($parser),
                 ),
-                Ok((actual_rest, actual_output)) => {
+                Ok((output_state, actual_output)) => {
                     assert!(
                         actual_output == expected_output,
                         "\nDid not get expected output from parser\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n    rest: {:?}\n  parser: {}\n",
                         expected_output,
                         actual_output,
                         input,
-                        actual_rest,
+                        output_state.data,
                         stringify!($parser),
                     );
                     assert!(
-                        actual_rest == expected_rest,
+                        output_state.data == expected_rest,
                         "\nParser did not consume expected data\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
                         expected_rest,
-                        actual_rest,
+                        output_state.data,
                         input,
                         actual_output,
                         stringify!($parser),
@@ -187,7 +330,7 @@ mod util {
         ($parser:expr, $input:expr) => {
             let parser = $parser;
             let input = $input;
-            let result: nom::IResult<_, _, ()> = parser(input);
+            let result: nom::IResult<_, _, ()> = parser(ParserState::new(input));
             if let Ok((_rest, output)) = result {
                 panic!(
                     "\nExpected error from parser, but got output\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
@@ -206,14 +349,15 @@ mod util {
 
     /// Recognizes a single byte. Possibly slightly more efficient than `bytes::tag()`
     /// with a one-byte string, but I didn't actually profile it.
-    pub fn tag_byte<'a, E: ParseError<&'a [u8]>>(
+    pub fn tag_byte<'a, E: ParseError<ParserState<'a>>>(
         b: u8,
-    ) -> impl Fn(&'a [u8]) -> IResult<&[u8], u8, E> {
-        move |i: &[u8]| {
-            if i.is_empty() {
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, u8, E> {
+        move |i: ParserState<'_>| {
+            if i.data.is_empty() {
                 err(i, ErrorKind::Tag)
-            } else if i[0] == b {
-                Ok((&i[1..], b))
+            } else if i.data[0] == b {
+                let output = ParserState { data: &i.data[1..], ..i };
+                Ok((output, b))
             } else {
                 err(i, ErrorKind::Tag)
             }
@@ -228,10 +372,10 @@ mod util {
     /// ```
     pub fn ext_op<'a, O, E, P>(
         p: P
-    ) -> impl Fn(&'a [u8]) -> IResult<&'a [u8], O, E>
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'a>, O, E>
     where
-        P: Fn(&'a [u8]) -> IResult<&'a [u8], O, E>,
-        E: ParseError<&'a [u8]>
+        P: Fn(ParserState<'a>) -> IResult<ParserState<'a>, O, E>,
+        E: ParseError<ParserState<'a>>
     {
         preceded(tag_byte(0x5b), p)
     }
@@ -275,7 +419,7 @@ mod util {
 
         #[test]
         fn test_ext_op() {
-            let ext_xyz = ext_op(bytes::is_a("XYZ"));
+            let ext_xyz = ext_op(bytes::is_a(b"XYZ"));
             assert_errors!(&ext_xyz, b"");
             assert_errors!(&ext_xyz, b"\xd8");
             assert_errors!(&ext_xyz, b"\x5b");
@@ -842,7 +986,7 @@ pub mod data {
                 in_package(struct_parser! {
                     Buffer {
                         size: TermArg::parse,
-                        initializer: rest,
+                        initializer: map(rest, |r: ParserState| r.data),
                     }
                 })
             )
@@ -999,15 +1143,16 @@ mod package {
     /// Execute a parser inside a length-prefixed package
     pub fn in_package<'a, P, O, E>(
         inner_parser: P,
-    ) -> impl Fn(&'a [u8]) -> IResult<&[u8], O, E>
+    ) -> impl Fn(ParserState<'a>) -> IResult<ParserState<'_>, O, E>
     where
-        P: Fn(&'a [u8]) -> IResult<&[u8], O, E>,
-        E: ParseError<&'a [u8]>
+        P: Fn(ParserState<'a>) -> IResult<ParserState<'_>, O, E>,
+        E: ParseError<ParserState<'a>>
     {
-        move |i: &'a [u8]| {
+        move |i: ParserState<'a>| {
             let (i, package_length) = parse_package_length(i)?;
             let (i, package_data) = bytes::take(package_length)(i)?;
-            let (_, parsed_package) = all_consuming(&inner_parser)(package_data)?;
+            let package_state = ParserState { data: package_data, ..i.clone() };
+            let (_, parsed_package) = all_consuming(&inner_parser)(package_state)?;
             Ok((i, parsed_package))
         }
     }
