@@ -49,10 +49,7 @@ pub mod state {
     use super::*;
     use super::super::name::NameSeg;
     use core::borrow::Borrow;
-    use nom::{
-        AsBytes, Compare, CompareResult, ExtendInto, FindSubstring, FindToken, InputIter,
-        InputLength, InputTake, Offset, ParseTo, Slice, UnspecializedInput
-    };
+    use nom::{InputIter, InputLength, InputTake, Slice, UnspecializedInput};
     use nom::error::VerboseError;
 
 
@@ -113,40 +110,6 @@ pub mod state {
         fn borrow(&self) -> &[u8] { self.data }
     }
 
-    impl AsBytes for ParserState<'_> {
-        fn as_bytes(&self) -> &[u8] { self.data }
-    }
-
-    impl<'a, T> Compare<T> for ParserState<'a> where &'a [u8]: Compare<T> {
-        fn compare(&self, t: T) -> CompareResult {
-            self.data.compare(t)
-        }
-        fn compare_no_case(&self, t: T) -> CompareResult {
-            self.data.compare_no_case(t)
-        }
-    }
-
-    impl<'a> ExtendInto for ParserState<'a> {
-        type Item = <&'a [u8] as ExtendInto>::Item;
-        type Extender = <&'a [u8] as ExtendInto>::Extender;
-        fn new_builder(&self) -> Self::Extender {
-            self.data.new_builder()
-        }
-        fn extend_into(&self, acc: &mut Self::Extender) {
-            self.data.extend_into(acc)
-        }
-    }
-
-    impl<'a, T> FindSubstring<T> for ParserState<'a> where &'a [u8]: FindSubstring<T> {
-        fn find_substring(&self, substr: T) -> Option<usize> {
-            self.data.find_substring(substr)
-        }
-    }
-
-    impl<'a, T> FindToken<T> for ParserState<'a> where &'a [u8]: FindToken<T> {
-        fn find_token(&self, t: T) -> bool { self.data.find_token(t) }
-    }
-
     impl<'a> InputIter for ParserState<'a> {
         type Item = <&'a [u8] as InputIter>::Item;
         type Iter = <&'a [u8] as InputIter>::Iter;
@@ -179,14 +142,6 @@ pub mod state {
             let b = Self { data: data_b, ..self.clone() };
             (a, b)
         }
-    }
-
-    impl Offset for ParserState<'_> {
-        fn offset(&self, second: &Self) -> usize { self.data.offset(second.data) }
-    }
-
-    impl<'a, R> ParseTo<R> for ParserState<'a> where &'a [u8]: ParseTo<R> {
-        fn parse_to(&self) -> Option<R> { self.data.parse_to() }
     }
 
     impl<'a, R> Slice<R> for ParserState<'a> where &'a [u8]: Slice<R> {
