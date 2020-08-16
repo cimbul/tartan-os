@@ -48,8 +48,7 @@ where T: state::ReplaceableParseError<&'a [u8], ParserState<'a>> { }
 pub mod state {
     use super::*;
     use super::super::name::NameSeg;
-    use core::borrow::Borrow;
-    use nom::{InputIter, InputLength, InputTake, Slice, UnspecializedInput};
+    use nom::{InputIter, InputLength};
     use nom::error::VerboseError;
 
 
@@ -106,10 +105,6 @@ pub mod state {
         }
     }
 
-    impl Borrow<[u8]> for ParserState<'_> {
-        fn borrow(&self) -> &[u8] { self.data }
-    }
-
     impl<'a> InputIter for ParserState<'a> {
         type Item = <&'a [u8] as InputIter>::Item;
         type Iter = <&'a [u8] as InputIter>::Iter;
@@ -131,29 +126,6 @@ pub mod state {
     impl InputLength for ParserState<'_> {
         fn input_len(&self) -> usize { self.data.input_len() }
     }
-
-    impl InputTake for ParserState<'_> {
-        fn take(&self, c: usize) -> Self {
-            Self { data: self.data.take(c), ..self.clone() }
-        }
-        fn take_split(&self, c: usize) -> (Self, Self) {
-            let (data_a, data_b) = self.data.take_split(c);
-            let a = Self { data: data_a, ..self.clone() };
-            let b = Self { data: data_b, ..self.clone() };
-            (a, b)
-        }
-    }
-
-    impl<'a, R> Slice<R> for ParserState<'a> where &'a [u8]: Slice<R> {
-        fn slice(&self, r: R) -> Self {
-            Self {
-                data: self.data.slice(r),
-                ..self.clone()
-            }
-        }
-    }
-
-    impl UnspecializedInput for ParserState<'_> { }
 
 
     /// Helper trait used to convert a parser error from one input type to another.
@@ -437,13 +409,15 @@ mod util {
         /// Recognizes a null-terminated (C-style), possibly-empty 7-bit ASCII string.
         /// Strips the null terminator.
         pub c_ascii_str(i) -> &str {
-            let (i, str_bytes) = bytes::take_till(|b: u8| b == 0 || !b.is_ascii())(i)?;
+            let (i, str_bytes) = ParserState::lift(
+                bytes::take_till(|b: u8| b == 0 || !b.is_ascii())
+            )(i)?;
             // Make sure we stopped at a null (not a non-ASCII byte or early end) and
             // consume it
             let (i, _) = tag_byte(0x00)(i)?;
             // SAFETY: We just checked that this is ASCII, so it's also valid UTF-8
             let str_utf8 = unsafe {
-                core::str::from_utf8_unchecked(str_bytes.data)
+                core::str::from_utf8_unchecked(str_bytes)
             };
             Ok((i, str_utf8))
         }
@@ -549,8 +523,9 @@ pub mod name {
                     && is_name_char(n[3])
             }
 
-            let (i, n_state) = verify(bytes::take(4_usize), is_name_seg)(i)?;
-            let n = n_state.data;
+            let (i, n) = ParserState::lift(
+                verify(bytes::take(4_usize), is_name_seg)
+            )(i)?;
             Ok((i, NameSeg([n[0], n[1], n[2], n[3]])))
         });
     }
@@ -1204,8 +1179,9 @@ mod package {
     {
         move |i: ParserState<'a>| {
             let (i, package_length) = parse_package_length(i)?;
-            let (i, package_data) = bytes::take(package_length)(i)?;
-            let (_, parsed_package) = all_consuming(&inner_parser)(package_data)?;
+            let (i, package_data) = ParserState::lift(bytes::take(package_length))(i)?;
+            let package_state = ParserState { data: package_data, ..i.clone() };
+            let (_, parsed_package) = all_consuming(&inner_parser)(package_state)?;
             Ok((i, parsed_package))
         }
     }
