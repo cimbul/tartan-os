@@ -18,11 +18,11 @@ use core::convert::TryFrom;
 use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
-use nom::combinator::{all_consuming, flat_map, map, rest, value, verify};
+use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
 use nom::error::{ErrorKind, ParseError};
 use nom::number::complete as num;
 use nom::multi;
-use nom::sequence::preceded;
+use nom::sequence::{preceded, tuple};
 
 
 /// An object that can be parsed from AML bytecode
@@ -933,11 +933,17 @@ pub mod data {
     /// DDBHandle       := Integer
     /// ObjectReference := Integer
     /// ```
+    ///
+    /// However, it is unclear how these two types would be encoded in AML and how they
+    /// would be distinguished from each other, or from the integral constants under
+    /// `ComputationalData`. Consequently, they aren't implemented
+    ///
+    /// TODO: Figure out why this production exists, and get rid of it if it is no
+    /// different than [`DataObject`].
     impl<'a> Parse<'a> for DataRefObject<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = map(DataObject::parse, DataRefObject::Data)
+        }
     }
 }
 
@@ -1132,11 +1138,12 @@ pub mod term {
     use alloc::boxed::Box;
     use super::*;
     use super::util::*;
+    use super::name::{parse_target};
     use super::package::{in_package, parse_package_length};
     use super::super::term::*;
     use super::super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
     use super::super::misc::{ArgObject, LocalObject};
-    use super::super::name::{NameSeg, NameString};
+    use super::super::name::{NameSeg, NameString, SimpleName, SuperName};
 
 
     /// Grammar:
@@ -2818,10 +2825,236 @@ pub mod term {
     ///                DefSignal | DefSleep | DefStall | DefWhile
     /// ```
     impl<'a> Parse<'a> for StatementOpcode<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                break_op,
+                break_point,
+                continue_op,
+                fatal,
+                if_op,
+                load,
+                no_op,
+                notify,
+                release,
+                reset,
+                return_op,
+                signal,
+                sleep,
+                stall,
+                while_op,
+            ))
+        }
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefBreak        := BreakOp
+        /// BreakOp         := 0xA5
+        /// ```
+        break_op -> StatementOpcode<'a> = value(StatementOpcode::Break, tag_byte(0xa5))
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefBreakPoint   := BreakPointOp
+        /// BreakPointOp    := 0xCC
+        /// ```
+        break_point -> StatementOpcode<'a> = value(StatementOpcode::BreakPoint, tag_byte(0xcc))
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefContinue     := ContinueOp
+        /// ContinueOp      := 0x9F
+        /// ```
+        continue_op -> StatementOpcode<'a> = value(StatementOpcode::Continue, tag_byte(0x9f))
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefFatal        := FatalOp FatalType FatalCode FatalArg
+        /// FatalOp         := ExtOpPrefix 0x32
+        /// FatalType       := ByteData
+        /// FatalCode       := DWordData
+        /// FatalArg        := TermArg => Integer
+        /// ```
+        fatal -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x32)),
+            struct_parser! {
+                StatementOpcode::Fatal {
+                    fatal_type: num::le_u8,
+                    code: num::le_u32,
+                    arg: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefIfElse       := IfOp PkgLength Predicate TermList DefElse
+        /// IfOp            := 0xA0
+        /// Predicate       := TermArg => Integer
+        /// DefElse         := Nothing | <ElseOp PkgLength TermList>
+        /// ElseOp          := 0xA1
+        /// ```
+        if_op(i) -> StatementOpcode<'a> {
+            let (i, _) = tag_byte(0xa0)(i)?;
+            let (i, (predicate, if_true)) = in_package(tuple((
+               TermArg::parse,
+               multi::many0(TermObject::parse),
+            )))(i)?;
+            let (i, if_false) = opt(in_package(preceded(
+                tag_byte(0xa1),
+                multi::many0(TermObject::parse),
+            )))(i)?;
+            let if_op = StatementOpcode::If {
+                predicate,
+                if_true,
+                if_false: if_false.unwrap_or_default(),
+            };
+            Ok((i, if_op))
+        }
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefLoad         := LoadOp NameString DDBHandleObject
+        /// LoadOp          := ExtOpPrefix 0x20
+        /// DDBHandleObject := SuperName
+        /// ```
+        load -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x20)),
+            struct_parser! {
+                StatementOpcode::Load {
+                    name: NameString::parse,
+                    definition_block_handle: SuperName::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefNoop         := NoopOp
+        /// NoopOp          := 0xA3
+        /// ```
+        no_op -> StatementOpcode<'a> = value(StatementOpcode::NoOp, tag_byte(0xa3))
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefNotify       := NotifyOp NotifyObject NotifyValue
+        /// NotifyOp        := 0x86
+        /// NotifyObject    := SuperName => ThermalZone | Processor | Device
+        /// NotifyValue     := TermArg => Integer
+        /// ```
+        notify -> StatementOpcode<'a> = preceded(
+            tag_byte(0x86),
+            struct_parser! {
+                StatementOpcode::Notify {
+                    device_or_zone: SuperName::parse,
+                    value: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefRelease      := ReleaseOp MutexObject
+        /// ReleaseOp       := ExtOpPrefix 0x27
+        /// MutexObject     := SuperName
+        /// ```
+        release -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x27)),
+            struct_parser! {
+                StatementOpcode::Release { mutex: SuperName::parse }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefReset        := ResetOp EventObject
+        /// ResetOp         := ExtOpPrefix 0x26
+        /// EventObject     := SuperName
+        /// ```
+        reset -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x26)),
+            struct_parser! {
+                StatementOpcode::Reset { event: SuperName::parse }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefReturn       := ReturnOp ArgObject
+        /// ReturnOp        := 0xA4
+        /// ArgObject       := TermArg => DataRefObject
+        /// ```
+        return_op -> StatementOpcode<'a> = preceded(
+            tag_byte(0xa4),
+            map(TermArg::parse, StatementOpcode::Return)
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefSignal       := SignalOp EventObject
+        /// SignalOp        := ExtOpPrefix 0x24
+        /// ```
+        signal -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x24)),
+            struct_parser! {
+                StatementOpcode::Signal { event: SuperName::parse }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefSleep        := SleepOp MsecTime
+        /// SleepOp         := ExtOpPrefix 0x22
+        /// MsecTime        := TermArg => Integer
+        /// ```
+        sleep -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x22)),
+            struct_parser! {
+                StatementOpcode::Sleep { milliseconds: TermArg::parse }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefStall        := StallOp UsecTime
+        /// StallOp         := ExtOpPrefix 0x21
+        /// UsecTime        := TermArg => ByteData
+        /// ```
+        stall -> StatementOpcode<'a> = preceded(
+            ext_op(tag_byte(0x21)),
+            struct_parser! {
+                StatementOpcode::Stall { microseconds: TermArg::parse }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefWhile        := WhileOp PkgLength Predicate TermList
+        /// WhileOp         := 0xA2
+        /// ```
+        while_op -> StatementOpcode<'a> = preceded(
+            tag_byte(0xa2),
+            in_package(struct_parser! {
+                StatementOpcode::While {
+                    predicate: TermArg::parse,
+                    body: multi::many0(TermObject::parse),
+                }
+            })
+        )
     }
 
 
@@ -2830,11 +3063,74 @@ pub mod term {
     /// ```text
     /// Type6Opcode := DefRefOf | DefDerefOf | DefIndex | ??UserTermObj
     /// ```
+    ///
+    /// An explanation in the ASL grammar seems to indicate that `UserTermObj` is
+    /// synonymous with `MethodInvocation`.
     impl<'a> Parse<'a> for ReferenceExpressionOpcode<'a> {
-        parser_fn!(parse('a i) -> Self {
-            // TODO: Implement
-            err(i, ErrorKind::Verify)
-        });
+        parser_fn! {
+            parse<'a> -> Self = alt((
+                ref_of,
+                deref,
+                index,
+                invoke,
+            ))
+        }
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefRefOf            := RefOfOp SuperName
+        /// RefOfOp             := 0x71
+        /// ```
+        ref_of -> ReferenceExpressionOpcode<'a> = preceded(
+            tag_byte(0x71),
+            map(SuperName::parse, ReferenceExpressionOpcode::RefOf),
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefDerefOf          := DerefOfOp ObjReference
+        /// DerefOfOp           := 0x83
+        /// ObjReference        := TermArg => ??ObjectReference | String
+        /// ```
+        deref -> ReferenceExpressionOpcode<'a> = preceded(
+            tag_byte(0x83),
+            map(TermArg::parse, ReferenceExpressionOpcode::Deref),
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefIndex            := IndexOp BuffPkgStrObj IndexValue Target
+        /// IndexOp             := 0x88
+        /// BuffPkgStrObj       := TermArg => Buffer, Package or String
+        /// IndexValue          := TermArg => Integer
+        /// ```
+        index -> ReferenceExpressionOpcode<'a> = preceded(
+            tag_byte(0x83),
+            struct_parser! {
+                ReferenceExpressionOpcode::DefIndex {
+                    source: TermArg::parse,
+                    index: TermArg::parse,
+                    result: parse_target,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// MethodInvocation := NameString TermArgList
+        /// ```
+        // TODO: Fix ambiguous grammar
+        invoke -> ReferenceExpressionOpcode<'a> = |i| err(i, ErrorKind::Tag)
+        // invoke -> ReferenceExpressionOpcode<'a> = struct_parser! {
+        //     ReferenceExpressionOpcode::Invoke {
+        //         source: NameString::parse,
+        //         args: multi::many0(TermArg::parse),
+        //     }
+        // }
     }
 
 
@@ -2855,16 +3151,601 @@ pub mod term {
     /// ```
     impl<'a> Parse<'a> for ExpressionOpcode<'a> {
         parser_fn! {
-            // TODO: Finish implementing
             parse<'a> -> Self = alt((
-                // TODO: RefExpression
-                map(Buffer::parse, |b| Self::Buffer(b)),
-                map(Package::parse, |p| Self::Package(p)),
-                map(VarPackage::parse, |p| Self::VarPackage(p)),
+                // Broken up in groups of 20 to avoid alt()'s parameter limit
+                alt((
+                    map(ReferenceExpressionOpcode::parse, Self::RefExpression),
+                    map(Buffer::parse, Self::Buffer),
+                    map(Package::parse, Self::Package),
+                    map(VarPackage::parse, Self::VarPackage),
+                    acquire,
+                    add,
+                    bitwise_and,
+                    concat,
+                    concat_res,
+                    cond_ref_of,
+                    copy_object,
+                    decrement,
+                    divide,
+                    find_set_left_bit,
+                    find_set_right_bit,
+                    from_bcd,
+                    increment,
+                    logical_and,
+                    equal,
+                    greater,
+                )),
+                alt((
+                    // covers !, !=, >=, <=
+                    inverted_logical_ops,
+                    less,
+                    load_table,
+                    logical_or,
+                    match_op,
+                    mid,
+                    mod_op,
+                    multiply,
+                    nand,
+                    nor,
+                    bitwise_not,
+                    object_type,
+                    bitwise_or,
+                    shift_left,
+                    shift_right,
+                    size_of,
+                    store,
+                    subtract,
+                    timer,
+                    to_bcd,
+                )),
+                alt((
+                    to_buffer,
+                    to_decimal_string,
+                    to_hex_string,
+                    to_integer,
+                    to_string,
+                    wait,
+                    bitwise_xor,
+                )),
             ))
         }
     }
 
+    macro_rules! binary_op_parser {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
+            parser_fn! {
+                $(#[$meta])*
+                $parser -> ExpressionOpcode<'a> = preceded(
+                    tag_byte($tag),
+                    struct_parser! {
+                        ExpressionOpcode::$op(TermArg::parse, TermArg::parse, parse_target)
+                    }
+                )
+            }
+        };
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefAdd              := AddOp Operand Operand Target
+        /// AddOp               := 0x72
+        /// Operand             := TermArg => Integer
+        /// ```
+        add Add 0x72
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefAnd              := AndOp Operand Operand Target
+        /// AndOp               := 0x7B
+        /// ```
+        bitwise_and BitwiseAnd 0x7b
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefOr               := OrOp Operand Operand Target
+        /// OrOp                := 0x7D
+        /// ```
+        bitwise_or BitwiseOr 0x7d
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefXOr              := XorOp Operand Operand Target
+        /// XorOp               := 0x7F
+        /// ```
+        bitwise_xor BitwiseXor 0x7f
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefConcat           := ConcatOp Data Data Target
+        /// ConcatOp            := 0x73
+        /// ```
+        /// Data                := TermArg => ComputationalData
+        concat Concat 0x73
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefConcatRes        := ConcatResOp BufData BufData Target
+        /// ConcatResOp         := 0x84
+        /// ```
+        /// BufData             := TermArg => Buffer
+        concat_res ConcatRes 0x84
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefMod              := ModOp Dividend Divisor Target
+        /// ModOp               := 0x85
+        /// ```
+        mod_op Mod 0x85
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefMultiply         := MultiplyOp Operand Operand Target
+        /// MultiplyOp          := 0x77
+        /// ```
+        multiply Multiply 0x77
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefNAnd             := NandOp Operand Operand Target
+        /// NandOp              := 0x7C
+        /// ```
+        nand Nand 0x7c
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefNOr              := NorOp Operand Operand Target
+        /// NorOp               := 0x7E
+        /// ```
+        nor Nor 0x7e
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefShiftLeft        := ShiftLeftOp Operand ShiftCount Target
+        /// ShiftLeftOp         := 0x79
+        /// ShiftCount          := TermArg => Integer
+        /// ```
+        shift_left ShiftLeft 0x79
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefShiftRight       := ShiftRightOp Operand ShiftCount Target
+        /// ShiftRightOp        := 0x7A
+        /// ```
+        shift_right ShiftRight 0x7a
+    }
+
+    binary_op_parser! {
+        /// ```text
+        /// DefSubtract         := SubtractOp Operand Operand Target
+        /// SubtractOp          := 0x74
+        /// ```
+        subtract Subtract 0x74
+    }
+
+    macro_rules! unary_op_parser {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
+            unary_op_parser! { $(#[$meta])* $parser $op tag_byte($tag) }
+        };
+
+        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:expr] => {
+            parser_fn! {
+                $(#[$meta])*
+                $parser -> ExpressionOpcode<'a> = preceded(
+                    $tag,
+                    struct_parser! {
+                        ExpressionOpcode::$op(TermArg::parse, parse_target)
+                    }
+                )
+            }
+        };
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefNot              := NotOp Operand Target
+        /// NotOp               := 0x80
+        /// ```
+        bitwise_not BitwiseNot 0x80
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefFindSetLeftBit   := FindSetLeftBitOp Operand Target
+        /// FindSetLeftBitOp    := 0x81
+        /// ```
+        find_set_left_bit FindSetLeftBit 0x81
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefFindSetRightBit  := FindSetRightBitOp Operand Target
+        /// FindSetRightBitOp   := 0x82
+        /// ```
+        find_set_right_bit FindSetRightBit 0x82
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefFromBCD          := FromBCDOp BCDValue Target
+        /// FromBCDOp           := ExtOpPrefix 0x28
+        /// ```
+        from_bcd FromBCD ext_op(tag_byte(0x28))
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefToBCD            := ToBCDOp Operand Target
+        /// ToBCDOp             := ExtOpPrefix 0x29
+        /// BCDValue            := TermArg => Integer
+        /// ```
+        to_bcd ToBCD ext_op(tag_byte(0x29))
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefToBuffer         := ToBufferOp Operand Target
+        /// ToBufferOp          := 0x96
+        /// ```
+        to_buffer ToBuffer 0x96
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefToDecimalString  := ToDecimalStringOp Operand Target
+        /// ToDecimalStringOp   := 0x97
+        /// ```
+        to_decimal_string ToDecimalString 0x97
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefToHexString      := ToHexStringOp Operand Target
+        /// ToHexStringOp       := 0x98
+        /// ```
+        to_hex_string ToHexString 0x98
+    }
+
+    unary_op_parser! {
+        /// ```text
+        /// DefToInteger        := ToIntegerOp Operand Target
+        /// ToIntegerOp         := 0x99
+        /// ```
+        to_integer ToInteger 0x99
+    }
+
+    macro_rules! logical_op_parser {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
+            parser_fn! {
+                $(#[$meta])*
+                $parser -> ExpressionOpcode<'a> = preceded(
+                    tag_byte($tag),
+                    struct_parser! {
+                        ExpressionOpcode::$op(TermArg::parse, TermArg::parse)
+                    }
+                )
+            }
+        };
+    }
+
+    logical_op_parser! {
+        /// ```text
+        /// DefLEqual           := LequalOp Operand Operand
+        /// LequalOp            := 0x93
+        /// ```text
+        equal Equal 0x93
+    }
+
+    logical_op_parser! {
+        /// ```text
+        /// DefLGreater         := LgreaterOp Operand Operand
+        /// LgreaterOp          := 0x94
+        /// ```text
+        greater Greater 0x94
+    }
+
+    logical_op_parser! {
+        /// ```text
+        /// DefLLess            := LlessOp Operand Operand
+        /// LlessOp             := 0x95
+        /// ```text
+        less Less 0x95
+    }
+
+    logical_op_parser! {
+        /// ```text
+        /// DefLAnd             := LandOp Operand Operand
+        /// LandOp              := 0x90
+        /// ```text
+        logical_and LogicalAnd 0x90
+    }
+
+    logical_op_parser! {
+        /// ```text
+        /// DefLOr              := LorOp Operand Operand
+        /// LorOp               := 0x91
+        /// ```text
+        logical_or LogicalOr 0x91
+    }
+
+    parser_fn! {
+        /// This implements both pure "not" **and** the inverted comparison operators,
+        /// which are really just parser optimizations.
+        ///
+        /// ```text
+        /// DefLNot             := LnotOp Operand
+        /// LnotOp              := 0x92
+        /// DefLGreaterEqual    := LgreaterEqualOp Operand Operand
+        /// LgreaterEqualOp     := LnotOp LlessOp
+        /// DefLLessEqual       := LlessEqualOp Operand Operand
+        /// LlessEqualOp        := LnotOp LgreaterOp
+        /// DefLNotEqual        := LnotEqualOp Operand Operand
+        /// LnotEqualOp         := LnotOp LequalOp
+        /// ```text
+        inverted_logical_ops -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x92),
+            alt((
+                preceded(tag_byte(0x95), struct_parser!(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse))),
+                preceded(tag_byte(0x94), struct_parser!(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse))),
+                preceded(tag_byte(0x93), struct_parser!(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse))),
+                map(TermArg::parse, ExpressionOpcode::LogicalNot),
+            ))
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefDecrement        := DecrementOp SuperName
+        /// DecrementOp         := 0x76
+        /// ```
+        decrement -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x76),
+            map(SuperName::parse, ExpressionOpcode::Decrement),
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefIncrement        := IncrementOp SuperName
+        /// IncrementOp         := 0x75
+        /// ```
+        increment -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x75),
+            map(SuperName::parse, ExpressionOpcode::Increment),
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefSizeOf           := SizeOfOp SuperName
+        /// SizeOfOp            := 0x87
+        /// ```
+        size_of -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x87),
+            map(SuperName::parse, ExpressionOpcode::SizeOf),
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefObjectType       := ObjectTypeOp <SimpleName | DebugObj |
+        ///                        DefRefOf | DefDerefOf | DefIndex>
+        /// ObjectTypeOp        := 0x8E
+        /// ```
+        ///
+        /// NOTE: SuperName includes MethodInvocation, which is *not* legal for the
+        /// ObjectType operator. It is otherwise identical to the grammar above.
+        object_type -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x8e),
+            map(
+                verify(
+                    SuperName::parse,
+                    // Disallow method invocations
+                    |n| match n {
+                        SuperName::Reference(r) =>
+                            !matches!(
+                                **r,
+                                ReferenceExpressionOpcode::Invoke { source: _, args: _ }
+                            ),
+                        _ => true,
+                    }
+                ),
+                ExpressionOpcode::ObjectType
+            )
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefTimer            := TimerOp
+        /// TimerOp             := 0x5B 0x33
+        /// ```
+        timer -> ExpressionOpcode<'a> = value(
+            ExpressionOpcode::Timer,
+            ext_op(tag_byte(0x33))
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefAcquire          := AcquireOp MutexObject Timeout
+        /// AcquireOp           := ExtOpPrefix 0x23
+        /// Timeout             := WordData
+        /// ```
+        acquire -> ExpressionOpcode<'a> = preceded(
+            ext_op(tag_byte(0x23)),
+            struct_parser! {
+                ExpressionOpcode::Acquire {
+                    mutex: SuperName::parse,
+                    timeout: num::le_u16,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefWait             := WaitOp EventObject Operand
+        /// WaitOp              := ExtOpPrefix 0x25
+        /// ```
+        wait -> ExpressionOpcode<'a> = preceded(
+            ext_op(tag_byte(0x25)),
+            struct_parser! {
+                ExpressionOpcode::Wait {
+                    event: SuperName::parse,
+                    timeout: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefCondRefOf        := CondRefOfOp SuperName Target
+        /// CondRefOfOp         := ExtOpPrefix 0x12
+        /// ```
+        cond_ref_of -> ExpressionOpcode<'a> = preceded(
+            ext_op(tag_byte(0x12)),
+            struct_parser! {
+                ExpressionOpcode::CondRefOf(SuperName::parse, parse_target)
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefCopyObject       := CopyObjectOp TermArg SimpleName
+        /// CopyObjectOp        := 0x9D
+        /// ```
+        copy_object -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x9d),
+            struct_parser! {
+                ExpressionOpcode::CopyObject(TermArg::parse, SimpleName::parse)
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefDivide           := DivideOp Dividend Divisor Remainder Quotient
+        /// DivideOp            := 0x78
+        /// Dividend            := TermArg => Integer
+        /// Divisor             := TermArg => Integer
+        /// Remainder           := Target
+        /// Quotient            := Target
+        /// ```
+        divide -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x78),
+            struct_parser! {
+                ExpressionOpcode::Divide {
+                    dividend: TermArg::parse,
+                    divisor: TermArg::parse,
+                    remainder: parse_target,
+                    quotient: parse_target,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefLoadTable        := LoadTableOp TermArg TermArg TermArg TermArg TermArg TermArg
+        /// LoadTableOp         := ExtOpPrefix 0x1F
+        /// ```
+        load_table -> ExpressionOpcode<'a> = preceded(
+            ext_op(tag_byte(0x1f)),
+            struct_parser! {
+                ExpressionOpcode::LoadTable {
+                    signature: TermArg::parse,
+                    oem_id: TermArg::parse,
+                    oem_table_id: TermArg::parse,
+                    root_path: TermArg::parse,
+                    parameter_path: TermArg::parse,
+                    parameter_data: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefMatch            := MatchOp SearchPkg MatchOpcode Operand MatchOpcode Operand StartIndex
+        /// MatchOp             := 0x89
+        /// SearchPkg           := TermArg => Package
+        /// StartIndex          := TermArg => Integer
+        /// ```
+        match_op -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x89),
+            struct_parser! {
+                ExpressionOpcode::Match {
+                    search_package: TermArg::parse,
+                    a: tuple((MatchOpcode::parse, TermArg::parse)),
+                    b: tuple((MatchOpcode::parse, TermArg::parse)),
+                    start_index: TermArg::parse,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefMid              := MidOp MidObj TermArg TermArg Target
+        /// MidOp               := 0x9E
+        /// MidObj              := TermArg => Buffer | String
+        /// ```
+        mid -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x9e),
+            struct_parser! {
+                ExpressionOpcode::Mid {
+                    source: TermArg::parse,
+                    index: TermArg::parse,
+                    length: TermArg::parse,
+                    result: parse_target,
+                }
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefStore            := StoreOp TermArg SuperName
+        /// StoreOp             := 0x70
+        /// ```
+        store -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x70),
+            struct_parser! {
+                ExpressionOpcode::Store(TermArg::parse, SuperName::parse)
+            }
+        )
+    }
+
+    parser_fn! {
+        /// ```text
+        /// DefToString         := ToStringOp TermArg LengthArg Target
+        /// LengthArg           := TermArg => Integer
+        /// ToStringOp          := 0x9C
+        /// ```
+        to_string -> ExpressionOpcode<'a> = preceded(
+            tag_byte(0x9c),
+            struct_parser! {
+                ExpressionOpcode::ToString {
+                    source: TermArg::parse,
+                    length: TermArg::parse,
+                    result: parse_target,
+                }
+            }
+        )
+    }
 
     /// Grammar:
     ///

@@ -482,82 +482,53 @@ pub mod term {
     /// Terminal operation that does not evaluate to a value, a.k.a. "Type 1 Opcode."
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum StatementOpcode<'a> {
-        // DefBreak        := BreakOp
-        // BreakOp         := 0xA5
+        /// Break from a loop
         Break,
 
-        // DefBreakPoint   := BreakPointOp
-        // BreakPointOp    := 0xCC
+        /// Trigger a debugger breakpoint
         BreakPoint,
 
-        // DefContinue     := ContinueOp
-        // ContinueOp      := 0x9F
+        /// Continue to the next loop iteration
         Continue,
 
-        // DefFatal        := FatalOp FatalType FatalCode FatalArg
-        // FatalOp         := ExtOpPrefix 0x32
-        // FatalType       := ByteData
-        // FatalCode       := DWordData
-        // FatalArg        := TermArg => Integer
+        /// Signal an error that requires a system shutdown
         Fatal { fatal_type: u8, code: u32, arg: TermArg<'a> },
 
-        // DefIfElse       := IfOp PkgLength Predicate TermList DefElse
-        // IfOp            := 0xA0
-        // Predicate       := TermArg => Integer
-        // DefElse         := Nothing | <ElseOp PkgLength TermList>
-        // ElseOp          := 0xA1
+        /// Branch on a predicate
         If {
             predicate: TermArg<'a>,
             if_true: Vec<TermObject<'a>>,
-            if_false: Option<Vec<TermObject<'a>>>,
+            if_false:Vec<TermObject<'a>>,
         },
 
-        // DefLoad         := LoadOp NameString DDBHandleObject
-        // LoadOp          := ExtOpPrefix 0x20
-        // DDBHandleObject := SuperName
+        /// Load a dynamically-generated SSDT from a field, region, or buffer
         Load { name: NameString, definition_block_handle: SuperName<'a> },
 
-        // DefNoop         := NoopOp
-        // NoopOp          := 0xA3
+        /// Do nothing
         NoOp,
 
-        // DefNotify       := NotifyOp NotifyObject NotifyValue
-        // NotifyOp        := 0x86
-        // NotifyObject    := SuperName => ThermalZone | Processor | Device
-        // NotifyValue     := TermArg => Integer
+        /// Send a signal value to a device/processor/zone
         Notify { device_or_zone: SuperName<'a>, value: TermArg<'a> },
 
-        // DefRelease      := ReleaseOp MutexObject
-        // ReleaseOp       := ExtOpPrefix 0x27
-        // MutexObject     := SuperName
+        /// Release a held mutex
         Release { mutex: SuperName<'a> },
 
-        // DefReset        := ResetOp EventObject
-        // ResetOp         := ExtOpPrefix 0x26
-        // EventObject     := SuperName
+        /// Clear the signalled state of an event object
         Reset { event: SuperName<'a> },
 
-        // DefReturn       := ReturnOp ArgObject
-        // ReturnOp        := 0xA4
-        // ArgObject       := TermArg => DataRefObject
+        /// Exit the current method and yield the given value to the caller
         Return(TermArg<'a>),
 
-        // DefSignal       := SignalOp EventObject
-        // SignalOp        := ExtOpPrefix 0x24
+        /// Signal to one thread waiting on the event
         Signal { event: SuperName<'a> },
 
-        // DefSleep        := SleepOp MsecTime
-        // SleepOp         := ExtOpPrefix 0x22
-        // MsecTime        := TermArg => Integer
+        /// Delay for at least the given milliseconds, releasing the processor
         Sleep { milliseconds: TermArg<'a> },
 
-        // DefStall        := StallOp UsecTime
-        // StallOp         := ExtOpPrefix 0x21
-        // UsecTime        := TermArg => ByteData
+        /// Delay for at least the given microseconds, but do *not* release the processor
         Stall { microseconds: TermArg<'a> },
 
-        // DefWhile        := WhileOp PkgLength Predicate TermList
-        // WhileOp         := 0xA2
+        /// Execute a series of statements as long as the predicate is true
         While { predicate: TermArg<'a>, body: Vec<TermObject<'a>> },
     }
 
@@ -565,23 +536,17 @@ pub mod term {
     /// Terminal operation that evaluates to a reference.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum ReferenceExpressionOpcode<'a> {
-        // DefRefOf            := RefOfOp SuperName
-        // RefOfOp             := 0x71
-        DefRefOf(SuperName<'a>),
+        /// Create a reference to the given name
+        RefOf(SuperName<'a>),
 
-        // DefDerefOf          := DerefOfOp ObjReference
-        // DerefOfOp           := 0x83
-        // ObjReference        := TermArg => ??ObjectReference | String
-        DefDerefOf(TermArg<'a>),
+        /// Get the target of a reference
+        Deref(TermArg<'a>),
 
-        // DefIndex            := IndexOp BuffPkgStrObj IndexValue Target
-        // IndexOp             := 0x88
-        // BuffPkgStrObj       := TermArg => Buffer, Package or String
-        // IndexValue          := TermArg => Integer
+        /// Create a reference to an index within a buffer
         DefIndex { source: TermArg<'a>, index: TermArg<'a>, result: Target<'a> },
 
-        // MethodInvocation := NameString TermArgList
-        MethodInvocation { source: NameString, args: Vec<TermArg<'a>> },
+        /// Execute a control method
+        Invoke { source: NameString, args: Vec<TermArg<'a>> },
     }
 
 
@@ -593,48 +558,32 @@ pub mod term {
         Package(Package<'a>),
         VarPackage(VarPackage<'a>),
 
-        // DefAcquire          := AcquireOp MutexObject Timeout
-        // AcquireOp           := ExtOpPrefix 0x23
-        // Timeout             := WordData
+        /// Try to acquire a mutex, returning *true* if the attempt times out
         Acquire { mutex: SuperName<'a>, timeout: u16 },
 
-        // DefAdd              := AddOp Operand Operand Target
-        // AddOp               := 0x72
-        // Operand             := TermArg => Integer
+        /// Add two integers
         Add(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefAnd              := AndOp Operand Operand Target
-        // AndOp               := 0x7B
+        /// Compute a bitwise AND of two integers
         BitwiseAnd(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefConcat           := ConcatOp Data Data Target
-        // ConcatOp            := 0x73
-        // Data                := TermArg => ComputationalData
+        /// Concatenate two strings or buffers
         Concat(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefConcatRes        := ConcatResOp BufData BufData Target
-        // ConcatResOp         := 0x84
-        // BufData             := TermArg => Buffer
+        /// Concatenate two buffers containing resource templates
         ConcatRes(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefCondRefOf        := CondRefOfOp SuperName Target
-        // CondRefOfOp         := ExtOpPrefix 0x12
+        /// Try to create a reference, returning false if it is not possible
         CondRefOf(SuperName<'a>, Target<'a>),
 
-        // DefCopyObject       := CopyObjectOp TermArg SimpleName
-        // CopyObjectOp        := 0x9D
+        /// Update the destination with a copy of the given value, *without* converting
+        /// its type. Compare with [`ExpressionOpcode::Store`].
         CopyObject(TermArg<'a>, SimpleName),
 
-        // DefDecrement        := DecrementOp SuperName
-        // DecrementOp         := 0x76
+        /// Decrement an integer variable
         Decrement(SuperName<'a>),
 
-        // DefDivide           := DivideOp Dividend Divisor Remainder Quotient
-        // DivideOp            := 0x78
-        // Dividend            := TermArg => Integer
-        // Divisor             := TermArg => Integer
-        // Remainder           := Target
-        // Quotient            := Target
+        /// Perform integer (quotient-remainder) division
         Divide {
             dividend: TermArg<'a>,
             divisor: TermArg<'a>,
@@ -642,57 +591,43 @@ pub mod term {
             quotient: Target<'a>,
         },
 
-        // DefFindSetLeftBit   := FindSetLeftBitOp Operand Target
-        // FindSetLeftBitOp    := 0x81
+        /// Get the index of the most-significant set bit in a value
         FindSetLeftBit(TermArg<'a>, Target<'a>),
 
-        // DefFindSetRightBit  := FindSetRightBitOp Operand Target
-        // FindSetRightBitOp   := 0x82
+        /// Get the index of the least-significant set bit in a value
         FindSetRightBit(TermArg<'a>, Target<'a>),
 
-        // DefFromBCD          := FromBCDOp BCDValue Target
-        // FromBCDOp           := ExtOpPrefix 0x28
-        // BCDValue            := TermArg => Integer
+        /// Decode a series of binary-coded decimal nibbles into an integer
         FromBCD(TermArg<'a>, Target<'a>),
 
-        // DefIncrement        := IncrementOp SuperName
-        // IncrementOp         := 0x75
+        /// Increment an integer variable
         Increment(SuperName<'a>),
 
-        // DefLAnd             := LandOp Operand Operand
-        // LandOp              := 0x90
+        /// Evaluate to true if both arguments are non-zero integers
         LogicalAnd(TermArg<'a>, TermArg<'a>),
 
-        // DefLEqual           := LequalOp Operand Operand
-        // LequalOp            := 0x93
+        /// Evaluate to true if both values are equal
         Equal(TermArg<'a>, TermArg<'a>),
 
-        // DefLGreater         := LgreaterOp Operand Operand
-        // LgreaterOp          := 0x94
+        /// Evaluate to true if the left value is greater than the right value
         Greater(TermArg<'a>, TermArg<'a>),
 
-        // DefLGreaterEqual    := LgreaterEqualOp Operand Operand
-        // LgreaterEqualOp     := LnotOp LlessOp
+        /// Evaluate to true if the left value is greater than or equal to the right value
         GreaterEqual(TermArg<'a>, TermArg<'a>),
 
-        // DefLLess            := LlessOp Operand Operand
-        // LlessOp             := 0x95
+        /// Evaluate to true if the left value is less than the right value
         Less(TermArg<'a>, TermArg<'a>),
 
-        // DefLLessEqual       := LlessEqualOp Operand Operand
-        // LlessEqualOp        := LnotOp LgreaterOp
+        /// Evaluate to true if the left value is less than or equal to the right value
         LessEqual(TermArg<'a>, TermArg<'a>),
 
-        // DefLNot             := LnotOp Operand
-        // LnotOp              := 0x92
+        /// Evaluate to true if the value is zero
         LogicalNot(TermArg<'a>),
 
-        // DefLNotEqual        := LnotEqualOp Operand Operand
-        // LnotEqualOp         := LnotOp LequalOp
+        /// Evaluate to true if the left value is not equal to the right value
         NotEqual(TermArg<'a>, TermArg<'a>),
 
-        // DefLoadTable        := LoadTableOp TermArg TermArg TermArg TermArg TermArg TermArg
-        // LoadTableOp         := ExtOpPrefix 0x1F
+        /// Find an ACPI table indexed by the XSDT
         LoadTable {
             signature: TermArg<'a>,
             oem_id: TermArg<'a>,
@@ -702,14 +637,11 @@ pub mod term {
             parameter_data: TermArg<'a>,
         },
 
-        // DefLOr              := LorOp Operand Operand
-        // LorOp               := 0x91
+        /// Evaluate to true if either of the values is a non-zero integer
         LogicalOr(TermArg<'a>, TermArg<'a>),
 
-        // DefMatch            := MatchOp SearchPkg MatchOpcode Operand MatchOpcode Operand StartIndex
-        // MatchOp             := 0x89
-        // SearchPkg           := TermArg => Package
-        // StartIndex          := TermArg => Integer
+        /// Search a package and return the index of the first contained value that
+        /// matches both specified conditions
         Match {
             search_package: TermArg<'a>,
             a: (MatchOpcode, TermArg<'a>),
@@ -717,9 +649,7 @@ pub mod term {
             start_index: TermArg<'a>,
         },
 
-        // DefMid              := MidOp MidObj TermArg TermArg Target
-        // MidOp               := 0x9E
-        // MidObj              := TermArg => Buffer | String
+        /// Copy a slice of a string or buffer.
         Mid {
             source: TermArg<'a>,
             index: TermArg<'a>,
@@ -727,94 +657,70 @@ pub mod term {
             result: Target<'a>,
         },
 
-        // DefMod              := ModOp Dividend Divisor Target
-        // ModOp               := 0x85
+        /// Compute the remainder of dividing the first integer by the second
         Mod(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefMultiply         := MultiplyOp Operand Operand Target
-        // MultiplyOp          := 0x77
+        /// Multiply two integers
         Multiply(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefNAnd             := NandOp Operand Operand Target
-        // NandOp              := 0x7C
+        /// Compute the bitwise NAND of two integers
         Nand(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefNOr              := NorOp Operand Operand Target
-        // NorOp               := 0x7E
+        /// Compute the bitwise NOR of two integers
         Nor(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefNot              := NotOp Operand Target
-        // NotOp               := 0x80
+        /// Invert the bits of an integer
         BitwiseNot(TermArg<'a>, Target<'a>),
 
-        // DefObjectType       := ObjectTypeOp <SimpleName | DebugObj |
-        //                        DefRefOf | DefDerefOf | DefIndex>
-        // ObjectTypeOp        := 0x8E
-        //
-        // NOTE: SuperName includes MethodInvocation, which is *not* legal for the
-        // ObjectType operator. It is otherwise identical to the grammar above.
+        /// Get an integer representing the type of the given value. See [`ObjectType`].
         ObjectType(SuperName<'a>),
 
-        // DefOr               := OrOp Operand Operand Target
-        // OrOp                := 0x7D
+        /// Compute the bitwise OR of the two integers
         BitwiseOr(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefShiftLeft        := ShiftLeftOp Operand ShiftCount Target
-        // ShiftLeftOp         := 0x79
-        // ShiftCount          := TermArg => Integer
+        /// Multiply an integer by the specified power of two
         ShiftLeft(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefShiftRight       := ShiftRightOp Operand ShiftCount Target
-        // ShiftRightOp        := 0x7A
+        /// Divide an integer by the specified power of two
         ShiftRight(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefSizeOf           := SizeOfOp SuperName
-        // SizeOfOp            := 0x87
+        /// Get the length of a string, buffer, or package
         SizeOf(SuperName<'a>),
 
-        // DefStore            := StoreOp TermArg SuperName
-        // StoreOp             := 0x70
+        /// Update the destination with the given value, converting it to the type of the
+        /// previous value. Compare with [`ExpressionOpcode::CopyObject`].
         Store(TermArg<'a>, SuperName<'a>),
 
-        // DefSubtract         := SubtractOp Operand Operand Target
-        // SubtractOp          := 0x74
+        /// Subtract an integer from another, ignoring underflow
         Subtract(TermArg<'a>, TermArg<'a>, Target<'a>),
 
-        // DefTimer            := TimerOp
-        // TimerOp             := 0x5B 0x33
+        /// Get the current value of the system timer in 100ns
         Timer,
 
-        // DefToBCD            := ToBCDOp Operand Target
-        // ToBCDOp             := ExtOpPrefix 0x29
+        /// Encode an integer into a sequence of binary-coded decimal nibbles
         ToBCD(TermArg<'a>, Target<'a>),
 
-        // DefToBuffer         := ToBufferOp Operand Target
-        // ToBufferOp          := 0x96
+        /// Convert a value to a buffer
         ToBuffer(TermArg<'a>, Target<'a>),
 
-        // DefToDecimalString  := ToDecimalStringOp Operand Target
-        // ToDecimalStringOp   := 0x97
+        /// Encode a value as an ASCII decimal number
         ToDecimalString(TermArg<'a>, Target<'a>),
 
-        // DefToHexString      := ToHexStringOp Operand Target
-        // ToHexStringOp       := 0x98
+        /// Encode a value as an ASCII hexadecimal number
         ToHexString(TermArg<'a>, Target<'a>),
 
-        // DefToInteger        := ToIntegerOp Operand Target
-        // ToIntegerOp         := 0x99
+        /// Convert a value to an integer, either by parsing a string or taking the first
+        /// bytes of a buffer.
         ToInteger(TermArg<'a>, Target<'a>),
 
-        // DefToString         := ToStringOp TermArg LengthArg Target
-        // LengthArg           := TermArg => Integer
-        // ToStringOp          := 0x9C
+        /// Copy an ASCII string from a buffer into a string value
         ToString { source: TermArg<'a>, length: TermArg<'a>, result: Target<'a>},
 
-        // DefWait             := WaitOp EventObject Operand
-        // WaitOp              := ExtOpPrefix 0x25
+        /// Try to wait for another thread to signal an event object, returning true if
+        /// the attempt times out
         Wait { event: SuperName<'a>, timeout: TermArg<'a> },
 
-        // DefXOr              := XorOp Operand Operand Target
-        // XorOp               := 0x7F
+        /// Compute the bitwise XOR of two integers
         BitwiseXor(TermArg<'a>, TermArg<'a>, Target<'a>),
     }
 
