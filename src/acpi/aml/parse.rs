@@ -671,15 +671,15 @@ pub mod name {
 
         #[test]
         fn test_parse_null() {
-            assert_parses!(NS::parse, b"\0",   b"",  NS::new(&[]));
-            assert_parses!(NS::parse, b"\0K",  b"K", NS::new(&[]));
-            assert_parses!(NS::parse, b"^^\0", b"",  NS::new_parent(2, &[]));
-            assert_parses!(NS::parse, b"\\\0", b"",  NS::new_root(&[]));
+            assert_parses!(NS::parse, b"\0",   b"",  NS::empty());
+            assert_parses!(NS::parse, b"\0K",  b"K", NS::empty());
+            assert_parses!(NS::parse, b"^^\0", b"",  NS::new_parent::<NameSeg>(2, &[]));
+            assert_parses!(NS::parse, b"\\\0", b"",  NS::new_root::<NameSeg>(&[]));
         }
 
         #[test]
         fn test_parse_single() {
-            let ns = &[NameSeg(*b"A123")];
+            let ns = &[b"A123"];
             assert_parses!(NS::parse, b"A123",    b"",  NS::new(ns));
             assert_parses!(NS::parse, b"A1234",   b"4", NS::new(ns));
             assert_parses!(NS::parse, b"^^^A123", b"",  NS::new_parent(3, ns));
@@ -688,7 +688,7 @@ pub mod name {
 
         #[test]
         fn test_parse_dual() {
-            let ns = &[NameSeg(*b"A___"), NameSeg(*b"B___")];
+            let ns = &[b"A___", b"B___"];
             assert_parses!(NS::parse, b"\x2eA___B___",     b"",     NS::new(ns));
             assert_parses!(NS::parse, b"\x2eA___B___C",    b"C",    NS::new(ns));
             assert_parses!(NS::parse, b"\x2eA___B___C___", b"C___", NS::new(ns));
@@ -703,16 +703,16 @@ pub mod name {
 
         #[test]
         fn test_parse_multi() {
-            let a = NameSeg(*b"A___");
-            let b = NameSeg(*b"B___");
-            let c = NameSeg(*b"C___");
-            let d = NameSeg(*b"D___");
+            let a = b"A___";
+            let b = b"B___";
+            let c = b"C___";
+            let d = b"D___";
 
             // Count = 0
-            assert_parses!(NS::parse, b"\x2f\x00",     b"",     NS::new(&[]));
-            assert_parses!(NS::parse, b"\x2f\x00A___", b"A___", NS::new(&[]));
-            assert_parses!(NS::parse, b"^^\x2f\x00",   b"",     NS::new_parent(2, &[]));
-            assert_parses!(NS::parse, b"\\\x2f\x00",   b"",     NS::new_root(&[]));
+            assert_parses!(NS::parse, b"\x2f\x00",     b"",     NS::empty());
+            assert_parses!(NS::parse, b"\x2f\x00A___", b"A___", NS::empty());
+            assert_parses!(NS::parse, b"^^\x2f\x00",   b"",     NS::new_parent::<NameSeg>(2, &[]));
+            assert_parses!(NS::parse, b"\\\x2f\x00",   b"",     NS::new_root::<NameSeg>(&[]));
 
             // Count = 1
             assert_errors!(NS::parse, b"\x2f\x01");
@@ -1854,8 +1854,8 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x87\x05\x00\x00\x00\x00");
 
             assert_parses!(N::parse, b"\x5b\x87\x04\x00\x00\x00\x00", b"", N::BankField {
-                region_name: NameString::new(&[]),
-                bank_name: NameString::new(&[]),
+                region_name: NameString::empty(),
+                bank_name: NameString::empty(),
                 bank_value: ComputationalData::Zero.into(),
                 flags: FieldFlags {
                     access_type: AccessType::Any,
@@ -1886,7 +1886,7 @@ pub mod term {
                 b"A___\x03",
                 N::BankField {
                     region_name: b"B___".into(),
-                    bank_name: NameString::new(&[]),
+                    bank_name: NameString::empty(),
                     bank_value: ComputationalData::One.into(),
                     flags: FieldFlags {
                         access_type: AccessType::QWord,
@@ -1910,7 +1910,7 @@ pub mod term {
                 N::CreateBitField {
                     source_buffer: ComputationalData::Zero.into(),
                     bit_index: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -1919,7 +1919,7 @@ pub mod term {
                 N::CreateBitField {
                     source_buffer: ArgObject::Arg6.into(),
                     bit_index: ComputationalData::Word(0xec3f).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -1933,7 +1933,7 @@ pub mod term {
                 N::CreateByteField {
                     source_buffer: ComputationalData::Zero.into(),
                     byte_index: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -1942,7 +1942,7 @@ pub mod term {
                 N::CreateByteField {
                     source_buffer: ArgObject::Arg6.into(),
                     byte_index: ComputationalData::Word(0xec3f).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -1956,7 +1956,7 @@ pub mod term {
                 N::CreateDWordField {
                     source_buffer: ComputationalData::Zero.into(),
                     byte_index: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -1965,7 +1965,7 @@ pub mod term {
                 N::CreateDWordField {
                     source_buffer: ArgObject::Arg6.into(),
                     byte_index: ComputationalData::Word(0xec3f).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -1982,7 +1982,7 @@ pub mod term {
                     source_buffer: ComputationalData::Zero.into(),
                     bit_index: ComputationalData::Zero.into(),
                     num_bits: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -1992,7 +1992,7 @@ pub mod term {
                     source_buffer: ArgObject::Arg6.into(),
                     bit_index: ComputationalData::Word(0xec3f).into(),
                     num_bits: ComputationalData::Byte(0x4c).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -2006,7 +2006,7 @@ pub mod term {
                 N::CreateQWordField {
                     source_buffer: ComputationalData::Zero.into(),
                     byte_index: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -2015,7 +2015,7 @@ pub mod term {
                 N::CreateQWordField {
                     source_buffer: ArgObject::Arg6.into(),
                     byte_index: ComputationalData::Word(0xec3f).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -2029,7 +2029,7 @@ pub mod term {
                 N::CreateWordField {
                     source_buffer: ComputationalData::Zero.into(),
                     byte_index: ComputationalData::Zero.into(),
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                 }
             );
             assert_parses!(N::parse,
@@ -2038,7 +2038,7 @@ pub mod term {
                 N::CreateWordField {
                     source_buffer: ArgObject::Arg6.into(),
                     byte_index: ComputationalData::Word(0xec3f).into(),
-                    name: NameString::new_root(&[NameSeg(*b"A___"), NameSeg(*b"B___")]),
+                    name: NameString::new_root(&[b"A___", b"B___"]),
                 }
             );
         }
@@ -2052,7 +2052,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x88\x00\x00\x00");
             assert_parses!(N::parse, b"\x5b\x88\x00\x00\x00\x00", b"",
                 N::DataTableRegion {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     signature: ComputationalData::Zero.into(),
                     oem_id: ComputationalData::Zero.into(),
                     oem_table_id: ComputationalData::Zero.into(),
@@ -2060,7 +2060,7 @@ pub mod term {
             );
             assert_parses!(N::parse, b"\x5b\x88\\_311\x0a\x42\xff\x6a\x94", b"\x94",
                 N::DataTableRegion {
-                    name: NameString::new_root(&[NameSeg(*b"_311")]),
+                    name: NameString::new_root(&[b"_311"]),
                     signature: ComputationalData::Byte(0x42).into(),
                     oem_id: ComputationalData::Ones.into(),
                     oem_table_id: ArgObject::Arg2.into(),
@@ -2076,7 +2076,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x82\x00\x00");
             assert_parses!(N::parse, b"\x5b\x82\x01\x00", b"",
                 N::Device {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     body: vec![],
                 }
             );
@@ -2086,7 +2086,7 @@ pub mod term {
                 b"\x5b\x82\x14^^ABCD\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::Device {
-                    name: NameString::new_parent(2, &[NameSeg(*b"ABCD")]),
+                    name: NameString::new_parent(2, &[b"ABCD"]),
                     body: vec![
                         N::CreateBitField {
                             source_buffer: LocalObject::Local3.into(),
@@ -2106,15 +2106,15 @@ pub mod term {
         fn test_event() {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x02");
-            assert_parses!(N::parse, b"\x5b\x02\x00", b"", N::Event(NameString::new(&[])));
+            assert_parses!(N::parse, b"\x5b\x02\x00", b"", N::Event(NameString::empty()));
             assert_parses!(N::parse,
                 b"\x5b\x02\\\x2f\x03A___B___C___D___",
                 b"D___",
                 N::Event(
                     NameString::new_root(&[
-                        NameSeg(*b"A___"),
-                        NameSeg(*b"B___"),
-                        NameSeg(*b"C___"),
+                        b"A___",
+                        b"B___",
+                        b"C___",
                     ])
                 )
             );
@@ -2127,12 +2127,12 @@ pub mod term {
             assert_errors!(N::parse, b"\x15\x00");
             assert_errors!(N::parse, b"\x15\x00\x00");
             assert_parses!(N::parse, b"\x15\x00\x00\x00", b"", N::External {
-                name: NameString::new(&[]),
+                name: NameString::empty(),
                 object_type: ObjectType::Uninitialized,
                 argument_count: 0,
             });
             assert_parses!(N::parse, b"\x15^_123\x10\x07\x94\x8b", b"\x94\x8b", N::External {
-                name: NameString::new_parent(1, &[NameSeg(*b"_123")]),
+                name: NameString::new_parent(1, &[b"_123"]),
                 object_type: ObjectType::DebugObject,
                 argument_count: 0x07,
             });
@@ -2150,7 +2150,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x81\x01\x00");
             assert_errors!(N::parse, b"\x5b\x81\x02\x00");
             assert_parses!(N::parse, b"\x5b\x81\x02\x00\x00", b"", N::Field {
-                region_name: NameString::new(&[]),
+                region_name: NameString::empty(),
                 flags: FieldFlags {
                     access_type: AccessType::Any,
                     lock: false,
@@ -2165,7 +2165,7 @@ pub mod term {
                 b"\x5b\x81\x11\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
                 b"\x11\x15",
                 N::Field {
-                    region_name: NameString::new_root(&[NameSeg(*b"ABCD")]),
+                    region_name: NameString::new_root(&[b"ABCD"]),
                     flags: FieldFlags {
                         access_type: AccessType::Buffer,
                         lock: true,
@@ -2174,7 +2174,7 @@ pub mod term {
                     elements: vec![
                         FieldElement::Reserved { bit_length: 0x098f_d853 },
                         FieldElement::Named {
-                            name: NameSeg(*b"_B34"),
+                            name: b"_B34".into(),
                             bit_length: 0x0a8d
                         }
                     ],
@@ -2193,8 +2193,8 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x86\x02\x00\x00");
             assert_errors!(N::parse, b"\x5b\x86\x03\x00\x00");
             assert_parses!(N::parse, b"\x5b\x86\x03\x00\x00\x00", b"", N::IndexField {
-                index_name: NameString::new(&[]),
-                data_name: NameString::new(&[]),
+                index_name: NameString::empty(),
+                data_name: NameString::empty(),
                 flags: FieldFlags {
                     access_type: AccessType::Any,
                     lock: false,
@@ -2209,8 +2209,8 @@ pub mod term {
                 b"\x5b\x86\x16^_987\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
                 b"\x11\x15",
                 N::IndexField {
-                    index_name: NameString::new_parent(1, &[NameSeg(*b"_987")]),
-                    data_name: NameString::new_root(&[NameSeg(*b"ABCD")]),
+                    index_name: NameString::new_parent(1, &[b"_987"]),
+                    data_name: NameString::new_root(&[b"ABCD"]),
                     flags: FieldFlags {
                         access_type: AccessType::Buffer,
                         lock: true,
@@ -2219,7 +2219,7 @@ pub mod term {
                     elements: vec![
                         FieldElement::Reserved { bit_length: 0x098f_d853 },
                         FieldElement::Named {
-                            name: NameSeg(*b"_B34"),
+                            name: b"_B34".into(),
                             bit_length: 0x0a8d
                         }
                     ],
@@ -2235,7 +2235,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x14\x02\x00");
             assert_parses!(N::parse, b"\x14\x02\x00\x00", b"",
                 N::Method {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     flags: MethodFlags {
                         arg_count: 0,
                         serialized: false,
@@ -2251,7 +2251,7 @@ pub mod term {
                 b"\x14\x15^^Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::Method {
-                    name: NameString::new_parent(2, &[NameSeg(*b"Z49F")]),
+                    name: NameString::new_parent(2, &[b"Z49F"]),
                     flags: MethodFlags {
                         arg_count: 0x7,
                         serialized: true,
@@ -2278,11 +2278,11 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x01");
             assert_errors!(N::parse, b"\x5b\x01\x00");
             assert_parses!(N::parse, b"\x5b\x01\x00\x00", b"", N::Mutex {
-                name: NameString::new(&[]),
+                name: NameString::empty(),
                 sync_level: 0,
             });
             assert_parses!(N::parse, b"\x5b\x01\\_BL8\x0f\x94\x7f", b"\x94\x7f", N::Mutex {
-                name: NameString::new_root(&[NameSeg(*b"_BL8")]),
+                name: NameString::new_root(&[b"_BL8"]),
                 sync_level: 0xf,
             });
         }
@@ -2296,7 +2296,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x80\x00\x00\x00");
             assert_parses!(N::parse, b"\x5b\x80\x00\x00\x00\x00", b"",
                 N::OperationRegion {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     region_space: RegionSpace::SystemMemory,
                     offset: ComputationalData::Zero.into(),
                     length: ComputationalData::Zero.into(),
@@ -2309,7 +2309,7 @@ pub mod term {
                 b"\x5b\x80^_J8M\xe8\x0a\x8b\xff\x05\x11",
                 b"\x05\x11",
                 N::OperationRegion {
-                    name: NameString::new_parent(1, &[NameSeg(*b"_J8M")]),
+                    name: NameString::new_parent(1, &[b"_J8M"]),
                     region_space: RegionSpace::OEMDefined(0xe8),
                     offset: ComputationalData::Byte(0x8b).into(),
                     length: ComputationalData::Ones.into(),
@@ -2331,7 +2331,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x84\x04\x00\x00\x00");
             assert_parses!(N::parse, b"\x5b\x84\x04\x00\x00\x00\x00", b"",
                 N::PowerResource {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     system_level: 0x00,
                     resource_order: 0x00,
                     body: vec![],
@@ -2344,7 +2344,7 @@ pub mod term {
                 b"\x5b\x84\x16\\_487\x8f\xa2\x43\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::PowerResource {
-                    name: NameString::new_root(&[NameSeg(*b"_487")]),
+                    name: NameString::new_root(&[b"_487"]),
                     system_level: 0x8f,
                     resource_order: 0x43a2,
                     body: vec![
@@ -2375,7 +2375,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x83\x06\x00\x00\x00\x00\x00\x00");
             assert_parses!(N::parse, b"\x5b\x83\x07\x00\x00\x00\x00\x00\x00\x00", b"",
                 N::Processor {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     id: 0x00,
                     register_block_addr: 0x0000_0000,
                     register_block_length: 0x00,
@@ -2389,7 +2389,7 @@ pub mod term {
                 b"\x5b\x83\x17^_842\xf4\xa2\x83\x42\xed\xd2\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
                 b"EFGH",
                 N::Processor {
-                    name: NameString::new_parent(1, &[NameSeg(*b"_842")]),
+                    name: NameString::new_parent(1, &[b"_842"]),
                     id: 0xf4,
                     register_block_addr: 0xed42_83a2,
                     register_block_length: 0xd2,
@@ -2398,7 +2398,7 @@ pub mod term {
                             size: ComputationalData::Byte(0x3d).into(),
                             initializer: &[0xf5, 0x83],
                         }.into(),
-                        N::Event(NameString::new(&[NameSeg(*b"ABCD")])).into(),
+                        N::Event(NameString::new(&[b"ABCD"])).into(),
                     ],
                 }
             );
@@ -2412,7 +2412,7 @@ pub mod term {
             assert_errors!(N::parse, b"\x5b\x85\x01");
             assert_parses!(N::parse, b"\x5b\x85\x01\x00", b"",
                 N::ThermalZone {
-                    name: NameString::new(&[]),
+                    name: NameString::empty(),
                     body: vec![],
                 }
             );
@@ -2422,13 +2422,13 @@ pub mod term {
                 b"\x5b\x85\x11\\_F37\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
                 b"EFGH",
                 N::ThermalZone {
-                    name: NameString::new_root(&[NameSeg(*b"_F37")]),
+                    name: NameString::new_root(&[b"_F37"]),
                     body: vec![
                         Buffer {
                             size: ComputationalData::Byte(0x3d).into(),
                             initializer: &[0xf5, 0x83],
                         }.into(),
-                        N::Event(NameString::new(&[NameSeg(*b"ABCD")])).into(),
+                        N::Event(NameString::new(&[b"ABCD"])).into(),
                     ],
                 }
             );
@@ -2846,15 +2846,15 @@ pub mod term {
 
         #[test]
         fn test_connect_named() {
-            let abcd = NameSeg(*b"ABCD");
-            let x123 = NameSeg(*b"X123");
+            let abcd = b"ABCD";
+            let x123 = b"X123";
 
             assert_errors!(F::parse, b"\x02");
             assert_errors!(F::parse, b"\x02\xff");
             assert_parses!(F::parse,
                 b"\x02\x00",
                 b"",
-                F::ConnectNamed(NameString::new(&[])),
+                F::ConnectNamed(NameString::empty()),
             );
 
             assert_errors!(F::parse, b"\x02A");

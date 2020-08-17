@@ -24,6 +24,18 @@ pub mod name {
     use super::term::ReferenceExpressionOpcode;
 
 
+    /// Convert a list of segments in various formats into a path vector
+    ///
+    /// ```
+    /// # use tartan_os::acpi::aml::name::{NameSeg, to_path};
+    /// #
+    /// assert_eq!(to_path(&[b"ABCD", b"EFGH"]), vec![NameSeg(*b"ABCD"), NameSeg(*b"EFGH")]);
+    /// ```
+    pub fn to_path<T: Copy + Into<NameSeg>>(path: &[T]) -> Vec<NameSeg> {
+        path.iter().map(|s| (*s).into()).collect()
+    }
+
+
     /// Four-character name segment, allowing underscores, uppercase letters, and digits
     /// (except at the beginning).
     ///
@@ -42,21 +54,25 @@ pub mod name {
     }
 
     impl NameString {
-        pub fn new(path: &[NameSeg]) -> Self {
+        pub fn empty() -> Self {
+            NameString::new::<NameSeg>(&[])
+        }
+
+        pub fn new<T: Copy + Into<NameSeg>>(path: &[T]) -> Self {
             NameString::new_parent(0, path)
         }
 
-        pub fn new_root(path: &[NameSeg]) -> Self {
-            NameString { path: path.into(), anchor: PathAnchor::Root }
+        pub fn new_root<T: Copy + Into<NameSeg>>(path: &[T]) -> Self {
+            NameString { path: to_path(path), anchor: PathAnchor::Root }
         }
 
-        pub fn new_parent(n: usize, path: &[NameSeg]) -> Self {
-            NameString { path: path.into(), anchor: PathAnchor::Parent(n) }
+        pub fn new_parent<T: Copy + Into<NameSeg>>(n: usize, path: &[T]) -> Self {
+            NameString { path: to_path(path), anchor: PathAnchor::Parent(n) }
         }
     }
 
+    from_impl!((n: &[u8; 4]) -> NameString = NameString::new(&[n]));
     from_impl!((n: NameSeg) -> NameString = NameString::new(&[n]));
-    from_impl!((n: &[u8; 4]) -> NameString = NameSeg::from(n).into());
 
 
     /// Indicates whether a name is absolute or relative to the current or parent scope.
