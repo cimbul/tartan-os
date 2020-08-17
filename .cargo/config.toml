@@ -1,6 +1,6 @@
 [alias]
-"test-host" = "test -Z build-std=core,alloc,std --target x86_64-apple-darwin"
-"clippy-test-host" = "clippy --tests -Z build-std=core,alloc,std --target x86_64-apple-darwin"
+"test-host" = "test --target x86_64-apple-darwin"
+"clippy-test-host" = "clippy --tests --target x86_64-apple-darwin"
 
 [build]
 target = "x86_64-unknown-uefi"
@@ -18,4 +18,5 @@ runner = "script/boot.sh"
 rustflags = ["-C", "target-feature=-soft-float"]
 
 [unstable]
-build-std = ["core", "alloc"]
+build-std = ["core", "alloc", "std"]
+build-std-features = []

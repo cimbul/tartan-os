@@ -44,10 +44,11 @@ Packages the bootloader into a GPT + FAT disk image and launches it in QEMU.
 ## Test
 
 ```
-cargo test-host
+# Substitute your host triple here:
+cargo test --target x86_64-apple-darwin
 
-# Or explicitly, if you need to adjust the host target:
-cargo test -Z build-std=core,alloc,std --target x86_64-apple-darwin
+# Or use the one defined in .cargo/config.toml (x86_64-apple-darwin):
+cargo test-host
 ```
 
 Runs tests on your local machine.  There is currently no support for running the tests on
