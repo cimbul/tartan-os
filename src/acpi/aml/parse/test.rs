@@ -1,37 +1,39 @@
 macro_rules! assert_parses {
     ($parser:expr, $input:expr, $rest:expr, $output:expr $(,)?) => {
-        let parser = $parser;
-        let input = $input;
-        let expected_rest = $rest;
-        let expected_output = $output;
-        let result: nom::IResult<_, _, ()> = parser(
-            crate::acpi::aml::parse::state::ParserState::new(input));
-        match result {
-            Err(_) => panic!(
-                "\nInput could not be parsed\n   input: {:?}\n  wanted: {:?}\n  parser: {}\n",
-                input,
-                expected_output,
-                stringify!($parser),
-            ),
-            Ok((output_state, actual_output)) => {
-                assert!(
-                    actual_output == expected_output,
-                    "\nDid not get expected output from parser\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n    rest: {:?}\n  parser: {}\n",
+        {
+            let parser = $parser;
+            let input = $input;
+            let expected_rest = $rest;
+            let expected_output = $output;
+            let result: nom::IResult<_, _, ()> = parser(
+                crate::acpi::aml::parse::state::ParserState::new(input));
+            match result {
+                Err(_) => panic!(
+                    "\nInput could not be parsed\n   input: {:?}\n  wanted: {:?}\n  parser: {}\n",
+                    input,
                     expected_output,
-                    actual_output,
-                    input,
-                    output_state.data,
                     stringify!($parser),
-                );
-                assert!(
-                    output_state.data == expected_rest,
-                    "\nParser did not consume expected data\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
-                    expected_rest,
-                    output_state.data,
-                    input,
-                    actual_output,
-                    stringify!($parser),
-                );
+                ),
+                Ok((output_state, actual_output)) => {
+                    assert!(
+                        actual_output == expected_output,
+                        "\nDid not get expected output from parser\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n    rest: {:?}\n  parser: {}\n",
+                        expected_output,
+                        actual_output,
+                        input,
+                        output_state.data,
+                        stringify!($parser),
+                    );
+                    assert!(
+                        output_state.data == expected_rest,
+                        "\nParser did not consume expected data\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
+                        expected_rest,
+                        output_state.data,
+                        input,
+                        actual_output,
+                        stringify!($parser),
+                    );
+                }
             }
         }
     };
@@ -39,17 +41,19 @@ macro_rules! assert_parses {
 
 macro_rules! assert_errors {
     ($parser:expr, $input:expr) => {
-        let parser = $parser;
-        let input = $input;
-        let result: nom::IResult<_, _, ()> = parser(
-            crate::acpi::aml::parse::state::ParserState::new(input));
-        if let Ok((_rest, output)) = result {
-            panic!(
-                "\nExpected error from parser, but got output\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
-                input,
-                output,
-                stringify!($parser),
-            );
+        {
+            let parser = $parser;
+            let input = $input;
+            let result: nom::IResult<_, _, ()> = parser(
+                crate::acpi::aml::parse::state::ParserState::new(input));
+            if let Ok((_rest, output)) = result {
+                panic!(
+                    "\nExpected error from parser, but got output\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
+                    input,
+                    output,
+                    stringify!($parser),
+                );
+            }
         }
     }
 }
@@ -1399,23 +1403,22 @@ mod term {
 
 mod misc {
     use crate::acpi::aml::parse::Parse;
-    use crate::acpi::aml::misc::*;
-    use ArgObject::*;
+    use crate::acpi::aml::misc::{ArgObject as A};
 
     #[test]
     fn test_arg_obj() {
-        assert_errors!(ArgObject::parse, &[]);
+        assert_errors!(A::parse, &[]);
 
-        assert_errors!(ArgObject::parse, &[0x67]);
-        assert_parses!(ArgObject::parse, &[0x68], &[], Arg0);
-        assert_parses!(ArgObject::parse, &[0x6c], &[], Arg4);
-        assert_parses!(ArgObject::parse, &[0x6e], &[], Arg6);
-        assert_errors!(ArgObject::parse, &[0x6f]);
+        assert_errors!(A::parse, &[0x67]);
+        assert_parses!(A::parse, &[0x68], &[], A::Arg0);
+        assert_parses!(A::parse, &[0x6c], &[], A::Arg4);
+        assert_parses!(A::parse, &[0x6e], &[], A::Arg6);
+        assert_errors!(A::parse, &[0x6f]);
 
         let data = &[0x6c, 0x6e, 0x48, 0x68];
-        assert_parses!(ArgObject::parse, &data[0..], &data[1..], Arg4);
-        assert_parses!(ArgObject::parse, &data[1..], &data[2..], Arg6);
-        assert_errors!(ArgObject::parse, &data[2..]);
-        assert_parses!(ArgObject::parse, &data[3..], &data[4..], Arg0);
+        assert_parses!(A::parse, &data[0..], &data[1..], A::Arg4);
+        assert_parses!(A::parse, &data[1..], &data[2..], A::Arg6);
+        assert_errors!(A::parse, &data[2..]);
+        assert_parses!(A::parse, &data[3..], &data[4..], A::Arg0);
     }
 }
