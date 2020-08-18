@@ -15,7 +15,7 @@ use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
-use core::mem::{size_of, align_of};
+use core::mem::{align_of, size_of};
 use core::slice;
 use crc_any::CRCu32;
 
@@ -32,6 +32,7 @@ pub struct Handle(usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Revision(pub u32);
 
+#[rustfmt::skip]
 impl Revision {
     pub const LATEST: Revision = Revision::V2_80;
 
@@ -100,6 +101,7 @@ pub type Result = core::result::Result<Status, Status>;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Status(usize);
 
+#[rustfmt::skip]
 impl Status {
     // Appendix D
     pub const SUCCESS: Status = Status(0);
@@ -159,8 +161,7 @@ impl Status {
     pub fn into_result(self) -> Result {
         if self.is_error() {
             Err(self)
-        }
-        else {
+        } else {
             Ok(self)
         }
     }
@@ -196,14 +197,13 @@ mod test_status {
         assert_eq!(true, Status::ACCESS_DENIED.is_error());
         assert_eq!(true, Status::HTTP_ERROR.is_error());
 
-        if cfg!(target_pointer_width="32") {
+        if cfg!(target_pointer_width = "32") {
             assert_eq!(Status(0x0000_0000).is_error(), false);
             assert_eq!(Status(0x0000_0001).is_error(), false);
             assert_eq!(Status(0x7fff_ffff).is_error(), false);
             assert_eq!(Status(0x8000_0000).is_error(), true);
             assert_eq!(Status(0xffff_ffff).is_error(), true);
-        }
-        else {
+        } else {
             assert_eq!(Status(0x0000_0000_0000_0000).is_error(), false);
             assert_eq!(Status(0x0000_0000_0000_0001).is_error(), false);
             assert_eq!(Status(0x7fff_ffff_ffff_ffff).is_error(), false);
@@ -224,14 +224,13 @@ mod test_status {
         assert_eq!(false, Status::ACCESS_DENIED.is_warning());
         assert_eq!(false, Status::HTTP_ERROR.is_warning());
 
-        if cfg!(target_pointer_width="32") {
+        if cfg!(target_pointer_width = "32") {
             assert_eq!(Status(0x0000_0000).is_warning(), false);
             assert_eq!(Status(0x0000_0001).is_warning(), true);
             assert_eq!(Status(0x7fff_ffff).is_warning(), true);
             assert_eq!(Status(0x8000_0000).is_warning(), false);
             assert_eq!(Status(0xffff_ffff).is_warning(), false);
-        }
-        else {
+        } else {
             assert_eq!(Status(0x0000_0000_0000_0000).is_warning(), false);
             assert_eq!(Status(0x0000_0000_0000_0001).is_warning(), true);
             assert_eq!(Status(0x7fff_ffff_ffff_ffff).is_warning(), true);
@@ -255,7 +254,10 @@ pub trait Table {
 
     fn header(&self) -> &TableHeader;
 
-    fn verify(&self) where Self: Sized {
+    fn verify(&self)
+    where
+        Self: Sized,
+    {
         self.verify_signature();
         self.verify_revision();
         self.verify_size();
@@ -282,7 +284,10 @@ pub trait Table {
         )
     }
 
-    fn verify_size(&self) where Self: Sized {
+    fn verify_size(&self)
+    where
+        Self: Sized,
+    {
         let actual_size = self.header().header_size as usize;
         assert!(
             actual_size >= size_of::<Self>(),
@@ -360,7 +365,9 @@ pub struct SystemTable<'a> {
 impl Table for SystemTable<'_> {
     const SIGNATURE: u64 = 0x5453_5953_2049_4249;
     const MIN_REVISION: Revision = Revision::V2_00;
-    fn header(&self) -> &TableHeader { &self.header }
+    fn header(&self) -> &TableHeader {
+        &self.header
+    }
 }
 
 #[repr(C)]
@@ -397,7 +404,9 @@ pub struct RuntimeServices {
 impl Table for RuntimeServices {
     const SIGNATURE: u64 = 0x5652_4553_544e_5552;
     const MIN_REVISION: Revision = Revision::V2_00;
-    fn header(&self) -> &TableHeader { &self.header }
+    fn header(&self) -> &TableHeader {
+        &self.header
+    }
 }
 
 #[repr(C)]
@@ -416,10 +425,8 @@ pub struct BootServices {
         page_count: usize,
         physical_address: *mut u64,
     ) -> Status,
-    pub free_pages: unsafe extern "C" fn(
-        physical_address: u64,
-        page_count: usize,
-    ) -> Status,
+    pub free_pages:
+        unsafe extern "C" fn(physical_address: u64, page_count: usize) -> Status,
     pub get_memory_map: unsafe extern "C" fn(
         map_size: &mut usize,
         map: *mut c_void,
@@ -432,9 +439,7 @@ pub struct BootServices {
         size: usize,
         buffer: *mut *mut c_void,
     ) -> Status,
-    pub free_pool: unsafe extern "C" fn(
-        buffer: *mut c_void,
-    ) -> Status,
+    pub free_pool: unsafe extern "C" fn(buffer: *mut c_void) -> Status,
 
     // Event & Timer Services
     create_event: usize,
@@ -499,17 +504,14 @@ pub struct BootServices {
 impl Table for BootServices {
     const SIGNATURE: u64 = 0x5652_4553_544f_4f42;
     const MIN_REVISION: Revision = Revision::V2_00;
-    fn header(&self) -> &TableHeader { &self.header }
+    fn header(&self) -> &TableHeader {
+        &self.header
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct GUID(
-    u32,
-    u16,
-    u16,
-    [u8; 8]
-);
+pub struct GUID(u32, u16, u16, [u8; 8]);
 
 impl GUID {
     pub const fn from(n: u128) -> Self {
@@ -524,7 +526,9 @@ impl GUID {
 }
 
 impl From<u128> for GUID {
-    fn from(n: u128) -> Self { GUID::from(n) }
+    fn from(n: u128) -> Self {
+        GUID::from(n)
+    }
 }
 
 #[cfg(test)]
@@ -537,10 +541,7 @@ mod test_guid {
         assert_eq!(guid.0, 0x0102_0304);
         assert_eq!(guid.1, 0x0506);
         assert_eq!(guid.2, 0x0708);
-        assert_eq!(guid.3, [
-            0x09_u8, 0x10_u8, 0x11_u8, 0x12_u8,
-            0x13_u8, 0x14_u8, 0x15_u8, 0x16_u8,
-        ]);
+        assert_eq!(guid.3, *b"\x09\x10\x11\x12\x13\x14\x15\x16");
     }
 
     #[test]
@@ -560,6 +561,7 @@ pub struct ConfigurationTable {
     vendor_table: usize,
 }
 
+#[rustfmt::skip]
 impl ConfigurationTable {
     pub const ACPI_20_GUID:    GUID = GUID::from(0x8868e871_e4f1_11d3_bc22_0080c73c8881);
     pub const ACPI_GUID:       GUID = GUID::from(0xeb9d2d30_2d88_11d3_9a16_0090273fc14d);
@@ -625,7 +627,8 @@ impl MemoryMap {
 
         assert!(
             self.descriptor_size % align_of::<MemoryDescriptor>() == 0,
-            "Descriptor size {} not a multiple of the MemoryDescriptor struct alignment {}",
+            "Descriptor size {} not a multiple of the MemoryDescriptor struct alignment \
+             {}",
             self.descriptor_size,
             align_of::<MemoryDescriptor>(),
         );
@@ -648,15 +651,15 @@ impl MemoryMap {
     }
 
     /// Iterate over memory descriptors contained in the map.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &MemoryDescriptor> + 'a
-    {
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &MemoryDescriptor> + 'a {
         #![allow(clippy::cast_ptr_alignment)]
 
         // SAFETY: We check the pointer alignment in the verify() call. Since
         // MemoryDescriptor is only composed of unsigned integer types, it is safe to
         // interpret any sequence of bytes as a MemoryDescriptor.
         self.verify();
-        self.raw_map.as_slice()
+        self.raw_map
+            .as_slice()
             .chunks_exact(self.descriptor_size)
             .map(|raw| unsafe { &*raw.as_ptr().cast::<MemoryDescriptor>() })
     }
@@ -676,6 +679,7 @@ impl Default for MemoryMap {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MemoryType(u32);
 
+#[rustfmt::skip]
 impl MemoryType {
     pub const RESERVED:              MemoryType = MemoryType(0);
     pub const LOADER_CODE:           MemoryType = MemoryType(1);
@@ -699,6 +703,7 @@ impl MemoryType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AllocateType(u32);
 
+#[rustfmt::skip]
 impl AllocateType {
     pub const ANY_ADDRESS:   AllocateType = AllocateType(0);
     pub const MAX_ADDRESS:   AllocateType = AllocateType(1);
@@ -725,7 +730,7 @@ bitflags! {
 }
 
 pub mod proto {
-    use super::{GUID, Handle, MemoryType, Status, SystemTable};
+    use super::{Handle, MemoryType, Status, SystemTable, GUID};
     use core::ffi::c_void;
 
     pub trait Protocol {
@@ -744,9 +749,14 @@ pub mod proto {
 
     #[repr(C)]
     pub struct SimpleTextOutput {
-        pub reset: unsafe extern "C" fn(this: &SimpleTextOutput, extended_verification: bool) -> Status,
-        pub output_string: unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
-        pub test_string: unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
+        pub reset: unsafe extern "C" fn(
+            this: &SimpleTextOutput,
+            extended_verification: bool,
+        ) -> Status,
+        pub output_string:
+            unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
+        pub test_string:
+            unsafe extern "C" fn(this: &SimpleTextOutput, string: *const u16) -> Status,
         query_mode: usize,
         set_mode: usize,
         set_attribute: usize,

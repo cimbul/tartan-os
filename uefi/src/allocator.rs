@@ -1,11 +1,11 @@
 //! [`BootServices`](super::BootServices)-based heap allocator to support the standard
 //! [alloc] crate.
 
+use super::global::SYSTEM_TABLE;
+use super::MemoryType;
 use core::alloc::{GlobalAlloc, Layout};
 use core::ffi::c_void;
 use core::ptr;
-use super::MemoryType;
-use super::global::SYSTEM_TABLE;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct BootAllocator;
@@ -22,9 +22,9 @@ impl BootAllocator {
         //    we can recover it for free_pool()
         //  * One extra unit of alignment to accommodate any shifting we need to do to
         //    align the pointer
-        let (saved_ptr_layout, saved_ptr_offset) =
-            orig_layout.extend(Self::VOID_PTR_LAYOUT)
-                .expect("Could not construct extended layout for alignment structure");
+        let (saved_ptr_layout, saved_ptr_offset) = orig_layout
+            .extend(Self::VOID_PTR_LAYOUT)
+            .expect("Could not construct extended layout for alignment structure");
         let adjusted_size = saved_ptr_layout.size() + saved_ptr_layout.align();
         let adjusted_layout =
             Layout::from_size_align(adjusted_size, saved_ptr_layout.align())
@@ -33,10 +33,9 @@ impl BootAllocator {
     }
 
     unsafe fn alloc(layout: Layout) -> *mut u8 {
-        let system_table = SYSTEM_TABLE
-            .expect("System table not initialized");
-        let boot_services = (*system_table).boot_services
-            .expect("Boot services unavailable");
+        let system_table = SYSTEM_TABLE.expect("System table not initialized");
+        let boot_services =
+            (*system_table).boot_services.expect("Boot services unavailable");
 
         let (adjusted_layout, saved_ptr_offset) =
             if layout.align() <= Self::UEFI_ALIGNMENT {
@@ -47,10 +46,13 @@ impl BootAllocator {
             };
 
         let mut buffer: *mut c_void = ptr::null_mut();
-        (boot_services.allocate_pool)(MemoryType::LOADER_DATA,
+        (boot_services.allocate_pool)(
+            MemoryType::LOADER_DATA,
             adjusted_layout.size(),
             &mut buffer,
-        ).into_result().expect("allocate_pool() failed");
+        )
+        .into_result()
+        .expect("allocate_pool() failed");
 
         if adjusted_layout.align() > Self::UEFI_ALIGNMENT {
             let orig_address = buffer as usize;
@@ -71,10 +73,9 @@ impl BootAllocator {
     }
 
     unsafe fn dealloc(buffer: *mut u8, layout: Layout) {
-        let system_table = SYSTEM_TABLE
-            .expect("System table not initialized");
-        let boot_services = (*system_table).boot_services
-            .expect("Boot services unavailable");
+        let system_table = SYSTEM_TABLE.expect("System table not initialized");
+        let boot_services =
+            (*system_table).boot_services.expect("Boot services unavailable");
 
         let original_ptr: *mut c_void = if layout.align() <= Self::UEFI_ALIGNMENT {
             // We gave Rust the pointer that came from allocate_pool() directly
@@ -88,7 +89,8 @@ impl BootAllocator {
             *saved_ptr_ptr
         };
 
-        (boot_services.free_pool)(original_ptr).into_result()
+        (boot_services.free_pool)(original_ptr)
+            .into_result()
             .expect("Could not free memory");
     }
 }

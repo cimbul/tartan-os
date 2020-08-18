@@ -1,8 +1,8 @@
 //! [`SimpleTextOutput`]-based [`Write`] implementation to support formatting macros.
 
-use core::fmt::Write;
-use super::{Result, Status};
 use super::proto::SimpleTextOutput;
+use super::{Result, Status};
+use core::fmt::Write;
 
 #[macro_export]
 /// Write formatted data to an [`OutputStream`] and return the last result, rather than a
@@ -30,10 +30,10 @@ impl Write for OutputStream<'_> {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         // TODO: Horribly inefficient, but simplest from a stack allocation perspective
         for c in s.chars() {
-            if let e@Err(_) = self.write_char(c) {
+            if let e @ Err(_) = self.write_char(c) {
                 return e;
             }
-        };
+        }
         Ok(())
     }
 

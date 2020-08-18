@@ -1,0 +1,16 @@
+unstable_features = true
+
+# Wrapping
+max_width = 90
+comment_width = 90
+use_small_heuristics = "Max"
+wrap_comments = true
+overflow_delimited_expr = true
+format_strings = true
+
+# Other
+blank_lines_upper_bound = 4
+normalize_doc_attributes = true
+use_field_init_shorthand = true
+use_try_shorthand = true
+normalize_comments = true

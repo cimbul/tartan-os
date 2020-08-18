@@ -64,7 +64,7 @@ pub struct FixedDescription {
     pub header: DescriptionHeader,
 
     pub firmware_api_ctrl_addr_32: u32, // FACS
-    pub diff_description_addr_32: u32, // DSDT
+    pub diff_description_addr_32: u32,  // DSDT
 
     _reserved_a: u8,
 
@@ -157,6 +157,7 @@ const_assert_eq!(12, size_of::<GenericAddress>());
 /// Type of register address
 pub struct AddressSpace(u8);
 
+#[rustfmt::skip]
 impl AddressSpace {
     pub const SYSTEM_MEMORY:                   AddressSpace = AddressSpace(0x00);
     pub const SYSTEM_IO:                       AddressSpace = AddressSpace(0x01);
@@ -182,6 +183,7 @@ impl AddressSpace {
 /// Memory width used to read/write from a register
 pub struct AccessSize(u8);
 
+#[rustfmt::skip]
 impl AccessSize {
     pub const UNDEFINED: AccessSize = AccessSize(0);
     pub const BYTE:      AccessSize = AccessSize(1);

@@ -18,10 +18,10 @@ macro_rules! from_impl {
 
 /// Names of objects, arguments, and references
 pub mod name {
-    use alloc::boxed::Box;
-    use alloc::vec::Vec;
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
+    use alloc::boxed::Box;
+    use alloc::vec::Vec;
 
 
     /// Convert a list of segments in various formats into a path vector
@@ -121,9 +121,9 @@ pub mod name {
 
 /// Data resources
 pub mod data {
-    use alloc::vec::Vec;
     use super::name::NameString;
     use super::term::TermArg;
+    use alloc::vec::Vec;
 
     /// Single value resolved at compile time.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -204,11 +204,13 @@ pub mod data {
 
 /// Top-level terms and opcodes.
 pub mod term {
+    use super::data::{
+        Buffer, ComputationalData, DataObject, DataRefObject, Package, VarPackage,
+    };
+    use super::misc::{ArgObject, LocalObject};
+    use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
     use alloc::boxed::Box;
     use alloc::vec::Vec;
-    use super::name::{NameSeg, NameString, SimpleName, SuperName, Target};
-    use super::data::{ComputationalData, Buffer, DataRefObject, DataObject, Package, VarPackage};
-    use super::misc::{ArgObject, LocalObject};
 
     /// Top-level, most general term type where the value (if any) is discarded.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -302,7 +304,7 @@ pub mod term {
             source_buffer: TermArg<'a>,
             bit_index: TermArg<'a>,
             num_bits: TermArg<'a>,
-            name: NameString
+            name: NameString,
         },
 
         /// Declare an eight-byte-wide field within a buffer
@@ -328,20 +330,13 @@ pub mod term {
         },
 
         /// Declare a device and its associated fields, methods, and sub-devices
-        Device {
-            name: NameString,
-            body: Vec<TermObject<'a>>,
-        },
+        Device { name: NameString, body: Vec<TermObject<'a>> },
 
         /// Declare a waitable synchronization object
         Event(NameString),
 
         /// Declare an object that is defined in another ACPI table
-        External {
-            name: NameString,
-            object_type: ObjectType,
-            argument_count: u8,
-        },
+        External { name: NameString, object_type: ObjectType, argument_count: u8 },
 
         /// Declare a group of fields
         Field {
@@ -360,17 +355,10 @@ pub mod term {
         },
 
         /// Declare a control method
-        Method {
-            name: NameString,
-            flags: MethodFlags,
-            body: Vec<TermObject<'a>>,
-        },
+        Method { name: NameString, flags: MethodFlags, body: Vec<TermObject<'a>> },
 
         /// Declare an acquirable mutex
-        Mutex {
-            name: NameString,
-            sync_level: u8,
-        },
+        Mutex { name: NameString, sync_level: u8 },
 
         /// Declare an address space that can be used by fields
         OperationRegion {
@@ -398,10 +386,7 @@ pub mod term {
         },
 
         /// Declare a thermal zone namespace
-        ThermalZone {
-            name: NameString,
-            body: Vec<TermObject<'a>>,
-        },
+        ThermalZone { name: NameString, body: Vec<TermObject<'a>> },
     }
 
     /// Rules for reading and writing a field.
@@ -514,7 +499,7 @@ pub mod term {
         If {
             predicate: TermArg<'a>,
             if_true: Vec<TermObject<'a>>,
-            if_false:Vec<TermObject<'a>>,
+            if_false: Vec<TermObject<'a>>,
         },
 
         /// Load a dynamically-generated SSDT from a field, region, or buffer
@@ -575,7 +560,10 @@ pub mod term {
         VarPackage(VarPackage<'a>),
 
         /// Try to acquire a mutex, returning *true* if the attempt times out
-        Acquire { mutex: SuperName<'a>, timeout: u16 },
+        Acquire {
+            mutex: SuperName<'a>,
+            timeout: u16,
+        },
 
         /// Add two integers
         Add(TermArg<'a>, TermArg<'a>, Target<'a>),
@@ -628,7 +616,8 @@ pub mod term {
         /// Evaluate to true if the left value is greater than the right value
         Greater(TermArg<'a>, TermArg<'a>),
 
-        /// Evaluate to true if the left value is greater than or equal to the right value
+        /// Evaluate to true if the left value is greater than or equal to the right
+        /// value
         GreaterEqual(TermArg<'a>, TermArg<'a>),
 
         /// Evaluate to true if the left value is less than the right value
@@ -730,11 +719,18 @@ pub mod term {
         ToInteger(TermArg<'a>, Target<'a>),
 
         /// Copy an ASCII string from a buffer into a string value
-        ToString { source: TermArg<'a>, length: TermArg<'a>, result: Target<'a>},
+        ToString {
+            source: TermArg<'a>,
+            length: TermArg<'a>,
+            result: Target<'a>,
+        },
 
         /// Try to wait for another thread to signal an event object, returning true if
         /// the attempt times out
-        Wait { event: SuperName<'a>, timeout: TermArg<'a> },
+        Wait {
+            event: SuperName<'a>,
+            timeout: TermArg<'a>,
+        },
 
         /// Compute the bitwise XOR of two integers
         BitwiseXor(TermArg<'a>, TermArg<'a>, Target<'a>),

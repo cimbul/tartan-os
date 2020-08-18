@@ -12,17 +12,17 @@
 
 #![allow(clippy::wildcard_imports)]
 
-use alloc::vec::Vec;
+use self::state::ParserState;
 use alloc::vec;
+use alloc::vec::Vec;
 use core::convert::TryFrom;
-use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
 use nom::error::{ErrorKind, ParseError};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
-use self::state::ParserState;
+use nom::IResult;
 
 
 #[cfg(test)]
@@ -30,10 +30,11 @@ mod test;
 
 
 /// An object that can be parsed from AML bytecode
-trait Parse<'a> where Self: Sized {
-    fn parse<E: AMLParseError<'a>>(
-        i: ParserState<'a>,
-    ) -> AMLParseResult<Self, E>;
+trait Parse<'a>
+where
+    Self: Sized,
+{
+    fn parse<E: AMLParseError<'a>>(i: ParserState<'a>) -> AMLParseResult<Self, E>;
 }
 
 
@@ -42,18 +43,23 @@ pub type AMLParseResult<'a, T, E> = IResult<ParserState<'a>, T, E>;
 
 
 /// Trait "alias" for error type used by AML parsers
-pub trait AMLParseError<'a>: state::ReplaceableParseError<&'a [u8], ParserState<'a>> { }
+pub trait AMLParseError<'a>:
+    state::ReplaceableParseError<&'a [u8], ParserState<'a>>
+{
+}
 
-impl<'a, T> AMLParseError<'a> for T
-where T: state::ReplaceableParseError<&'a [u8], ParserState<'a>> { }
+impl<'a, T> AMLParseError<'a> for T where
+    T: state::ReplaceableParseError<&'a [u8], ParserState<'a>>
+{
+}
 
 
 /// Parser context needed to disambiguate grammar
 pub mod state {
-    use super::*;
     use super::super::name::NameSeg;
-    use nom::{InputIter, InputLength};
+    use super::*;
     use nom::error::VerboseError;
+    use nom::{InputIter, InputLength};
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -77,11 +83,7 @@ pub mod state {
 
     impl<'a> ParserState<'a> {
         pub fn new(data: &'a [u8]) -> Self {
-            Self {
-                data,
-                current_scope: vec![],
-                method_signatures: vec![],
-            }
+            Self { data, current_scope: vec![], method_signatures: vec![] }
         }
 
         /// Wraps a byte-oriented parser to work with `ParserState`
@@ -90,21 +92,19 @@ pub mod state {
         ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
         where
             P: Fn(&'a [u8]) -> IResult<&[u8], O, E::From>,
-            E: AMLParseError<'a>
+            E: AMLParseError<'a>,
         {
-            move |input| {
-                match parser(input.data) {
-                    Ok((output_data, output_value)) => Ok((
-                        ParserState { data: output_data, ..input },
-                        output_value
-                    )),
-                    Err(nom::Err::Error(e)) =>
-                        Err(nom::Err::Error(E::replace_input(e, input))),
-                    Err(nom::Err::Failure(e)) =>
-                        Err(nom::Err::Failure(E::replace_input(e, input))),
-                    Err(nom::Err::Incomplete(e)) =>
-                        Err(nom::Err::Incomplete(e)),
+            move |input| match parser(input.data) {
+                Ok((output_data, output_value)) => {
+                    Ok((ParserState { data: output_data, ..input }, output_value))
                 }
+                Err(nom::Err::Error(e)) => {
+                    Err(nom::Err::Error(E::replace_input(e, input)))
+                }
+                Err(nom::Err::Failure(e)) => {
+                    Err(nom::Err::Failure(E::replace_input(e, input)))
+                }
+                Err(nom::Err::Incomplete(e)) => Err(nom::Err::Incomplete(e)),
             }
         }
     }
@@ -128,7 +128,9 @@ pub mod state {
     }
 
     impl InputLength for ParserState<'_> {
-        fn input_len(&self) -> usize { self.data.input_len() }
+        fn input_len(&self) -> usize {
+            self.data.input_len()
+        }
     }
 
 
@@ -160,10 +162,11 @@ pub mod state {
                 // the original error was close to the same point in the input. That is a
                 // safe assumption in `ParserState::lift`, which is used primarily for
                 // adapting low-level byte parsers.
-                errors: from.errors
+                errors: from
+                    .errors
                     .into_iter()
                     .map(|(_, kind)| (input.clone(), kind))
-                    .collect()
+                    .collect(),
             }
         }
     }
@@ -341,12 +344,10 @@ mod util {
     /// ```text
     /// ExtOpPrefix := 0x5B
     /// ```
-    pub fn ext_op<'a, O, E, P>(
-        p: P
-    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
+    pub fn ext_op<'a, O, E, P>(p: P) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
     where
         P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
-        E: ParseError<ParserState<'a>>
+        E: ParseError<ParserState<'a>>,
     {
         preceded(tag_byte(0x5b), p)
     }
@@ -373,12 +374,12 @@ mod util {
 
 /// Name objects, defined in §20.2.2
 pub mod name {
-    use alloc::boxed::Box;
-    use super::*;
-    use super::util::*;
-    use super::super::name::*;
     use super::super::misc::*;
+    use super::super::name::*;
     use super::super::term::ReferenceExpressionOpcode;
+    use super::util::*;
+    use super::*;
+    use alloc::boxed::Box;
 
     /// Grammar:
     ///
@@ -527,12 +528,12 @@ pub mod name {
 
 /// Data objects, defined in §20.2.3
 pub mod data {
-    use super::*;
-    use super::util::*;
-    use super::package::in_package;
     use super::super::data::*;
     use super::super::name::NameString;
     use super::super::term::TermArg;
+    use super::package::in_package;
+    use super::util::*;
+    use super::*;
 
     /// Grammar:
     ///
@@ -760,7 +761,7 @@ mod package {
     ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
     where
         P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
-        E: AMLParseError<'a>
+        E: AMLParseError<'a>,
     {
         move |i: ParserState<'a>| {
             let (i, package_length) = parse_package_length(i)?;
@@ -775,15 +776,15 @@ mod package {
 
 /// Terms, defined in §20.2.5
 pub mod term {
-    use alloc::boxed::Box;
-    use super::*;
-    use super::util::*;
-    use super::name::{parse_target};
-    use super::package::{in_package, parse_package_length};
-    use super::super::term::*;
-    use super::super::data::{Buffer, DataRefObject, DataObject, Package, VarPackage};
+    use super::super::data::{Buffer, DataObject, DataRefObject, Package, VarPackage};
     use super::super::misc::{ArgObject, LocalObject};
     use super::super::name::{NameSeg, NameString, SimpleName, SuperName};
+    use super::super::term::*;
+    use super::name::parse_target;
+    use super::package::{in_package, parse_package_length};
+    use super::util::*;
+    use super::*;
+    use alloc::boxed::Box;
 
 
     /// Grammar:
@@ -2610,9 +2611,9 @@ pub mod term {
 
 /// Miscellaneous objects, defined in §20.2.6
 pub mod misc {
-    use super::*;
     use super::super::misc::*;
     use super::util::*;
+    use super::*;
 
     /// Grammar:
     ///

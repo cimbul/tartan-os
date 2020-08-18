@@ -6,23 +6,23 @@
 #![deny(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
-extern crate rlibc;
 extern crate alloc;
+extern crate rlibc;
 
+#[cfg(not(test))]
+use core::alloc::Layout;
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 #[cfg(not(test))]
 use tartan_uefi::allocator::BootAllocator;
-#[cfg(not(test))]
-use core::alloc::Layout;
 
 use alloc::string::String;
 use core::fmt::Write;
-use tartan_uefi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
-use tartan_uefi::proto::{LoadedImage, Protocol};
-use tartan_uefi::io::OutputStream;
 use tartan_uefi::global::SYSTEM_TABLE;
+use tartan_uefi::io::OutputStream;
+use tartan_uefi::proto::{LoadedImage, Protocol};
 use tartan_uefi::writeln_result;
+use tartan_uefi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
 
 #[no_mangle]
 fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {
@@ -53,7 +53,8 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
             image_handle,
             &LoadedImage::PROTOCOL_ID,
             &mut (loaded_image.cast()),
-        ).into_result()?;
+        )
+        .into_result()?;
 
         let image_base = (*loaded_image).image_base;
         writeln_result!(out, "Image base: {:p}", image_base)?;
@@ -63,7 +64,8 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
         writeln_result!(out, "Fetching memory map")?;
         let memory_map = get_memory_map(boot_services)?;
-        writeln_result!(out,
+        writeln_result!(
+            out,
             "Got memory map: size = {} bytes ({} per descriptor), version {}, key = {}",
             memory_map.raw_map.len(),
             memory_map.descriptor_size,
@@ -71,7 +73,8 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
             memory_map.key
         )?;
         for (i, descriptor) in memory_map.iter().enumerate() {
-            writeln_result!(out,
+            writeln_result!(
+                out,
                 "Region {}: {:x} => {:x} + {:3x} pages, {:?}",
                 i,
                 descriptor.physical_start,
@@ -82,10 +85,12 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         }
     }
 
-    loop { }
+    loop {}
 }
 
-fn get_memory_map(boot_services: &BootServices) -> core::result::Result<MemoryMap, Status> {
+fn get_memory_map(
+    boot_services: &BootServices,
+) -> core::result::Result<MemoryMap, Status> {
     let mut memory_map_size = 0_usize;
     let mut memory_map = MemoryMap::new();
 
@@ -101,16 +106,18 @@ fn get_memory_map(boot_services: &BootServices) -> core::result::Result<MemoryMa
                 &mut memory_map.key,
                 &mut memory_map.descriptor_size,
                 &mut memory_map.descriptor_version,
-            ).into_result()
+            )
+            .into_result()
         };
         match result {
             Ok(_) => break,
-            Err(Status::BUFFER_TOO_SMALL) =>
+            Err(Status::BUFFER_TOO_SMALL) => {
                 // Allow room for another entry since we have to reallocate the buffer
-                memory_map_size += memory_map.descriptor_size,
+                memory_map_size += memory_map.descriptor_size
+            }
             Err(e) => return Err(e),
         }
-    };
+    }
 
     // Trim anything that wasn't used
     memory_map.raw_map.resize(memory_map_size, 0);
@@ -123,7 +130,7 @@ fn get_memory_map(boot_services: &BootServices) -> core::result::Result<MemoryMa
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
     // Not much we can do with Err results in a panic handler
-    #[allow(unused_must_use)]
+    #![allow(unused_must_use)]
 
     unsafe {
         if let Some(system_table) = SYSTEM_TABLE {
@@ -165,4 +172,6 @@ fn eh_personality() -> ! {
 // Hack to get the binary to build on the host target. It obviously doesn't do anything.
 #[cfg(not(test))]
 #[no_mangle]
-fn main(_: isize, _: *const *const u8) -> isize { 100 }
+fn main(_: isize, _: *const *const u8) -> isize {
+    100
+}

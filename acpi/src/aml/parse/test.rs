@@ -1,3 +1,6 @@
+#![cfg_attr(rustfmt, rustfmt::skip)]
+
+
 macro_rules! assert_parses {
     ($parser:expr, $input:expr, $rest:expr, $output:expr $(,)?) => {
         {
@@ -60,8 +63,8 @@ macro_rules! assert_errors {
 
 
 mod util {
-    use crate::aml::parse::util::*;
     use crate::aml::parse::state::ParserState;
+    use crate::aml::parse::util::*;
     use nom::bytes::complete as bytes;
 
     #[test]
@@ -125,8 +128,8 @@ mod util {
 
 
 mod name {
-    use crate::aml::parse::Parse;
     use crate::aml::name::{NameSeg, NameString, PathAnchor};
+    use crate::aml::parse::Parse;
 
 
     #[test]
@@ -191,8 +194,8 @@ mod name {
 
 
     mod name_string {
-        use super::*;
         use super::NameString as NS;
+        use super::*;
 
         #[test]
         fn test_parse_errors() {
@@ -305,9 +308,9 @@ mod name {
 
 
 mod data {
-    use crate::aml::parse::Parse;
     use crate::aml::data::{Buffer, ComputationalData as CD};
     use crate::aml::misc::LocalObject;
+    use crate::aml::parse::Parse;
 
     #[test]
     fn test_parse_byte() {
@@ -544,17 +547,17 @@ mod package {
 
 
 mod term {
-    use crate::aml::parse::Parse;
-    use crate::aml::term::*;
-    use crate::aml::name::NameString;
     use crate::aml::data::{Buffer, ComputationalData};
     use crate::aml::misc::{ArgObject, LocalObject};
+    use crate::aml::name::NameString;
+    use crate::aml::parse::Parse;
+    use crate::aml::term::*;
     use alloc::vec;
 
 
     mod named_object {
-        use super::*;
         use super::NamedObject as N;
+        use super::*;
 
         #[test]
         fn test_bank_field() {
@@ -1200,8 +1203,8 @@ mod term {
 
 
     mod field_element {
-        use super::*;
         use super::FieldElement as F;
+        use super::*;
 
         #[test]
         fn test_misc_invalid() {
@@ -1402,8 +1405,8 @@ mod term {
 
 
 mod misc {
+    use crate::aml::misc::ArgObject as A;
     use crate::aml::parse::Parse;
-    use crate::aml::misc::{ArgObject as A};
 
     #[test]
     fn test_arg_obj() {
