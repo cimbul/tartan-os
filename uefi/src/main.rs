@@ -12,17 +12,17 @@ extern crate alloc;
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 #[cfg(not(test))]
-use tartan_os::efi::alloc::BootAllocator;
+use tartan_uefi::allocator::BootAllocator;
 #[cfg(not(test))]
 use core::alloc::Layout;
 
 use alloc::string::String;
 use core::fmt::Write;
-use tartan_os::efi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
-use tartan_os::efi::proto::{LoadedImage, Protocol};
-use tartan_os::efi::io::OutputStream;
-use tartan_os::efi::global::SYSTEM_TABLE;
-use tartan_os::writeln_result;
+use tartan_uefi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
+use tartan_uefi::proto::{LoadedImage, Protocol};
+use tartan_uefi::io::OutputStream;
+use tartan_uefi::global::SYSTEM_TABLE;
+use tartan_uefi::writeln_result;
 
 #[no_mangle]
 fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {

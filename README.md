@@ -24,18 +24,33 @@ Suggested additional tools:
 
 ## Build
 
+Note that when building, running, or testing with Cargo, the default target will *depend
+on your current directory*:
+  * From the main directory, Cargo will build for your host system by default.
+	* From the `uefi/` directory, Cargo will build for the `x86_64-unknown-uefi` target,
+	  along with flags to compile the standard Rust libraries. This is configured in
+		`uefi/.cargo/config.toml`.
+
+To build the libraries for your host system:
+
 ```
 cargo build
 ```
 
-Emits an AMD64 UEFI bootloader application (a PE image) at
-`target/x86_64-unknown-uefi/debug/tartan-os.efi`.
-
-
-## Run
+To build the AMD64 UEFI bootloader:
 
 ```
-cargo run
+(cd uefi && cargo build)
+```
+
+The UEFI application (a PE image) will be emitted at
+`target/x86_64-unknown-uefi/debug/tartan-uefi.efi`.
+
+
+## Run UEFI bootloader
+
+```
+(cd uefi && cargo run)
 ```
 
 Packages the bootloader into a GPT + FAT disk image and launches it in QEMU.
@@ -44,16 +59,11 @@ Packages the bootloader into a GPT + FAT disk image and launches it in QEMU.
 ## Test
 
 ```
-# Substitute your host triple here:
-cargo test --target x86_64-apple-darwin
-
-# Or use the one defined in .cargo/config.toml (x86_64-apple-darwin):
-cargo test-host
+cargo test
 ```
 
-Runs tests on your local machine.  There is currently no support for running the tests on
-the target architecture in QEMU. Since the default build target is AMD64 UEFI
-(`x86_64-unknown-uefi`), `cargo test` doesn't work without additional flags.
+Runs tests on your host system. There is currently no support for running the tests on the
+target architecture in QEMU.
 
 
 ## Documentation
@@ -66,7 +76,7 @@ cargo doc --open
 ## Lint
 
 ```
-cargo clippy
+cargo clippy --all-targets
 ```
 
 

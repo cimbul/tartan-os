@@ -3,6 +3,14 @@
 //! See ACPI spec v6.3 (Jan 2019).
 // TODO: Handle endianness (all ACPI tables use little-endian)
 
+#![no_std]
+#![feature(fn_traits)]
+#![feature(ptr_offset_from)]
+#![deny(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+
+extern crate alloc;
+
 use bitflags::bitflags;
 use core::mem::size_of;
 use static_assertions::const_assert_eq;

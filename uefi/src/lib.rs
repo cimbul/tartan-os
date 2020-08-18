@@ -2,6 +2,14 @@
 //!
 //! See EDK `MdePkg/Include/Uefi/UefiSpec.h`
 
+#![no_std]
+#![feature(fn_traits)]
+#![feature(ptr_offset_from)]
+#![deny(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+
+extern crate alloc;
+
 use ::alloc::vec::Vec;
 use bitflags::bitflags;
 use core::convert::TryInto;
@@ -11,7 +19,7 @@ use core::mem::{size_of, align_of};
 use core::slice;
 use crc_any::CRCu32;
 
-pub mod alloc;
+pub mod allocator;
 pub mod global;
 #[macro_use]
 pub mod io;

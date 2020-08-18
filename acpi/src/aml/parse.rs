@@ -7,7 +7,7 @@
 //! ```
 //!
 //! Everything in `DefBlockHeader` just repeats the fixed
-//! [`DescriptionHeader`](crate::acpi::DescriptionHeader) struct used in other tables,
+//! [`DescriptionHeader`](crate::DescriptionHeader) struct used in other tables,
 //! so there's no reason to write a parser for it.
 
 #![allow(clippy::wildcard_imports)]
@@ -259,7 +259,7 @@ mod util {
     /// # Example
     ///
     /// ```
-    /// # #[macro_use] extern crate tartan_os;
+    /// # #[macro_use] extern crate tartan_acpi;
     /// # use nom::IResult;
     /// # use nom::character::complete::alphanumeric1;
     /// # use nom::number::complete::le_u16;

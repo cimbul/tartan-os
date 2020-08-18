@@ -7,6 +7,7 @@ use core::ptr;
 use super::MemoryType;
 use super::global::SYSTEM_TABLE;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct BootAllocator;
 
 impl BootAllocator {

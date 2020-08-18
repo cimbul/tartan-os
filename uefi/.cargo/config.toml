@@ -1,0 +1,9 @@
+# Settings required for cross-compiling for UEFI. These are only used by Cargo if you run
+# it from within the uefi/ directory.
+
+[build]
+target = "x86_64-unknown-uefi"
+
+[unstable]
+build-std = ["core", "alloc", "std"]
+build-std-features = []

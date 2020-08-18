@@ -6,7 +6,7 @@ macro_rules! assert_parses {
             let expected_rest = $rest;
             let expected_output = $output;
             let result: nom::IResult<_, _, ()> = parser(
-                crate::acpi::aml::parse::state::ParserState::new(input));
+                crate::aml::parse::state::ParserState::new(input));
             match result {
                 Err(_) => panic!(
                     "\nInput could not be parsed\n   input: {:?}\n  wanted: {:?}\n  parser: {}\n",
@@ -45,7 +45,7 @@ macro_rules! assert_errors {
             let parser = $parser;
             let input = $input;
             let result: nom::IResult<_, _, ()> = parser(
-                crate::acpi::aml::parse::state::ParserState::new(input));
+                crate::aml::parse::state::ParserState::new(input));
             if let Ok((_rest, output)) = result {
                 panic!(
                     "\nExpected error from parser, but got output\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
@@ -60,8 +60,8 @@ macro_rules! assert_errors {
 
 
 mod util {
-    use crate::acpi::aml::parse::util::*;
-    use crate::acpi::aml::parse::state::ParserState;
+    use crate::aml::parse::util::*;
+    use crate::aml::parse::state::ParserState;
     use nom::bytes::complete as bytes;
 
     #[test]
@@ -125,8 +125,8 @@ mod util {
 
 
 mod name {
-    use crate::acpi::aml::parse::Parse;
-    use crate::acpi::aml::name::{NameSeg, NameString, PathAnchor};
+    use crate::aml::parse::Parse;
+    use crate::aml::name::{NameSeg, NameString, PathAnchor};
 
 
     #[test]
@@ -305,9 +305,9 @@ mod name {
 
 
 mod data {
-    use crate::acpi::aml::parse::Parse;
-    use crate::acpi::aml::data::{Buffer, ComputationalData as CD};
-    use crate::acpi::aml::misc::LocalObject;
+    use crate::aml::parse::Parse;
+    use crate::aml::data::{Buffer, ComputationalData as CD};
+    use crate::aml::misc::LocalObject;
 
     #[test]
     fn test_parse_byte() {
@@ -421,8 +421,8 @@ mod data {
 
 
 mod package {
-    use crate::acpi::aml::parse::package::*;
-    use crate::acpi::aml::parse::state::ParserState;
+    use crate::aml::parse::package::*;
+    use crate::aml::parse::state::ParserState;
     use nom::bytes::complete as bytes;
 
     #[test]
@@ -544,11 +544,11 @@ mod package {
 
 
 mod term {
-    use crate::acpi::aml::parse::Parse;
-    use crate::acpi::aml::term::*;
-    use crate::acpi::aml::name::NameString;
-    use crate::acpi::aml::data::{Buffer, ComputationalData};
-    use crate::acpi::aml::misc::{ArgObject, LocalObject};
+    use crate::aml::parse::Parse;
+    use crate::aml::term::*;
+    use crate::aml::name::NameString;
+    use crate::aml::data::{Buffer, ComputationalData};
+    use crate::aml::misc::{ArgObject, LocalObject};
     use alloc::vec;
 
 
@@ -1402,8 +1402,8 @@ mod term {
 
 
 mod misc {
-    use crate::acpi::aml::parse::Parse;
-    use crate::acpi::aml::misc::{ArgObject as A};
+    use crate::aml::parse::Parse;
+    use crate::aml::misc::{ArgObject as A};
 
     #[test]
     fn test_arg_obj() {

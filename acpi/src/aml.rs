@@ -27,7 +27,7 @@ pub mod name {
     /// Convert a list of segments in various formats into a path vector
     ///
     /// ```
-    /// # use tartan_os::acpi::aml::name::{NameSeg, to_path};
+    /// # use tartan_acpi::aml::name::{NameSeg, to_path};
     /// #
     /// assert_eq!(to_path(&[b"ABCD", b"EFGH"]), vec![NameSeg(*b"ABCD"), NameSeg(*b"EFGH")]);
     /// ```
