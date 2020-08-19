@@ -4,7 +4,18 @@
 #![allow(clippy::module_name_repetitions)]
 
 
+use crate::DescriptionHeader;
+use alloc::vec::Vec;
+
+
 pub mod parse;
+
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct AMLTable<'a> {
+    pub header: DescriptionHeader,
+    pub body: Vec<term::TermObject<'a>>,
+}
 
 
 macro_rules! from_impl {

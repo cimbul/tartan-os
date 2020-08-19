@@ -12,7 +12,7 @@ macro_rules! assert_parses {
                 crate::aml::parse::state::ParserState::new(input));
             match result {
                 Err(_) => panic!(
-                    "\nInput could not be parsed\n   input: {:?}\n  wanted: {:?}\n  parser: {}\n",
+                    "\nInput could not be parsed\n   input: {:x?}\n  wanted: {:x?}\n  parser: {}\n",
                     input,
                     expected_output,
                     stringify!($parser),
@@ -20,7 +20,7 @@ macro_rules! assert_parses {
                 Ok((output_state, actual_output)) => {
                     assert!(
                         actual_output == expected_output,
-                        "\nDid not get expected output from parser\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n    rest: {:?}\n  parser: {}\n",
+                        "\nDid not get expected output from parser\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n    rest: {:x?}\n  parser: {}\n",
                         expected_output,
                         actual_output,
                         input,
@@ -29,7 +29,7 @@ macro_rules! assert_parses {
                     );
                     assert!(
                         output_state.data == expected_rest,
-                        "\nParser did not consume expected data\n  wanted: {:?}\n     got: {:?}\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
+                        "\nParser did not consume expected data\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n  output: {:x?}\n  parser: {}\n",
                         expected_rest,
                         output_state.data,
                         input,
@@ -51,7 +51,7 @@ macro_rules! assert_errors {
                 crate::aml::parse::state::ParserState::new(input));
             if let Ok((_rest, output)) = result {
                 panic!(
-                    "\nExpected error from parser, but got output\n   input: {:?}\n  output: {:?}\n  parser: {}\n",
+                    "\nExpected error from parser, but got output\n   input: {:x?}\n  output: {:x?}\n  parser: {}\n",
                     input,
                     output,
                     stringify!($parser),

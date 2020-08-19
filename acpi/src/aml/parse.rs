@@ -13,13 +13,17 @@
 #![allow(clippy::wildcard_imports)]
 
 use self::state::ParserState;
+use crate::aml::term::TermObject;
+use crate::aml::AMLTable;
+use crate::DescriptionHeader;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::TryFrom;
+use core::mem;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
-use nom::error::{ErrorKind, ParseError};
+use nom::error::{ErrorKind, ParseError, VerboseError};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
@@ -29,11 +33,48 @@ use nom::IResult;
 mod test;
 
 
+/// Parse an ACPI table that contains AML, including the header
+///
+/// # Errors
+/// Returns an error if the AML contents cannot be parsed.
+pub fn parse_table<'a>(
+    data: &'a [u8],
+) -> AMLParseResult<AMLTable<'a>, VerboseError<ParserState<'a>>> {
+    const HEADER_SIZE: usize = mem::size_of::<DescriptionHeader>();
+
+    let state = ParserState::new(data);
+
+    let (state, header_slice) = ParserState::lift(bytes::take(HEADER_SIZE))(state)?;
+    let mut header_array = [0_u8; HEADER_SIZE];
+    header_array.copy_from_slice(header_slice);
+    // SAFETY: DescriptionHeader is composed of packed unsigned integers and is trivially
+    // transmutable.
+    let header: DescriptionHeader = unsafe { mem::transmute(header_array) };
+
+    // Check data using header
+    if header.length as usize != data.len() {
+        return util::err(state, ErrorKind::Eof);
+    }
+    let checksum = data.iter().fold(0_u8, |a, b| a.wrapping_add(*b));
+    if checksum != 0 {
+        return util::err(state, ErrorKind::Verify);
+    }
+
+    let (state, body) = all_consuming(multi::many0(TermObject::parse))(state)?;
+
+    Ok((state, AMLTable { header, body }))
+}
+
+
 /// An object that can be parsed from AML bytecode
-trait Parse<'a>
+pub trait Parse<'a>
 where
     Self: Sized,
 {
+    /// Try to parse an object of this type from the given input and state.
+    ///
+    /// # Errors
+    /// Returns an error if the data cannot be parsed.
     fn parse<E: AMLParseError<'a>>(i: ParserState<'a>) -> AMLParseResult<Self, E>;
 }
 
@@ -1398,8 +1439,7 @@ pub mod term {
     ///     compiler seems to translate it into relative **bit** offset when it outputs
     ///     the `ReservedField` op in AML.
     ///   * `AccessField` and `ExtendedAccessField` encode the same information and are
-    ///     merged into one enum variant. See [`access_field`] and
-    ///     [`extended_access_field`].
+    ///     merged into one enum variant. See `access_field` and `extended_access_field`.
     ///   * The ACPICA parser expects `BufferData` to be a `DefBuffer` op.
     ///   * The `ConnectField` op in split into two enum variants to avoid another level
     ///     of indirection.

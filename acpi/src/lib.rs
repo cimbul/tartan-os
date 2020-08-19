@@ -19,6 +19,7 @@ pub mod aml;
 
 
 #[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Root System Description Pointer (RSDP) used in ACPI 1.0
 pub struct RootDescriptionPointerV1 {
     pub signature: [u8; 8],
@@ -31,6 +32,7 @@ const_assert_eq!(20, size_of::<RootDescriptionPointerV1>());
 
 
 #[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Extended RDSP defined by ACPI 2.0
 pub struct RootDescriptionPointerV2 {
     pub v1: RootDescriptionPointerV1,
@@ -43,6 +45,7 @@ const_assert_eq!(36, size_of::<RootDescriptionPointerV2>());
 
 
 #[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Common table header defined as `DESCRIPTION_HEADER` in the spec
 pub struct DescriptionHeader {
     pub signature: [u8; 4],
@@ -59,6 +62,7 @@ const_assert_eq!(36, size_of::<DescriptionHeader>());
 
 
 #[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Fixed ACPI Description Table (FADT)
 pub struct FixedDescription {
     pub header: DescriptionHeader,
@@ -141,6 +145,7 @@ const_assert_eq!(276, size_of::<FixedDescription>());
 
 
 #[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Extended address structure defined in ACPI 2.0 to support 64-bit systems
 pub struct GenericAddress {
     address_space: AddressSpace,
