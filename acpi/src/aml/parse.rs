@@ -410,6 +410,39 @@ mod util {
             Ok((i, str_utf8))
         }
     }
+
+    /// Transforms a parser error (recoverable) to a failure (non-recoverable). This
+    /// avoids pointless backtracking when we know that no alternatives will succeed.
+    ///
+    /// Unlike [`nom::combinator::cut`], this doesn't duplicate the input for no apparent
+    /// reason.
+    pub fn cut<P, I, O, E>(parser: P) -> impl Fn(I) -> IResult<I, O, E>
+    where
+        P: Fn(I) -> IResult<I, O, E>,
+        E: ParseError<I>,
+    {
+        move |i| match parser(i) {
+            Err(nom::Err::Error(e)) => Err(nom::Err::Failure(e)),
+            other => other,
+        }
+    }
+
+    /// Combinator for productions that use a deterministic opcode
+    ///
+    /// If a production is preceded by an unambiguous opcode, then we can avoid
+    /// backtracking when parsing the rest. This enables better error messages in addition
+    /// to faster parsing.
+    pub fn opcode<'a, O1, O2, E, P, Q>(
+        opcode_parser: P,
+        body_parser: Q,
+    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>
+    where
+        P: Fn(ParserState<'a>) -> AMLParseResult<'a, O1, E>,
+        Q: Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>,
+        E: ParseError<ParserState<'a>>,
+    {
+        preceded(opcode_parser, cut(body_parser))
+    }
 }
 
 
@@ -492,7 +525,7 @@ pub mod name {
 
     parser_fn! {
         /// See grammar for [`NameString`]
-        dual_name -> Vec<NameSeg> = preceded(
+        dual_name -> Vec<NameSeg> = opcode(
             tag_byte(0x2e),
             multi::count(NameSeg::parse, 2),
         )
@@ -500,7 +533,7 @@ pub mod name {
 
     parser_fn! {
         /// See grammar for [`NameString`]
-        multi_name -> Vec<NameSeg> = preceded(
+        multi_name -> Vec<NameSeg> = opcode(
             tag_byte(0x2f),
             flat_map(num::le_u8, |n| multi::count(NameSeg::parse, n.into())),
         )
@@ -613,12 +646,12 @@ pub mod data {
     impl<'a> Parse<'a> for ComputationalData<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
-                map(preceded(tag_byte(0x0a), num::le_u8),  Self::Byte),
-                map(preceded(tag_byte(0x0b), num::le_u16), Self::Word),
-                map(preceded(tag_byte(0x0c), num::le_u32), Self::DWord),
+                map(opcode(tag_byte(0x0a), num::le_u8),  Self::Byte),
+                map(opcode(tag_byte(0x0b), num::le_u16), Self::Word),
+                map(opcode(tag_byte(0x0c), num::le_u32), Self::DWord),
                 // NOTE: These two are out of order, but this is how the spec lists it
-                map(preceded(tag_byte(0x0e), num::le_u64), Self::QWord),
-                map(preceded(tag_byte(0x0d), c_ascii_str), Self::String),
+                map(opcode(tag_byte(0x0e), num::le_u64), Self::QWord),
+                map(opcode(tag_byte(0x0d), c_ascii_str), Self::String),
                 value(Self::Zero, tag_byte(0x00)),
                 value(Self::One, tag_byte(0x01)),
                 value(Self::Ones, tag_byte(0xff)),
@@ -637,7 +670,7 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for Buffer<'a> {
         parser_fn! {
-            parse<'a> -> Self = preceded(
+            parse<'a> -> Self = opcode(
                 tag_byte(0x11),
                 in_package(struct_parser! {
                     Buffer {
@@ -658,7 +691,7 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for Package<'a> {
         parser_fn! {
-            parse<'a> -> Self = preceded(
+            parse<'a> -> Self = opcode(
                 tag_byte(0x12),
                 in_package(struct_parser! {
                     Package {
@@ -679,7 +712,7 @@ pub mod data {
     /// ```
     impl<'a> Parse<'a> for VarPackage<'a> {
         parser_fn! {
-            parse<'a> -> Self = preceded(
+            parse<'a> -> Self = opcode(
                 tag_byte(0x13),
                 in_package(struct_parser! {
                     VarPackage {
@@ -887,7 +920,7 @@ pub mod term {
         /// DefAlias := AliasOp NameString NameString
         /// AliasOp  := 0x06
         /// ```
-        parse_alias -> NameSpaceModifier<'a> = preceded(
+        parse_alias -> NameSpaceModifier<'a> = opcode(
             tag_byte(0x06),
             struct_parser!(
                 NameSpaceModifier::Alias {
@@ -905,7 +938,7 @@ pub mod term {
         /// DefName := NameOp NameString DataRefObject
         /// NameOp  := 0x08
         /// ```
-        parse_name -> NameSpaceModifier<'a> = preceded(
+        parse_name -> NameSpaceModifier<'a> = opcode(
             tag_byte(0x08),
             struct_parser! {
                 NameSpaceModifier::Name(
@@ -923,7 +956,7 @@ pub mod term {
         /// DefScope := ScopeOp PkgLength NameString TermList
         /// ScopeOp  := 0x10
         /// ```
-        parse_scope -> NameSpaceModifier<'a> = preceded(
+        parse_scope -> NameSpaceModifier<'a> = opcode(
             tag_byte(0x10),
             in_package(struct_parser! {
                 NameSpaceModifier::Scope(
@@ -989,7 +1022,7 @@ pub mod term {
         /// BankFieldOp  := ExtOpPrefix 0x87
         /// BankValue    := TermArg => Integer
         /// ```
-        bank_field -> NamedObject<'a> = preceded(
+        bank_field -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x87)),
             in_package(struct_parser! {
                 NamedObject::BankField {
@@ -1012,7 +1045,7 @@ pub mod term {
         /// SourceBuff           := TermArg => Buffer
         /// BitIndex             := TermArg => Integer
         /// ```
-        create_bit_field -> NamedObject<'a> = preceded(
+        create_bit_field -> NamedObject<'a> = opcode(
             tag_byte(0x8d),
             struct_parser! {
                 NamedObject::CreateBitField {
@@ -1028,7 +1061,7 @@ pub mod term {
         [$(#[$meta:meta])* $parser_name:ident $struct:ident $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
-                $parser_name -> NamedObject<'a> = preceded(
+                $parser_name -> NamedObject<'a> = opcode(
                     tag_byte($tag),
                     struct_parser! {
                         NamedObject::$struct {
@@ -1091,7 +1124,7 @@ pub mod term {
         /// CreateFieldOp        := ExtOpPrefix 0x13
         /// NumBits              := TermArg => Integer
         /// ```
-        create_field -> NamedObject<'a> = preceded(
+        create_field -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x13)),
             struct_parser! {
                 NamedObject::CreateField {
@@ -1111,7 +1144,7 @@ pub mod term {
         /// DefDataRegion        := DataRegionOp NameString TermArg TermArg TermArg
         /// DataRegionOp         := ExtOpPrefix 0x88
         /// ```
-        data_table_region -> NamedObject<'a> = preceded(
+        data_table_region -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x88)),
             struct_parser! {
                 NamedObject::DataTableRegion {
@@ -1131,7 +1164,7 @@ pub mod term {
         /// DefDevice            := DeviceOp PkgLength NameString TermList
         /// DeviceOp             := ExtOpPrefix 0x82
         /// ```
-        device -> NamedObject<'a> = preceded(
+        device -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x82)),
             in_package(struct_parser! {
                 NamedObject::Device {
@@ -1149,7 +1182,7 @@ pub mod term {
         /// DefEvent             := EventOp NameString
         /// EventOp              := ExtOpPrefix 0x02
         /// ```
-        event -> NamedObject<'a> = preceded(
+        event -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x02)),
             map(NameString::parse, NamedObject::Event),
         )
@@ -1164,7 +1197,7 @@ pub mod term {
         /// ObjectType           := ByteData
         /// ArgumentCount        := ByteData (0 – 7)
         /// ```
-        external -> NamedObject<'a> = preceded(
+        external -> NamedObject<'a> = opcode(
             tag_byte(0x15),
             struct_parser! {
                 NamedObject::External {
@@ -1183,7 +1216,7 @@ pub mod term {
         /// DefField             := FieldOp PkgLength NameString FieldFlags FieldList
         /// FieldOp              := ExtOpPrefix 0x81
         /// ```
-        field -> NamedObject<'a> = preceded(
+        field -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x81)),
             in_package(struct_parser! {
                 NamedObject::Field {
@@ -1202,7 +1235,7 @@ pub mod term {
         /// DefIndexField        := IndexFieldOp PkgLength NameString NameString FieldFlags FieldList
         /// IndexFieldOp         := ExtOpPrefix 0x86
         /// ```
-        index_field -> NamedObject<'a> = preceded(
+        index_field -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x86)),
             in_package(struct_parser! {
                 NamedObject::IndexField {
@@ -1222,7 +1255,7 @@ pub mod term {
         /// DefMethod            := MethodOp PkgLength NameString MethodFlags TermList
         /// MethodOp             := 0x14
         /// ```
-        method -> NamedObject<'a> = preceded(
+        method -> NamedObject<'a> = opcode(
             tag_byte(0x14),
             in_package(struct_parser! {
                 NamedObject::Method {
@@ -1244,7 +1277,7 @@ pub mod term {
         ///     // bit 0-3: SyncLevel (0x00-0x0f)
         ///     // bit 4-7: Reserved (must be 0)
         /// ```
-        mutex -> NamedObject<'a> = preceded(
+        mutex -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x01)),
             struct_parser! {
                 NamedObject::Mutex {
@@ -1264,7 +1297,7 @@ pub mod term {
         /// RegionOffset         := TermArg => Integer
         /// RegionLen            := TermArg => Integer
         /// ```
-        operation_region -> NamedObject<'a> = preceded(
+        operation_region -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x80)),
             struct_parser! {
                 NamedObject::OperationRegion {
@@ -1286,7 +1319,7 @@ pub mod term {
         /// SystemLevel          := ByteData
         /// ResourceOrder        := WordData
         /// ```
-        power_resource -> NamedObject<'a> = preceded(
+        power_resource -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x84)),
             in_package(struct_parser! {
                 NamedObject::PowerResource {
@@ -1309,7 +1342,7 @@ pub mod term {
         /// PblkAddr             := DWordData
         /// PblkLen              := ByteData
         /// ```
-        processor -> NamedObject<'a> = preceded(
+        processor -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x83)),
             in_package(struct_parser! {
                 NamedObject::Processor {
@@ -1330,7 +1363,7 @@ pub mod term {
         /// DefThermalZone       := ThermalZoneOp PkgLength NameString TermList
         /// ThermalZoneOp        := ExtOpPrefix 0x85
         /// ```
-        thermal_zone -> NamedObject<'a> = preceded(
+        thermal_zone -> NamedObject<'a> = opcode(
             ext_op(tag_byte(0x85)),
             in_package(struct_parser! {
                 NamedObject::ThermalZone {
@@ -1449,13 +1482,13 @@ pub mod term {
                 struct_parser!(
                     Self::Named { name: NameSeg::parse, bit_length: parse_package_length }
                 ),
-                preceded(
+                opcode(
                     tag_byte(0x00),
                     struct_parser!(Self::Reserved { bit_length: parse_package_length }),
                 ),
                 access_field,
                 extended_access_field,
-                preceded(
+                opcode(
                     tag_byte(0x02),
                     alt((
                         map(NameString::parse, Self::ConnectNamed),
@@ -1493,36 +1526,38 @@ pub mod term {
         ///     //    0x0C   AttribProcessCall
         ///     //    0x0D   AttribBlockProcessCall
         /// ```
-        access_field(i) -> FieldElement<'a> {
-            let (i, _) = tag_byte(0x01)(i)?;
-            let (i, first) = num::le_u8(i)?;
-            let (i, second) = num::le_u8(i)?;
+        access_field -> FieldElement<'a> = opcode(
+            tag_byte(0x01),
+            |i| {
+                let (i, first) = num::le_u8(i)?;
+                let (i, second) = num::le_u8(i)?;
 
-            let access_type = match AccessType::try_from(first & 0x0f) {
-                Ok(a) => a,
-                Err(_) => return err(i, ErrorKind::Tag),
-            };
+                let access_type = match AccessType::try_from(first & 0x0f) {
+                    Ok(a) => a,
+                    Err(_) => return err(i, ErrorKind::Tag),
+                };
 
-            let access_attrib = match first >> 6 {
-                1 => AccessAttrib::Bytes(second),
-                2 => AccessAttrib::RawBytes(second),
-                3 => AccessAttrib::RawProcessBytes(second),
-                0 => match second {
-                    0x0 => AccessAttrib::None,  // Note that we added this value
-                    0x2 => AccessAttrib::Quick,
-                    0x4 => AccessAttrib::SendReceive,
-                    0x6 => AccessAttrib::Byte,
-                    0x8 => AccessAttrib::Word,
-                    0xa => AccessAttrib::Block,
-                    0xc => AccessAttrib::ProcessCall,
-                    0xd => AccessAttrib::BlockProcessCall,
-                    _ => return err(i, ErrorKind::Tag)
-                }
-                _ => panic!("Somehow got a value >= 4 from a two bit field"),
-            };
+                let access_attrib = match first >> 6 {
+                    1 => AccessAttrib::Bytes(second),
+                    2 => AccessAttrib::RawBytes(second),
+                    3 => AccessAttrib::RawProcessBytes(second),
+                    0 => match second {
+                        0x0 => AccessAttrib::None,  // Note that we added this value
+                        0x2 => AccessAttrib::Quick,
+                        0x4 => AccessAttrib::SendReceive,
+                        0x6 => AccessAttrib::Byte,
+                        0x8 => AccessAttrib::Word,
+                        0xa => AccessAttrib::Block,
+                        0xc => AccessAttrib::ProcessCall,
+                        0xd => AccessAttrib::BlockProcessCall,
+                        _ => return err(i, ErrorKind::Tag)
+                    }
+                    _ => panic!("Somehow got a value >= 4 from a two bit field"),
+                };
 
-            Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
-        }
+                Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
+            }
+        )
     }
 
     parser_fn! {
@@ -1544,35 +1579,37 @@ pub mod term {
         ///
         /// The ACPICA AML parser expects `AccessLength` to be a byte. See
         /// `source/components/parser/psargs.c`.
-        extended_access_field(i) -> FieldElement<'a> {
-            let (i, _) = tag_byte(0x03)(i)?;
-            let (i, type_byte) = num::le_u8(i)?;
-            let (i, attrib_byte) = num::le_u8(i)?;
-            let (i, length) = num::le_u8(i)?;
+        extended_access_field -> FieldElement<'a> = opcode(
+            tag_byte(0x03),
+            |i| {
+                let (i, type_byte) = num::le_u8(i)?;
+                let (i, attrib_byte) = num::le_u8(i)?;
+                let (i, length) = num::le_u8(i)?;
 
-            let access_type = match AccessType::try_from(type_byte & 0x0f) {
-                Ok(a) => a,
-                Err(_) => return err(i, ErrorKind::Tag),
-            };
+                let access_type = match AccessType::try_from(type_byte & 0x0f) {
+                    Ok(a) => a,
+                    Err(_) => return err(i, ErrorKind::Tag),
+                };
 
-            // It's not clear whether it is legal to encode `Bytes`/`RawBytes`/
-            // `RawProcessBytes` the way that the `AccessField` production does. Assume
-            // that it isn't, and fail if the compiler tries.
-            if type_byte >> 6 != 0 {
-                return err(i, ErrorKind::Tag);
+                // It's not clear whether it is legal to encode `Bytes`/`RawBytes`/
+                // `RawProcessBytes` the way that the `AccessField` production does. Assume
+                // that it isn't, and fail if the compiler tries.
+                if type_byte >> 6 != 0 {
+                    return err(i, ErrorKind::Tag);
+                }
+
+                let access_attrib = match attrib_byte {
+                    0x0b => AccessAttrib::Bytes(length),
+                    0x0e => AccessAttrib::RawBytes(length),
+                    0x0f => AccessAttrib::RawProcessBytes(length),
+                    // Also not clear whether the values from the `AccessAttrib` production
+                    // are legal here. Again, assume that they aren't.
+                    _ => return err(i, ErrorKind::Tag),
+                };
+
+                Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
             }
-
-            let access_attrib = match attrib_byte {
-                0x0b => AccessAttrib::Bytes(length),
-                0x0e => AccessAttrib::RawBytes(length),
-                0x0f => AccessAttrib::RawProcessBytes(length),
-                // Also not clear whether the values from the `AccessAttrib` production
-                // are legal here. Again, assume that they aren't.
-                _ => return err(i, ErrorKind::Tag),
-            };
-
-            Ok((i, FieldElement::AccessAs(access_type, access_attrib)))
-        }
+        )
     }
 
 
@@ -1701,7 +1738,7 @@ pub mod term {
         /// FatalCode       := DWordData
         /// FatalArg        := TermArg => Integer
         /// ```
-        fatal -> StatementOpcode<'a> = preceded(
+        fatal -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x32)),
             struct_parser! {
                 StatementOpcode::Fatal {
@@ -1721,23 +1758,25 @@ pub mod term {
         /// DefElse         := Nothing | <ElseOp PkgLength TermList>
         /// ElseOp          := 0xA1
         /// ```
-        if_op(i) -> StatementOpcode<'a> {
-            let (i, _) = tag_byte(0xa0)(i)?;
-            let (i, (predicate, if_true)) = in_package(tuple((
-               TermArg::parse,
-               multi::many0(TermObject::parse),
-            )))(i)?;
-            let (i, if_false) = opt(in_package(preceded(
-                tag_byte(0xa1),
-                multi::many0(TermObject::parse),
-            )))(i)?;
-            let if_op = StatementOpcode::If {
-                predicate,
-                if_true,
-                if_false: if_false.unwrap_or_default(),
-            };
-            Ok((i, if_op))
-        }
+        if_op -> StatementOpcode<'a> = opcode(
+            tag_byte(0xa0),
+            |i| {
+                let (i, (predicate, if_true)) = in_package(tuple((
+                    TermArg::parse,
+                    multi::many0(TermObject::parse),
+                )))(i)?;
+                let (i, if_false) = opt(in_package(opcode(
+                    tag_byte(0xa1),
+                    multi::many0(TermObject::parse),
+                )))(i)?;
+                let if_op = StatementOpcode::If {
+                    predicate,
+                    if_true,
+                    if_false: if_false.unwrap_or_default(),
+                };
+                Ok((i, if_op))
+            }
+        )
     }
 
     parser_fn! {
@@ -1746,7 +1785,7 @@ pub mod term {
         /// LoadOp          := ExtOpPrefix 0x20
         /// DDBHandleObject := SuperName
         /// ```
-        load -> StatementOpcode<'a> = preceded(
+        load -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x20)),
             struct_parser! {
                 StatementOpcode::Load {
@@ -1772,7 +1811,7 @@ pub mod term {
         /// NotifyObject    := SuperName => ThermalZone | Processor | Device
         /// NotifyValue     := TermArg => Integer
         /// ```
-        notify -> StatementOpcode<'a> = preceded(
+        notify -> StatementOpcode<'a> = opcode(
             tag_byte(0x86),
             struct_parser! {
                 StatementOpcode::Notify {
@@ -1789,7 +1828,7 @@ pub mod term {
         /// ReleaseOp       := ExtOpPrefix 0x27
         /// MutexObject     := SuperName
         /// ```
-        release -> StatementOpcode<'a> = preceded(
+        release -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x27)),
             struct_parser! {
                 StatementOpcode::Release { mutex: SuperName::parse }
@@ -1803,7 +1842,7 @@ pub mod term {
         /// ResetOp         := ExtOpPrefix 0x26
         /// EventObject     := SuperName
         /// ```
-        reset -> StatementOpcode<'a> = preceded(
+        reset -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x26)),
             struct_parser! {
                 StatementOpcode::Reset { event: SuperName::parse }
@@ -1817,7 +1856,7 @@ pub mod term {
         /// ReturnOp        := 0xA4
         /// ArgObject       := TermArg => DataRefObject
         /// ```
-        return_op -> StatementOpcode<'a> = preceded(
+        return_op -> StatementOpcode<'a> = opcode(
             tag_byte(0xa4),
             map(TermArg::parse, StatementOpcode::Return)
         )
@@ -1828,7 +1867,7 @@ pub mod term {
         /// DefSignal       := SignalOp EventObject
         /// SignalOp        := ExtOpPrefix 0x24
         /// ```
-        signal -> StatementOpcode<'a> = preceded(
+        signal -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x24)),
             struct_parser! {
                 StatementOpcode::Signal { event: SuperName::parse }
@@ -1842,7 +1881,7 @@ pub mod term {
         /// SleepOp         := ExtOpPrefix 0x22
         /// MsecTime        := TermArg => Integer
         /// ```
-        sleep -> StatementOpcode<'a> = preceded(
+        sleep -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x22)),
             struct_parser! {
                 StatementOpcode::Sleep { milliseconds: TermArg::parse }
@@ -1856,7 +1895,7 @@ pub mod term {
         /// StallOp         := ExtOpPrefix 0x21
         /// UsecTime        := TermArg => ByteData
         /// ```
-        stall -> StatementOpcode<'a> = preceded(
+        stall -> StatementOpcode<'a> = opcode(
             ext_op(tag_byte(0x21)),
             struct_parser! {
                 StatementOpcode::Stall { microseconds: TermArg::parse }
@@ -1869,7 +1908,7 @@ pub mod term {
         /// DefWhile        := WhileOp PkgLength Predicate TermList
         /// WhileOp         := 0xA2
         /// ```
-        while_op -> StatementOpcode<'a> = preceded(
+        while_op -> StatementOpcode<'a> = opcode(
             tag_byte(0xa2),
             in_package(struct_parser! {
                 StatementOpcode::While {
@@ -1905,7 +1944,7 @@ pub mod term {
         /// DefRefOf            := RefOfOp SuperName
         /// RefOfOp             := 0x71
         /// ```
-        ref_of -> ReferenceExpressionOpcode<'a> = preceded(
+        ref_of -> ReferenceExpressionOpcode<'a> = opcode(
             tag_byte(0x71),
             map(SuperName::parse, ReferenceExpressionOpcode::RefOf),
         )
@@ -1917,7 +1956,7 @@ pub mod term {
         /// DerefOfOp           := 0x83
         /// ObjReference        := TermArg => ??ObjectReference | String
         /// ```
-        deref -> ReferenceExpressionOpcode<'a> = preceded(
+        deref -> ReferenceExpressionOpcode<'a> = opcode(
             tag_byte(0x83),
             map(TermArg::parse, ReferenceExpressionOpcode::Deref),
         )
@@ -1930,7 +1969,7 @@ pub mod term {
         /// BuffPkgStrObj       := TermArg => Buffer, Package or String
         /// IndexValue          := TermArg => Integer
         /// ```
-        index -> ReferenceExpressionOpcode<'a> = preceded(
+        index -> ReferenceExpressionOpcode<'a> = opcode(
             tag_byte(0x83),
             struct_parser! {
                 ReferenceExpressionOpcode::DefIndex {
@@ -2038,7 +2077,7 @@ pub mod term {
         [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
-                $parser -> ExpressionOpcode<'a> = preceded(
+                $parser -> ExpressionOpcode<'a> = opcode(
                     tag_byte($tag),
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, TermArg::parse, parse_target)
@@ -2164,7 +2203,7 @@ pub mod term {
         [$( #[$meta:meta] )* $parser:ident $op:ident $tag:expr] => {
             parser_fn! {
                 $(#[$meta])*
-                $parser -> ExpressionOpcode<'a> = preceded(
+                $parser -> ExpressionOpcode<'a> = opcode(
                     $tag,
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, parse_target)
@@ -2251,7 +2290,7 @@ pub mod term {
         [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
-                $parser -> ExpressionOpcode<'a> = preceded(
+                $parser -> ExpressionOpcode<'a> = opcode(
                     tag_byte($tag),
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, TermArg::parse)
@@ -2315,12 +2354,12 @@ pub mod term {
         /// DefLNotEqual        := LnotEqualOp Operand Operand
         /// LnotEqualOp         := LnotOp LequalOp
         /// ```text
-        inverted_logical_ops -> ExpressionOpcode<'a> = preceded(
+        inverted_logical_ops -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x92),
             alt((
-                preceded(tag_byte(0x95), struct_parser!(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse))),
-                preceded(tag_byte(0x94), struct_parser!(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse))),
-                preceded(tag_byte(0x93), struct_parser!(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse))),
+                opcode(tag_byte(0x95), struct_parser!(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse))),
+                opcode(tag_byte(0x94), struct_parser!(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse))),
+                opcode(tag_byte(0x93), struct_parser!(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse))),
                 map(TermArg::parse, ExpressionOpcode::LogicalNot),
             ))
         )
@@ -2331,7 +2370,7 @@ pub mod term {
         /// DefDecrement        := DecrementOp SuperName
         /// DecrementOp         := 0x76
         /// ```
-        decrement -> ExpressionOpcode<'a> = preceded(
+        decrement -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x76),
             map(SuperName::parse, ExpressionOpcode::Decrement),
         )
@@ -2342,7 +2381,7 @@ pub mod term {
         /// DefIncrement        := IncrementOp SuperName
         /// IncrementOp         := 0x75
         /// ```
-        increment -> ExpressionOpcode<'a> = preceded(
+        increment -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x75),
             map(SuperName::parse, ExpressionOpcode::Increment),
         )
@@ -2353,7 +2392,7 @@ pub mod term {
         /// DefSizeOf           := SizeOfOp SuperName
         /// SizeOfOp            := 0x87
         /// ```
-        size_of -> ExpressionOpcode<'a> = preceded(
+        size_of -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x87),
             map(SuperName::parse, ExpressionOpcode::SizeOf),
         )
@@ -2368,7 +2407,7 @@ pub mod term {
         ///
         /// NOTE: SuperName includes MethodInvocation, which is *not* legal for the
         /// ObjectType operator. It is otherwise identical to the grammar above.
-        object_type -> ExpressionOpcode<'a> = preceded(
+        object_type -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x8e),
             map(
                 verify(
@@ -2405,7 +2444,7 @@ pub mod term {
         /// AcquireOp           := ExtOpPrefix 0x23
         /// Timeout             := WordData
         /// ```
-        acquire -> ExpressionOpcode<'a> = preceded(
+        acquire -> ExpressionOpcode<'a> = opcode(
             ext_op(tag_byte(0x23)),
             struct_parser! {
                 ExpressionOpcode::Acquire {
@@ -2421,7 +2460,7 @@ pub mod term {
         /// DefWait             := WaitOp EventObject Operand
         /// WaitOp              := ExtOpPrefix 0x25
         /// ```
-        wait -> ExpressionOpcode<'a> = preceded(
+        wait -> ExpressionOpcode<'a> = opcode(
             ext_op(tag_byte(0x25)),
             struct_parser! {
                 ExpressionOpcode::Wait {
@@ -2437,7 +2476,7 @@ pub mod term {
         /// DefCondRefOf        := CondRefOfOp SuperName Target
         /// CondRefOfOp         := ExtOpPrefix 0x12
         /// ```
-        cond_ref_of -> ExpressionOpcode<'a> = preceded(
+        cond_ref_of -> ExpressionOpcode<'a> = opcode(
             ext_op(tag_byte(0x12)),
             struct_parser! {
                 ExpressionOpcode::CondRefOf(SuperName::parse, parse_target)
@@ -2450,7 +2489,7 @@ pub mod term {
         /// DefCopyObject       := CopyObjectOp TermArg SimpleName
         /// CopyObjectOp        := 0x9D
         /// ```
-        copy_object -> ExpressionOpcode<'a> = preceded(
+        copy_object -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x9d),
             struct_parser! {
                 ExpressionOpcode::CopyObject(TermArg::parse, SimpleName::parse)
@@ -2467,7 +2506,7 @@ pub mod term {
         /// Remainder           := Target
         /// Quotient            := Target
         /// ```
-        divide -> ExpressionOpcode<'a> = preceded(
+        divide -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x78),
             struct_parser! {
                 ExpressionOpcode::Divide {
@@ -2485,7 +2524,7 @@ pub mod term {
         /// DefLoadTable        := LoadTableOp TermArg TermArg TermArg TermArg TermArg TermArg
         /// LoadTableOp         := ExtOpPrefix 0x1F
         /// ```
-        load_table -> ExpressionOpcode<'a> = preceded(
+        load_table -> ExpressionOpcode<'a> = opcode(
             ext_op(tag_byte(0x1f)),
             struct_parser! {
                 ExpressionOpcode::LoadTable {
@@ -2507,7 +2546,7 @@ pub mod term {
         /// SearchPkg           := TermArg => Package
         /// StartIndex          := TermArg => Integer
         /// ```
-        match_op -> ExpressionOpcode<'a> = preceded(
+        match_op -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x89),
             struct_parser! {
                 ExpressionOpcode::Match {
@@ -2526,7 +2565,7 @@ pub mod term {
         /// MidOp               := 0x9E
         /// MidObj              := TermArg => Buffer | String
         /// ```
-        mid -> ExpressionOpcode<'a> = preceded(
+        mid -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x9e),
             struct_parser! {
                 ExpressionOpcode::Mid {
@@ -2544,7 +2583,7 @@ pub mod term {
         /// DefStore            := StoreOp TermArg SuperName
         /// StoreOp             := 0x70
         /// ```
-        store -> ExpressionOpcode<'a> = preceded(
+        store -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x70),
             struct_parser! {
                 ExpressionOpcode::Store(TermArg::parse, SuperName::parse)
@@ -2558,7 +2597,7 @@ pub mod term {
         /// LengthArg           := TermArg => Integer
         /// ToStringOp          := 0x9C
         /// ```
-        to_string -> ExpressionOpcode<'a> = preceded(
+        to_string -> ExpressionOpcode<'a> = opcode(
             tag_byte(0x9c),
             struct_parser! {
                 ExpressionOpcode::ToString {
