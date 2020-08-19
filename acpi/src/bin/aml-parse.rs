@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match parse_table(&aml_data) {
         Ok(t) => println!("Successfully parsed {}:\n:{:#x?}", aml_path.display(), t),
-        Err(e) => println!("Error parsing {}:\n{:#x?}", aml_path.display(), e),
+        Err(e) => println!("Error parsing {}:\n{}", aml_path.display(), e),
     }
 
     Ok(())

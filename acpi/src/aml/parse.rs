@@ -12,7 +12,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
-use self::state::ParserState;
+use self::state::{ErrorWithPosition, ParserState};
 use crate::aml::term::TermObject;
 use crate::aml::AMLTable;
 use crate::DescriptionHeader;
@@ -23,7 +23,7 @@ use core::mem;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
-use nom::error::{ErrorKind, ParseError, VerboseError, context};
+use nom::error::{ErrorKind, ParseError, context};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
@@ -37,32 +37,39 @@ mod test;
 ///
 /// # Errors
 /// Returns an error if the AML contents cannot be parsed.
-pub fn parse_table<'a>(
-    data: &'a [u8],
-) -> AMLParseResult<AMLTable<'a>, VerboseError<ParserState<'a>>> {
+pub fn parse_table<'a>(data: &'a [u8]) -> Result<AMLTable<'a>, ErrorWithPosition<'a>> {
     const HEADER_SIZE: usize = mem::size_of::<DescriptionHeader>();
 
     let state = ParserState::new(data);
+    let parser = || {
+        let (state, header_slice) = ParserState::lift(bytes::take(HEADER_SIZE))(state)?;
+        let mut header_array = [0_u8; HEADER_SIZE];
+        header_array.copy_from_slice(header_slice);
+        // SAFETY: DescriptionHeader is composed of packed unsigned integers and is
+        // trivially transmutable.
+        let header: DescriptionHeader = unsafe { mem::transmute(header_array) };
 
-    let (state, header_slice) = ParserState::lift(bytes::take(HEADER_SIZE))(state)?;
-    let mut header_array = [0_u8; HEADER_SIZE];
-    header_array.copy_from_slice(header_slice);
-    // SAFETY: DescriptionHeader is composed of packed unsigned integers and is trivially
-    // transmutable.
-    let header: DescriptionHeader = unsafe { mem::transmute(header_array) };
+        // Check data using header
+        if header.length as usize != data.len() {
+            return util::err(state, ErrorKind::Eof);
+        }
+        let checksum = data.iter().fold(0_u8, |a, b| a.wrapping_add(*b));
+        if checksum != 0 {
+            return util::err(state, ErrorKind::Verify);
+        }
 
-    // Check data using header
-    if header.length as usize != data.len() {
-        return util::err(state, ErrorKind::Eof);
+        let body_parser = context(
+            "table body",
+            all_consuming(multi::many0(TermObject::parse)),
+        );
+        let (state, body) = body_parser(state)?;
+
+        Ok((state, AMLTable { header, body }))
+    };
+    match parser() {
+        Ok((_, table)) => Ok(table),
+        Err(e) => Err(ErrorWithPosition::new(e, data)),
     }
-    let checksum = data.iter().fold(0_u8, |a, b| a.wrapping_add(*b));
-    if checksum != 0 {
-        return util::err(state, ErrorKind::Verify);
-    }
-
-    let (state, body) = all_consuming(multi::many0(TermObject::parse))(state)?;
-
-    Ok((state, AMLTable { header, body }))
 }
 
 
@@ -99,8 +106,10 @@ impl<'a, T> AMLParseError<'a> for T where
 pub mod state {
     use super::super::name::NameSeg;
     use super::*;
-    use nom::error::VerboseError;
-    use nom::{InputIter, InputLength};
+    use core::cmp::{max, min};
+    use core::fmt::{self, Display, Formatter};
+    use nom::error::{VerboseError, VerboseErrorKind};
+    use nom::{InputIter, InputLength, Offset};
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -125,6 +134,10 @@ pub mod state {
     impl<'a> ParserState<'a> {
         pub fn new(data: &'a [u8]) -> Self {
             Self { data, current_scope: vec![], method_signatures: vec![] }
+        }
+
+        pub fn position_in(&'a self, full_input: &'a [u8]) -> Position<'a> {
+            Position { state: self, full_input }
         }
 
         /// Wraps a byte-oriented parser to work with `ParserState`
@@ -171,6 +184,100 @@ pub mod state {
     impl InputLength for ParserState<'_> {
         fn input_len(&self) -> usize {
             self.data.input_len()
+        }
+    }
+
+
+    /// Helper struct that prints human-readable position information when formatted with
+    /// `Display`.
+    pub struct Position<'a> {
+        pub state: &'a ParserState<'a>,
+        pub full_input: &'a [u8],
+    }
+
+    impl Display for Position<'_> {
+        fn fmt(&self, out: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+            if self.full_input.is_empty() {
+                return writeln!(out, "in empty input");
+            }
+
+            let offset = self.full_input.offset(self.state.data);
+
+            let context_start = max(offset - 10, 0);
+            let context_end = min(offset + 10, self.full_input.len());
+            let context_slice = &self.full_input[context_start..context_end];
+
+            write!(out, "at offset {0} ({0:#x}):\n ", offset)?;
+            for byte in context_slice {
+                let ascii_char = match byte {
+                    b if b.is_ascii_graphic() => *b as char,
+                    b' ' => ' ',
+                    _ => '.',
+                };
+                write!(out, " {:2}", ascii_char)?;
+            }
+            write!(out, "\n ")?;
+            for byte in context_slice {
+                write!(out, " {:02x}", byte)?;
+            }
+            write!(
+                out,
+                "\n  {caret:>caret_offset$}\n",
+                caret = '^',
+                caret_offset = (offset - context_start) * 3 + 1,
+            )
+        }
+    }
+
+
+    /// A parser error with position info useful for printing human-readable messages.
+    pub struct ErrorWithPosition<'a> {
+        pub error: VerboseError<ParserState<'a>>,
+        pub full_input: &'a [u8],
+    }
+
+    impl<'a> ErrorWithPosition<'a> {
+        pub fn new(
+            wrapped_error: nom::Err<VerboseError<ParserState<'a>>>,
+            full_input: &'a [u8],
+        ) -> Self {
+            match wrapped_error {
+                nom::Err::Error(error) | nom::Err::Failure(error) => {
+                    ErrorWithPosition { error, full_input }
+                }
+                nom::Err::Incomplete(_) => {
+                    let error = VerboseError::from_error_kind(
+                        ParserState::new(full_input),
+                        ErrorKind::Complete,
+                    );
+                    ErrorWithPosition { error, full_input }
+                }
+            }
+        }
+    }
+
+    impl Display for ErrorWithPosition<'_> {
+        fn fmt(&self, out: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+            if self.error.errors.is_empty() {
+                return writeln!(out, "Unknown parsing error");
+            }
+
+            for (state, kind) in &self.error.errors {
+                match kind {
+                    VerboseErrorKind::Context(context) => {
+                        write!(out, "In {}", context)?;
+                    }
+                    VerboseErrorKind::Char(c) => {
+                        write!(out, "Expected '{}'", c)?;
+                    }
+                    VerboseErrorKind::Nom(e) => {
+                        write!(out, "Failed {}", e.description())?;
+                    }
+                }
+                write!(out, " {}", state.position_in(self.full_input))?;
+            }
+
+            Ok(())
         }
     }
 
