@@ -23,7 +23,7 @@ use core::mem;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
-use nom::error::{ErrorKind, ParseError, VerboseError};
+use nom::error::{ErrorKind, ParseError, VerboseError, context};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
@@ -433,6 +433,7 @@ mod util {
     /// backtracking when parsing the rest. This enables better error messages in addition
     /// to faster parsing.
     pub fn opcode<'a, O1, O2, E, P, Q>(
+        description: &'static str,
         opcode_parser: P,
         body_parser: Q,
     ) -> impl Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>
@@ -441,7 +442,7 @@ mod util {
         Q: Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>,
         E: ParseError<ParserState<'a>>,
     {
-        preceded(opcode_parser, cut(body_parser))
+        preceded(opcode_parser, context(description, cut(body_parser)))
     }
 }
 
@@ -526,6 +527,7 @@ pub mod name {
     parser_fn! {
         /// See grammar for [`NameString`]
         dual_name -> Vec<NameSeg> = opcode(
+            "name segments (2)",
             tag_byte(0x2e),
             multi::count(NameSeg::parse, 2),
         )
@@ -534,6 +536,7 @@ pub mod name {
     parser_fn! {
         /// See grammar for [`NameString`]
         multi_name -> Vec<NameSeg> = opcode(
+            "name segments",
             tag_byte(0x2f),
             flat_map(num::le_u8, |n| multi::count(NameSeg::parse, n.into())),
         )
@@ -646,12 +649,12 @@ pub mod data {
     impl<'a> Parse<'a> for ComputationalData<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
-                map(opcode(tag_byte(0x0a), num::le_u8),  Self::Byte),
-                map(opcode(tag_byte(0x0b), num::le_u16), Self::Word),
-                map(opcode(tag_byte(0x0c), num::le_u32), Self::DWord),
+                map(opcode("u8 literal",     tag_byte(0x0a), num::le_u8),  Self::Byte),
+                map(opcode("u16 literal",    tag_byte(0x0b), num::le_u16), Self::Word),
+                map(opcode("u32 literal",    tag_byte(0x0c), num::le_u32), Self::DWord),
                 // NOTE: These two are out of order, but this is how the spec lists it
-                map(opcode(tag_byte(0x0e), num::le_u64), Self::QWord),
-                map(opcode(tag_byte(0x0d), c_ascii_str), Self::String),
+                map(opcode("u64 literal",    tag_byte(0x0e), num::le_u64), Self::QWord),
+                map(opcode("string literal", tag_byte(0x0d), c_ascii_str), Self::String),
                 value(Self::Zero, tag_byte(0x00)),
                 value(Self::One, tag_byte(0x01)),
                 value(Self::Ones, tag_byte(0xff)),
@@ -671,6 +674,7 @@ pub mod data {
     impl<'a> Parse<'a> for Buffer<'a> {
         parser_fn! {
             parse<'a> -> Self = opcode(
+                "buffer",
                 tag_byte(0x11),
                 in_package(struct_parser! {
                     Buffer {
@@ -692,6 +696,7 @@ pub mod data {
     impl<'a> Parse<'a> for Package<'a> {
         parser_fn! {
             parse<'a> -> Self = opcode(
+                "package",
                 tag_byte(0x12),
                 in_package(struct_parser! {
                     Package {
@@ -713,6 +718,7 @@ pub mod data {
     impl<'a> Parse<'a> for VarPackage<'a> {
         parser_fn! {
             parse<'a> -> Self = opcode(
+                "package (variable-length)",
                 tag_byte(0x13),
                 in_package(struct_parser! {
                     VarPackage {
@@ -921,6 +927,7 @@ pub mod term {
         /// AliasOp  := 0x06
         /// ```
         parse_alias -> NameSpaceModifier<'a> = opcode(
+            "alias definition",
             tag_byte(0x06),
             struct_parser!(
                 NameSpaceModifier::Alias {
@@ -939,6 +946,7 @@ pub mod term {
         /// NameOp  := 0x08
         /// ```
         parse_name -> NameSpaceModifier<'a> = opcode(
+            "name definition",
             tag_byte(0x08),
             struct_parser! {
                 NameSpaceModifier::Name(
@@ -957,6 +965,7 @@ pub mod term {
         /// ScopeOp  := 0x10
         /// ```
         parse_scope -> NameSpaceModifier<'a> = opcode(
+            "scope",
             tag_byte(0x10),
             in_package(struct_parser! {
                 NameSpaceModifier::Scope(
@@ -1023,6 +1032,7 @@ pub mod term {
         /// BankValue    := TermArg => Integer
         /// ```
         bank_field -> NamedObject<'a> = opcode(
+            "bank field group",
             ext_op(tag_byte(0x87)),
             in_package(struct_parser! {
                 NamedObject::BankField {
@@ -1046,6 +1056,7 @@ pub mod term {
         /// BitIndex             := TermArg => Integer
         /// ```
         create_bit_field -> NamedObject<'a> = opcode(
+            "bit field",
             tag_byte(0x8d),
             struct_parser! {
                 NamedObject::CreateBitField {
@@ -1058,10 +1069,11 @@ pub mod term {
     }
 
     macro_rules! parse_create_sized_field {
-        [$(#[$meta:meta])* $parser_name:ident $struct:ident $tag:literal] => {
+        [$(#[$meta:meta])* $parser_name:ident $struct:ident $desc:literal $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
                 $parser_name -> NamedObject<'a> = opcode(
+                    $desc,
                     tag_byte($tag),
                     struct_parser! {
                         NamedObject::$struct {
@@ -1083,7 +1095,7 @@ pub mod term {
         /// CreateByteFieldOp    := 0x8C
         /// ByteIndex            := TermArg => Integer
         /// ```
-        create_byte_field CreateByteField 0x8c
+        create_byte_field CreateByteField "u8 field" 0x8c
     }
 
     parse_create_sized_field! {
@@ -1093,7 +1105,7 @@ pub mod term {
         /// DefCreateWordField   := CreateWordFieldOp SourceBuff ByteIndex NameString
         /// CreateWordFieldOp    := 0x8B
         /// ```
-        create_word_field CreateWordField 0x8b
+        create_word_field CreateWordField "u16 field" 0x8b
     }
 
     parse_create_sized_field! {
@@ -1103,7 +1115,7 @@ pub mod term {
         /// DefCreateDWordField  := CreateDWordFieldOp SourceBuff ByteIndex NameString
         /// CreateDWordFieldOp   := 0x8A
         /// ```
-        create_dword_field CreateDWordField 0x8a
+        create_dword_field CreateDWordField "u32 field" 0x8a
     }
 
     parse_create_sized_field! {
@@ -1113,7 +1125,7 @@ pub mod term {
         /// DefCreateQWordField  := CreateQWordFieldOp SourceBuff ByteIndex NameString
         /// CreateQWordFieldOp   := 0x8F
         /// ```
-        create_qword_field CreateQWordField 0x8f
+        create_qword_field CreateQWordField "u64 field" 0x8f
     }
 
     parser_fn! {
@@ -1125,6 +1137,7 @@ pub mod term {
         /// NumBits              := TermArg => Integer
         /// ```
         create_field -> NamedObject<'a> = opcode(
+            "custom-length field",
             ext_op(tag_byte(0x13)),
             struct_parser! {
                 NamedObject::CreateField {
@@ -1145,6 +1158,7 @@ pub mod term {
         /// DataRegionOp         := ExtOpPrefix 0x88
         /// ```
         data_table_region -> NamedObject<'a> = opcode(
+            "data region",
             ext_op(tag_byte(0x88)),
             struct_parser! {
                 NamedObject::DataTableRegion {
@@ -1165,6 +1179,7 @@ pub mod term {
         /// DeviceOp             := ExtOpPrefix 0x82
         /// ```
         device -> NamedObject<'a> = opcode(
+            "device",
             ext_op(tag_byte(0x82)),
             in_package(struct_parser! {
                 NamedObject::Device {
@@ -1183,6 +1198,7 @@ pub mod term {
         /// EventOp              := ExtOpPrefix 0x02
         /// ```
         event -> NamedObject<'a> = opcode(
+            "event",
             ext_op(tag_byte(0x02)),
             map(NameString::parse, NamedObject::Event),
         )
@@ -1198,6 +1214,7 @@ pub mod term {
         /// ArgumentCount        := ByteData (0 – 7)
         /// ```
         external -> NamedObject<'a> = opcode(
+            "external declaration",
             tag_byte(0x15),
             struct_parser! {
                 NamedObject::External {
@@ -1217,6 +1234,7 @@ pub mod term {
         /// FieldOp              := ExtOpPrefix 0x81
         /// ```
         field -> NamedObject<'a> = opcode(
+            "field group",
             ext_op(tag_byte(0x81)),
             in_package(struct_parser! {
                 NamedObject::Field {
@@ -1236,6 +1254,7 @@ pub mod term {
         /// IndexFieldOp         := ExtOpPrefix 0x86
         /// ```
         index_field -> NamedObject<'a> = opcode(
+            "indexed field group",
             ext_op(tag_byte(0x86)),
             in_package(struct_parser! {
                 NamedObject::IndexField {
@@ -1256,6 +1275,7 @@ pub mod term {
         /// MethodOp             := 0x14
         /// ```
         method -> NamedObject<'a> = opcode(
+            "method definition",
             tag_byte(0x14),
             in_package(struct_parser! {
                 NamedObject::Method {
@@ -1278,6 +1298,7 @@ pub mod term {
         ///     // bit 4-7: Reserved (must be 0)
         /// ```
         mutex -> NamedObject<'a> = opcode(
+            "mutex",
             ext_op(tag_byte(0x01)),
             struct_parser! {
                 NamedObject::Mutex {
@@ -1298,6 +1319,7 @@ pub mod term {
         /// RegionLen            := TermArg => Integer
         /// ```
         operation_region -> NamedObject<'a> = opcode(
+            "region declaration",
             ext_op(tag_byte(0x80)),
             struct_parser! {
                 NamedObject::OperationRegion {
@@ -1320,6 +1342,7 @@ pub mod term {
         /// ResourceOrder        := WordData
         /// ```
         power_resource -> NamedObject<'a> = opcode(
+            "power resource",
             ext_op(tag_byte(0x84)),
             in_package(struct_parser! {
                 NamedObject::PowerResource {
@@ -1343,6 +1366,7 @@ pub mod term {
         /// PblkLen              := ByteData
         /// ```
         processor -> NamedObject<'a> = opcode(
+            "processor",
             ext_op(tag_byte(0x83)),
             in_package(struct_parser! {
                 NamedObject::Processor {
@@ -1364,6 +1388,7 @@ pub mod term {
         /// ThermalZoneOp        := ExtOpPrefix 0x85
         /// ```
         thermal_zone -> NamedObject<'a> = opcode(
+            "thermal zone",
             ext_op(tag_byte(0x85)),
             in_package(struct_parser! {
                 NamedObject::ThermalZone {
@@ -1479,16 +1504,18 @@ pub mod term {
     impl<'a> Parse<'a> for FieldElement<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
-                struct_parser!(
+                context("named field", struct_parser!(
                     Self::Named { name: NameSeg::parse, bit_length: parse_package_length }
-                ),
+                )),
                 opcode(
+                    "reserved field",
                     tag_byte(0x00),
                     struct_parser!(Self::Reserved { bit_length: parse_package_length }),
                 ),
                 access_field,
                 extended_access_field,
                 opcode(
+                    "connect field",
                     tag_byte(0x02),
                     alt((
                         map(NameString::parse, Self::ConnectNamed),
@@ -1527,6 +1554,7 @@ pub mod term {
         ///     //    0x0D   AttribBlockProcessCall
         /// ```
         access_field -> FieldElement<'a> = opcode(
+            "field access modifiers",
             tag_byte(0x01),
             |i| {
                 let (i, first) = num::le_u8(i)?;
@@ -1580,6 +1608,7 @@ pub mod term {
         /// The ACPICA AML parser expects `AccessLength` to be a byte. See
         /// `source/components/parser/psargs.c`.
         extended_access_field -> FieldElement<'a> = opcode(
+            "field access modifiers (extended)",
             tag_byte(0x03),
             |i| {
                 let (i, type_byte) = num::le_u8(i)?;
@@ -1739,6 +1768,7 @@ pub mod term {
         /// FatalArg        := TermArg => Integer
         /// ```
         fatal -> StatementOpcode<'a> = opcode(
+            "fatal statement",
             ext_op(tag_byte(0x32)),
             struct_parser! {
                 StatementOpcode::Fatal {
@@ -1759,6 +1789,7 @@ pub mod term {
         /// ElseOp          := 0xA1
         /// ```
         if_op -> StatementOpcode<'a> = opcode(
+            "if statement",
             tag_byte(0xa0),
             |i| {
                 let (i, (predicate, if_true)) = in_package(tuple((
@@ -1766,6 +1797,7 @@ pub mod term {
                     multi::many0(TermObject::parse),
                 )))(i)?;
                 let (i, if_false) = opt(in_package(opcode(
+                    "else branch",
                     tag_byte(0xa1),
                     multi::many0(TermObject::parse),
                 )))(i)?;
@@ -1786,6 +1818,7 @@ pub mod term {
         /// DDBHandleObject := SuperName
         /// ```
         load -> StatementOpcode<'a> = opcode(
+            "load statement",
             ext_op(tag_byte(0x20)),
             struct_parser! {
                 StatementOpcode::Load {
@@ -1812,6 +1845,7 @@ pub mod term {
         /// NotifyValue     := TermArg => Integer
         /// ```
         notify -> StatementOpcode<'a> = opcode(
+            "notify statement",
             tag_byte(0x86),
             struct_parser! {
                 StatementOpcode::Notify {
@@ -1829,6 +1863,7 @@ pub mod term {
         /// MutexObject     := SuperName
         /// ```
         release -> StatementOpcode<'a> = opcode(
+            "release statement",
             ext_op(tag_byte(0x27)),
             struct_parser! {
                 StatementOpcode::Release { mutex: SuperName::parse }
@@ -1843,6 +1878,7 @@ pub mod term {
         /// EventObject     := SuperName
         /// ```
         reset -> StatementOpcode<'a> = opcode(
+            "reset statement",
             ext_op(tag_byte(0x26)),
             struct_parser! {
                 StatementOpcode::Reset { event: SuperName::parse }
@@ -1857,6 +1893,7 @@ pub mod term {
         /// ArgObject       := TermArg => DataRefObject
         /// ```
         return_op -> StatementOpcode<'a> = opcode(
+            "return statement",
             tag_byte(0xa4),
             map(TermArg::parse, StatementOpcode::Return)
         )
@@ -1868,6 +1905,7 @@ pub mod term {
         /// SignalOp        := ExtOpPrefix 0x24
         /// ```
         signal -> StatementOpcode<'a> = opcode(
+            "signal statement",
             ext_op(tag_byte(0x24)),
             struct_parser! {
                 StatementOpcode::Signal { event: SuperName::parse }
@@ -1882,6 +1920,7 @@ pub mod term {
         /// MsecTime        := TermArg => Integer
         /// ```
         sleep -> StatementOpcode<'a> = opcode(
+            "sleep statement",
             ext_op(tag_byte(0x22)),
             struct_parser! {
                 StatementOpcode::Sleep { milliseconds: TermArg::parse }
@@ -1896,6 +1935,7 @@ pub mod term {
         /// UsecTime        := TermArg => ByteData
         /// ```
         stall -> StatementOpcode<'a> = opcode(
+            "stall statement",
             ext_op(tag_byte(0x21)),
             struct_parser! {
                 StatementOpcode::Stall { microseconds: TermArg::parse }
@@ -1909,6 +1949,7 @@ pub mod term {
         /// WhileOp         := 0xA2
         /// ```
         while_op -> StatementOpcode<'a> = opcode(
+            "while loop",
             tag_byte(0xa2),
             in_package(struct_parser! {
                 StatementOpcode::While {
@@ -1945,6 +1986,7 @@ pub mod term {
         /// RefOfOp             := 0x71
         /// ```
         ref_of -> ReferenceExpressionOpcode<'a> = opcode(
+            "reference-of operator",
             tag_byte(0x71),
             map(SuperName::parse, ReferenceExpressionOpcode::RefOf),
         )
@@ -1957,6 +1999,7 @@ pub mod term {
         /// ObjReference        := TermArg => ??ObjectReference | String
         /// ```
         deref -> ReferenceExpressionOpcode<'a> = opcode(
+            "dereference operator",
             tag_byte(0x83),
             map(TermArg::parse, ReferenceExpressionOpcode::Deref),
         )
@@ -1970,6 +2013,7 @@ pub mod term {
         /// IndexValue          := TermArg => Integer
         /// ```
         index -> ReferenceExpressionOpcode<'a> = opcode(
+            "index operator",
             tag_byte(0x83),
             struct_parser! {
                 ReferenceExpressionOpcode::DefIndex {
@@ -2074,10 +2118,11 @@ pub mod term {
     }
 
     macro_rules! binary_op_parser {
-        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $desc:literal $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
                 $parser -> ExpressionOpcode<'a> = opcode(
+                    $desc,
                     tag_byte($tag),
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, TermArg::parse, parse_target)
@@ -2093,7 +2138,7 @@ pub mod term {
         /// AddOp               := 0x72
         /// Operand             := TermArg => Integer
         /// ```
-        add Add 0x72
+        add Add "add operator" 0x72
     }
 
     binary_op_parser! {
@@ -2101,7 +2146,7 @@ pub mod term {
         /// DefAnd              := AndOp Operand Operand Target
         /// AndOp               := 0x7B
         /// ```
-        bitwise_and BitwiseAnd 0x7b
+        bitwise_and BitwiseAnd "bitwise AND operator" 0x7b
     }
 
     binary_op_parser! {
@@ -2109,7 +2154,7 @@ pub mod term {
         /// DefOr               := OrOp Operand Operand Target
         /// OrOp                := 0x7D
         /// ```
-        bitwise_or BitwiseOr 0x7d
+        bitwise_or BitwiseOr "bitwise OR operator" 0x7d
     }
 
     binary_op_parser! {
@@ -2117,7 +2162,7 @@ pub mod term {
         /// DefXOr              := XorOp Operand Operand Target
         /// XorOp               := 0x7F
         /// ```
-        bitwise_xor BitwiseXor 0x7f
+        bitwise_xor BitwiseXor "bitwise XOR operator" 0x7f
     }
 
     binary_op_parser! {
@@ -2126,7 +2171,7 @@ pub mod term {
         /// ConcatOp            := 0x73
         /// ```
         /// Data                := TermArg => ComputationalData
-        concat Concat 0x73
+        concat Concat "concat operator" 0x73
     }
 
     binary_op_parser! {
@@ -2135,7 +2180,7 @@ pub mod term {
         /// ConcatResOp         := 0x84
         /// ```
         /// BufData             := TermArg => Buffer
-        concat_res ConcatRes 0x84
+        concat_res ConcatRes "concat resource template operator" 0x84
     }
 
     binary_op_parser! {
@@ -2143,7 +2188,7 @@ pub mod term {
         /// DefMod              := ModOp Dividend Divisor Target
         /// ModOp               := 0x85
         /// ```
-        mod_op Mod 0x85
+        mod_op Mod "modulus operator" 0x85
     }
 
     binary_op_parser! {
@@ -2151,7 +2196,7 @@ pub mod term {
         /// DefMultiply         := MultiplyOp Operand Operand Target
         /// MultiplyOp          := 0x77
         /// ```
-        multiply Multiply 0x77
+        multiply Multiply "multiplication operator" 0x77
     }
 
     binary_op_parser! {
@@ -2159,7 +2204,7 @@ pub mod term {
         /// DefNAnd             := NandOp Operand Operand Target
         /// NandOp              := 0x7C
         /// ```
-        nand Nand 0x7c
+        nand Nand "bitwise NAND operator" 0x7c
     }
 
     binary_op_parser! {
@@ -2167,7 +2212,7 @@ pub mod term {
         /// DefNOr              := NorOp Operand Operand Target
         /// NorOp               := 0x7E
         /// ```
-        nor Nor 0x7e
+        nor Nor "bitwise NOR operator" 0x7e
     }
 
     binary_op_parser! {
@@ -2176,7 +2221,7 @@ pub mod term {
         /// ShiftLeftOp         := 0x79
         /// ShiftCount          := TermArg => Integer
         /// ```
-        shift_left ShiftLeft 0x79
+        shift_left ShiftLeft "left shift operator" 0x79
     }
 
     binary_op_parser! {
@@ -2184,7 +2229,7 @@ pub mod term {
         /// DefShiftRight       := ShiftRightOp Operand ShiftCount Target
         /// ShiftRightOp        := 0x7A
         /// ```
-        shift_right ShiftRight 0x7a
+        shift_right ShiftRight "right shift operator" 0x7a
     }
 
     binary_op_parser! {
@@ -2192,18 +2237,19 @@ pub mod term {
         /// DefSubtract         := SubtractOp Operand Operand Target
         /// SubtractOp          := 0x74
         /// ```
-        subtract Subtract 0x74
+        subtract Subtract "subtraction operator" 0x74
     }
 
     macro_rules! unary_op_parser {
-        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
-            unary_op_parser! { $(#[$meta])* $parser $op tag_byte($tag) }
+        [$( #[$meta:meta] )* $parser:ident $op:ident $desc:literal $tag:literal] => {
+            unary_op_parser! { $(#[$meta])* $parser $op $desc tag_byte($tag) }
         };
 
-        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:expr] => {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $desc:literal $tag:expr] => {
             parser_fn! {
                 $(#[$meta])*
                 $parser -> ExpressionOpcode<'a> = opcode(
+                    $desc,
                     $tag,
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, parse_target)
@@ -2218,7 +2264,7 @@ pub mod term {
         /// DefNot              := NotOp Operand Target
         /// NotOp               := 0x80
         /// ```
-        bitwise_not BitwiseNot 0x80
+        bitwise_not BitwiseNot "bitwise NOT operator" 0x80
     }
 
     unary_op_parser! {
@@ -2226,7 +2272,7 @@ pub mod term {
         /// DefFindSetLeftBit   := FindSetLeftBitOp Operand Target
         /// FindSetLeftBitOp    := 0x81
         /// ```
-        find_set_left_bit FindSetLeftBit 0x81
+        find_set_left_bit FindSetLeftBit "find left bit operator" 0x81
     }
 
     unary_op_parser! {
@@ -2234,7 +2280,7 @@ pub mod term {
         /// DefFindSetRightBit  := FindSetRightBitOp Operand Target
         /// FindSetRightBitOp   := 0x82
         /// ```
-        find_set_right_bit FindSetRightBit 0x82
+        find_set_right_bit FindSetRightBit "find right bit operator" 0x82
     }
 
     unary_op_parser! {
@@ -2242,7 +2288,7 @@ pub mod term {
         /// DefFromBCD          := FromBCDOp BCDValue Target
         /// FromBCDOp           := ExtOpPrefix 0x28
         /// ```
-        from_bcd FromBCD ext_op(tag_byte(0x28))
+        from_bcd FromBCD "from BCD conversion" ext_op(tag_byte(0x28))
     }
 
     unary_op_parser! {
@@ -2251,7 +2297,7 @@ pub mod term {
         /// ToBCDOp             := ExtOpPrefix 0x29
         /// BCDValue            := TermArg => Integer
         /// ```
-        to_bcd ToBCD ext_op(tag_byte(0x29))
+        to_bcd ToBCD "to BCD conversion" ext_op(tag_byte(0x29))
     }
 
     unary_op_parser! {
@@ -2259,7 +2305,7 @@ pub mod term {
         /// DefToBuffer         := ToBufferOp Operand Target
         /// ToBufferOp          := 0x96
         /// ```
-        to_buffer ToBuffer 0x96
+        to_buffer ToBuffer "buffer conversion" 0x96
     }
 
     unary_op_parser! {
@@ -2267,7 +2313,7 @@ pub mod term {
         /// DefToDecimalString  := ToDecimalStringOp Operand Target
         /// ToDecimalStringOp   := 0x97
         /// ```
-        to_decimal_string ToDecimalString 0x97
+        to_decimal_string ToDecimalString "decimal string conversion" 0x97
     }
 
     unary_op_parser! {
@@ -2275,7 +2321,7 @@ pub mod term {
         /// DefToHexString      := ToHexStringOp Operand Target
         /// ToHexStringOp       := 0x98
         /// ```
-        to_hex_string ToHexString 0x98
+        to_hex_string ToHexString "hex string conversion" 0x98
     }
 
     unary_op_parser! {
@@ -2283,14 +2329,15 @@ pub mod term {
         /// DefToInteger        := ToIntegerOp Operand Target
         /// ToIntegerOp         := 0x99
         /// ```
-        to_integer ToInteger 0x99
+        to_integer ToInteger "integer conversion" 0x99
     }
 
     macro_rules! logical_op_parser {
-        [$( #[$meta:meta] )* $parser:ident $op:ident $tag:literal] => {
+        [$( #[$meta:meta] )* $parser:ident $op:ident $desc:literal $tag:literal] => {
             parser_fn! {
                 $(#[$meta])*
                 $parser -> ExpressionOpcode<'a> = opcode(
+                    $desc,
                     tag_byte($tag),
                     struct_parser! {
                         ExpressionOpcode::$op(TermArg::parse, TermArg::parse)
@@ -2305,7 +2352,7 @@ pub mod term {
         /// DefLEqual           := LequalOp Operand Operand
         /// LequalOp            := 0x93
         /// ```text
-        equal Equal 0x93
+        equal Equal "equality operator" 0x93
     }
 
     logical_op_parser! {
@@ -2313,7 +2360,7 @@ pub mod term {
         /// DefLGreater         := LgreaterOp Operand Operand
         /// LgreaterOp          := 0x94
         /// ```text
-        greater Greater 0x94
+        greater Greater "greater-than operator" 0x94
     }
 
     logical_op_parser! {
@@ -2321,7 +2368,7 @@ pub mod term {
         /// DefLLess            := LlessOp Operand Operand
         /// LlessOp             := 0x95
         /// ```text
-        less Less 0x95
+        less Less "less-than operator" 0x95
     }
 
     logical_op_parser! {
@@ -2329,7 +2376,7 @@ pub mod term {
         /// DefLAnd             := LandOp Operand Operand
         /// LandOp              := 0x90
         /// ```text
-        logical_and LogicalAnd 0x90
+        logical_and LogicalAnd "logical AND operator " 0x90
     }
 
     logical_op_parser! {
@@ -2337,7 +2384,7 @@ pub mod term {
         /// DefLOr              := LorOp Operand Operand
         /// LorOp               := 0x91
         /// ```text
-        logical_or LogicalOr 0x91
+        logical_or LogicalOr "logical OR operator" 0x91
     }
 
     parser_fn! {
@@ -2355,11 +2402,24 @@ pub mod term {
         /// LnotEqualOp         := LnotOp LequalOp
         /// ```text
         inverted_logical_ops -> ExpressionOpcode<'a> = opcode(
+            "logical NOT operator",
             tag_byte(0x92),
             alt((
-                opcode(tag_byte(0x95), struct_parser!(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse))),
-                opcode(tag_byte(0x94), struct_parser!(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse))),
-                opcode(tag_byte(0x93), struct_parser!(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse))),
+                opcode(
+                    "less-than operator",
+                    tag_byte(0x95),
+                    struct_parser!(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse)),
+                ),
+                opcode(
+                    "greater-than operator",
+                    tag_byte(0x94),
+                    struct_parser!(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse)),
+                ),
+                opcode(
+                    "equality operator",
+                    tag_byte(0x93),
+                    struct_parser!(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse)),
+                ),
                 map(TermArg::parse, ExpressionOpcode::LogicalNot),
             ))
         )
@@ -2371,6 +2431,7 @@ pub mod term {
         /// DecrementOp         := 0x76
         /// ```
         decrement -> ExpressionOpcode<'a> = opcode(
+            "decrement operator",
             tag_byte(0x76),
             map(SuperName::parse, ExpressionOpcode::Decrement),
         )
@@ -2382,6 +2443,7 @@ pub mod term {
         /// IncrementOp         := 0x75
         /// ```
         increment -> ExpressionOpcode<'a> = opcode(
+            "increment operator",
             tag_byte(0x75),
             map(SuperName::parse, ExpressionOpcode::Increment),
         )
@@ -2393,6 +2455,7 @@ pub mod term {
         /// SizeOfOp            := 0x87
         /// ```
         size_of -> ExpressionOpcode<'a> = opcode(
+            "size-of operator",
             tag_byte(0x87),
             map(SuperName::parse, ExpressionOpcode::SizeOf),
         )
@@ -2408,6 +2471,7 @@ pub mod term {
         /// NOTE: SuperName includes MethodInvocation, which is *not* legal for the
         /// ObjectType operator. It is otherwise identical to the grammar above.
         object_type -> ExpressionOpcode<'a> = opcode(
+            "object type operator",
             tag_byte(0x8e),
             map(
                 verify(
@@ -2445,6 +2509,7 @@ pub mod term {
         /// Timeout             := WordData
         /// ```
         acquire -> ExpressionOpcode<'a> = opcode(
+            "acquire expression",
             ext_op(tag_byte(0x23)),
             struct_parser! {
                 ExpressionOpcode::Acquire {
@@ -2461,6 +2526,7 @@ pub mod term {
         /// WaitOp              := ExtOpPrefix 0x25
         /// ```
         wait -> ExpressionOpcode<'a> = opcode(
+            "wait expression",
             ext_op(tag_byte(0x25)),
             struct_parser! {
                 ExpressionOpcode::Wait {
@@ -2477,6 +2543,7 @@ pub mod term {
         /// CondRefOfOp         := ExtOpPrefix 0x12
         /// ```
         cond_ref_of -> ExpressionOpcode<'a> = opcode(
+            "reference-of operator (conditional)",
             ext_op(tag_byte(0x12)),
             struct_parser! {
                 ExpressionOpcode::CondRefOf(SuperName::parse, parse_target)
@@ -2490,6 +2557,7 @@ pub mod term {
         /// CopyObjectOp        := 0x9D
         /// ```
         copy_object -> ExpressionOpcode<'a> = opcode(
+            "copy expresssion",
             tag_byte(0x9d),
             struct_parser! {
                 ExpressionOpcode::CopyObject(TermArg::parse, SimpleName::parse)
@@ -2507,6 +2575,7 @@ pub mod term {
         /// Quotient            := Target
         /// ```
         divide -> ExpressionOpcode<'a> = opcode(
+            "division operator",
             tag_byte(0x78),
             struct_parser! {
                 ExpressionOpcode::Divide {
@@ -2525,6 +2594,7 @@ pub mod term {
         /// LoadTableOp         := ExtOpPrefix 0x1F
         /// ```
         load_table -> ExpressionOpcode<'a> = opcode(
+            "load table expression",
             ext_op(tag_byte(0x1f)),
             struct_parser! {
                 ExpressionOpcode::LoadTable {
@@ -2547,6 +2617,7 @@ pub mod term {
         /// StartIndex          := TermArg => Integer
         /// ```
         match_op -> ExpressionOpcode<'a> = opcode(
+            "match expression",
             tag_byte(0x89),
             struct_parser! {
                 ExpressionOpcode::Match {
@@ -2566,6 +2637,7 @@ pub mod term {
         /// MidObj              := TermArg => Buffer | String
         /// ```
         mid -> ExpressionOpcode<'a> = opcode(
+            "mid operator",
             tag_byte(0x9e),
             struct_parser! {
                 ExpressionOpcode::Mid {
@@ -2584,6 +2656,7 @@ pub mod term {
         /// StoreOp             := 0x70
         /// ```
         store -> ExpressionOpcode<'a> = opcode(
+            "store expression",
             tag_byte(0x70),
             struct_parser! {
                 ExpressionOpcode::Store(TermArg::parse, SuperName::parse)
@@ -2598,6 +2671,7 @@ pub mod term {
         /// ToStringOp          := 0x9C
         /// ```
         to_string -> ExpressionOpcode<'a> = opcode(
+            "string conversion",
             tag_byte(0x9c),
             struct_parser! {
                 ExpressionOpcode::ToString {
