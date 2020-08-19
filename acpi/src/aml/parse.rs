@@ -553,7 +553,15 @@ mod util {
         Q: Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>,
         E: ParseError<ParserState<'a>>,
     {
-        preceded(opcode_parser, context(description, cut(body_parser)))
+        move |i| match preceded(&opcode_parser, cut(&body_parser))(i.clone()) {
+            Err(nom::Err::Failure(e)) => {
+                // Only add context to *failures*, on the assumption that these will only
+                // come from the opcode body, and we don't want to add context when the
+                // opcode itself wasn't recognized.
+                Err(nom::Err::Failure(E::add_context(i, description, e)))
+            }
+            other => other,
+        }
     }
 }
 

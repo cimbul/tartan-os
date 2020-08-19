@@ -32,7 +32,9 @@ pub mod name {
     use super::misc::{ArgObject, LocalObject};
     use super::term::ReferenceExpressionOpcode;
     use alloc::boxed::Box;
+    use alloc::string::ToString;
     use alloc::vec::Vec;
+    use core::fmt;
 
 
     /// Convert a list of segments in various formats into a path vector
@@ -51,14 +53,27 @@ pub mod name {
     /// (except at the beginning).
     ///
     /// The ASL compiler uses underscores to pad the end of names shorter than 4 chars.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Clone, Copy, PartialEq, Eq)]
     pub struct NameSeg(pub [u8; 4]);
+
+    impl fmt::Display for NameSeg {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            let str_name = core::str::from_utf8(&self.0).unwrap_or("<invalid>");
+            f.write_str(str_name)
+        }
+    }
+
+    impl fmt::Debug for NameSeg {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            write!(f, "NameSeg[{:?}]", self.to_string())
+        }
+    }
 
     from_impl!((n: &[u8; 4]) -> NameSeg = NameSeg(*n));
 
 
     /// Fully qualified object path, either absolute or relative.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Clone, PartialEq, Eq)]
     pub struct NameString {
         pub anchor: PathAnchor,
         pub path: Vec<NameSeg>,
@@ -82,6 +97,42 @@ pub mod name {
         }
     }
 
+    impl fmt::Display for NameString {
+        /// Format a `NameString` like a path in ASL
+        ///
+        /// ```
+        /// # use tartan_acpi::aml::name::NameString;
+        /// #
+        /// let a = NameString::empty();
+        /// assert_eq!(format!("{}", a), "");
+        ///
+        /// let b = NameString::new(&[b"ASDF", b"_123"]);
+        /// assert_eq!(format!("{}", b), "ASDF\\_123");
+        ///
+        /// let c = NameString::new_parent(2, &[b"FOO_", b"BAR_"]);
+        /// assert_eq!(format!("{}", c), "^^FOO_\\BAR_");
+        ///
+        /// let d = NameString::new_root(&[b"X___"]);
+        /// assert_eq!(format!("{}", d), "\\X___");
+        /// ```
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            write!(f, "{}", self.anchor)?;
+            if !self.path.is_empty() {
+                write!(f, "{}", self.path[0])?;
+                for n in self.path.iter().skip(1) {
+                    write!(f, "\\{}", n)?;
+                }
+            }
+            Ok(())
+        }
+    }
+
+    impl fmt::Debug for NameString {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            write!(f, "NameString[{:?}]", self.to_string())
+        }
+    }
+
     from_impl!((n: &[u8; 4]) -> NameString = NameString::new(&[n]));
     from_impl!((n: NameSeg) -> NameString = NameString::new(&[n]));
 
@@ -91,6 +142,20 @@ pub mod name {
     pub enum PathAnchor {
         Root,
         Parent(usize),
+    }
+
+    impl fmt::Display for PathAnchor {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            match self {
+                PathAnchor::Root => f.write_str("\\"),
+                PathAnchor::Parent(n) => {
+                    for _ in 0..(*n) {
+                        f.write_str("^")?;
+                    }
+                    Ok(())
+                }
+            }
+        }
     }
 
 

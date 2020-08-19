@@ -8,33 +8,34 @@ macro_rules! assert_parses {
             let input = $input;
             let expected_rest = $rest;
             let expected_output = $output;
-            let result: nom::IResult<_, _, ()> = parser(
+            let result: nom::IResult<_, _, nom::error::VerboseError<_>> = parser(
                 crate::aml::parse::state::ParserState::new(input));
             match result {
-                Err(_) => panic!(
-                    "\nInput could not be parsed\n   input: {:x?}\n  wanted: {:x?}\n  parser: {}\n",
+                Err(e) => panic!(
+                    "\nInput could not be parsed\n  parser: {}\n   input: {:x?}\n  wanted: {:#x?}\n\n{}",
+                    stringify!($parser),
                     input,
                     expected_output,
-                    stringify!($parser),
+                    crate::aml::parse::state::ErrorWithPosition::new(e, input),
                 ),
                 Ok((output_state, actual_output)) => {
                     assert!(
                         actual_output == expected_output,
-                        "\nDid not get expected output from parser\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n    rest: {:x?}\n  parser: {}\n",
-                        expected_output,
-                        actual_output,
+                        "\nDid not get expected output from parser\n  parser: {}\n   input: {:x?}\n    rest: {:x?}\n  wanted: {:#x?}\n     got: {:#x?}",
+                        stringify!($parser),
                         input,
                         output_state.data,
-                        stringify!($parser),
+                        expected_output,
+                        actual_output,
                     );
                     assert!(
                         output_state.data == expected_rest,
-                        "\nParser did not consume expected data\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n  output: {:x?}\n  parser: {}\n",
+                        "\nParser did not consume expected data\n  parser: {}\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n  output: {:#x?}\n",
+                        stringify!($parser),
                         expected_rest,
                         output_state.data,
                         input,
                         actual_output,
-                        stringify!($parser),
                     );
                 }
             }
@@ -47,7 +48,7 @@ macro_rules! assert_errors {
         {
             let parser = $parser;
             let input = $input;
-            let result: nom::IResult<_, _, ()> = parser(
+            let result: nom::IResult<_, _, nom::error::VerboseError<_>> = parser(
                 crate::aml::parse::state::ParserState::new(input));
             if let Ok((_rest, output)) = result {
                 panic!(
@@ -533,8 +534,7 @@ mod package {
         assert_errors!(&package_xyz, b"\x02ZA");
 
         // Fails if inner parser requires more data
-        let package_take_4 = in_package::<_, _, ()>(
-            ParserState::lift(bytes::take(4_usize)));
+        let package_take_4 = in_package(ParserState::lift(bytes::take(4_usize)));
         assert_errors!(&package_take_4, b"\x00");
         assert_errors!(&package_take_4, b"\x01A");
         assert_errors!(&package_take_4, b"\x02AB");
