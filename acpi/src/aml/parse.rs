@@ -104,10 +104,10 @@ impl<'a, T> AMLParseError<'a> for T where
 pub mod state {
     use super::super::name::NameSeg;
     use super::*;
-    use core::cmp::{max, min};
+    use core::cmp::min;
     use core::fmt::{self, Display, Formatter};
     use nom::error::{VerboseError, VerboseErrorKind};
-    use nom::{InputIter, InputLength, Offset};
+    use nom::{InputIter, InputLength};
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -199,9 +199,15 @@ pub mod state {
                 return writeln!(out, "in empty input");
             }
 
-            let offset = self.full_input.offset(self.state.data);
+            // NOTE: nom's Offset implementation can panic. Avoid it.
+            let full_input_pos = self.full_input.as_ptr() as usize;
+            let state_pos = self.state.data.as_ptr() as usize;
+            let offset = match state_pos.checked_sub(full_input_pos) {
+                Some(o) => o,
+                None => return writeln!(out, "at unknown/invalid offset"),
+            };
 
-            let context_start = max(offset - 10, 0);
+            let context_start = offset.checked_sub(10).unwrap_or(0);
             let context_end = min(offset + 10, self.full_input.len());
             let context_slice = &self.full_input[context_start..context_end];
 
