@@ -23,7 +23,7 @@ use core::mem;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
 use nom::combinator::{all_consuming, flat_map, map, opt, rest, value, verify};
-use nom::error::{ErrorKind, ParseError, context};
+use nom::error::{context, ErrorKind, ParseError};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
@@ -58,10 +58,8 @@ pub fn parse_table<'a>(data: &'a [u8]) -> Result<AMLTable<'a>, ErrorWithPosition
             return util::err(state, ErrorKind::Verify);
         }
 
-        let body_parser = context(
-            "table body",
-            all_consuming(multi::many0(TermObject::parse)),
-        );
+        let body_parser =
+            context("table body", all_consuming(multi::many0(TermObject::parse)));
         let (state, body) = body_parser(state)?;
 
         Ok((state, AMLTable { header, body }))
