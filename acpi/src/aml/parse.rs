@@ -910,48 +910,71 @@ pub mod data {
 mod package {
     use super::*;
 
-    parser_fn! {
-        /// Parse the length of a package
+    /// The inner and outer size of a length-prefixed package
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct PackageLength {
+        /// The total length of the package including the package length encoding itself.
+        pub total_length: u32,
+
+        /// The length of the remainder of the package following the length encoding.
         ///
-        /// Grammar:
-        /// ```text
-        /// PkgLength :=
-        ///     PkgLeadByte |
-        ///     <PkgLeadByte ByteData> |
-        ///     <PkgLeadByte ByteData ByteData> |
-        ///     <PkgLeadByte ByteData ByteData ByteData>
-        ///
-        /// PkgLeadByte :=
-        ///     <bit 7-6: ByteData count that follows (0-3)>
-        ///     <bit 5-4: Only used if PkgLength < 63>
-        ///     <bit 3-0: Least significant package length nybble>
-        /// ```
-        ///
-        /// If multiple bytes are used, the least-significant nibble comes from the
-        /// lower nibble `PkgLeadByte`, then the next two nibbles come from the next byte,
-        /// and so on.
-        pub parse_package_length(i) -> u32 {
-            let (i, head_byte) = num::le_u8(i)?;
-            let tail_byte_count = head_byte >> 6;
-            let length_low = u32::from(head_byte & 0x0f);
-            let (i, length_high) = match tail_byte_count {
-                0 => (i, u32::from(head_byte & 0b0011_0000)),
-                1 => {
-                    let (i, tail_byte) = num::le_u8(i)?;
-                    (i, u32::from(tail_byte) << 4)
-                },
-                2 => {
-                    let (i, tail_bytes) = num::le_u16(i)?;
-                    (i, u32::from(tail_bytes) << 4)
-                },
-                3 => {
-                    let (i, tail_bytes) = num::le_u24(i)?;
-                    (i, tail_bytes << 4)
-                }
-                _ => panic!("Somehow got a value >= 4 from a two bit field"),
-            };
-            Ok((i, length_high | length_low))
+        /// None if the total length is less than the size of the length encoding itself.
+        pub body_length: Option<u32>,
+    }
+
+    impl<'a> Parse<'a> for PackageLength {
+        parser_fn! {
+            /// Grammar:
+            /// ```text
+            /// PkgLength :=
+            ///     PkgLeadByte |
+            ///     <PkgLeadByte ByteData> |
+            ///     <PkgLeadByte ByteData ByteData> |
+            ///     <PkgLeadByte ByteData ByteData ByteData>
+            ///
+            /// PkgLeadByte :=
+            ///     <bit 7-6: ByteData count that follows (0-3)>
+            ///     <bit 5-4: Only used if PkgLength < 63>
+            ///     <bit 3-0: Least significant package length nybble>
+            /// ```
+            ///
+            /// If multiple bytes are used, the least-significant nibble comes from the
+            /// lower nibble `PkgLeadByte`, then the next two nibbles come from the next byte,
+            /// and so on.
+            parse('a i) -> PackageLength {
+                let (i, head_byte) = num::le_u8(i)?;
+                let tail_byte_count = head_byte >> 6;
+                let length_low = u32::from(head_byte & 0x0f);
+                let (i, length_high) = match tail_byte_count {
+                    0 => (i, u32::from(head_byte & 0b0011_0000)),
+                    1 => {
+                        let (i, tail_byte) = num::le_u8(i)?;
+                        (i, u32::from(tail_byte) << 4)
+                    },
+                    2 => {
+                        let (i, tail_bytes) = num::le_u16(i)?;
+                        (i, u32::from(tail_bytes) << 4)
+                    },
+                    3 => {
+                        let (i, tail_bytes) = num::le_u24(i)?;
+                        (i, tail_bytes << 4)
+                    }
+                    _ => panic!("Somehow got a value >= 4 from a two bit field"),
+                };
+                let total_length = length_high | length_low;
+                let body_length = total_length.checked_sub((tail_byte_count + 1).into());
+                Ok((i, PackageLength { total_length, body_length }))
+            }
         }
+    }
+
+    parser_fn! {
+        /// Parse a length value uses "package" encoding but is not actually followed by
+        /// content.
+        pub standalone_package_length -> u32 = map(
+            PackageLength::parse,
+            |l| l.total_length,
+        )
     }
 
     /// Execute a parser inside a length-prefixed package
@@ -963,8 +986,12 @@ mod package {
         E: AMLParseError<'a>,
     {
         move |i: ParserState<'a>| {
-            let (i, package_length) = parse_package_length(i)?;
-            let (i, package_data) = ParserState::lift(bytes::take(package_length))(i)?;
+            let (i, package_length) = PackageLength::parse(i)?;
+            let body_length = match package_length.body_length {
+                Some(l) => l,
+                None => return util::err(i, ErrorKind::Verify),
+            };
+            let (i, package_data) = ParserState::lift(bytes::take(body_length))(i)?;
             let package_state = ParserState { data: package_data, ..i.clone() };
             let (_, parsed_package) = all_consuming(&inner_parser)(package_state)?;
             Ok((i, parsed_package))
@@ -980,7 +1007,7 @@ pub mod term {
     use super::super::name::{NameSeg, NameString, SimpleName, SuperName};
     use super::super::term::*;
     use super::name::parse_target;
-    use super::package::{in_package, parse_package_length};
+    use super::package::{in_package, standalone_package_length};
     use super::util::*;
     use super::*;
     use alloc::boxed::Box;
@@ -1623,13 +1650,16 @@ pub mod term {
     impl<'a> Parse<'a> for FieldElement<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
-                context("named field", struct_parser!(
-                    Self::Named { name: NameSeg::parse, bit_length: parse_package_length }
-                )),
+                context("named field", struct_parser!(Self::Named {
+                        name: NameSeg::parse,
+                        bit_length: standalone_package_length,
+                })),
                 opcode(
                     "reserved field",
                     tag_byte(0x00),
-                    struct_parser!(Self::Reserved { bit_length: parse_package_length }),
+                    struct_parser!(Self::Reserved {
+                        bit_length: standalone_package_length,
+                    }),
                 ),
                 access_field,
                 extended_access_field,

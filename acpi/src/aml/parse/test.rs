@@ -378,143 +378,165 @@ mod data {
     fn test_buffer() {
         assert_errors!(CD::parse, b"\x11");
         assert_errors!(CD::parse, b"\x11\x00");
-        assert_errors!(CD::parse, b"\x11\x00\x00");
+        assert_errors!(CD::parse, b"\x11\x01");
+        assert_errors!(CD::parse, b"\x11\x01\x00");
 
         // Single-byte package length, single-byte size, no initializer
-        assert_parses!(CD::parse, b"\x11\x01\x00", b"", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x02\x00", b"", CD::Buffer(Buffer {
             size: CD::Zero.into(),
             initializer: &[],
         }));
         // Single-byte initializer
-        assert_parses!(CD::parse, b"\x11\x02\x00\x00", b"", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x03\x00\x00", b"", CD::Buffer(Buffer {
             size: CD::Zero.into(),
             initializer: &[0x00],
         }));
         // Multi-byte initializer + trailing data
-        assert_parses!(CD::parse, b"\x11\x03\x00\xab\xcd\xef", b"\xef", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x04\x00\xab\xcd\xef", b"\xef", CD::Buffer(Buffer {
             size: CD::Zero.into(),
             initializer: &[0xab, 0xcd],
         }));
         // Multi-byte size term
-        assert_parses!(CD::parse, b"\x11\x03\x0b\x0a\x00", b"", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x04\x0b\x0a\x00", b"", CD::Buffer(Buffer {
             size: CD::Word(10).into(),
             initializer: &[],
         }));
         // Single-byte size term
-        assert_parses!(CD::parse, b"\x11\x03\x62\x1f\xdb", b"", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x04\x62\x1f\xdb", b"", CD::Buffer(Buffer {
             size: LocalObject::Local2.into(),
             initializer: &[0x1f, 0xdb],
         }));
         // Multi-byte package length
-        assert_parses!(CD::parse, b"\x11\x46\x00\x62\x12\x34\x56\x78\x9a", b"", CD::Buffer(Buffer {
+        assert_parses!(CD::parse, b"\x11\x48\x00\x62\x12\x34\x56\x78\x9a", b"", CD::Buffer(Buffer {
             size: LocalObject::Local2.into(),
             initializer: &[0x12, 0x34, 0x56, 0x78, 0x9a],
         }));
 
         // Not enough data for package length
-        assert_errors!(CD::parse, b"\x11\x46\x00\x62\x12\x34\x56\x78");
+        assert_errors!(CD::parse, b"\x11\x48\x00\x62\x12\x34\x56\x78");
 
         // Invalid term
-        assert_errors!(CD::parse, b"\x11\x01\x0b");
-        assert_errors!(CD::parse, b"\x11\x02\x0b\x00");
+        assert_errors!(CD::parse, b"\x11\x02\x0b");
+        assert_errors!(CD::parse, b"\x11\x03\x0b\x00");
 
         // Package length cuts off valid term
-        assert_errors!(CD::parse, b"\x11\x02\x0b\x00\x01");
+        assert_errors!(CD::parse, b"\x11\x03\x0b\x00\x01");
     }
 }
 
 
 mod package {
+    use crate::aml::parse::Parse;
     use crate::aml::parse::package::*;
     use crate::aml::parse::state::ParserState;
     use nom::bytes::complete as bytes;
+    use PackageLength as PL;
+
+    fn pl(total_length: u32, body_length: u32) -> PackageLength {
+        PackageLength { total_length, body_length: Some(body_length) }
+    }
+
+    fn pli(total_length: u32) -> PackageLength {
+        PackageLength { total_length, body_length: None }
+    }
 
     #[test]
     fn test_package_length_one_byte() {
-        assert_errors!(parse_package_length, &[]);
+        assert_errors!(PL::parse, &[]);
+
+        assert_parses!(PL::parse, &[0x00      ], &[],     pli(0x00));
+        assert_parses!(PL::parse, &[0x00, 0xa4], &[0xa4], pli(0x00));
 
         // Values with fewer than 6 bits parse as themselves and only consume one byte
-        for n in 0..0x40_u8 {
-            assert_parses!(parse_package_length, &[n      ], &[],     n.into());
-            assert_parses!(parse_package_length, &[n, 0xa4], &[0xa4], n.into());
+        for n in 1..0x40_u8 {
+            assert_parses!(PL::parse, &[n      ], &[],     pl(n.into(), (n - 1).into()));
+            assert_parses!(PL::parse, &[n, 0xa4], &[0xa4], pl(n.into(), (n - 1).into()));
         }
 
         // Every other value requires multiple bytes
         for n in 0x40_u8..=0xff {
-            assert_errors!(parse_package_length, &[n]);
+            assert_errors!(PL::parse, &[n]);
         }
     }
 
     #[test]
     fn test_package_length_two_byte() {
         // Legal two-byte values start with 0x4
-        assert_parses!(parse_package_length, &[0x41, 0x32],       &[],     0x0321);
-        assert_parses!(parse_package_length, &[0x4e, 0xd9],       &[],     0x0d9e);
-        assert_parses!(parse_package_length, &[0x40, 0x01],       &[],     0x0010);
-        assert_parses!(parse_package_length, &[0x40, 0x01, 0x2a], &[0x2a], 0x0010);
-        assert_parses!(parse_package_length, &[0x4f, 0xff],       &[],     0x0fff);
-        assert_parses!(parse_package_length, &[0x4f, 0xff, 0xa5], &[0xa5], 0x0fff);
+        assert_parses!(PL::parse, &[0x41, 0x32],       &[],     pl(0x0321, 0x031f));
+        assert_parses!(PL::parse, &[0x4e, 0xd9],       &[],     pl(0x0d9e, 0x0d9c));
+        assert_parses!(PL::parse, &[0x40, 0x01],       &[],     pl(0x0010, 0x000e));
+        assert_parses!(PL::parse, &[0x40, 0x01, 0x2a], &[0x2a], pl(0x0010, 0x000e));
+        assert_parses!(PL::parse, &[0x4f, 0xff],       &[],     pl(0x0fff, 0x0ffd));
+        assert_parses!(PL::parse, &[0x4f, 0xff, 0xa5], &[0xa5], pl(0x0fff, 0x0ffd));
 
         // Bits 5-6 are reserved and must be unset, but we should ignore them anyway
-        assert_parses!(parse_package_length, &[0x4e, 0xd9],       &[],     0x0d9e);
-        assert_parses!(parse_package_length, &[0x5e, 0xd9, 0x8c], &[0x8c], 0x0d9e);
-        assert_parses!(parse_package_length, &[0x6e, 0xd9],       &[],     0x0d9e);
-        assert_parses!(parse_package_length, &[0x7e, 0xd9, 0x8c], &[0x8c], 0x0d9e);
+        assert_parses!(PL::parse, &[0x4e, 0xd9],       &[],     pl(0x0d9e, 0x0d9c));
+        assert_parses!(PL::parse, &[0x5e, 0xd9, 0x8c], &[0x8c], pl(0x0d9e, 0x0d9c));
+        assert_parses!(PL::parse, &[0x6e, 0xd9],       &[],     pl(0x0d9e, 0x0d9c));
+        assert_parses!(PL::parse, &[0x7e, 0xd9, 0x8c], &[0x8c], pl(0x0d9e, 0x0d9c));
 
         // These could have fit in one byte, but we can still parse them
-        assert_parses!(parse_package_length, &[0x40, 0x00],       &[],     0x0000);
-        assert_parses!(parse_package_length, &[0x41, 0x00],       &[],     0x0001);
-        assert_parses!(parse_package_length, &[0x41, 0x00, 0xe9], &[0xe9], 0x0001);
-        assert_parses!(parse_package_length, &[0x4f, 0x00],       &[],     0x000f);
+        assert_parses!(PL::parse, &[0x40, 0x00],       &[],     pli(0x0000));
+        assert_parses!(PL::parse, &[0x41, 0x00],       &[],     pli(0x0001));
+        assert_parses!(PL::parse, &[0x42, 0x00],       &[],     pl(0x0002, 0x0000));
+        assert_parses!(PL::parse, &[0x42, 0x00, 0xe9], &[0xe9], pl(0x0002, 0x0000));
+        assert_parses!(PL::parse, &[0x43, 0x00],       &[],     pl(0x0003, 0x0001));
+        assert_parses!(PL::parse, &[0x4f, 0x00],       &[],     pl(0x000f, 0x000d));
     }
 
     #[test]
     fn test_package_length_three_byte() {
         // Legal three-byte values start with 0x8
-        assert_parses!(parse_package_length, &[0x81, 0x32, 0x54],       &[],     0x0005_4321);
-        assert_parses!(parse_package_length, &[0x89, 0x7e, 0xa3],       &[],     0x000a_37e9);
-        assert_parses!(parse_package_length, &[0x80, 0x00, 0x01],       &[],     0x0000_1000);
-        assert_parses!(parse_package_length, &[0x80, 0x00, 0x01, 0xb7], &[0xb7], 0x0000_1000);
-        assert_parses!(parse_package_length, &[0x8f, 0xff, 0xff],       &[],     0x000f_ffff);
-        assert_parses!(parse_package_length, &[0x8f, 0xff, 0xff, 0x4b], &[0x4b], 0x000f_ffff);
+        assert_parses!(PL::parse, &[0x81, 0x32, 0x54],       &[],     pl(0x0005_4321, 0x0005_431e));
+        assert_parses!(PL::parse, &[0x89, 0x7e, 0xa3],       &[],     pl(0x000a_37e9, 0x000a_37e6));
+        assert_parses!(PL::parse, &[0x80, 0x00, 0x01],       &[],     pl(0x0000_1000, 0x0000_0ffd));
+        assert_parses!(PL::parse, &[0x80, 0x00, 0x01, 0xb7], &[0xb7], pl(0x0000_1000, 0x0000_0ffd));
+        assert_parses!(PL::parse, &[0x8f, 0xff, 0xff],       &[],     pl(0x000f_ffff, 0x000f_fffc));
+        assert_parses!(PL::parse, &[0x8f, 0xff, 0xff, 0x4b], &[0x4b], pl(0x000f_ffff, 0x000f_fffc));
 
         // Bits 5-6 are reserved and must be unset, but we should ignore them anyway
-        assert_parses!(parse_package_length, &[0x89, 0x7e, 0xa3, 0x5b], &[0x5b], 0x000a_37e9);
-        assert_parses!(parse_package_length, &[0x99, 0x7e, 0xa3],       &[],     0x000a_37e9);
-        assert_parses!(parse_package_length, &[0xa9, 0x7e, 0xa3, 0x5b], &[0x5b], 0x000a_37e9);
-        assert_parses!(parse_package_length, &[0xb9, 0x7e, 0xa3],       &[],     0x000a_37e9);
+        assert_parses!(PL::parse, &[0x89, 0x7e, 0xa3, 0x5b], &[0x5b], pl(0x000a_37e9, 0x000a_37e6));
+        assert_parses!(PL::parse, &[0x99, 0x7e, 0xa3],       &[],     pl(0x000a_37e9, 0x000a_37e6));
+        assert_parses!(PL::parse, &[0xa9, 0x7e, 0xa3, 0x5b], &[0x5b], pl(0x000a_37e9, 0x000a_37e6));
+        assert_parses!(PL::parse, &[0xb9, 0x7e, 0xa3],       &[],     pl(0x000a_37e9, 0x000a_37e6));
 
         // These could have fit in fewer bytes, but we can still parse them
-        assert_parses!(parse_package_length, &[0x80, 0x00, 0x00],       &[],     0x0000);
-        assert_parses!(parse_package_length, &[0x81, 0x00, 0x00],       &[],     0x0001);
-        assert_parses!(parse_package_length, &[0x81, 0x00, 0x00, 0x6d], &[0x6d], 0x0001);
-        assert_parses!(parse_package_length, &[0x80, 0x01, 0x00],       &[],     0x0010);
-        assert_parses!(parse_package_length, &[0x8f, 0xff, 0x00],       &[],     0x0fff);
+        assert_parses!(PL::parse, &[0x80, 0x00, 0x00],       &[],     pli(0x0000));
+        assert_parses!(PL::parse, &[0x81, 0x00, 0x00],       &[],     pli(0x0001));
+        assert_parses!(PL::parse, &[0x82, 0x00, 0x00],       &[],     pli(0x0002));
+        assert_parses!(PL::parse, &[0x83, 0x00, 0x00],       &[],     pl(0x0003, 0x0000));
+        assert_parses!(PL::parse, &[0x83, 0x00, 0x00, 0x6d], &[0x6d], pl(0x0003, 0x0000));
+        assert_parses!(PL::parse, &[0x84, 0x00, 0x00],       &[],     pl(0x0004, 0x0001));
+        assert_parses!(PL::parse, &[0x80, 0x01, 0x00],       &[],     pl(0x0010, 0x000d));
+        assert_parses!(PL::parse, &[0x8f, 0xff, 0x00],       &[],     pl(0x0fff, 0x0ffc));
     }
 
     #[test]
     fn test_package_length_four_byte() {
         // Legal four-byte values start with 0xc
-        assert_parses!(parse_package_length, &[0xc1, 0x32, 0x54, 0x76],       &[],     0x0765_4321);
-        assert_parses!(parse_package_length, &[0xcb, 0xe3, 0xd8, 0x49],       &[],     0x049d_8e3b);
-        assert_parses!(parse_package_length, &[0xc0, 0x00, 0x00, 0x01],       &[],     0x0010_0000);
-        assert_parses!(parse_package_length, &[0xc0, 0x00, 0x00, 0x01, 0x2f], &[0x2f], 0x0010_0000);
-        assert_parses!(parse_package_length, &[0xcf, 0xff, 0xff, 0xff],       &[],     0x0fff_ffff);
-        assert_parses!(parse_package_length, &[0xcf, 0xff, 0xff, 0xff, 0xa4], &[0xa4], 0x0fff_ffff);
+        assert_parses!(PL::parse, &[0xc1, 0x32, 0x54, 0x76],       &[],     pl(0x0765_4321, 0x0765_431d));
+        assert_parses!(PL::parse, &[0xcb, 0xe3, 0xd8, 0x49],       &[],     pl(0x049d_8e3b, 0x049d_8e37));
+        assert_parses!(PL::parse, &[0xc0, 0x00, 0x00, 0x01],       &[],     pl(0x0010_0000, 0x000f_fffc));
+        assert_parses!(PL::parse, &[0xc0, 0x00, 0x00, 0x01, 0x2f], &[0x2f], pl(0x0010_0000, 0x000f_fffc));
+        assert_parses!(PL::parse, &[0xcf, 0xff, 0xff, 0xff],       &[],     pl(0x0fff_ffff, 0x0fff_fffb));
+        assert_parses!(PL::parse, &[0xcf, 0xff, 0xff, 0xff, 0xa4], &[0xa4], pl(0x0fff_ffff, 0x0fff_fffb));
 
         // Bits 5-6 are reserved and must be unset, but we should ignore them anyway
-        assert_parses!(parse_package_length, &[0xcb, 0xe3, 0xd8, 0x49, 0xbf], &[0xbf], 0x049d_8e3b);
-        assert_parses!(parse_package_length, &[0xdb, 0xe3, 0xd8, 0x49],       &[],     0x049d_8e3b);
-        assert_parses!(parse_package_length, &[0xeb, 0xe3, 0xd8, 0x49],       &[],     0x049d_8e3b);
-        assert_parses!(parse_package_length, &[0xfb, 0xe3, 0xd8, 0x49, 0xbf], &[0xbf], 0x049d_8e3b);
+        assert_parses!(PL::parse, &[0xcb, 0xe3, 0xd8, 0x49, 0xbf], &[0xbf], pl(0x049d_8e3b, 0x049d_8e37));
+        assert_parses!(PL::parse, &[0xdb, 0xe3, 0xd8, 0x49],       &[],     pl(0x049d_8e3b, 0x049d_8e37));
+        assert_parses!(PL::parse, &[0xeb, 0xe3, 0xd8, 0x49],       &[],     pl(0x049d_8e3b, 0x049d_8e37));
+        assert_parses!(PL::parse, &[0xfb, 0xe3, 0xd8, 0x49, 0xbf], &[0xbf], pl(0x049d_8e3b, 0x049d_8e37));
 
         // These could have fit in fewer bytes, but we can still parse them
-        assert_parses!(parse_package_length, &[0xc0, 0x00, 0x00, 0x00],       &[],     0x0000_0000);
-        assert_parses!(parse_package_length, &[0xc1, 0x00, 0x00, 0x00],       &[],     0x0000_0001);
-        assert_parses!(parse_package_length, &[0xc1, 0x00, 0x00, 0x00, 0xc7], &[0xc7], 0x0000_0001);
-        assert_parses!(parse_package_length, &[0xc0, 0x01, 0x00, 0x00],       &[],     0x0000_0010);
-        assert_parses!(parse_package_length, &[0xc0, 0x00, 0x01, 0x00],       &[],     0x0000_1000);
-        assert_parses!(parse_package_length, &[0xcf, 0xff, 0xff, 0x00],       &[],     0x000f_ffff);
+        assert_parses!(PL::parse, &[0xc0, 0x00, 0x00, 0x00],       &[],     pli(0x0000_0000));
+        assert_parses!(PL::parse, &[0xc1, 0x00, 0x00, 0x00],       &[],     pli(0x0000_0001));
+        assert_parses!(PL::parse, &[0xc3, 0x00, 0x00, 0x00],       &[],     pli(0x0000_0003));
+        assert_parses!(PL::parse, &[0xc4, 0x00, 0x00, 0x00],       &[],     pl(0x0000_0004, 0x0000_0000));
+        assert_parses!(PL::parse, &[0xc4, 0x00, 0x00, 0x00, 0xc7], &[0xc7], pl(0x0000_0004, 0x0000_0000));
+        assert_parses!(PL::parse, &[0xc5, 0x00, 0x00, 0x00],       &[],     pl(0x0000_0005, 0x0000_0001));
+        assert_parses!(PL::parse, &[0xc0, 0x01, 0x00, 0x00],       &[],     pl(0x0000_0010, 0x0000_000c));
+        assert_parses!(PL::parse, &[0xc0, 0x00, 0x01, 0x00],       &[],     pl(0x0000_1000, 0x0000_0ffc));
+        assert_parses!(PL::parse, &[0xcf, 0xff, 0xff, 0x00],       &[],     pl(0x000f_ffff, 0x000f_fffb));
     }
 
     #[test]
@@ -522,26 +544,28 @@ mod package {
         let package_xyz = in_package(
             ParserState::lift(bytes::take_while(|b| b"XYZ".contains(&b))));
         assert_errors!(&package_xyz, b"");
-        assert_parses!(&package_xyz, b"\x00", b"", b"");
-        assert_errors!(&package_xyz, b"\x01");
-        assert_errors!(&package_xyz, b"\x01A");
-        assert_parses!(&package_xyz, b"\x01Z",   b"",  b"Z");
-        assert_parses!(&package_xyz, b"\x01ZZ",  b"Z", b"Z");  // Can't read past end
-        assert_parses!(&package_xyz, b"\x01ZA",  b"A", b"Z");
-        assert_parses!(&package_xyz, b"\x02ZZ",  b"",  b"ZZ");
+        assert_errors!(&package_xyz, b"\x00");
+        assert_parses!(&package_xyz, b"\x01", b"", b"");
         assert_errors!(&package_xyz, b"\x02");
-        assert_errors!(&package_xyz, b"\x02Z");
-        assert_errors!(&package_xyz, b"\x02ZA");
+        assert_errors!(&package_xyz, b"\x02A");
+        assert_parses!(&package_xyz, b"\x02Z",   b"",  b"Z");
+        assert_parses!(&package_xyz, b"\x02ZZ",  b"Z", b"Z");  // Can't read past end
+        assert_parses!(&package_xyz, b"\x02ZA",  b"A", b"Z");
+        assert_parses!(&package_xyz, b"\x03ZZ",  b"",  b"ZZ");
+        assert_errors!(&package_xyz, b"\x03");
+        assert_errors!(&package_xyz, b"\x04Z");
+        assert_errors!(&package_xyz, b"\x04ZA");
 
         // Fails if inner parser requires more data
         let package_take_4 = in_package(ParserState::lift(bytes::take(4_usize)));
         assert_errors!(&package_take_4, b"\x00");
-        assert_errors!(&package_take_4, b"\x01A");
-        assert_errors!(&package_take_4, b"\x02AB");
-        assert_errors!(&package_take_4, b"\x03ABC");
-        assert_parses!(&package_take_4, b"\x04ABCD",  b"",  b"ABCD");
-        assert_parses!(&package_take_4, b"\x04ABCDE", b"E", b"ABCD");
-        assert_errors!(&package_take_4, b"\x05ABCDE");  // Must consume whole package
+        assert_errors!(&package_take_4, b"\x01");
+        assert_errors!(&package_take_4, b"\x02A");
+        assert_errors!(&package_take_4, b"\x03AB");
+        assert_errors!(&package_take_4, b"\x04ABC");
+        assert_parses!(&package_take_4, b"\x05ABCD",  b"",  b"ABCD");
+        assert_parses!(&package_take_4, b"\x05ABCDE", b"E", b"ABCD");
+        assert_errors!(&package_take_4, b"\x06ABCDE");  // Must consume whole package
     }
 }
 
@@ -564,14 +588,15 @@ mod term {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x87");
             assert_errors!(N::parse, b"\x5b\x87\x00");
-            assert_errors!(N::parse, b"\x5b\x87\x01\x00");
-            assert_errors!(N::parse, b"\x5b\x87\x02\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x87\x03\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x01");
+            assert_errors!(N::parse, b"\x5b\x87\x02\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x03\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x04\x00\x00\x00");
 
-            assert_errors!(N::parse, b"\x5b\x87\x03\x00\x00\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x87\x05\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x04\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x87\x06\x00\x00\x00\x00");
 
-            assert_parses!(N::parse, b"\x5b\x87\x04\x00\x00\x00\x00", b"", N::BankField {
+            assert_parses!(N::parse, b"\x5b\x87\x05\x00\x00\x00\x00", b"", N::BankField {
                 region_name: NameString::empty(),
                 bank_name: NameString::empty(),
                 bank_value: ComputationalData::Zero.into(),
@@ -583,7 +608,7 @@ mod term {
                 elements: vec![]
             });
 
-            assert_parses!(N::parse, b"\x5b\x87\x0aA___B___\x6d\x55", b"", N::BankField {
+            assert_parses!(N::parse, b"\x5b\x87\x0bA___B___\x6d\x55", b"", N::BankField {
                 region_name: b"A___".into(),
                 bank_name: b"B___".into(),
                 bank_value: ArgObject::Arg5.into(),
@@ -600,7 +625,7 @@ mod term {
                 //            |   bname   flags
                 //        pkg |   |   bval|   element[0]          element[1]  rest
                 //        |   |   |   |   |   |                   |           |
-                b"\x5b\x87\x12B___\x00\x01\x24Z_F2\xc2\x4d\x0e\x94\x00\x4f\xd7A___\x03",
+                b"\x5b\x87\x13B___\x00\x01\x24Z_F2\xc2\x4d\x0e\x94\x00\x4f\xd7A___\x03",
                 b"A___\x03",
                 N::BankField {
                     region_name: b"B___".into(),
@@ -791,8 +816,9 @@ mod term {
             assert_errors!(N::parse, b"\x5b\x82");
             assert_errors!(N::parse, b"\x5b\x82\x00");
             assert_errors!(N::parse, b"\x5b\x82\x01");
-            assert_errors!(N::parse, b"\x5b\x82\x00\x00");
-            assert_parses!(N::parse, b"\x5b\x82\x01\x00", b"",
+            assert_errors!(N::parse, b"\x5b\x82\x02");
+            assert_errors!(N::parse, b"\x5b\x82\x01\x00");
+            assert_parses!(N::parse, b"\x5b\x82\x02\x00", b"",
                 N::Device {
                     name: NameString::empty(),
                     body: vec![],
@@ -801,7 +827,7 @@ mod term {
             assert_parses!(N::parse,
                 //        pkg name  body[0]             body[1]                 rest
                 //        |   |     |                   |                       |
-                b"\x5b\x82\x14^^ABCD\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x5b\x82\x15^^ABCD\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::Device {
                     name: NameString::new_parent(2, &[b"ABCD"]),
@@ -864,10 +890,11 @@ mod term {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x81");
             assert_errors!(N::parse, b"\x5b\x81\x00");
-            assert_errors!(N::parse, b"\x5b\x81\x02");
-            assert_errors!(N::parse, b"\x5b\x81\x01\x00");
+            assert_errors!(N::parse, b"\x5b\x81\x01");
+            assert_errors!(N::parse, b"\x5b\x81\x03");
             assert_errors!(N::parse, b"\x5b\x81\x02\x00");
-            assert_parses!(N::parse, b"\x5b\x81\x02\x00\x00", b"", N::Field {
+            assert_errors!(N::parse, b"\x5b\x81\x03\x00");
+            assert_parses!(N::parse, b"\x5b\x81\x03\x00\x00", b"", N::Field {
                 region_name: NameString::empty(),
                 flags: FieldFlags {
                     access_type: AccessType::Any,
@@ -880,7 +907,7 @@ mod term {
                 //                  flags
                 //        pkg rname |   element[0]          element[1]  rest
                 //        |   |     |   |                   |           |
-                b"\x5b\x81\x11\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
+                b"\x5b\x81\x12\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
                 b"\x11\x15",
                 N::Field {
                     region_name: NameString::new_root(&[b"ABCD"]),
@@ -905,12 +932,13 @@ mod term {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x86");
             assert_errors!(N::parse, b"\x5b\x86\x00");
-            assert_errors!(N::parse, b"\x5b\x86\x03");
-            assert_errors!(N::parse, b"\x5b\x86\x01\x00");
-            assert_errors!(N::parse, b"\x5b\x86\x03\x00");
-            assert_errors!(N::parse, b"\x5b\x86\x02\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x01");
+            assert_errors!(N::parse, b"\x5b\x86\x04");
+            assert_errors!(N::parse, b"\x5b\x86\x02\x00");
+            assert_errors!(N::parse, b"\x5b\x86\x04\x00");
             assert_errors!(N::parse, b"\x5b\x86\x03\x00\x00");
-            assert_parses!(N::parse, b"\x5b\x86\x03\x00\x00\x00", b"", N::IndexField {
+            assert_errors!(N::parse, b"\x5b\x86\x04\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x86\x04\x00\x00\x00", b"", N::IndexField {
                 index_name: NameString::empty(),
                 data_name: NameString::empty(),
                 flags: FieldFlags {
@@ -924,7 +952,7 @@ mod term {
                 //            iname      flags
                 //        pkg |    dname |   element[0]          element[1]  rest
                 //        |   |    |     |   |                   |           |
-                b"\x5b\x86\x16^_987\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
+                b"\x5b\x86\x17^_987\\ABCD\x35\x00\xc3\x85\xfd\x98_B34\x4d\xa8\x11\x15",
                 b"\x11\x15",
                 N::IndexField {
                     index_name: NameString::new_parent(1, &[b"_987"]),
@@ -949,9 +977,10 @@ mod term {
         fn test_method() {
             assert_errors!(N::parse, b"\x14");
             assert_errors!(N::parse, b"\x14\x00");
-            assert_errors!(N::parse, b"\x14\x01\x00");
+            assert_errors!(N::parse, b"\x14\x01");
             assert_errors!(N::parse, b"\x14\x02\x00");
-            assert_parses!(N::parse, b"\x14\x02\x00\x00", b"",
+            assert_errors!(N::parse, b"\x14\x03\x00");
+            assert_parses!(N::parse, b"\x14\x03\x00\x00", b"",
                 N::Method {
                     name: NameString::empty(),
                     flags: MethodFlags {
@@ -966,7 +995,7 @@ mod term {
                 //              flags
                 //    pkg name  |   body[0]             body[1]                 rest
                 //    |   |     |   |                   |                       |
-                b"\x14\x15^^Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x14\x16^^Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::Method {
                     name: NameString::new_parent(2, &[b"Z49F"]),
@@ -1040,14 +1069,15 @@ mod term {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x84");
             assert_errors!(N::parse, b"\x5b\x84\x00");
-            assert_errors!(N::parse, b"\x5b\x84\x04");
-            assert_errors!(N::parse, b"\x5b\x84\x01\x00");
-            assert_errors!(N::parse, b"\x5b\x84\x04\x00");
-            assert_errors!(N::parse, b"\x5b\x84\x02\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x84\x04\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x84\x03\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x01");
+            assert_errors!(N::parse, b"\x5b\x84\x05");
+            assert_errors!(N::parse, b"\x5b\x84\x02\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x05\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x03\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x84\x05\x00\x00");
             assert_errors!(N::parse, b"\x5b\x84\x04\x00\x00\x00");
-            assert_parses!(N::parse, b"\x5b\x84\x04\x00\x00\x00\x00", b"",
+            assert_errors!(N::parse, b"\x5b\x84\x05\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x84\x05\x00\x00\x00\x00", b"",
                 N::PowerResource {
                     name: NameString::empty(),
                     system_level: 0x00,
@@ -1059,7 +1089,7 @@ mod term {
                 //                  slevel
                 //        pkg name  |   rorder  body[0]             body[1]                 rest
                 //        |   |     |   |       |                   |                       |
-                b"\x5b\x84\x16\\_487\x8f\xa2\x43\x8d\x63\x0a\x42_57Z\x11\x04\x0a\x3d\xf5\x83\x62\x01",
+                b"\x5b\x84\x17\\_487\x8f\xa2\x43\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::PowerResource {
                     name: NameString::new_root(&[b"_487"]),
@@ -1085,13 +1115,14 @@ mod term {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x83");
             assert_errors!(N::parse, b"\x5b\x83\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x01\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x02\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x03\x00\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x04\x00\x00\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x05\x00\x00\x00\x00\x00");
-            assert_errors!(N::parse, b"\x5b\x83\x06\x00\x00\x00\x00\x00\x00");
-            assert_parses!(N::parse, b"\x5b\x83\x07\x00\x00\x00\x00\x00\x00\x00", b"",
+            assert_errors!(N::parse, b"\x5b\x83\x01");
+            assert_errors!(N::parse, b"\x5b\x83\x02\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x03\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x04\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x05\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x06\x00\x00\x00\x00\x00");
+            assert_errors!(N::parse, b"\x5b\x83\x07\x00\x00\x00\x00\x00\x00");
+            assert_parses!(N::parse, b"\x5b\x83\x08\x00\x00\x00\x00\x00\x00\x00", b"",
                 N::Processor {
                     name: NameString::empty(),
                     id: 0x00,
@@ -1104,7 +1135,7 @@ mod term {
                 //                                     rlen
                 //        pkg name id  raddr           |   body[0]                 body[1]     rest
                 //        |   |    |   |               |   |                       |           |
-                b"\x5b\x83\x17^_842\xf4\xa2\x83\x42\xed\xd2\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
+                b"\x5b\x83\x18^_842\xf4\xa2\x83\x42\xed\xd2\x11\x05\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
                 b"EFGH",
                 N::Processor {
                     name: NameString::new_parent(1, &[b"_842"]),
@@ -1128,7 +1159,8 @@ mod term {
             assert_errors!(N::parse, b"\x5b\x85");
             assert_errors!(N::parse, b"\x5b\x85\x00");
             assert_errors!(N::parse, b"\x5b\x85\x01");
-            assert_parses!(N::parse, b"\x5b\x85\x01\x00", b"",
+            assert_errors!(N::parse, b"\x5b\x85\x02");
+            assert_parses!(N::parse, b"\x5b\x85\x02\x00", b"",
                 N::ThermalZone {
                     name: NameString::empty(),
                     body: vec![],
@@ -1137,7 +1169,7 @@ mod term {
             assert_parses!(N::parse,
                 //        pkg name  body[0]                 body[1]     rest
                 //        |   |     |                       |           |
-                b"\x5b\x85\x11\\_F37\x11\x04\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
+                b"\x5b\x85\x12\\_F37\x11\x05\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
                 b"EFGH",
                 N::ThermalZone {
                     name: NameString::new_root(&[b"_F37"]),
@@ -1363,20 +1395,21 @@ mod term {
             assert_errors!(F::parse, b"\x02\x11");
             assert_errors!(F::parse, b"\x02\x11\x00");
             assert_errors!(F::parse, b"\x02\x11\x01");
-            assert_parses!(F::parse, b"\x02\x11\x01\x00", b"", F::ConnectBuffer(Buffer {
+            assert_errors!(F::parse, b"\x02\x11\x02");
+            assert_parses!(F::parse, b"\x02\x11\x02\x00", b"", F::ConnectBuffer(Buffer {
                 size: ComputationalData::Zero.into(),
                 initializer: &[],
             }));
-            assert_parses!(F::parse, b"\x02\x11\x03\x01\x4d\xa9", b"", F::ConnectBuffer(Buffer {
+            assert_parses!(F::parse, b"\x02\x11\x04\x01\x4d\xa9", b"", F::ConnectBuffer(Buffer {
                 size: ComputationalData::One.into(),
                 initializer: &[0x4d, 0xa9],
             }));
-            assert_errors!(F::parse, b"\x02\x11\x03\x01\x4d");
+            assert_errors!(F::parse, b"\x02\x11\x04\x01\x4d");
 
             // Could be interpreted as ASCII (like a NameSeg), but shouldn't be
-            assert_parses!(F::parse, b"\x02\x11\tbcdefgabc", b"", F::ConnectBuffer(Buffer {
+            assert_parses!(F::parse, b"\x02\x11\tbcdefgabc", b"c", F::ConnectBuffer(Buffer {
                 size: LocalObject::Local2.into(),
-                initializer: b"cdefgabc",
+                initializer: b"cdefgab",
             }));
         }
     }
