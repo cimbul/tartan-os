@@ -2163,7 +2163,7 @@ pub mod term {
         /// ```
         index -> ReferenceExpressionOpcode<'a> = opcode(
             "index operator",
-            tag_byte(0x83),
+            tag_byte(0x88),
             struct_parser! {
                 ReferenceExpressionOpcode::DefIndex {
                     source: TermArg::parse,
