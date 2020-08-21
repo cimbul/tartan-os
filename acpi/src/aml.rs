@@ -107,10 +107,10 @@ pub mod name {
         /// assert_eq!(format!("{}", a), "");
         ///
         /// let b = NameString::new(&[b"ASDF", b"_123"]);
-        /// assert_eq!(format!("{}", b), "ASDF\\_123");
+        /// assert_eq!(format!("{}", b), "ASDF._123");
         ///
         /// let c = NameString::new_parent(2, &[b"FOO_", b"BAR_"]);
-        /// assert_eq!(format!("{}", c), "^^FOO_\\BAR_");
+        /// assert_eq!(format!("{}", c), "^^FOO_.BAR_");
         ///
         /// let d = NameString::new_root(&[b"X___"]);
         /// assert_eq!(format!("{}", d), "\\X___");
@@ -120,7 +120,7 @@ pub mod name {
             if !self.path.is_empty() {
                 write!(f, "{}", self.path[0])?;
                 for n in self.path.iter().skip(1) {
-                    write!(f, "\\{}", n)?;
+                    write!(f, ".{}", n)?;
                 }
             }
             Ok(())
