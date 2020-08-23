@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["LoadedImage",""],["SimpleTextInput",""],["SimpleTextOutput",""],["SimpleTextOutputMode",""]],"trait":[["Protocol",""]]});

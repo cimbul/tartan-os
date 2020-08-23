@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["SYSTEM_TABLE",""]]});
