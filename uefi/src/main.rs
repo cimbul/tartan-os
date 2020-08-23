@@ -3,7 +3,7 @@
 #![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
-#![deny(clippy::pedantic)]
+#![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
 extern crate alloc;
