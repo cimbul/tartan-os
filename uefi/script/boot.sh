@@ -14,6 +14,13 @@ target_dir="$(dirname "$executable")"
 
 "$this_dir/make-boot-image.sh" "$target_dir/tartan-uefi.efi" "$target_dir/tartan-uefi.img"
 
+cat >&2 <<EOF
+=============================
+Starting QEMU in console mode
+ > To exit, press Ctrl+a, x
+ > For more, press Ctrl+a, h
+=============================
+EOF
 qemu-system-x86_64 \
     -drive if=pflash,format=raw,unit=0,file="$qemu_prefix"/share/qemu/edk2-x86_64-code.fd,readonly=on \
     -drive if=ide,format=raw,file="$target_dir/tartan-uefi.img" \
