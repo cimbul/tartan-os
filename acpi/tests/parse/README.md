@@ -28,7 +28,7 @@ to update the AML files.
 
 After creating or editing an ASL file, regenerate the AML with:
 
-```console
+```bash
 compile-all.sh
 ```
 
@@ -37,18 +37,19 @@ compile-all.sh
 
 After making a change to the AML, rerun the tests with:
 
-```
+```bash
 cargo test
 ```
 
 The tests should fail and warn you about the changed output. Review the changes and update
 the snapshots if appropriate:
 
-```
+```bash
 cargo insta review
 
 # Or manually:
-mv snapshots/parse__<FILE>.snap.new snapshots/parse__<FILE>.snap
+mv snapshots/parse__<FILE>.snap.new \
+   snapshots/parse__<FILE>.snap
 ```
 
 For more information on managing snapshots, see the

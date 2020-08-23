@@ -16,10 +16,10 @@ Tested on macOS only.
 
 * Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
 * [QEMU](https://www.qemu.org/) 5.0
-* bash 3.0+ for the launcher script
+* Some additional requirements for the UEFI launcher script, documented below.
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
-at [acpi/tests/parse/README.md](acpi/tests/parse/README.md).
+at [acpi/tests/parse/README.md](acpi/tests/parse/).
 
 Suggested additional tools:
   * [`cargo-binutils`](https://github.com/rust-embedded/cargo-binutils)
@@ -30,19 +30,19 @@ Suggested additional tools:
 Note that when building, running, or testing with Cargo, the default target will *depend
 on your current directory*:
   * From the main directory, Cargo will build for your host system by default.
-	* From the `uefi/` directory, Cargo will build for the `x86_64-unknown-uefi` target,
-	  along with flags to compile the standard Rust libraries. This is configured in
-		`uefi/.cargo/config.toml`.
+  * From the `uefi/` directory, Cargo will build for the `x86_64-unknown-uefi` target,
+    along with flags to compile the standard Rust libraries. This is configured in
+    `uefi/.cargo/config.toml`.
 
 To build the libraries for your host system:
 
-```
+```bash
 cargo build
 ```
 
 To build the AMD64 UEFI bootloader:
 
-```
+```bash
 (cd uefi && cargo build)
 ```
 
@@ -52,16 +52,20 @@ The UEFI application (a PE image) will be emitted at
 
 ## Run UEFI bootloader
 
-```
+```bash
 (cd uefi && cargo run)
 ```
 
 Packages the bootloader into a GPT + FAT disk image and launches it in QEMU.
 
+In addition to `bash`, this step currently requires the macOS `hdiutil` tool to build the
+disk image. For other host OSs, you may want to check out the
+[`uefi-run`](https://github.com/richard-w/uefi-run) crate.
+
 
 ## Test
 
-```
+```bash
 cargo test
 ```
 
@@ -71,14 +75,14 @@ target architecture in QEMU.
 
 ## Documentation
 
-```
+```bash
 cargo doc --open
 ```
 
 
 ## Lint
 
-```
+```bash
 cargo clippy --all-targets
 ```
 
