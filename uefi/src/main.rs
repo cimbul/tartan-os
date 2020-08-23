@@ -1,6 +1,7 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(not(test), feature(lang_items))]
+#![cfg_attr(not(test), feature(link_args))]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
 #![warn(clippy::pedantic)]
@@ -175,3 +176,11 @@ fn eh_personality() -> ! {
 fn main(_: isize, _: *const *const u8) -> isize {
     100
 }
+
+// More hacks to get the binary to build on the host target.
+// Thanks to https://fasterthanli.me/series/making-our-own-executable-packer/part-12
+// for showing how to do this without breaking dependencies' build scripts.
+#[allow(unused_attributes)]
+#[cfg_attr(all(not(test), target_os = "linux"), link_args = "-nostartfiles")]
+#[cfg_attr(all(not(test), target_os = "macos"), link_args = "-lSystem")]
+extern "C" {}

@@ -12,7 +12,8 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 
 ## Dependencies
 
-Tested on macOS only.
+Builds and tests on macOS and Linux, but the process for launching the UEFI bootloader is
+more involved on Linux.
 
 * Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
 * [QEMU](https://www.qemu.org/) 5.0

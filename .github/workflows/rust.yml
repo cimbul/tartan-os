@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install components
-      run: rustup component add rustfmt clippy
+      run: rustup component add rust-src rustfmt clippy
     - name: Format
       run: cargo fmt --all -- --check
     - name: Lint
