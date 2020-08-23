@@ -12,12 +12,11 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 
 ## Dependencies
 
-Builds and tests on macOS and Linux, but the process for launching the UEFI bootloader is
-more involved on Linux.
+Tested on macOS and Linux.
 
 * Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
 * [QEMU](https://www.qemu.org/) 5.0
-* Some additional requirements for the UEFI launcher script, documented below.
+* bash, for the UEFI launcher script
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
 at [acpi/tests/parse/README.md](acpi/tests/parse/).
@@ -57,11 +56,8 @@ The UEFI application (a PE image) will be emitted at
 (cd uefi && cargo run)
 ```
 
-Packages the bootloader into a GPT + FAT disk image and launches it in QEMU.
-
-In addition to `bash`, this step currently requires the macOS `hdiutil` tool to build the
-disk image. For other host OSs, you may want to check out the
-[`uefi-run`](https://github.com/richard-w/uefi-run) crate.
+This launches the UEFI application in QEMU using
+[`uefi/script/boot.sh`](uefi/script/boot.sh).
 
 
 ## Test
