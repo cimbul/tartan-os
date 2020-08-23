@@ -37,7 +37,7 @@ mod test;
 ///
 /// # Errors
 /// Returns an error if the AML contents cannot be parsed.
-pub fn parse_table<'a>(data: &'a [u8]) -> Result<AMLTable<'a>, ErrorWithPosition<'a>> {
+pub fn parse_table(data: &[u8]) -> Result<AMLTable<'_>, ErrorWithPosition<'_>> {
     const HEADER_SIZE: usize = mem::size_of::<DescriptionHeader>();
 
     let state = ParserState::new(data);
@@ -254,7 +254,7 @@ pub mod state {
                 None => return writeln!(out, "at unknown/invalid offset"),
             };
 
-            let context_start = offset.checked_sub(10).unwrap_or(0);
+            let context_start = offset.saturating_sub(10);
             let context_end = min(offset + 10, self.full_input.len());
             let context_slice = &self.full_input[context_start..context_end];
 
@@ -2446,8 +2446,8 @@ pub mod term {
         /// ```text
         /// DefConcat           := ConcatOp Data Data Target
         /// ConcatOp            := 0x73
-        /// ```
         /// Data                := TermArg => ComputationalData
+        /// ```
         concat Concat "concat operator" 0x73
     }
 
@@ -2455,8 +2455,8 @@ pub mod term {
         /// ```text
         /// DefConcatRes        := ConcatResOp BufData BufData Target
         /// ConcatResOp         := 0x84
-        /// ```
         /// BufData             := TermArg => Buffer
+        /// ```
         concat_res ConcatRes "concat resource template operator" 0x84
     }
 
