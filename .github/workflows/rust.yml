@@ -30,3 +30,9 @@ jobs:
       run: cargo test --verbose --workspace
     - name: Build (UEFI)
       run: (cd uefi && cargo build)
+    - name: GitHub Pages
+      uses: crazy-max/ghaction-github-pages@v2.1.2
+      with:
+        # Build directory to deploy
+        build_dir: target/doc
+        jekyll: false
