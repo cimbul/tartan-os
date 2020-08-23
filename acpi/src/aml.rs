@@ -33,6 +33,7 @@ pub mod name {
     use super::term::ReferenceExpressionOpcode;
     use alloc::boxed::Box;
     use alloc::string::ToString;
+    use alloc::vec;
     use alloc::vec::Vec;
     use core::fmt;
 
@@ -94,6 +95,97 @@ pub mod name {
 
         pub fn new_parent<T: Copy + Into<NameSeg>>(n: usize, path: &[T]) -> Self {
             NameString { path: to_path(path), anchor: PathAnchor::Parent(n) }
+        }
+
+        /// Convert to an absolute namespace path in the context of the given scope,
+        /// treating the name as new declaration/definition.
+        ///
+        /// If this name is a reference that must be looked up in the namespace, then use
+        /// [`NameString::resolve_as_ref`] instead.
+        ///
+        /// ```
+        /// # use tartan_acpi::aml::name::{NameString, to_path};
+        /// #
+        /// let scope = to_path(&[b"A___", b"B___"]);
+        ///
+        /// let child = NameString::new(&[b"X___"]);
+        /// let up_1  = NameString::new_parent(1, &[b"X___"]);
+        /// let up_2  = NameString::new_parent(2, &[b"X___"]);
+        /// let up_3  = NameString::new_parent(3, &[b"X___"]);
+        /// let abs   = NameString::new_root(&[b"Y___", b"Z___"]);
+        ///
+        /// assert_eq!(child.resolve_as_decl(&scope), Some(to_path(&[b"A___", b"B___", b"X___"])));
+        /// assert_eq!(up_1.resolve_as_decl(&scope),  Some(to_path(&[b"A___", b"X___"])));
+        /// assert_eq!(up_2.resolve_as_decl(&scope),  Some(to_path(&[b"X___"])));
+        /// assert_eq!(up_3.resolve_as_decl(&scope),  None);
+        /// assert_eq!(abs.resolve_as_decl(&scope),   Some(to_path(&[b"Y___", b"Z___"])));
+        /// ```
+        ///
+        /// # Errors
+        ///
+        /// Returns `None` if this `NameString` is anchored to a parent scope and the
+        /// result would be outside the namespace root.
+        pub fn resolve_as_decl(&self, scope: &[NameSeg]) -> Option<Vec<NameSeg>> {
+            self.resolve_as_ref(scope).into_iter().next()
+        }
+
+        /// List all possible absolute pathnames that this name may refer to in the
+        /// context of the given scope.
+        ///
+        /// Use this method if the name is a reference that must be looked up in the
+        /// namespace. For names that define new objects, see
+        /// [`NameString::resolve_as_decl`].
+        ///
+        /// As defined by §5.3 of ACPI 6.3, there are distinct rules for two cases:
+        ///   * Unanchored one-segment names are looked up in the current scope, then the
+        ///     parent scope, etc. until a match is found.
+        ///   * All other names are resolved relative to the current scope *only*.
+        ///
+        /// ```
+        /// # use tartan_acpi::aml::name::{NameSeg, NameString, to_path};
+        /// #
+        /// let scope = to_path(&[b"A___", b"B___"]);
+        ///
+        /// let simple = NameString::new(&[b"X___"]);
+        /// let multi  = NameString::new(&[b"X___", b"Y___"]);
+        /// let up_1   = NameString::new_parent(1, &[b"X___"]);
+        /// let up_2   = NameString::new_parent(2, &[b"X___"]);
+        /// let up_3   = NameString::new_parent(3, &[b"X___"]);
+        ///
+        /// // Look up unanchored one-segment names in parent scopes
+        /// assert_eq!(
+        ///     simple.resolve_as_ref(&scope),
+        ///     vec![
+        ///         to_path(&[b"A___", b"B___", b"X___"]),
+        ///         to_path(&[b"A___", b"X___"]),
+        ///         to_path(&[b"X___"]),
+        ///     ],
+        /// );
+        ///
+        /// // Others only resolve against current scope
+        /// assert_eq!(multi.resolve_as_ref(&scope), vec![to_path(&[b"A___", b"B___", b"X___", b"Y___"])]);
+        /// assert_eq!(up_1.resolve_as_ref(&scope),  vec![to_path(&[b"A___", b"X___"])]);
+        /// assert_eq!(up_2.resolve_as_ref(&scope),  vec![to_path(&[b"X___"])]);
+        /// assert_eq!(up_3.resolve_as_ref(&scope),  Vec::<Vec<NameSeg>>::new());
+        /// ```
+        ///
+        /// Will return an empty vector if this `NameString` is anchored to a parent scope
+        /// and the result would be outside the namespace root.
+        pub fn resolve_as_ref(&self, scope: &[NameSeg]) -> Vec<Vec<NameSeg>> {
+            match self.anchor {
+                PathAnchor::Root => vec![self.path.clone()],
+                PathAnchor::Parent(n) if n == scope.len() => vec![self.path.clone()],
+                PathAnchor::Parent(0) if self.path.len() == 1 => {
+                    let ends = (0..=scope.len()).rev();
+                    ends.map(|end| [&scope[..end], &self.path].concat()).collect()
+                }
+                PathAnchor::Parent(n) if n < scope.len() => {
+                    let end = scope.len() - n;
+                    vec![[&scope[..end], &self.path].concat()]
+                }
+                // n > scope.len(), so this falls out of the namespace root
+                PathAnchor::Parent(_) => vec![],
+            }
         }
     }
 
@@ -314,6 +406,7 @@ pub mod term {
         Data(Box<DataObject<'a>>),
         Arg(ArgObject),
         Local(LocalObject),
+        Name(NameString),
     }
 
     from_impl!(<'a>(e: ExpressionOpcode<'a>) -> TermArg<'a> = TermArg::Expression(Box::new(e)));
@@ -326,6 +419,7 @@ pub mod term {
     from_impl!(<'a>(d: ComputationalData<'a>) -> TermArg<'a> = DataObject::from(d).into());
     from_impl!(<'a>(a: ArgObject) -> TermArg<'a> = TermArg::Arg(a));
     from_impl!(<'a>(l: LocalObject) -> TermArg<'a> = TermArg::Local(l));
+    from_impl!(<'a>(n: NameString) -> TermArg<'a> = TermArg::Name(n));
 
 
     /// Term that attaches a name to its argument.
@@ -465,6 +559,7 @@ pub mod term {
         ThermalZone { name: NameString, body: Vec<TermObject<'a>> },
     }
 
+
     /// Rules for reading and writing a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct FieldFlags {
@@ -530,6 +625,7 @@ pub mod term {
         RawProcessBytes(u8),
     }
 
+
     /// Information about how to call a method.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct MethodFlags {
@@ -537,6 +633,13 @@ pub mod term {
         pub serialized: bool,
         pub sync_level: u8,
     }
+
+    impl MethodFlags {
+        pub fn unsynced(arg_count: u8) -> Self {
+            Self { arg_count, serialized: false, sync_level: 0 }
+        }
+    }
+
 
     /// Address space used to access a field.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -620,10 +723,10 @@ pub mod term {
         Deref(TermArg<'a>),
 
         /// Create a reference to an index within a buffer
-        DefIndex { source: TermArg<'a>, index: TermArg<'a>, result: Target<'a> },
+        Index { source: TermArg<'a>, index: TermArg<'a>, result: Target<'a> },
 
         /// Execute a control method
-        Invoke { source: NameString, args: Vec<TermArg<'a>> },
+        Invoke(NameString, Vec<TermArg<'a>>),
     }
 
 

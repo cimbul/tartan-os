@@ -102,7 +102,8 @@ impl<'a, T> AMLParseError<'a> for T where
 
 /// Parser context needed to disambiguate grammar
 pub mod state {
-    use super::super::name::NameSeg;
+    use super::super::name::{to_path, NameSeg, NameString};
+    use super::util::err;
     use super::*;
     use core::cmp::min;
     use core::fmt::{self, Display, Formatter};
@@ -118,6 +119,12 @@ pub mod state {
     pub struct MethodSignature {
         pub name: Vec<NameSeg>,
         pub arg_count: u8,
+    }
+
+    impl MethodSignature {
+        pub fn new<T: Copy + Into<NameSeg>>(name: &[T], arg_count: u8) -> Self {
+            Self { name: to_path(name), arg_count }
+        }
     }
 
 
@@ -136,6 +143,46 @@ pub mod state {
 
         pub fn position_in(&'a self, full_input: &'a [u8]) -> Position<'a> {
             Position { state: self, full_input }
+        }
+
+        /// Get the argument count of the named method, if it is declared
+        pub fn get_arg_count(&self, name: &NameString) -> Option<u8> {
+            let signature =
+                name.resolve_as_ref(&self.current_scope).into_iter().find_map(
+                    |abs_name| self.method_signatures.iter().find(|s| s.name == abs_name),
+                )?;
+            Some(signature.arg_count)
+        }
+
+        /// Execute a parser in a new scope relative to the current scope, then restore
+        /// the original scope.
+        ///
+        /// # Errors
+        ///
+        /// Fails if the given scope is invalid when resolved against the current scope
+        /// (because it falls outside the namespace root), or when the inner parser fails.
+        pub fn in_scope<P, O, E>(
+            self,
+            new_scope: &NameString,
+            parser: P,
+        ) -> AMLParseResult<'a, O, E>
+        where
+            P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
+            E: AMLParseError<'a>,
+        {
+            let new_scope_abs = match new_scope.resolve_as_decl(&self.current_scope) {
+                Some(s) => s,
+                None => return err(self, ErrorKind::Verify),
+            };
+
+            let previous_scope = self.current_scope.clone();
+            let inner_state = ParserState { current_scope: new_scope_abs, ..self };
+
+            let (inner_state, result) = parser(inner_state)?;
+
+            let outer_state =
+                ParserState { current_scope: previous_scope, ..inner_state };
+            Ok((outer_state, result))
         }
 
         /// Wraps a byte-oriented parser to work with `ParserState`
@@ -696,12 +743,16 @@ pub mod name {
     /// ```text
     /// SuperName := SimpleName | DebugObj | Type6Opcode
     /// ```
+    ///
+    /// Despite the order given in the grammar, we have to try `Type6Opcode` **before**
+    /// `SimpleName`. `Type6Opcode` includes method calls, which would never be reached if
+    /// `SimpleName` slurped up the method name first.
     impl<'a> Parse<'a> for SuperName<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
-                map(SimpleName::parse, Self::Name),
                 value(Self::Debug, DebugObject::parse),
                 map(ReferenceExpressionOpcode::parse, |r| Self::Reference(Box::new(r))),
+                map(SimpleName::parse, Self::Name),
             ))
         }
     }
@@ -985,16 +1036,21 @@ mod package {
         P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
         E: AMLParseError<'a>,
     {
-        move |i: ParserState<'a>| {
-            let (i, package_length) = PackageLength::parse(i)?;
+        move |outer_state: ParserState<'a>| {
+            let (outer_state, package_length) = PackageLength::parse(outer_state)?;
             let body_length = match package_length.body_length {
                 Some(l) => l,
-                None => return util::err(i, ErrorKind::Verify),
+                None => return util::err(outer_state, ErrorKind::Verify),
             };
-            let (i, package_data) = ParserState::lift(bytes::take(body_length))(i)?;
-            let package_state = ParserState { data: package_data, ..i.clone() };
-            let (_, parsed_package) = all_consuming(&inner_parser)(package_state)?;
-            Ok((i, parsed_package))
+            let (outer_state, package_data) =
+                ParserState::lift(bytes::take(body_length))(outer_state)?;
+
+            let inner_state = ParserState { data: package_data, ..outer_state.clone() };
+            let (inner_state, parsed_package) =
+                all_consuming(&inner_parser)(inner_state)?;
+            let outer_state = ParserState { data: outer_state.data, ..inner_state };
+
+            Ok((outer_state, parsed_package))
         }
     }
 }
@@ -1008,6 +1064,7 @@ pub mod term {
     use super::super::term::*;
     use super::name::parse_target;
     use super::package::{in_package, standalone_package_length};
+    use super::state::MethodSignature;
     use super::util::*;
     use super::*;
     use alloc::boxed::Box;
@@ -1038,6 +1095,13 @@ pub mod term {
     /// TermArg     := Type2Opcode | DataObject | ArgObj | LocalObject
     /// TermArgList := Nothing | <TermArg TermArgList>
     /// ```
+    ///
+    /// Note that this syntax does not list `NameString`s as valid `TermArgs`, except as
+    /// part of `MethodInvocation` under `Type6Opcode`. However, it's abundantly clear
+    /// that names can be used as references to their values anywhere a term argument is
+    /// expected. Tests with the ACPICA compiler confirm this. However, bare names are
+    /// *not* allowed in `TermObj` positions, so it isn't appropriate to add them to
+    /// `Type2Opcode` ([`ExpressionOpcode`]), and we have to add it to `TermArg` instead.
     impl<'a> Parse<'a> for TermArg<'a> {
         parser_fn! {
             parse<'a> -> Self = alt((
@@ -1045,6 +1109,7 @@ pub mod term {
                 map(DataObject::parse,       |x| Self::Data(Box::new(x))),
                 map(ArgObject::parse,            Self::Arg),
                 map(LocalObject::parse,          Self::Local),
+                map(NameString::parse,           Self::Name),
             ))
         }
     }
@@ -1075,12 +1140,25 @@ pub mod term {
         parse_alias -> NameSpaceModifier<'a> = opcode(
             "alias definition",
             tag_byte(0x06),
-            struct_parser!(
-                NameSpaceModifier::Alias {
-                    source: NameString::parse,
-                    alias: NameString::parse,
+            |i| {
+                let (i, source) = NameString::parse(i)?;
+                let (mut i, alias) = NameString::parse(i)?;
+
+                // Copy the method signature if the original name is a method
+                if let Some(arg_count) = i.get_arg_count(&source) {
+                    let alias_abs = match alias.resolve_as_decl(&i.current_scope) {
+                        Some(n) => n,
+                        None => return err(i, ErrorKind::Verify),
+                    };
+
+                    i.method_signatures.push(MethodSignature {
+                        name: alias_abs,
+                        arg_count,
+                    });
                 }
-            )
+
+                Ok((i, NameSpaceModifier::Alias { source, alias }))
+            }
         )
     }
 
@@ -1113,11 +1191,10 @@ pub mod term {
         parse_scope -> NameSpaceModifier<'a> = opcode(
             "scope",
             tag_byte(0x10),
-            in_package(struct_parser! {
-                NameSpaceModifier::Scope(
-                    NameString::parse,
-                    multi::many0(TermObject::parse),
-                )
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, body) = i.in_scope(&name, multi::many0(TermObject::parse))?;
+                Ok((i, NameSpaceModifier::Scope(name, body)))
             })
         )
     }
@@ -1327,11 +1404,10 @@ pub mod term {
         device -> NamedObject<'a> = opcode(
             "device",
             ext_op(tag_byte(0x82)),
-            in_package(struct_parser! {
-                NamedObject::Device {
-                    name: NameString::parse,
-                    body: multi::many0(TermObject::parse),
-                }
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, body) = i.in_scope(&name, multi::many0(TermObject::parse))?;
+                Ok((i, NamedObject::Device { name, body }))
             })
         )
     }
@@ -1362,12 +1438,24 @@ pub mod term {
         external -> NamedObject<'a> = opcode(
             "external declaration",
             tag_byte(0x15),
-            struct_parser! {
-                NamedObject::External {
-                    name: NameString::parse,
-                    object_type: ObjectType::parse,
-                    argument_count: verify(num::le_u8, |b| *b <= 7),
+            |i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, object_type) = ObjectType::parse(i)?;
+                let (mut i, argument_count) = verify(num::le_u8, |b| *b <= 7)(i)?;
+
+                if object_type == ObjectType::Method {
+                    // Add the new method signature
+                    let abs_name = match name.resolve_as_decl(&i.current_scope) {
+                        Some(n) => n,
+                        None => return err(i, ErrorKind::Verify),
+                    };
+                    i.method_signatures.push(MethodSignature {
+                        name: abs_name,
+                        arg_count: argument_count,
+                    });
                 }
+
+                Ok((i, NamedObject::External { name, object_type, argument_count }))
             }
         )
     }
@@ -1423,12 +1511,38 @@ pub mod term {
         method -> NamedObject<'a> = opcode(
             "method definition",
             tag_byte(0x14),
-            in_package(struct_parser! {
-                NamedObject::Method {
-                    name: NameString::parse,
-                    flags: MethodFlags::parse,
-                    body: multi::many0(TermObject::parse),
-                }
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (mut i, flags) = MethodFlags::parse(i)?;
+
+                // Compute the absolute method name
+                let outer_scope = i.current_scope.clone();
+                let abs_name = match name.resolve_as_decl(&outer_scope) {
+                    Some(n) => n,
+                    None => return err(i, ErrorKind::Verify),
+                };
+
+                // Add the new method signature
+                i.method_signatures.push(MethodSignature {
+                    name: abs_name.clone(),
+                    arg_count: flags.arg_count,
+                });
+
+                // NOTE: Method scopes are weird. They are temporary, but still global.
+                // Any objects they create are visible from outside... but only until the
+                // method exits. If some insane person defined a method inside a method,
+                // we will leave it inside our method signature list, but that doesn't
+                // guarantee it's actually accessible. Leave that problem for runtime.
+                i.current_scope = abs_name;
+                let (mut i, body) = multi::many0(TermObject::parse)(i)?;
+                i.current_scope = outer_scope;
+
+                let method = NamedObject::Method {
+                    name,
+                    flags,
+                    body,
+                };
+                Ok((i, method))
             })
         )
     }
@@ -1490,13 +1604,18 @@ pub mod term {
         power_resource -> NamedObject<'a> = opcode(
             "power resource",
             ext_op(tag_byte(0x84)),
-            in_package(struct_parser! {
-                NamedObject::PowerResource {
-                    name: NameString::parse,
-                    system_level: num::le_u8,
-                    resource_order: num::le_u16,
-                    body: multi::many0(TermObject::parse),
-                }
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, system_level) = num::le_u8(i)?;
+                let (i, resource_order) = num::le_u16(i)?;
+                let (i, body) = i.in_scope(&name, multi::many0(TermObject::parse))?;
+                let resource = NamedObject::PowerResource {
+                    name,
+                    system_level,
+                    resource_order,
+                    body,
+                };
+                Ok((i, resource))
             })
         )
     }
@@ -1514,14 +1633,20 @@ pub mod term {
         processor -> NamedObject<'a> = opcode(
             "processor",
             ext_op(tag_byte(0x83)),
-            in_package(struct_parser! {
-                NamedObject::Processor {
-                    name: NameString::parse,
-                    id: num::le_u8,
-                    register_block_addr: num::le_u32,
-                    register_block_length: num::le_u8,
-                    body: multi::many0(TermObject::parse),
-                }
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, id) = num::le_u8(i)?;
+                let (i, register_block_addr) = num::le_u32(i)?;
+                let (i, register_block_length) = num::le_u8(i)?;
+                let (i, body) = i.in_scope(&name, multi::many0(TermObject::parse))?;
+                let processor = NamedObject::Processor {
+                    name,
+                    id,
+                    register_block_addr,
+                    register_block_length,
+                    body,
+                };
+                Ok((i, processor))
             })
         )
     }
@@ -1536,11 +1661,10 @@ pub mod term {
         thermal_zone -> NamedObject<'a> = opcode(
             "thermal zone",
             ext_op(tag_byte(0x85)),
-            in_package(struct_parser! {
-                NamedObject::ThermalZone {
-                    name: NameString::parse,
-                    body: multi::many0(TermObject::parse),
-                }
+            in_package(|i| {
+                let (i, name) = NameString::parse(i)?;
+                let (i, body) = i.in_scope(&name, multi::many0(TermObject::parse))?;
+                Ok((i, NamedObject::ThermalZone { name, body }))
             })
         )
     }
@@ -2165,7 +2289,7 @@ pub mod term {
             "index operator",
             tag_byte(0x88),
             struct_parser! {
-                ReferenceExpressionOpcode::DefIndex {
+                ReferenceExpressionOpcode::Index {
                     source: TermArg::parse,
                     index: TermArg::parse,
                     result: parse_target,
@@ -2178,14 +2302,18 @@ pub mod term {
         /// ```text
         /// MethodInvocation := NameString TermArgList
         /// ```
-        // TODO: Fix ambiguous grammar
-        invoke -> ReferenceExpressionOpcode<'a> = |i| err(i, ErrorKind::Tag)
-        // invoke -> ReferenceExpressionOpcode<'a> = struct_parser! {
-        //     ReferenceExpressionOpcode::Invoke {
-        //         source: NameString::parse,
-        //         args: multi::many0(TermArg::parse),
-        //     }
-        // }
+        invoke(i) -> ReferenceExpressionOpcode<'a> {
+            let (i, name) = NameString::parse(i)?;
+
+            let arg_count = match i.get_arg_count(&name) {
+                Some(c) => c,
+                None => return err(i, ErrorKind::Verify),
+            };
+
+            let (i, args) = multi::count(TermArg::parse, arg_count.into())(i)?;
+
+            Ok((i, ReferenceExpressionOpcode::Invoke(name, args)))
+        }
     }
 
 

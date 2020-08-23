@@ -1,39 +1,39 @@
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
 
-macro_rules! assert_parses {
-    ($parser:expr, $input:expr, $rest:expr, $output:expr $(,)?) => {
+macro_rules! assert_parses_stateful {
+    ($parser:expr, $input:expr, $end_state:expr, $output:expr $(,)?) => {
         {
             let parser = $parser;
             let input = $input;
-            let expected_rest = $rest;
+            let expected_end_state = $end_state;
             let expected_output = $output;
-            let result: nom::IResult<_, _, nom::error::VerboseError<_>> = parser(
-                crate::aml::parse::state::ParserState::new(input));
+            let result: nom::IResult<_, _, nom::error::VerboseError<_>> =
+                parser(input.clone());
             match result {
                 Err(e) => panic!(
                     "\nInput could not be parsed\n  parser: {}\n   input: {:x?}\n  wanted: {:#x?}\n\n{}",
                     stringify!($parser),
                     input,
                     expected_output,
-                    crate::aml::parse::state::ErrorWithPosition::new(e, input),
+                    crate::aml::parse::state::ErrorWithPosition::new(e, input.data),
                 ),
-                Ok((output_state, actual_output)) => {
+                Ok((actual_end_state, actual_output)) => {
                     assert!(
                         actual_output == expected_output,
-                        "\nDid not get expected output from parser\n  parser: {}\n   input: {:x?}\n    rest: {:x?}\n  wanted: {:#x?}\n     got: {:#x?}",
+                        "\nDid not get expected output from parser\n  parser: {}\n   input: {:#x?}\n    rest: {:x?}\n  wanted: {:#x?}\n     got: {:#x?}",
                         stringify!($parser),
                         input,
-                        output_state.data,
+                        actual_end_state.data,
                         expected_output,
                         actual_output,
                     );
                     assert!(
-                        output_state.data == expected_rest,
-                        "\nParser did not consume expected data\n  parser: {}\n  wanted: {:x?}\n     got: {:x?}\n   input: {:x?}\n  output: {:#x?}\n",
+                        actual_end_state == expected_end_state,
+                        "\nParser did not end in expected state\n  parser: {}\n  wanted: {:#x?}\n     got: {:#x?}\n   input: {:#x?}\n  output: {:#x?}\n",
                         stringify!($parser),
-                        expected_rest,
-                        output_state.data,
+                        expected_end_state,
+                        actual_end_state,
                         input,
                         actual_output,
                     );
@@ -43,13 +43,27 @@ macro_rules! assert_parses {
     };
 }
 
-macro_rules! assert_errors {
-    ($parser:expr, $input:expr) => {
+macro_rules! assert_parses {
+    ($parser:expr, $input:expr, $rest:expr, $output:expr $(,)?) => {
+        {
+            let input = $input; // Avoid error about dropping temporary
+            assert_parses_stateful! {
+                $parser,
+                crate::aml::parse::state::ParserState::new(input),
+                crate::aml::parse::state::ParserState::new($rest),
+                $output,
+            }
+        }
+    };
+}
+
+macro_rules! assert_errors_stateful {
+    ($parser:expr, $input:expr $(,)?) => {
         {
             let parser = $parser;
             let input = $input;
-            let result: nom::IResult<_, _, nom::error::VerboseError<_>> = parser(
-                crate::aml::parse::state::ParserState::new(input));
+            let result: nom::IResult<_, _, nom::error::VerboseError<_>> =
+                parser(input.clone());
             if let Ok((_rest, output)) = result {
                 panic!(
                     "\nExpected error from parser, but got output\n   input: {:x?}\n  output: {:x?}\n  parser: {}\n",
@@ -60,6 +74,18 @@ macro_rules! assert_errors {
             }
         }
     }
+}
+
+macro_rules! assert_errors {
+    ($parser:expr, $input:expr $(,)?) => {
+        {
+            let input = $input; // Avoid error about dropping temporary
+            assert_errors_stateful! {
+                $parser,
+                crate::aml::parse::state::ParserState::new(input),
+            }
+        }
+    };
 }
 
 
@@ -573,10 +599,12 @@ mod package {
 mod term {
     use crate::aml::data::{Buffer, ComputationalData};
     use crate::aml::misc::{ArgObject, LocalObject};
-    use crate::aml::name::NameString;
+    use crate::aml::name::{NameSeg, NameString, to_path};
     use crate::aml::parse::Parse;
+    use crate::aml::parse::state::{ParserState, MethodSignature};
     use crate::aml::term::*;
     use alloc::vec;
+    use alloc::vec::Vec;
 
 
     mod named_object {
@@ -827,10 +855,10 @@ mod term {
             assert_parses!(N::parse,
                 //        pkg name  body[0]             body[1]                 rest
                 //        |   |     |                   |                       |
-                b"\x5b\x82\x15^^ABCD\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
+                b"\x5b\x82\x14\\ABCD\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
                 b"\x62\x01",
                 N::Device {
-                    name: NameString::new_parent(2, &[b"ABCD"]),
+                    name: NameString::new_root(&[b"ABCD"]),
                     body: vec![
                         N::CreateBitField {
                             source_buffer: LocalObject::Local3.into(),
@@ -843,6 +871,48 @@ mod term {
                         }.into(),
                     ],
                 }
+            );
+        }
+
+        #[test]
+        fn test_device_scope() {
+            // Cannot resolve name since it goes outside the root scope
+            assert_errors_stateful!(N::parse,
+                ParserState {
+                    //              pkg name         body[0]
+                    //              |   |            |
+                    data: b"\x5b\x82\x13^\x2eC___D___\x14\x07^MTH1\x02",
+                    current_scope: vec![],
+                    method_signatures: vec![],
+                },
+            );
+
+            // But it works from a non-root scope
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    //              pkg name         body[0]
+                    //              |   |            |
+                    data: b"\x5b\x82\x13^\x2eC___D___\x14\x07^MTH1\x02",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"C___", b"MTH1"], 2),
+                    ],
+                },
+                N::Device {
+                    name: NameString::new_parent(1, &[b"C___", b"D___"]),
+                    body: vec![
+                        N::Method {
+                            name: NameString::new_parent(1, &[b"MTH1"]),
+                            flags: MethodFlags::unsynced(2),
+                            body: vec![],
+                        }.into(),
+                    ]
+                },
             );
         }
 
@@ -883,6 +953,27 @@ mod term {
 
             // Argument count too high
             assert_errors!(N::parse, b"\x15\x00\x00\x08");
+
+            // When object_type is method, it is added to the signature list
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    data: b"\x15^MTH1\x08\x03",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"MTH1"], 3)
+                    ],
+                },
+                N::External {
+                    name: NameString::new_parent(1, &[b"MTH1"]),
+                    object_type: ObjectType::Method,
+                    argument_count: 3,
+                }
+            );
         }
 
         #[test]
@@ -980,7 +1071,16 @@ mod term {
             assert_errors!(N::parse, b"\x14\x01");
             assert_errors!(N::parse, b"\x14\x02\x00");
             assert_errors!(N::parse, b"\x14\x03\x00");
-            assert_parses!(N::parse, b"\x14\x03\x00\x00", b"",
+            assert_parses_stateful!(
+                N::parse,
+                ParserState::new(b"\x14\x03\x00\x00"),
+                ParserState {
+                    data: b"",
+                    current_scope: vec![],
+                    method_signatures: vec![
+                        MethodSignature::new(&[] as &[NameSeg], 0),
+                    ],
+                },
                 N::Method {
                     name: NameString::empty(),
                     flags: MethodFlags {
@@ -991,14 +1091,23 @@ mod term {
                     body: vec![],
                 }
             );
-            assert_parses!(N::parse,
-                //              flags
-                //    pkg name  |   body[0]             body[1]                 rest
-                //    |   |     |   |                   |                       |
-                b"\x14\x16^^Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
-                b"\x62\x01",
+
+            assert_parses_stateful!(N::parse,
+                ParserState::new(
+                    //              flags
+                    //    pkg name  |   body[0]             body[1]                 rest
+                    //    |   |     |   |                   |                       |
+                    b"\x14\x15\\Z49F\xff\x8d\x63\x0a\x42_57Z\x11\x05\x0a\x3d\xf5\x83\x62\x01",
+                ),
+                ParserState {
+                    data: b"\x62\x01",
+                    current_scope: vec![],
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"Z49F"], 7),
+                    ],
+                },
                 N::Method {
-                    name: NameString::new_parent(2, &[b"Z49F"]),
+                    name: NameString::new_root(&[b"Z49F"]),
                     flags: MethodFlags {
                         arg_count: 0x7,
                         serialized: true,
@@ -1015,7 +1124,69 @@ mod term {
                             initializer: &[0xf5, 0x83],
                         }.into(),
                     ],
+                },
+            );
+        }
+
+        #[test]
+        fn test_method_scope() {
+            // Cannot resolve method name since it goes outside the root scope
+            assert_errors_stateful!(N::parse,
+                ParserState {
+                    data: b"\x14\x0c^\x2eC___D___\x04",
+                    current_scope: vec![],
+                    method_signatures: vec![],
+                },
+            );
+
+            // But it works from a non-root scope
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    data: b"\x14\x0c^\x2eC___D___\x04",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"C___", b"D___"], 4),
+                    ],
+                },
+                N::Method {
+                    name: NameString::new_parent(1, &[b"C___", b"D___"]),
+                    flags: MethodFlags::unsynced(4),
+                    body: vec![],
                 }
+            );
+
+            // Methods defined within methods
+            assert_parses_stateful!(N::parse,
+                ParserState::new(
+                    //            flags
+                    //    pkg nm  |   body[0]
+                    //    |   |   |   |
+                    b"\x14\x0dABCD\x00\x14\x06EFGH\x00",
+                ),
+                ParserState {
+                    data: b"",
+                    current_scope: vec![],
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"ABCD"], 0),
+                        MethodSignature::new(&[b"ABCD", b"EFGH"], 0),
+                    ],
+                },
+                N::Method {
+                    name: NameString::new(&[b"ABCD"]),
+                    flags: MethodFlags::unsynced(0),
+                    body: vec![
+                        N::Method {
+                            name: NameString::new(&[b"EFGH"]),
+                            flags: MethodFlags::unsynced(0),
+                            body: vec![],
+                        }.into(),
+                    ]
+                },
             );
         }
 
@@ -1111,6 +1282,52 @@ mod term {
         }
 
         #[test]
+        fn test_power_resource_scope() {
+            // Cannot resolve name since it goes outside the root scope
+            assert_errors_stateful!(N::parse,
+                ParserState {
+                    //                               slevel
+                    //              pkg name         |   rorder  body[0]
+                    //              |   |            |   |       |
+                    data: b"\x5b\x84\x16^\x2eC___D___\x01\x02\x03\x14\x07^MTH1\x02",
+                    current_scope: vec![],
+                    method_signatures: vec![],
+                },
+            );
+
+            // But it works from a non-root scope
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    //                               slevel
+                    //              pkg name         |   rorder  body[0]
+                    //              |   |            |   |       |
+                    data: b"\x5b\x84\x16^\x2eC___D___\x01\x02\x03\x14\x07^MTH1\x02",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"C___", b"MTH1"], 2),
+                    ],
+                },
+                N::PowerResource {
+                    name: NameString::new_parent(1, &[b"C___", b"D___"]),
+                    system_level: 0x01,
+                    resource_order: 0x0302,
+                    body: vec![
+                        N::Method {
+                            name: NameString::new_parent(1, &[b"MTH1"]),
+                            flags: MethodFlags::unsynced(2),
+                            body: vec![],
+                        }.into(),
+                    ]
+                },
+            );
+        }
+
+        #[test]
         fn test_processor() {
             assert_errors!(N::parse, b"\x5b");
             assert_errors!(N::parse, b"\x5b\x83");
@@ -1133,12 +1350,12 @@ mod term {
             );
             assert_parses!(N::parse,
                 //                                     rlen
-                //        pkg name id  raddr           |   body[0]                 body[1]     rest
-                //        |   |    |   |               |   |                       |           |
-                b"\x5b\x83\x18^_842\xf4\xa2\x83\x42\xed\xd2\x11\x05\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
+                //        pkg name  id  raddr           |   body[0]                 body[1]     rest
+                //        |   |     |   |               |   |                       |           |
+                b"\x5b\x83\x18\\_842\xf4\xa2\x83\x42\xed\xd2\x11\x05\x0a\x3d\xf5\x83\x5b\x02ABCDEFGH",
                 b"EFGH",
                 N::Processor {
-                    name: NameString::new_parent(1, &[b"_842"]),
+                    name: NameString::new_root(&[b"_842"]),
                     id: 0xf4,
                     register_block_addr: 0xed42_83a2,
                     register_block_length: 0xd2,
@@ -1150,6 +1367,53 @@ mod term {
                         N::Event(NameString::new(&[b"ABCD"])).into(),
                     ],
                 }
+            );
+        }
+
+        #[test]
+        fn test_processor_scope() {
+            // Cannot resolve name since it goes outside the root scope
+            assert_errors_stateful!(N::parse,
+                ParserState {
+                    //                                                   rlen
+                    //              pkg name         id  raddr           |   body[0]
+                    //              |   |            |   |               |   |
+                    data: b"\x5b\x83\x19^\x2eC___D___\x01\x02\x03\x04\x05\x06\x14\x07^MTH1\x02",
+                    current_scope: vec![],
+                    method_signatures: vec![],
+                },
+            );
+
+            // But it works from a non-root scope
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    //                                                   rlen
+                    //              pkg name         id  raddr           |   body[0]
+                    //              |   |            |   |               |   |
+                    data: b"\x5b\x83\x19^\x2eC___D___\x01\x02\x03\x04\x05\x06\x14\x07^MTH1\x02",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"C___", b"MTH1"], 2),
+                    ],
+                },
+                N::Processor {
+                    name: NameString::new_parent(1, &[b"C___", b"D___"]),
+                    id: 0x01,
+                    register_block_addr: 0x0504_0302,
+                    register_block_length: 0x06,
+                    body: vec![
+                        N::Method {
+                            name: NameString::new_parent(1, &[b"MTH1"]),
+                            flags: MethodFlags::unsynced(2),
+                            body: vec![],
+                        }.into(),
+                    ]
+                },
             );
         }
 
@@ -1181,6 +1445,48 @@ mod term {
                         N::Event(NameString::new(&[b"ABCD"])).into(),
                     ],
                 }
+            );
+        }
+
+        #[test]
+        fn test_thermal_zone_scope() {
+            // Cannot resolve name since it goes outside the root scope
+            assert_errors_stateful!(N::parse,
+                ParserState {
+                    //              pkg name         body[0]
+                    //              |   |            |
+                    data: b"\x5b\x85\x13^\x2eC___D___\x14\x07^MTH1\x02",
+                    current_scope: vec![],
+                    method_signatures: vec![],
+                },
+            );
+
+            // But it works from a non-root scope
+            assert_parses_stateful!(N::parse,
+                ParserState {
+                    //              pkg name         body[0]
+                    //              |   |            |
+                    data: b"\x5b\x85\x13^\x2eC___D___\x14\x07^MTH1\x02",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![],
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: vec![
+                        MethodSignature::new(&[b"A___", b"C___", b"MTH1"], 2),
+                    ],
+                },
+                N::ThermalZone {
+                    name: NameString::new_parent(1, &[b"C___", b"D___"]),
+                    body: vec![
+                        N::Method {
+                            name: NameString::new_parent(1, &[b"MTH1"]),
+                            flags: MethodFlags::unsynced(2),
+                            body: vec![],
+                        }.into(),
+                    ]
+                },
             );
         }
     }
@@ -1433,6 +1739,371 @@ mod term {
             &[0b1010_0101],
             MethodFlags { arg_count: 7, serialized: false, sync_level: 0xf },
         );
+    }
+
+
+    mod reference_expression {
+        use crate::aml::name::SuperName;
+        use crate::aml::term::ReferenceExpressionOpcode as R;
+        use super::*;
+
+        fn example_signatures() -> Vec<MethodSignature> {
+            vec![
+                MethodSignature::new(&[b"MTH0"], 0),
+                MethodSignature::new(&[b"A___", b"MTH1"], 1),
+                MethodSignature::new(&[b"A___", b"MTH2"], 2),
+            ]
+        }
+
+        #[test]
+        fn test_ref_of() {
+            assert_errors!(R::parse, b"\x71");
+            assert_parses!(R::parse, b"\x71\x00", b"", R::RefOf(
+                NameString::empty().into()
+            ));
+            assert_parses!(R::parse, b"\x71\x5b\x31", b"", R::RefOf(
+                SuperName::Debug
+            ));
+            assert_parses!(R::parse, b"\x71FOO_\x0a\x42", b"\x0a\x42", R::RefOf(
+                NameString::new(&[b"FOO_"]).into()
+            ));
+            assert_parses!(R::parse, b"\x71\x83FOO_", b"", R::RefOf(
+                R::Deref(
+                    NameString::new(&[b"FOO_"]).into()
+                ).into()
+            ));
+        }
+
+        #[test]
+        fn test_deref() {
+            assert_errors!(R::parse, b"\x83");
+            assert_parses!(R::parse, b"\x83\x00", b"", R::Deref(
+                ComputationalData::Zero.into()
+            ));
+            assert_parses!(R::parse, b"\x83\x0b\xcd\xab", b"", R::Deref(
+                ComputationalData::Word(0xabcd).into()
+            ));
+            assert_parses!(R::parse, b"\x83FOO_\x0a\x42", b"\x0a\x42", R::Deref(
+                NameString::new(&[b"FOO_"]).into()
+            ));
+            assert_parses!(R::parse, b"\x83\x65", b"", R::Deref(
+                LocalObject::Local5.into()
+            ));
+        }
+
+        #[test]
+        fn test_index() {
+            assert_errors!(R::parse, b"\x88");
+            assert_errors!(R::parse, b"\x88\x00");
+            assert_errors!(R::parse, b"\x88\x00\x00");
+            assert_parses!(R::parse, b"\x88\x00\x00\x00", b"", R::Index {
+                source: ComputationalData::Zero.into(),
+                index: ComputationalData::Zero.into(),
+                result: None,
+            });
+            assert_parses!(R::parse, b"\x88\x6e\x0a\x3fABCD", b"", R::Index {
+                source: ArgObject::Arg6.into(),
+                index: ComputationalData::Byte(0x3f).into(),
+                result: Some(NameString::new(&[b"ABCD"]).into()),
+            });
+        }
+
+        #[test]
+        fn test_invoke_zero_arg() {
+            // Unanchored one-segment name (searches all parent scopes)
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTH0",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(NameString::new(&[b"MTH0"]), vec![]),
+            );
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTH0",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(NameString::new(&[b"MTH0"]), vec![]),
+            );
+
+            // Anchored name
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^MTH0\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"FOO_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"FOO_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(NameString::new_parent(1, &[b"MTH0"]), vec![]),
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^MTH0\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+            );
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\\MTH0",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(NameString::new_root(&[b"MTH0"]), vec![]),
+            );
+
+            // Unrecognized method
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTHX",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+            );
+        }
+
+        #[test]
+        fn test_invoke_one_arg() {
+            #![allow(clippy::too_many_lines)]
+
+            // Unanchored one-segment name (searches all parent scopes)
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTH1\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"\x6a\x01",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new(&[b"MTH1"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                    ],
+                ),
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTH1\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"FOO_"]),
+                    method_signatures: example_signatures(),
+                },
+            );
+
+            // Multi-segment names
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH1\x0a\xb4",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new(&[b"A___", b"MTH1"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                    ],
+                ),
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH1\x0a\xb4",
+                    current_scope: to_path(&[b"A___"]),
+                    method_signatures: example_signatures(),
+                },
+            );
+
+            // Anchored name
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^\x2eA___MTH1\x0a\xb4",
+                    current_scope: to_path(&[b"FOO_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"FOO_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new_parent(1, &[b"A___", b"MTH1"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                    ],
+                ),
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^\x2eA___MTH1\x0a\xb4",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+            );
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\\\x2eA___MTH1\x0a\xb4",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new_root(&[b"A___", b"MTH1"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                    ],
+                ),
+            );
+
+            // Too few arguments
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH1",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+            );
+        }
+
+        #[test]
+        fn test_invoke_two_args() {
+            // Unanchored one-segment name (searches all parent scopes)
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"MTH2\x0a\xb4\x6a\x01",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"\x01",
+                    current_scope: to_path(&[b"A___", b"B___"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new(&[b"MTH2"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                        ArgObject::Arg2.into(),
+                    ],
+                ),
+            );
+
+            // Multi-segment name
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH2\x0a\xb4\x6a",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new(&[b"A___", b"MTH2"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                        ArgObject::Arg2.into(),
+                    ],
+                ),
+            );
+
+            // Anchored name
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^^\x2eA___MTH2\x0a\xb4\x6a",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"",
+                    current_scope: to_path(&[b"FOO_", b"BAR_"]),
+                    method_signatures: example_signatures(),
+                },
+                R::Invoke(
+                    NameString::new_parent(2, &[b"A___", b"MTH2"]),
+                    vec![
+                        ComputationalData::Byte(0xb4).into(),
+                        ArgObject::Arg2.into(),
+                    ],
+                ),
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"^^\x2eA___MTH2\x0a\xb4\x6a",
+                    current_scope: to_path(&[b"FOO_", b"BAR_", b"BAZ_"]),
+                    method_signatures: example_signatures(),
+                },
+            );
+
+            // Too few arguments
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH2\x0a\xb4",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+            );
+            assert_errors_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x2eA___MTH2",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+            );
+        }
     }
 }
 
