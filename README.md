@@ -1,5 +1,8 @@
 # Tartan OS
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/cimbul/tartan-os/Build)
+![License](https://img.shields.io/github/license/cimbul/tartan-os)
+
 A toy OS written in Rust. The name is a reference to the old logo of a certain rust
 removal product.
 
@@ -14,9 +17,9 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 
 Tested on macOS and Linux.
 
-* Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
-* [QEMU](https://www.qemu.org/) 5.0
-* bash, for the UEFI launcher script
+  * Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
+  * [QEMU](https://www.qemu.org/) 5.0
+  * bash, for the UEFI launcher script
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
 at [acpi/tests/parse/README.md](acpi/tests/parse/).
@@ -75,6 +78,8 @@ target architecture in QEMU.
 ```bash
 cargo doc --open
 ```
+
+Documentation from the latest build is available at https://tartan.cimbul.com/.
 
 
 ## Lint

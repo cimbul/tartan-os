@@ -1,4 +1,4 @@
-name: Rust
+name: Build
 
 on:
   push:
@@ -23,7 +23,9 @@ jobs:
     - name: Lint
       run: cargo clippy --workspace --all-targets -- -D warnings
     - name: Document
-      run: cargo doc --workspace --no-deps
+      run: |
+        cargo doc --workspace --no-deps
+        cp doc/crate-redirect.html target/doc/index.html
     - name: Build (Linux)
       run: cargo build --verbose --workspace
     - name: Run tests (Linux)
@@ -35,3 +37,4 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: target/doc/
+        cname: tartan.cimbul.com
