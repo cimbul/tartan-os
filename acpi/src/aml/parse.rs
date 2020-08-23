@@ -757,6 +757,20 @@ pub mod name {
         }
     }
 
+    parser_fn! {
+        /// Parse a [`SuperName`], but do *not* allow method invocations.
+        ///
+        /// This is needed by some operators where invocations are not allowed, but bare
+        /// `NameString` references are---including method references. The standard
+        /// `SuperName` parser would try to parse it as an invocation first.
+        pub super_name_minus_invoke -> SuperName<'a> = alt((
+            map(SimpleName::parse, SuperName::Name),
+            value(SuperName::Debug, DebugObject::parse),
+            // We don't need a special RefExpOp parser that excludes invocations. They
+            // will be slurped up by the SimpleName parser first.
+            map(ReferenceExpressionOpcode::parse, |r| SuperName::Reference(Box::new(r))),
+        ))
+    }
 
     parser_fn! {
         /// Grammar:
@@ -1062,7 +1076,7 @@ pub mod term {
     use super::super::misc::{ArgObject, LocalObject};
     use super::super::name::{NameSeg, NameString, SimpleName, SuperName};
     use super::super::term::*;
-    use super::name::parse_target;
+    use super::name::{parse_target, super_name_minus_invoke};
     use super::package::{in_package, standalone_package_length};
     use super::state::MethodSignature;
     use super::util::*;
@@ -2258,10 +2272,24 @@ pub mod term {
         /// DefRefOf            := RefOfOp SuperName
         /// RefOfOp             := 0x71
         /// ```
+        ///
+        /// Although the grammar suggests all SuperNames are accepted, the ACPICA parser
+        /// does not allow method invocations or nested `RefOf` operators.
         ref_of -> ReferenceExpressionOpcode<'a> = opcode(
             "reference-of operator",
             tag_byte(0x71),
-            map(SuperName::parse, ReferenceExpressionOpcode::RefOf),
+            map(
+                verify(
+                    super_name_minus_invoke,
+                    // Forbid RefOf(RefOf(_))
+                    |n| match n {
+                        SuperName::Reference(r) =>
+                            !matches!(**r, ReferenceExpressionOpcode::RefOf(_)),
+                        _ => true,
+                    }
+                ),
+                ReferenceExpressionOpcode::RefOf,
+            ),
         )
     }
 
@@ -2750,21 +2778,7 @@ pub mod term {
         object_type -> ExpressionOpcode<'a> = opcode(
             "object type operator",
             tag_byte(0x8e),
-            map(
-                verify(
-                    SuperName::parse,
-                    // Disallow method invocations
-                    |n| match n {
-                        SuperName::Reference(r) =>
-                            !matches!(
-                                **r,
-                                ReferenceExpressionOpcode::Invoke { source: _, args: _ }
-                            ),
-                        _ => true,
-                    }
-                ),
-                ExpressionOpcode::ObjectType
-            )
+            map(super_name_minus_invoke, ExpressionOpcode::ObjectType),
         )
     }
 
@@ -2819,11 +2833,26 @@ pub mod term {
         /// DefCondRefOf        := CondRefOfOp SuperName Target
         /// CondRefOfOp         := ExtOpPrefix 0x12
         /// ```
+        ///
+        /// Like [`ReferenceExpressionOpcode::RefOf`], method invocations and nested
+        /// `RefOf` calls are not allowed in the first argument even though the spec
+        /// suggests they are.
         cond_ref_of -> ExpressionOpcode<'a> = opcode(
             "reference-of operator (conditional)",
             ext_op(tag_byte(0x12)),
             struct_parser! {
-                ExpressionOpcode::CondRefOf(SuperName::parse, parse_target)
+                ExpressionOpcode::CondRefOf(
+                    verify(
+                        super_name_minus_invoke,
+                        // Forbid RefOf(RefOf(_))
+                        |n| match n {
+                            SuperName::Reference(r) =>
+                                !matches!(**r, ReferenceExpressionOpcode::RefOf(_)),
+                            _ => true,
+                        }
+                    ),
+                    parse_target,
+                )
             }
         )
     }

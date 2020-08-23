@@ -1772,6 +1772,27 @@ mod term {
                     NameString::new(&[b"FOO_"]).into()
                 ).into()
             ));
+
+            // RefOf(RefOf(...)) is not allowed
+            assert_errors!(R::parse, b"\x71\x71FOO_");
+
+            // Method names should be parsed as references, not calls
+            assert_parses_stateful!(
+                R::parse,
+                ParserState {
+                    data: b"\x71MTH0\x0a\x42",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                ParserState {
+                    data: b"\x0a\x42",
+                    current_scope: vec![],
+                    method_signatures: example_signatures(),
+                },
+                R::RefOf(
+                    NameString::new(&[b"MTH0"]).into(),
+                ),
+            );
         }
 
         #[test]
