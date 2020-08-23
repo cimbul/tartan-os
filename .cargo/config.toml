@@ -1,6 +1,9 @@
 [target.'cfg(target_os = "macos")']
 rustflags = ["-C", "link-arg=-lSystem"]
 
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "link-arg=-lc"]
+
 [target.x86_64-unknown-uefi]
 runner = "uefi/script/boot.sh"
 # Fix an error compiling the memchr crate with the default x86_64-unknown-uefi settings:
