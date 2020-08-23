@@ -12,3 +12,6 @@ publish = false
 bitflags = "1.2.1"
 static_assertions = "1.1.0"
 nom = {version = "5.1.2", features = ["alloc"], default-features = false}
+
+[dev-dependencies]
+insta = {version = "0.16.1", features = ["glob"]}

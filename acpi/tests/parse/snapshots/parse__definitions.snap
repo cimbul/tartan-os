@@ -1,0 +1,791 @@
+---
+source: acpi/tests/parse/main.rs
+expression: parse_table(&aml_data)
+---
+Ok(
+    AMLTable {
+        header: DescriptionHeader {
+            signature: [
+                83,
+                83,
+                68,
+                84,
+            ],
+            length: 629,
+            revision: 2,
+            checksum: 50,
+            oem_id: [
+                84,
+                97,
+                114,
+                116,
+                97,
+                110,
+            ],
+            oem_table_id: [
+                68,
+                97,
+                116,
+                97,
+                0,
+                0,
+                0,
+                0,
+            ],
+            oem_revision: 0,
+            creator_id: 1280593481,
+            creator_revision: 538969879,
+        },
+        body: [
+            Modifier(
+                Name(
+                    NameString["U8__"],
+                    Data(
+                        Data(
+                            Byte(
+                                255,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["U16_"],
+                    Data(
+                        Data(
+                            Word(
+                                65535,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["U32_"],
+                    Data(
+                        Data(
+                            DWord(
+                                4294967295,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["U64_"],
+                    Data(
+                        Data(
+                            QWord(
+                                1152921504606846975,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["STR0"],
+                    Data(
+                        Data(
+                            String(
+                                "",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["STR_"],
+                    Data(
+                        Data(
+                            String(
+                                "Hello, world!",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["Z___"],
+                    Data(
+                        Data(
+                            Zero,
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["O___"],
+                    Data(
+                        Data(
+                            One,
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["F___"],
+                    Data(
+                        Data(
+                            Ones,
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["BUF0"],
+                    Data(
+                        Data(
+                            Buffer(
+                                Buffer {
+                                    size: Data(
+                                        Data(
+                                            Byte(
+                                                0,
+                                            ),
+                                        ),
+                                    ),
+                                    initializer: [],
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["BUFF"],
+                    Data(
+                        Data(
+                            Buffer(
+                                Buffer {
+                                    size: Data(
+                                        Data(
+                                            Byte(
+                                                16,
+                                            ),
+                                        ),
+                                    ),
+                                    initializer: [
+                                        1,
+                                        2,
+                                        3,
+                                    ],
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["VBUF"],
+                    Data(
+                        Data(
+                            Buffer(
+                                Buffer {
+                                    size: Name(
+                                        NameString["\\U32_"],
+                                    ),
+                                    initializer: [],
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["PKG0"],
+                    Data(
+                        Package(
+                            Package {
+                                count: 0,
+                                initializers: [],
+                            },
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["PKG1"],
+                    Data(
+                        Package(
+                            Package {
+                                count: 32,
+                                initializers: [
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                Byte(
+                                                    255,
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                String(
+                                                    "foo",
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                Ones,
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                Buffer(
+                                                    Buffer {
+                                                        size: Data(
+                                                            Data(
+                                                                Byte(
+                                                                    2,
+                                                                ),
+                                                            ),
+                                                        ),
+                                                        initializer: [
+                                                            255,
+                                                            238,
+                                                        ],
+                                                    },
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Package(
+                                                Package {
+                                                    count: 2,
+                                                    initializers: [
+                                                        Ref(
+                                                            Data(
+                                                                Data(
+                                                                    DWord(
+                                                                        3405691582,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                        Ref(
+                                                            Data(
+                                                                Data(
+                                                                    DWord(
+                                                                        3735928559,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                    Name(
+                                        NameString["\\U32_"],
+                                    ),
+                                    Name(
+                                        NameString["\\STR_"],
+                                    ),
+                                    Name(
+                                        NameString["\\BUFF"],
+                                    ),
+                                    Name(
+                                        NameString["\\FLD3"],
+                                    ),
+                                    Name(
+                                        NameString["\\VPKG"],
+                                    ),
+                                    Name(
+                                        NameString["\\DEV1"],
+                                    ),
+                                    Name(
+                                        NameString["\\EVT1"],
+                                    ),
+                                    Name(
+                                        NameString["\\MTH1"],
+                                    ),
+                                    Name(
+                                        NameString["\\MTX1"],
+                                    ),
+                                    Name(
+                                        NameString["\\REG1"],
+                                    ),
+                                    Name(
+                                        NameString["\\PWR1"],
+                                    ),
+                                    Name(
+                                        NameString["\\PRC1"],
+                                    ),
+                                    Name(
+                                        NameString["\\THZ1"],
+                                    ),
+                                ],
+                            },
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["VPKG"],
+                    Data(
+                        VarPackage(
+                            VarPackage {
+                                count: Name(
+                                    NameString["\\U32_"],
+                                ),
+                                initializers: [
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                String(
+                                                    "stuff",
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                Zero,
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["VPKG.OTHR"],
+                    Data(
+                        VarPackage(
+                            VarPackage {
+                                count: Data(
+                                    Data(
+                                        Word(
+                                            256,
+                                        ),
+                                    ),
+                                ),
+                                initializers: [
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                String(
+                                                    "other",
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    Ref(
+                                        Data(
+                                            Data(
+                                                Word(
+                                                    43981,
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                    ),
+                ),
+            ),
+            Named(
+                DataTableRegion {
+                    name: NameString["REG1"],
+                    signature: Data(
+                        Data(
+                            String(
+                                "XYZ1",
+                            ),
+                        ),
+                    ),
+                    oem_id: Data(
+                        Data(
+                            String(
+                                "Tartan",
+                            ),
+                        ),
+                    ),
+                    oem_table_id: Data(
+                        Data(
+                            String(
+                                "SomeTable",
+                            ),
+                        ),
+                    ),
+                },
+            ),
+            Named(
+                OperationRegion {
+                    name: NameString["REG2"],
+                    region_space: GenericSerialBus,
+                    offset: Data(
+                        Data(
+                            Byte(
+                                66,
+                            ),
+                        ),
+                    ),
+                    length: Data(
+                        Data(
+                            Byte(
+                                48,
+                            ),
+                        ),
+                    ),
+                },
+            ),
+            Modifier(
+                Name(
+                    NameString["COM1"],
+                    Data(
+                        Data(
+                            Buffer(
+                                Buffer {
+                                    size: Data(
+                                        Data(
+                                            Byte(
+                                                27,
+                                            ),
+                                        ),
+                                    ),
+                                    initializer: [
+                                        142,
+                                        22,
+                                        0,
+                                        2,
+                                        0,
+                                        1,
+                                        2,
+                                        0,
+                                        0,
+                                        1,
+                                        8,
+                                        0,
+                                        0,
+                                        119,
+                                        1,
+                                        0,
+                                        18,
+                                        0,
+                                        3,
+                                        4,
+                                        92,
+                                        73,
+                                        50,
+                                        67,
+                                        0,
+                                        121,
+                                        0,
+                                    ],
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Named(
+                BankField {
+                    region_name: NameString["REG2"],
+                    bank_name: NameString["FLD6"],
+                    bank_value: Data(
+                        Data(
+                            Word(
+                                4660,
+                            ),
+                        ),
+                    ),
+                    flags: FieldFlags {
+                        access_type: Buffer,
+                        lock: true,
+                        update_rule: Preserve,
+                    },
+                    elements: [
+                        Named {
+                            name: NameSeg["FLD1"],
+                            bit_length: 10,
+                        },
+                        Named {
+                            name: NameSeg["FLD2"],
+                            bit_length: 4,
+                        },
+                        Reserved {
+                            bit_length: 178,
+                        },
+                        ConnectNamed(
+                            NameString["COM1"],
+                        ),
+                        AccessAs(
+                            Buffer,
+                            Bytes(
+                                4,
+                            ),
+                        ),
+                        Named {
+                            name: NameSeg["FLD3"],
+                            bit_length: 5,
+                        },
+                        ConnectBuffer(
+                            Buffer {
+                                size: Data(
+                                    Data(
+                                        Byte(
+                                            25,
+                                        ),
+                                    ),
+                                ),
+                                initializer: [
+                                    142,
+                                    22,
+                                    0,
+                                    2,
+                                    0,
+                                    1,
+                                    2,
+                                    0,
+                                    0,
+                                    1,
+                                    8,
+                                    0,
+                                    0,
+                                    119,
+                                    1,
+                                    0,
+                                    18,
+                                    0,
+                                    3,
+                                    4,
+                                    92,
+                                    73,
+                                    50,
+                                    67,
+                                    0,
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Field {
+                    region_name: NameString["REG1"],
+                    flags: FieldFlags {
+                        access_type: QWord,
+                        lock: true,
+                        update_rule: WriteAsZeros,
+                    },
+                    elements: [],
+                },
+            ),
+            Named(
+                IndexField {
+                    index_name: NameString["FLD1"],
+                    data_name: NameString["FLD2"],
+                    flags: FieldFlags {
+                        access_type: DWord,
+                        lock: false,
+                        update_rule: WriteAsOnes,
+                    },
+                    elements: [],
+                },
+            ),
+            Named(
+                CreateField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    bit_index: Data(
+                        Data(
+                            Byte(
+                                3,
+                            ),
+                        ),
+                    ),
+                    num_bits: Data(
+                        Data(
+                            Byte(
+                                5,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD4"],
+                },
+            ),
+            Named(
+                CreateBitField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    bit_index: Data(
+                        Data(
+                            Byte(
+                                9,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD5"],
+                },
+            ),
+            Named(
+                CreateByteField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    byte_index: Data(
+                        Data(
+                            Byte(
+                                2,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD6"],
+                },
+            ),
+            Named(
+                CreateWordField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    byte_index: Data(
+                        Data(
+                            Byte(
+                                8,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD7"],
+                },
+            ),
+            Named(
+                CreateDWordField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    byte_index: Data(
+                        Data(
+                            Byte(
+                                4,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD8"],
+                },
+            ),
+            Named(
+                CreateQWordField {
+                    source_buffer: Name(
+                        NameString["BUFF"],
+                    ),
+                    byte_index: Data(
+                        Data(
+                            Byte(
+                                7,
+                            ),
+                        ),
+                    ),
+                    name: NameString["FLD9"],
+                },
+            ),
+            Named(
+                Device {
+                    name: NameString["DEV1"],
+                    body: [],
+                },
+            ),
+            Named(
+                Event(
+                    NameString["EVT1"],
+                ),
+            ),
+            Named(
+                Method {
+                    name: NameString["MTH1"],
+                    flags: MethodFlags {
+                        arg_count: 0,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [],
+                },
+            ),
+            Named(
+                Mutex {
+                    name: NameString["MTX1"],
+                    sync_level: 0,
+                },
+            ),
+            Named(
+                PowerResource {
+                    name: NameString["PWR1"],
+                    system_level: 2,
+                    resource_order: 99,
+                    body: [],
+                },
+            ),
+            Named(
+                Processor {
+                    name: NameString["PRC1"],
+                    id: 1,
+                    register_block_addr: 291,
+                    register_block_length: 10,
+                    body: [],
+                },
+            ),
+            Named(
+                ThermalZone {
+                    name: NameString["THZ1"],
+                    body: [],
+                },
+            ),
+            Modifier(
+                Alias {
+                    source: NameString["MTH1"],
+                    alias: NameString["MTH2"],
+                },
+            ),
+            Modifier(
+                Scope(
+                    NameString["DEV1"],
+                    [
+                        Modifier(
+                            Name(
+                                NameString["FOO_"],
+                                Data(
+                                    Data(
+                                        String(
+                                            "bar",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    },
+)

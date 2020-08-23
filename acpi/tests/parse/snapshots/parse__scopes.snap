@@ -1,0 +1,534 @@
+---
+source: acpi/tests/parse/main.rs
+expression: parse_table(&aml_data)
+---
+Ok(
+    AMLTable {
+        header: DescriptionHeader {
+            signature: [
+                68,
+                83,
+                68,
+                84,
+            ],
+            length: 381,
+            revision: 2,
+            checksum: 229,
+            oem_id: [
+                84,
+                97,
+                114,
+                116,
+                97,
+                110,
+            ],
+            oem_table_id: [
+                78,
+                97,
+                109,
+                101,
+                115,
+                0,
+                0,
+                0,
+            ],
+            oem_revision: 0,
+            creator_id: 1280593481,
+            creator_revision: 538969879,
+        },
+        body: [
+            Statement(
+                If {
+                    predicate: Data(
+                        Data(
+                            Zero,
+                        ),
+                    ),
+                    if_true: [
+                        Named(
+                            External {
+                                name: NameString["\\OTHR"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\MTHS.NEST"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                    ],
+                    if_false: [],
+                },
+            ),
+            Named(
+                Device {
+                    name: NameString["\\MTHS"],
+                    body: [
+                        Named(
+                            Method {
+                                name: NameString["MTH1"],
+                                flags: MethodFlags {
+                                    arg_count: 1,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Statement(
+                                        Return(
+                                            Arg(
+                                                Arg0,
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Expression(
+                            RefExpression(
+                                Invoke(
+                                    NameString["MTH1"],
+                                    [
+                                        Data(
+                                            Data(
+                                                Byte(
+                                                    10,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Invoke(
+                                    NameString["^MTHS.MTH1"],
+                                    [
+                                        Data(
+                                            Data(
+                                                Byte(
+                                                    10,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Invoke(
+                                    NameString["\\MTHS.MTH1"],
+                                    [
+                                        Data(
+                                            Data(
+                                                Byte(
+                                                    10,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["AAAA"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["^BBBB"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["NEST.CCCC"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^^MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^^^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["\\DDDD"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["\\MTHS.EEEE"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                        Named(
+                            Method {
+                                name: NameString["\\OTHR.EEEE"],
+                                flags: MethodFlags {
+                                    arg_count: 0,
+                                    serialized: false,
+                                    sync_level: 0,
+                                },
+                                body: [
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["^^MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    Expression(
+                                        RefExpression(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Data(
+                                                        Data(
+                                                            Byte(
+                                                                10,
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["MTHS.MTH1"],
+                        [
+                            Data(
+                                Data(
+                                    Byte(
+                                        10,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["\\MTHS.MTH1"],
+                        [
+                            Data(
+                                Data(
+                                    Byte(
+                                        10,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+        ],
+    },
+)

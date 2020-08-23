@@ -282,6 +282,7 @@ pub mod state {
 
 
     /// A parser error with position info useful for printing human-readable messages.
+    #[derive(Debug, Clone)]
     pub struct ErrorWithPosition<'a> {
         pub error: VerboseError<ParserState<'a>>,
         pub full_input: &'a [u8],

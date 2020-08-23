@@ -1,0 +1,41 @@
+---
+source: acpi/tests/parse/main.rs
+expression: parse_table(&aml_data)
+---
+Ok(
+    AMLTable {
+        header: DescriptionHeader {
+            signature: [
+                68,
+                83,
+                68,
+                84,
+            ],
+            length: 36,
+            revision: 2,
+            checksum: 157,
+            oem_id: [
+                84,
+                97,
+                114,
+                116,
+                97,
+                110,
+            ],
+            oem_table_id: [
+                69,
+                109,
+                112,
+                116,
+                121,
+                0,
+                0,
+                0,
+            ],
+            oem_revision: 0,
+            creator_id: 1280593481,
+            creator_revision: 538969879,
+        },
+        body: [],
+    },
+)

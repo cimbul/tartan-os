@@ -1,0 +1,1837 @@
+---
+source: acpi/tests/parse/main.rs
+expression: parse_table(&aml_data)
+---
+Ok(
+    AMLTable {
+        header: DescriptionHeader {
+            signature: [
+                68,
+                83,
+                68,
+                84,
+            ],
+            length: 1405,
+            revision: 2,
+            checksum: 92,
+            oem_id: [
+                84,
+                97,
+                114,
+                116,
+                97,
+                110,
+            ],
+            oem_table_id: [
+                78,
+                97,
+                109,
+                101,
+                115,
+                0,
+                0,
+                0,
+            ],
+            oem_revision: 0,
+            creator_id: 1280593481,
+            creator_revision: 538969879,
+        },
+        body: [
+            Statement(
+                If {
+                    predicate: Data(
+                        Data(
+                            Zero,
+                        ),
+                    ),
+                    if_true: [
+                        Named(
+                            External {
+                                name: NameString["\\FOO_"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\BAR_"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\BAZ_"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\TST_"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\MTHS"],
+                                object_type: Uninitialized,
+                                argument_count: 0,
+                            },
+                        ),
+                        Named(
+                            External {
+                                name: NameString["\\MTHS.EXTN"],
+                                object_type: Method,
+                                argument_count: 1,
+                            },
+                        ),
+                    ],
+                    if_false: [],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\MTHS.MTH0"],
+                    flags: MethodFlags {
+                        arg_count: 0,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Statement(
+                            Return(
+                                Data(
+                                    Data(
+                                        Byte(
+                                            42,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\MTHS.MTH1"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Statement(
+                            Return(
+                                Arg(
+                                    Arg0,
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.STOR"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH1"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.EXTN"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Debug,
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    RefOf(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Store(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Reference(
+                                    Index {
+                                        source: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    1,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.INC_"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH1"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.EXTN"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Debug,
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    RefOf(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Increment(
+                                Reference(
+                                    Index {
+                                        source: Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.ADD_"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Name(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Name(
+                                        Arg(
+                                            Arg0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Name(
+                                        Local(
+                                            Local0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Invoke(
+                                            NameString["\\MTHS.MTH0"],
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Invoke(
+                                            NameString["\\MTHS.MTH0"],
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Invoke(
+                                            NameString["\\MTHS.MTH1"],
+                                            [
+                                                Name(
+                                                    NameString["\\BAR_"],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Invoke(
+                                            NameString["\\MTHS.EXTN"],
+                                            [
+                                                Name(
+                                                    NameString["\\BAR_"],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Debug,
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        RefOf(
+                                            Name(
+                                                Name(
+                                                    NameString["\\BAR_"],
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Deref(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Add(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Data(
+                                    Data(
+                                        Byte(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                                Some(
+                                    Reference(
+                                        Index {
+                                            source: Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                            index: Data(
+                                                Data(
+                                                    Byte(
+                                                        0,
+                                                    ),
+                                                ),
+                                            ),
+                                            result: None,
+                                        },
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.SZOF"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH1"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.EXTN"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Debug,
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    RefOf(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            SizeOf(
+                                Reference(
+                                    Index {
+                                        source: Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.INDX"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Name(
+                                            Arg(
+                                                Arg0,
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Name(
+                                            Local(
+                                                Local0,
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH0"],
+                                                [],
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH0"],
+                                                [],
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Invoke(
+                                                NameString["\\MTHS.MTH1"],
+                                                [
+                                                    Name(
+                                                        NameString["\\BAR_"],
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Invoke(
+                                                NameString["\\MTHS.EXTN"],
+                                                [
+                                                    Name(
+                                                        NameString["\\BAR_"],
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Debug,
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            RefOf(
+                                                Name(
+                                                    Name(
+                                                        NameString["\\BAR_"],
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Deref(
+                                                Name(
+                                                    NameString["\\BAR_"],
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                Index {
+                                    source: Name(
+                                        NameString["\\FOO_"],
+                                    ),
+                                    index: Data(
+                                        Data(
+                                            Byte(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                    result: Some(
+                                        Reference(
+                                            Index {
+                                                source: Name(
+                                                    NameString["\\BAR_"],
+                                                ),
+                                                index: Data(
+                                                    Data(
+                                                        Byte(
+                                                            0,
+                                                        ),
+                                                    ),
+                                                ),
+                                                result: None,
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.LOAD"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH0"],
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.MTH1"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Invoke(
+                                        NameString["\\MTHS.EXTN"],
+                                        [
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Debug,
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    RefOf(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ),
+                        Statement(
+                            Load {
+                                name: NameString["\\FOO_"],
+                                definition_block_handle: Reference(
+                                    Index {
+                                        source: Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                            },
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.COPY"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            CopyObject(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Name(
+                                    NameString["\\BAR_"],
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            CopyObject(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Arg(
+                                    Arg0,
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            CopyObject(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Local(
+                                    Local0,
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            CopyObject(
+                                Name(
+                                    NameString["\\FOO_"],
+                                ),
+                                Name(
+                                    NameString["\\MTHS.MTH0"],
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.REF_"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Arg(
+                                            Arg0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Local(
+                                            Local0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Name(
+                                            NameString["\\MTHS.MTH0"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Name(
+                                            NameString["\\MTHS.MTH1"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Name(
+                                        Name(
+                                            NameString["\\MTHS.EXTN"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Debug,
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Reference(
+                                        Deref(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            RefExpression(
+                                RefOf(
+                                    Reference(
+                                        Index {
+                                            source: Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                            index: Data(
+                                                Data(
+                                                    Byte(
+                                                        0,
+                                                    ),
+                                                ),
+                                            ),
+                                            result: None,
+                                        },
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.CREF"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.MTH0"],
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.MTH1"],
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.EXTN"],
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Debug,
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                                None,
+                            ),
+                        ),
+                        Expression(
+                            CondRefOf(
+                                Reference(
+                                    Index {
+                                        source: Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                                None,
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\TST_.TYPE"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Expression(
+                            Store(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Foo",
+                                        ),
+                                    ),
+                                ),
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Name(
+                                        NameString["\\BAR_"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Arg(
+                                        Arg0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Local(
+                                        Local0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.MTH0"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.MTH1"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.EXTN"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Debug,
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Reference(
+                                    RefOf(
+                                        Name(
+                                            Name(
+                                                NameString["\\BAR_"],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Reference(
+                                    Deref(
+                                        Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            ObjectType(
+                                Reference(
+                                    Index {
+                                        source: Name(
+                                            NameString["\\BAR_"],
+                                        ),
+                                        index: Data(
+                                            Data(
+                                                Byte(
+                                                    0,
+                                                ),
+                                            ),
+                                        ),
+                                        result: None,
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+        ],
+    },
+)

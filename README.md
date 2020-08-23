@@ -18,6 +18,9 @@ Tested on macOS only.
 * [QEMU](https://www.qemu.org/) 5.0
 * bash 3.0+ for the launcher script
 
+In order to edit the ACPI parser integration tests, you will also need tools documented
+at [acpi/tests/parse/README.md](acpi/tests/parse/README.md).
+
 Suggested additional tools:
   * [`cargo-binutils`](https://github.com/rust-embedded/cargo-binutils)
 

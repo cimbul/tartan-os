@@ -1,0 +1,364 @@
+---
+source: acpi/tests/parse/main.rs
+expression: parse_table(&aml_data)
+---
+Ok(
+    AMLTable {
+        header: DescriptionHeader {
+            signature: [
+                68,
+                83,
+                68,
+                84,
+            ],
+            length: 338,
+            revision: 2,
+            checksum: 53,
+            oem_id: [
+                84,
+                97,
+                114,
+                116,
+                97,
+                110,
+            ],
+            oem_table_id: [
+                77,
+                101,
+                116,
+                104,
+                111,
+                100,
+                115,
+                0,
+            ],
+            oem_revision: 0,
+            creator_id: 1280593481,
+            creator_revision: 538969879,
+        },
+        body: [
+            Statement(
+                If {
+                    predicate: Data(
+                        Data(
+                            Zero,
+                        ),
+                    ),
+                    if_true: [
+                        Named(
+                            External {
+                                name: NameString["\\MTHS.EXTN"],
+                                object_type: Method,
+                                argument_count: 2,
+                            },
+                        ),
+                    ],
+                    if_false: [],
+                },
+            ),
+            Modifier(
+                Name(
+                    NameString["\\FOO_"],
+                    Data(
+                        Data(
+                            Byte(
+                                123,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["\\BAR_"],
+                    Data(
+                        Data(
+                            Word(
+                                456,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Modifier(
+                Name(
+                    NameString["\\BAZ_"],
+                    Data(
+                        Data(
+                            Word(
+                                789,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Named(
+                Device {
+                    name: NameString["\\MTHS"],
+                    body: [
+                        Modifier(
+                            Name(
+                                NameString["REF1"],
+                                Data(
+                                    Data(
+                                        Byte(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Modifier(
+                            Name(
+                                NameString["REF2"],
+                                Data(
+                                    Data(
+                                        Byte(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        Modifier(
+                            Name(
+                                NameString["REF3"],
+                                Data(
+                                    Data(
+                                        Byte(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\MTHS.MTH0"],
+                    flags: MethodFlags {
+                        arg_count: 0,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Statement(
+                            Return(
+                                Data(
+                                    Data(
+                                        String(
+                                            "Hello, world!",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\MTHS.MTH1"],
+                    flags: MethodFlags {
+                        arg_count: 1,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Statement(
+                            Return(
+                                Arg(
+                                    Arg0,
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Named(
+                Method {
+                    name: NameString["\\MTHS.MTH2"],
+                    flags: MethodFlags {
+                        arg_count: 2,
+                        serialized: false,
+                        sync_level: 0,
+                    },
+                    body: [
+                        Statement(
+                            Return(
+                                Arg(
+                                    Arg1,
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["\\MTHS.MTH0"],
+                        [],
+                    ),
+                ),
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["\\MTHS.MTH1"],
+                        [
+                            Data(
+                                Data(
+                                    Byte(
+                                        1,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["\\MTHS.MTH2"],
+                        [
+                            Data(
+                                Data(
+                                    Byte(
+                                        1,
+                                    ),
+                                ),
+                            ),
+                            Data(
+                                Data(
+                                    Byte(
+                                        2,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Expression(
+                RefExpression(
+                    Invoke(
+                        NameString["\\MTHS.EXTN"],
+                        [
+                            Name(
+                                NameString["\\FOO_"],
+                            ),
+                            Name(
+                                NameString["\\BAR_"],
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            Modifier(
+                Alias {
+                    source: NameString["\\MTHS.MTH1"],
+                    alias: NameString["\\MTHS.ALIS"],
+                },
+            ),
+            Modifier(
+                Name(
+                    NameString["\\MTHS.PKG_"],
+                    Data(
+                        Package(
+                            Package {
+                                count: 1,
+                                initializers: [
+                                    Name(
+                                        NameString["\\MTHS.MTH1"],
+                                    ),
+                                ],
+                            },
+                        ),
+                    ),
+                ),
+            ),
+            Expression(
+                Store(
+                    Expression(
+                        RefExpression(
+                            RefOf(
+                                Name(
+                                    Name(
+                                        NameString["\\MTHS.MTH1"],
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    Name(
+                        Name(
+                            NameString["\\MTHS.REF1"],
+                        ),
+                    ),
+                ),
+            ),
+            Expression(
+                Store(
+                    Expression(
+                        RefExpression(
+                            Deref(
+                                Expression(
+                                    RefExpression(
+                                        RefOf(
+                                            Name(
+                                                Name(
+                                                    NameString["\\MTHS.MTH1"],
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    Name(
+                        Name(
+                            NameString["\\MTHS.REF2"],
+                        ),
+                    ),
+                ),
+            ),
+            Expression(
+                Store(
+                    Expression(
+                        RefExpression(
+                            Deref(
+                                Expression(
+                                    RefExpression(
+                                        Index {
+                                            source: Name(
+                                                NameString["\\MTHS.PKG_"],
+                                            ),
+                                            index: Data(
+                                                Data(
+                                                    Byte(
+                                                        0,
+                                                    ),
+                                                ),
+                                            ),
+                                            result: None,
+                                        },
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    Name(
+                        Name(
+                            NameString["\\MTHS.REF3"],
+                        ),
+                    ),
+                ),
+            ),
+        ],
+    },
+)
