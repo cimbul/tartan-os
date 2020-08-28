@@ -15,6 +15,7 @@ macro_rules! writeln_result {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct OutputStream<'a> {
     out: &'a SimpleTextOutput,
     pub last_result: Result,
@@ -56,4 +57,28 @@ impl Write for OutputStream<'_> {
             Err(_) => Err(core::fmt::Error),
         }
     }
+}
+
+
+pub struct Logger<'a>(pub Option<OutputStream<'a>>);
+
+impl log::Log for Logger<'_> {
+    fn log(&self, record: &log::Record) {
+        if let Some(out) = self.0 {
+            writeln!(
+                out.clone(),
+                "{} [{}] {}",
+                record.level(),
+                record.module_path().unwrap_or("<unknown>"),
+                record.args(),
+            )
+            .unwrap();
+        }
+    }
+
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn flush(&self) {}
 }

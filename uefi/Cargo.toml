@@ -14,5 +14,6 @@ tartan-acpi = {path = "../acpi"}
 # External
 bitflags = "1.2.1"
 crc-any = {version = "2.3.5", default-features = false}
+log = "0.4.11"
 rlibc = "1.0.0"
 utf16_lit = "1.0.0"

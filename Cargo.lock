@@ -329,6 +329,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "crc-any",
+ "log",
  "rlibc",
  "tartan-acpi",
  "utf16_lit",

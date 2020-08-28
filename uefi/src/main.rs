@@ -19,16 +19,25 @@ use tartan_uefi::allocator::BootAllocator;
 
 use alloc::string::String;
 use core::fmt::Write;
+use log::info;
 use tartan_uefi::global::SYSTEM_TABLE;
-use tartan_uefi::io::OutputStream;
+use tartan_uefi::io::{Logger, OutputStream};
 use tartan_uefi::proto::{LoadedImage, Protocol};
 use tartan_uefi::writeln_result;
 use tartan_uefi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
+
+
+static mut LOGGER: Logger = Logger(None);
+
 
 #[no_mangle]
 fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {
     unsafe {
         SYSTEM_TABLE = Some(system_table);
+
+        LOGGER.0 = Some(OutputStream::new(&*system_table.console_out.unwrap()));
+        log::set_logger(&LOGGER).unwrap();
+        log::set_max_level(log::LevelFilter::max());
     }
 
     match efi_main_result(image_handle, system_table) {
@@ -39,8 +48,9 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
 fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Result {
     unsafe {
         let mut out = OutputStream::new(&*system_table.console_out.unwrap());
-
         writeln_result!(out, "Hello, world!\nWhat's up?")?;
+
+        info!("Logging initialized");
 
         writeln_result!(out, "Verifying system tables...")?;
         system_table.verify();

@@ -738,6 +738,7 @@ pub mod proto {
     }
 
     #[repr(C)]
+    #[derive(Debug)]
     pub struct SimpleTextInput {
         reset: usize,
         read_key_stroke: usize,
@@ -767,6 +768,7 @@ pub mod proto {
     }
 
     #[repr(C)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub struct SimpleTextOutputMode {
         pub max_mode: i32,
         pub mode: i32,
@@ -777,6 +779,7 @@ pub mod proto {
     }
 
     #[repr(C)]
+    #[derive(Debug)]
     pub struct LoadedImage<'a> {
         pub revision: u32,
         pub parent_handle: Handle,
