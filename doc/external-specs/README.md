@@ -92,8 +92,9 @@ into Git, because many of these documents don't allow free (libre) redistributio
     v2.0, Apr 2000 (Spec), May 2019 (ECNs)
     * [Enhanced Host Controller Interface](https://www.intel.com/content/www/us/en/products/docs/io/universal-serial-bus/ehci-specification-for-usb.html)
       (EHCI) v1.0, Mar 2002
-  * [Universal Host Controller Interface](ftp://ftp.netbsd.org/pub/NetBSD/misc/blymn/uhci11d.pdf)
-    (UHCI) v1.1, Mar 1996
+  * Universal Host Controller Interface (UHCI) v1.1, Mar 1996
+
+    <ftp://ftp.netbsd.org/pub/NetBSD/misc/blymn/uhci11d.pdf>
   * [Open Host Controller Interface](https://www.getusb.info/resources/hcir1_0a.pdf)
     (OHCI) v1.0a, Aug 1999
 
