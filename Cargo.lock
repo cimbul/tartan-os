@@ -318,7 +318,6 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "insta",
- "memchr",
  "nom",
  "static_assertions",
 ]

@@ -12,9 +12,6 @@ publish = false
 bitflags = "1.2.1"
 static_assertions = "1.1.0"
 nom = {version = "5.1.2", features = ["alloc"], default-features = false}
-# nom depends on memchr, but an LLVM bug breaks the build on the UEFI target with v2.2
-# https://github.com/rust-lang/rust/issues/61721#issuecomment-678570861
-memchr = {version = "=2.1", default-features = false}
 
 [dev-dependencies]
 insta = {version = "0.16.1", features = ["glob"]}
