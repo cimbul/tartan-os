@@ -1,6 +1,8 @@
 [workspace]
 members = [
 	"acpi",
+	"arch",
+	"pci",
 	"uefi",
 	"util",
 ]

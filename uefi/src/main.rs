@@ -20,6 +20,8 @@ use tartan_uefi::allocator::BootAllocator;
 use alloc::string::String;
 use core::fmt::Write;
 use log::info;
+use tartan_pci as pci;
+use tartan_pci::access::{ConfigAccess, ConfigSelector, IOConfigAccess};
 use tartan_uefi::global::SYSTEM_TABLE;
 use tartan_uefi::io::{Logger, OutputStream};
 use tartan_uefi::proto::{LoadedImage, Protocol};
@@ -94,9 +96,57 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
                 descriptor.memory_type
             )?;
         }
+
+        enumerate_pci(&mut out)?;
     }
 
     loop {}
+}
+
+fn enumerate_pci(out: &mut OutputStream) -> Result {
+    writeln_result!(out, "Enumerating PCI devices on bus 0")?;
+    let access = IOConfigAccess;
+    for device in 0..=pci::MAX_DEVICE {
+        let selector = ConfigSelector { device, ..ConfigSelector::default() };
+        let id_register: pci::HeaderRegister0 = access.get_fixed_register(selector);
+        if id_register.valid() {
+            writeln_result!(
+                out,
+                " {:2x}: vendor {:04x} device {:04x}",
+                device,
+                id_register.vendor(),
+                id_register.device(),
+            )?;
+
+            let register_3: pci::HeaderRegister3 = access.get_fixed_register(selector);
+            let function_count_note = if register_3.header_type().multi_function() {
+                "multi-function"
+            } else {
+                "single-function"
+            };
+            writeln_result!(
+                out,
+                "     header type {:02x} ({})",
+                register_3.header_type().header_type(),
+                function_count_note,
+            )?;
+
+            let class_register =
+                access.get_fixed_register::<pci::HeaderRegister2>(selector);
+            writeln_result!(
+                out,
+                "     class {:02x} subclass {:02x} interface {:02x} revision {:02x}",
+                class_register.class(),
+                class_register.subclass(),
+                class_register.interface(),
+                class_register.revision(),
+            )?;
+        } else {
+            writeln_result!(out, " {:2x}: (not present)", device)?;
+        }
+    }
+
+    Ok(Status::SUCCESS)
 }
 
 fn get_memory_map(

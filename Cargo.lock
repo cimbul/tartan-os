@@ -674,6 +674,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tartan-arch"
+version = "0.1.0"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
+name = "tartan-pci"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "tartan-arch",
+ "tartan-util",
+]
+
+[[package]]
 name = "tartan-uefi"
 version = "0.1.0"
 dependencies = [
@@ -682,6 +698,7 @@ dependencies = [
  "log",
  "rlibc",
  "tartan-acpi",
+ "tartan-pci",
  "utf16_lit",
 ]
 
