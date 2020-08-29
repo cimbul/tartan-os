@@ -1,1 +1,5 @@
 /target
+
+# Criterion tends to pick the wrong output folder
+# https://github.com/bheisler/criterion.rs/issues/192
+criterion/
