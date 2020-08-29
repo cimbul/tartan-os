@@ -17,7 +17,7 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 
 Tested on macOS and Linux.
 
-  * Rust 1.47.0 _nightly_ toolchain, for better cross-compilation features in Cargo
+  * Rust 1.48.0 _nightly_ toolchain, for better cross-compilation features in Cargo
   * [QEMU](https://www.qemu.org/) 5.0
   * bash, for the UEFI launcher script
 
