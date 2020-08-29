@@ -805,6 +805,8 @@
 <span id="804">804</span>
 <span id="805">805</span>
 <span id="806">806</span>
+<span id="807">807</span>
+<span id="808">808</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Support for Unified Extensible Firmware Interface</span>
 <span class="doccomment">//!</span>
@@ -812,7 +814,6 @@
 
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">fn_traits</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">ptr_offset_from</span>)]</span>
 <span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy</span>::<span class="ident">pedantic</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">must_use_candidate</span>)]</span>
 
@@ -1546,6 +1547,7 @@
     }
 
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleTextInput</span> {
         <span class="ident">reset</span>: <span class="ident">usize</span>,
         <span class="ident">read_key_stroke</span>: <span class="ident">usize</span>,
@@ -1575,6 +1577,7 @@
     }
 
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleTextOutputMode</span> {
         <span class="kw">pub</span> <span class="ident">max_mode</span>: <span class="ident">i32</span>,
         <span class="kw">pub</span> <span class="ident">mode</span>: <span class="ident">i32</span>,
@@ -1585,6 +1588,7 @@
     }
 
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LoadedImage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
         <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u32</span>,
         <span class="kw">pub</span> <span class="ident">parent_handle</span>: <span class="ident">Handle</span>,

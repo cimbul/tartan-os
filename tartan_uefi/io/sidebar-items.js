@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["OutputStream",""]]});
+initSidebarItems({"struct":[["Logger",""],["OutputStream",""]]});
