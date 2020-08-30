@@ -106,44 +106,44 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 fn enumerate_pci(out: &mut OutputStream) -> Result {
     writeln_result!(out, "Enumerating PCI devices on bus 0")?;
     let access = IOConfigAccess;
-    for device in 0..=pci::MAX_DEVICE {
-        let selector = ConfigSelector { device, ..ConfigSelector::default() };
-        let id_register: pci::HeaderRegister0 = access.get_fixed_register(selector);
-        if id_register.valid() {
-            writeln_result!(
-                out,
-                " {:2x}: vendor {:04x} device {:04x}",
-                device,
-                id_register.vendor(),
-                id_register.device(),
-            )?;
+    for selector in pci::enumerate_bus(&access, ConfigSelector::default()) {
+        let id_register: pci::config::HeaderRegister0 =
+            access.get_fixed_register(selector);
 
-            let register_3: pci::HeaderRegister3 = access.get_fixed_register(selector);
-            let function_count_note = if register_3.header_type().multi_function() {
-                "multi-function"
-            } else {
-                "single-function"
-            };
-            writeln_result!(
-                out,
-                "     header type {:02x} ({})",
-                register_3.header_type().header_type(),
-                function_count_note,
-            )?;
+        writeln_result!(
+            out,
+            " {:2x}:{:x}: vendor {:04x} device {:04x}",
+            selector.device,
+            selector.function,
+            id_register.vendor(),
+            id_register.device(),
+        )?;
 
-            let class_register =
-                access.get_fixed_register::<pci::HeaderRegister2>(selector);
-            writeln_result!(
-                out,
-                "     class {:02x} subclass {:02x} interface {:02x} revision {:02x}",
-                class_register.class(),
-                class_register.subclass(),
-                class_register.interface(),
-                class_register.revision(),
-            )?;
+        let register_3: pci::config::HeaderRegister3 =
+            access.get_fixed_register(selector);
+        let function_count_note = if register_3.header_type().multi_function() {
+            "multi-function"
         } else {
-            writeln_result!(out, " {:2x}: (not present)", device)?;
-        }
+            "single-function"
+        };
+        writeln_result!(
+            out,
+            "       header type {:02x} ({})",
+            register_3.header_type().header_type(),
+            function_count_note,
+        )?;
+
+
+        let class_register: pci::config::HeaderRegister2 =
+            access.get_fixed_register(selector);
+        writeln_result!(
+            out,
+            "       class {:02x} subclass {:02x} interface {:02x} revision {:02x}",
+            class_register.class(),
+            class_register.subclass(),
+            class_register.interface(),
+            class_register.revision(),
+        )?;
     }
 
     Ok(Status::SUCCESS)

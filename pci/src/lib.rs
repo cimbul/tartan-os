@@ -1,7 +1,9 @@
 #![no_std]
 
-use tartan_util::bitfield;
+use config::{HeaderRegister0, HeaderRegister3};
+use access::{ConfigAccess, ConfigSelector};
 
+pub mod config;
 pub mod access;
 
 pub const MAX_DEVICE: u8 = (1 << 5) - 1;
@@ -9,114 +11,66 @@ pub const MAX_FUNCTION: u8 = (1 << 3) - 1;
 pub const INVALID_VENDOR: u16 = 0xffff;
 
 
-pub trait FixedConfigRegister: From<u32> {
-    const REGISTER_NUMBER: u8;
+pub fn enumerate_bus<'a, A>(
+    access: &'a A,
+    bus_selector: ConfigSelector,
+) -> impl Iterator<Item = ConfigSelector> + 'a
+where
+    A: ConfigAccess
+{
+    enumerate_bus_devices(access, bus_selector)
+        .flat_map(move |device| enumerate_device_functions(access, device))
 }
 
 
-bitfield! {
-    pub struct HeaderRegister0(u32) {
-        [16..32] pub device: u16,
-        [ 0..16] pub vendor: u16,
-    }
+pub fn enumerate_bus_devices<'a, A>(
+    access: &'a A,
+    bus_selector: ConfigSelector,
+) -> impl Iterator<Item = ConfigSelector> + 'a
+where
+    A: ConfigAccess,
+{
+    (0..=MAX_DEVICE).filter_map(move |device| {
+        let selector = ConfigSelector {
+            device,
+            function: 0,
+            ..bus_selector
+        };
+        if check_valid(access, selector) {
+            Some(selector)
+        } else {
+            None
+        }
+    })
 }
 
-impl HeaderRegister0 {
-    pub fn valid(&self) -> bool {
-        self.vendor() != INVALID_VENDOR
-    }
+pub fn enumerate_device_functions<'a, A>(
+    access: &'a A,
+    device_selector: ConfigSelector,
+) -> impl Iterator<Item = ConfigSelector> + 'a
+where
+    A: ConfigAccess,
+{
+    let fn_0_register: HeaderRegister3 = access.get_fixed_register(device_selector);
+    let function_range = if fn_0_register.header_type().multi_function() {
+        0..MAX_FUNCTION
+    } else {
+        0..1
+    };
+    function_range.filter_map(move |function| {
+        let fn_selector = ConfigSelector { function, ..device_selector };
+        if check_valid(access, fn_selector) {
+            Some(fn_selector)
+        } else {
+            None
+        }
+    })
 }
 
-impl FixedConfigRegister for HeaderRegister0 {
-    const REGISTER_NUMBER: u8 = 0;
-}
-
-
-bitfield! {
-    pub struct HeaderRegister1(u32) {
-        [16..32] pub status:  u16 as StatusRegister,
-        [ 0..16] pub command: u16 as CommandRegister,
-    }
-}
-
-impl FixedConfigRegister for HeaderRegister1 {
-    const REGISTER_NUMBER: u8 = 1;
-}
-
-
-bitfield! {
-    pub struct HeaderRegister2(u32) {
-        [24..32] pub class: u8,
-        [16..24] pub subclass: u8,
-        [ 8..16] pub interface: u8,
-        [ 0.. 8] pub revision: u8,
-    }
-}
-
-impl FixedConfigRegister for HeaderRegister2 {
-    const REGISTER_NUMBER: u8 = 2;
-}
-
-
-bitfield! {
-    pub struct HeaderRegister3(u32) {
-        [24..32] pub self_test: u8 as SelfTest,
-        [16..24] pub header_type: u8 as HeaderType,
-        [ 8..16] pub latency_timer: u8,
-        [ 0.. 8] pub cache_line_size: u8,
-    }
-}
-
-impl FixedConfigRegister for HeaderRegister3 {
-    const REGISTER_NUMBER: u8 = 3;
-}
-
-
-bitfield! {
-    pub struct CommandRegister(u16) {
-        [10] pub interrupt_disabled,
-        [ 9] pub fast_back_to_back_enabled,
-        [ 8] pub system_error_enabled,
-        [ 6] pub parity_error_response,
-        [ 5] pub vga_palette_snoop,
-        [ 4] pub write_and_invalidate_enable,
-        [ 3] pub special_cycle,
-        [ 2] pub bus_master,
-        [ 1] pub memory_space,
-        [ 0] pub io_space,
-    }
-}
-
-
-bitfield! {
-    pub struct StatusRegister(u16) {
-        [15    ] pub parity_error_detected,
-        [14    ] pub system_error_signaled,
-        [13    ] pub master_abort_received,
-        [12    ] pub target_abort_received,
-        [11    ] pub target_abort_signaled,
-        [ 9..11] pub device_select_timing: u8,
-        [ 8    ] pub master_parity_error,
-        [ 7    ] pub fast_back_to_back_capable,
-        [ 5    ] pub double_clock_capable,
-        [ 4    ] pub capabilities_list_available,
-        [ 3    ] pub interrupt_status,
-    }
-}
-
-
-bitfield! {
-    pub struct SelfTest(u8) {
-        [7   ] pub capable,
-        [6   ] pub start,
-        [0..4] pub completion: u8,
-    }
-}
-
-
-bitfield! {
-    pub struct HeaderType(u8) {
-        [7   ] pub multi_function,
-        [0..7] pub header_type: u8,
-    }
+pub fn check_valid<A>(access: &A, selector: ConfigSelector) -> bool
+where
+    A: ConfigAccess,
+{
+    let id_register: HeaderRegister0 = access.get_fixed_register(selector);
+    id_register.valid()
 }
