@@ -30,14 +30,14 @@ jobs:
       run: cargo build --verbose --workspace
     - name: Run tests (Linux)
       run: cargo test --verbose --workspace
-		- name: Build (UEFI x86)
-			run: (cd uefi && cargo build --target target-specs/i686-unknown-uefi.json)
+    - name: Build (UEFI x86)
+      run: (cd uefi && cargo build --target target-specs/i686-unknown-uefi.json)
     - name: Build (UEFI x86-64)
-			run: (cd uefi && cargo build --target target-specs/x86_64-unknown-uefi.json)
-		- name: Build (UEFI arm)
-			run: (cd uefi && cargo build --target target-specs/thumbv7a-unknown-uefi.json)
-		- name: Build (UEFI arm64)
-			run: (cd uefi && cargo build --target target-specs/aarch64-unknown-uefi.json)
+      run: (cd uefi && cargo build --target target-specs/x86_64-unknown-uefi.json)
+    - name: Build (UEFI arm)
+      run: (cd uefi && cargo build --target target-specs/thumbv7a-unknown-uefi.json)
+    - name: Build (UEFI arm64)
+      run: (cd uefi && cargo build --target target-specs/aarch64-unknown-uefi.json)
     - name: GitHub Pages
       uses: peaceiris/actions-gh-pages@v3.6.4
       with:
