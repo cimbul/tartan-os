@@ -6,14 +6,13 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn in_u8(addr: u16) -> u8 {
-        let val: u8;
-        llvm_asm!(
-            "in al, dx"
-            : "={al}"(val)
-            : "{dx}"(addr)
-            :: "intel", "volatile"
+        let data: u8;
+        asm!(
+            "in al, dx",
+            out("al") data,
+            in("dx") addr,
         );
-        val
+        data
     }
 
     /// Read a 16-bit value from the port at the given address in I/O space.
@@ -23,14 +22,13 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn in_u16(addr: u16) -> u16 {
-        let val: u16;
-        llvm_asm!(
-            "in ax, dx"
-            : "={ax}"(val)
-            : "{dx}"(addr)
-            :: "intel", "volatile"
+        let data: u16;
+        asm!(
+            "in ax, dx",
+            out("ax") data,
+            in("dx") addr,
         );
-        val
+        data
     }
 
     /// Read a 32-bit value from the port at the given address in I/O space.
@@ -40,14 +38,13 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn in_u32(addr: u16) -> u32 {
-        let val: u32;
-        llvm_asm!(
-            "in eax, dx"
-            : "={eax}"(val)
-            : "{dx}"(addr)
-            :: "intel", "volatile"
+        let data: u32;
+        asm!(
+            "in eax, dx",
+            out("eax") data,
+            in("dx") addr,
         );
-        val
+        data
     }
 
     /// Write an 8-bit value to the port at the given address in I/O space.
@@ -57,10 +54,10 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn out_u8(addr: u16, data: u8) {
-        llvm_asm!(
-            "out dx, al"
-            :: "{al}"(data), "{dx}"(addr)
-            :: "intel", "volatile"
+        asm!(
+            "out dx, al",
+            in("al") data,
+            in("dx") addr,
         );
     }
 
@@ -71,10 +68,10 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn out_u16(addr: u16, data: u16) {
-        llvm_asm!(
-            "out dx, ax"
-            :: "{ax}"(data), "{dx}"(addr)
-            :: "intel", "volatile"
+        asm!(
+            "out dx, ax",
+            in("ax") data,
+            in("dx") addr,
         );
     }
 
@@ -85,10 +82,10 @@ pub mod io {
     /// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a
     /// missile. Use with caution.
     pub unsafe fn out_u32(addr: u16, data: u32) {
-        llvm_asm!(
-            "out dx, eax"
-            :: "{eax}"(data), "{dx}"(addr)
-            :: "intel", "volatile"
+        asm!(
+            "out dx, eax",
+            in("eax") data,
+            in("dx") addr,
         );
     }
 }
