@@ -6,7 +6,7 @@
   "env": "",
   "exe-suffix": ".efi",
   "executables": true,
-  "features": "",
+  "features": "-dsp,-neon,-vfp2,-vfp3",
 	"linker": "rust-lld",
   "linker-flavor": "lld-link",
   "lld-flavor": "link",
