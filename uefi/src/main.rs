@@ -26,7 +26,10 @@ use tartan_uefi::global::SYSTEM_TABLE;
 use tartan_uefi::io::{Logger, OutputStream};
 use tartan_uefi::proto::{LoadedImage, Protocol};
 use tartan_uefi::writeln_result;
-use tartan_uefi::{BootServices, Handle, MemoryMap, Result, Status, SystemTable, Table};
+use tartan_uefi::{
+    BootServices, Handle, MemoryMap, OpenProtocolAttributes, Result, Status, SystemTable,
+    Table,
+};
 
 
 static mut LOGGER: Logger = Logger(None);
@@ -62,10 +65,13 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
         let mut loaded_image: *const LoadedImage = core::ptr::null();
         let boot_services = system_table.boot_services.unwrap();
-        (boot_services.handle_protocol)(
+        (boot_services.open_protocol)(
             image_handle,
             &LoadedImage::PROTOCOL_ID,
             ((&mut loaded_image) as *mut *const LoadedImage).cast(),
+            image_handle,
+            Handle::NULL,
+            OpenProtocolAttributes::GET,
         )
         .into_result()?;
 

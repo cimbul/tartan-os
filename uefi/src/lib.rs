@@ -23,9 +23,15 @@ pub mod global;
 #[macro_use]
 pub mod io;
 
+
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Handle(usize);
+
+impl Handle {
+    pub const NULL: Handle = Handle(0);
+}
+
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -480,7 +486,14 @@ pub struct BootServices {
     disconnect_controller: usize,
 
     // Open and Close Protocol Services
-    open_protocol: usize,
+    pub open_protocol: unsafe extern "C" fn(
+        handle: Handle,
+        guid: &GUID,
+        interface: *mut *const c_void,
+        agent_handle: Handle,
+        controller_handle: Handle,
+        attributes: OpenProtocolAttributes,
+    ) -> Status,
     close_protocol: usize,
     open_protocol_information: usize,
 
@@ -727,6 +740,22 @@ bitflags! {
         const RUNTIME                  = 0x8000_0000_0000_0000_u64;
     }
 }
+
+
+#[repr(transparent)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct OpenProtocolAttributes(u32);
+
+#[rustfmt::skip]
+impl OpenProtocolAttributes {
+    pub const BY_HANDLE: OpenProtocolAttributes = OpenProtocolAttributes(1 << 0);
+    pub const GET:       OpenProtocolAttributes = OpenProtocolAttributes(1 << 1);
+    pub const TEST:      OpenProtocolAttributes = OpenProtocolAttributes(1 << 2);
+    pub const BY_CHILD:  OpenProtocolAttributes = OpenProtocolAttributes(1 << 3);
+    pub const BY_DRIVER: OpenProtocolAttributes = OpenProtocolAttributes(1 << 4);
+    pub const EXCLUSIVE: OpenProtocolAttributes = OpenProtocolAttributes(1 << 5);
+}
+
 
 pub mod proto {
     use super::{Handle, MemoryType, Status, SystemTable, GUID};
