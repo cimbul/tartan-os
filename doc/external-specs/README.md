@@ -42,8 +42,18 @@ into Git, because many of these documents don't allow free (libre) redistributio
     vC.d, Mar 2018
   * [Armv7-M Architecture Reference Manual](https://developer.arm.com/documentation/ddi0403/latest)
     vE.d, Jun 2018
-  * [Armv6 Architecture Reference Manual](https://developer.arm.com/documentation/ddi0419/latest)
+  * [Armv6-M Architecture Reference Manual](https://developer.arm.com/documentation/ddi0419/latest)
     vE, Jun 2018
+  * [Arm Architecture Reference Manual](https://developer.arm.com/documentation/ddi0100/latest)
+    vI, Jul 2005 (covers up to v6/ARM11 prior to v6-M/Cortex)
+      * [Arm Architecture Reference Manual Thumb-2 Supplement](https://developer.arm.com/documentation/ddi0308/latest)
+        vD, Dec 2005
+  * [Arm and Thumb-2 Instruction Set Quick Reference](https://developer.arm.com/documentation/qrc0001/latest)
+    vM, Sep 2008
+  * [Thumb 16-bit Instruction Set Quick Reference](https://developer.arm.com/documentation/qrc0006/latest)
+    vE, Sep 2008
+  * [Arm Compiler armasm User Guide](https://developer.arm.com/documentation/dui0801/)
+    vK (6.6.4), Aug 2020
 
 
 ## Firmwmare interfaces
@@ -142,6 +152,16 @@ Architecture-specific extensions (psABI):
   * 64-bit:
     * [Procedure Call Standard](https://github.com/ARM-software/abi-aa/releases)
       (AAPCS64) v2020Q2
+
+### Exception handling
+
+  * [LLVM Exception Handling](https://llvm.org/docs/ExceptionHandling.html)
+  * [Itanium C++ ABI: Exception Handling](http://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html)
+    v1.22, Mar 2005
+  * [DWARF Debugging Information Format](http://dwarfstd.org/doc/DWARF5.pdf)
+    v5, Feb 2017
+  * [Linux Standard Base Core, Generic: §10.6 Exception Frames](https://refspecs.linuxfoundation.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html)
+    v5.0, Jun 2015
 
 
 ## Devices
