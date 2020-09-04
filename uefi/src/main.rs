@@ -60,15 +60,16 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         system_table.boot_services.unwrap().verify();
         writeln_result!(out, "Verified!")?;
 
-        let loaded_image: *const LoadedImage = core::ptr::null();
+        let mut loaded_image: *const LoadedImage = core::ptr::null();
         let boot_services = system_table.boot_services.unwrap();
         (boot_services.handle_protocol)(
             image_handle,
             &LoadedImage::PROTOCOL_ID,
-            &mut (loaded_image.cast()),
+            ((&mut loaded_image) as *mut *const LoadedImage).cast(),
         )
         .into_result()?;
 
+        assert_ne!(loaded_image, core::ptr::null());
         let image_base = (*loaded_image).image_base;
         writeln_result!(out, "Image base: {:p}", image_base)?;
 
