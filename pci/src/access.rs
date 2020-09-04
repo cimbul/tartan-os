@@ -1,6 +1,5 @@
+use crate::config::FixedConfigRegister;
 use crate::{MAX_DEVICE, MAX_FUNCTION};
-use crate::config::{FixedConfigRegister};
-use core::convert::TryFrom;
 use core::ops::RangeInclusive;
 use tartan_arch as arch;
 use tartan_util::bitfield;

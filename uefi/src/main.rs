@@ -21,7 +21,7 @@ use alloc::string::String;
 use core::fmt::Write;
 use log::info;
 use tartan_pci as pci;
-use tartan_pci::access::{ConfigAccess, ConfigSelector, IOConfigAccess};
+use tartan_pci::access::{io::IOConfigAccess, ConfigAccess, ConfigSelector};
 use tartan_uefi::global::SYSTEM_TABLE;
 use tartan_uefi::io::{Logger, OutputStream};
 use tartan_uefi::proto::{LoadedImage, Protocol};
