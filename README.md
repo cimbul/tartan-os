@@ -20,6 +20,7 @@ Tested on macOS and Linux.
   * Rust 1.48.0 _nightly_ toolchain, for better cross-compilation features in Cargo
   * [QEMU](https://www.qemu.org/) 5.1
   * bash, for the UEFI launcher script
+  * Python 3.2+ for booting 32-bit Arm only
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
 at [acpi/tests/parse/README.md](acpi/tests/parse/).
@@ -64,6 +65,11 @@ Where `<ARCH>` is one of:
 The UEFI application (a PE image) will be emitted at
 `target/<ARCH>-unknown-uefi/debug/tartan-uefi.efi`.
 
+Note that for the `thumbv7a` target, the PE image does not have the "machine type"
+expected by the UEFI runtime, so it will not boot as-is. This is fixed with a Python
+script when booting via `cargo run` (see below), but you will have to manually fix it if
+you deploy the application yourself. See [`uefi/script/boot.sh`](uefi/script/boot.sh).
+
 
 ## Run UEFI bootloader
 
@@ -77,9 +83,6 @@ cargo run --package tartan-uefi -Z build-std \
 
 This launches the UEFI application in QEMU using
 [`uefi/script/boot.sh`](uefi/script/boot.sh).
-
-Note that the `thumbv7a` target does not boot due to a PE machine type mismatch (see
-`boot.sh`).
 
 
 ## Test

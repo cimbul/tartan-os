@@ -2,6 +2,8 @@
 
 set -e
 
+this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
 qemu_prefix="/usr/local/"
 
 arch="$1"
@@ -30,9 +32,10 @@ case "$arch" in
         qemu_args=()
         ;;
     arm)
-        # FIXME: 32-bit Arm currently doesn't boot because UEFI expects the PE machine
-        # type to be 0x01c2 (Thumb), but LLVM only emits 0x01c4 (Arm "NT", whatever that
-        # means) for 32-bit targets, and 0xaa64 (AArch64) for 64-bit.
+        # UEFI expects the PE machine type to be 0x01c2 (Thumb), but LLVM only emits
+        # 0x01c4 (Arm "NT", whatever that means) for 32-bit Arm architectures, so we have
+        # to override it with a Python script.
+        pe_machine_type_override="0x01c2"
         boot_filename="BOOTARM.EFI"
         qemu_suffix="arm"
         efi_code="edk2-arm-code.fd"
@@ -61,6 +64,14 @@ esac
 boot_dir="$target_dir/boot-fs"
 mkdir -p "$boot_dir/EFI/BOOT"
 cp "$executable" "$boot_dir/EFI/BOOT/$boot_filename"
+
+# Override the PE machine type if necessary
+if [ -n "$pe_machine_type_override" ]; then
+    echo "Setting PE machine type to $pe_machine_type_override"
+    "$this_dir"/set-pe-machine-type.py \
+        "$boot_dir/EFI/BOOT/$boot_filename" \
+        "$pe_machine_type_override"
+fi
 
 # Copy EFI var file to allow writes (required by EDK2 on ARM)
 cp "$qemu_prefix"/share/qemu/"$efi_vars" "$target_dir"/"$efi_vars"
