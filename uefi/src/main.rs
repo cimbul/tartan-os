@@ -3,6 +3,8 @@
 #![cfg_attr(not(test), feature(lang_items))]
 #![cfg_attr(not(test), feature(link_args))]
 #![feature(alloc_error_handler)]
+#![feature(asm)]
+#![feature(naked_functions)]
 #![feature(panic_info_message)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
@@ -20,8 +22,6 @@ use tartan_uefi::allocator::BootAllocator;
 use alloc::string::String;
 use core::fmt::Write;
 use log::info;
-use tartan_pci as pci;
-use tartan_pci::access::{io::IOConfigAccess, ConfigAccess, ConfigSelector};
 use tartan_uefi::global::SYSTEM_TABLE;
 use tartan_uefi::io::{Logger, OutputStream};
 use tartan_uefi::proto::{LoadedImage, Protocol};
@@ -104,7 +104,17 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
     loop {}
 }
 
+#[cfg(not(any(arch = "x86", arch = "x86_64")))]
+fn enumerate_pci(_: &mut OutputStream) -> Result {
+    // TODO
+    Ok(Status::SUCCESS)
+}
+
+#[cfg(any(arch = "x86", arch = "x86_64"))]
 fn enumerate_pci(out: &mut OutputStream) -> Result {
+    use tartan_pci as pci;
+    use tartan_pci::access::{io::IOConfigAccess, ConfigAccess, ConfigSelector};
+
     writeln_result!(out, "Enumerating PCI devices on bus 0")?;
     let access = IOConfigAccess;
     for selector in pci::enumerate_bus(&access, ConfigSelector::default()) {
@@ -232,7 +242,7 @@ fn eh_personality() -> ! {
 }
 
 // Hack to get the binary to build on the host target. It obviously doesn't do anything.
-#[cfg(not(test))]
+#[cfg(not(any(test, target_os = "uefi")))]
 #[no_mangle]
 fn main(_: isize, _: *const *const u8) -> isize {
     100
@@ -245,3 +255,139 @@ fn main(_: isize, _: *const *const u8) -> isize {
 #[cfg_attr(all(not(test), target_os = "linux"), link_args = "-nostartfiles")]
 #[cfg_attr(all(not(test), target_os = "macos"), link_args = "-lSystem")]
 extern "C" {}
+
+// compiler-builtins doesn't mangle this name correctly for Windows's cdecl convention on
+// x86, which adds a leading underscore. It would be better to alias this symbol directly,
+// but I can't get LLVM ASM to handle that right.
+#[cfg(all(target_os = "uefi", target_arch = "x86"))]
+#[no_mangle]
+#[naked]
+pub unsafe fn __rust_probestack() {
+    // This looks recursive, but isn't. This function is ___rust_probestack (triple).
+    asm!("jmp __rust_probestack");
+}
+
+/// This is a Microsoft C Runtime Library function that LLVM expects to be available when
+/// it is making PE files for Arm.
+#[cfg(all(target_os = "uefi", target_arch = "aarch64"))]
+#[no_mangle]
+#[naked]
+pub unsafe extern "C" fn __chkstk() {
+    // Input:    x15 = number of 16-byte units in stack
+    // Output:   x15 = same as input
+    // Clobbers: x16, x17
+    asm!(
+        "
+        mov  x16, 0    // Stack offset
+        mov  x17, x15  // Remaining 16-byte units
+
+    1:  // Repeatedly touch the guard page to trigger faults and allocate more stack
+        sub  x16, x16, 4096   // Page size in bytes
+        ldr  xzr, [sp, x16]
+        subs x17, x17, 256    // Page size in 16-byte units
+        b.gt 1b
+
+        ret
+        "
+    )
+}
+
+/// This is a Microsoft C Runtime Library function that LLVM expects to be available when
+/// it is making PE files for Arm.
+#[cfg(all(target_os = "uefi", target_arch = "arm"))]
+#[no_mangle]
+#[naked]
+pub unsafe extern "C" fn __chkstk() {
+    // Input:    r4 = number of 4-byte units in stack
+    // Output:   r4 = number of *individual* bytes in stack
+    // Clobbers: r12
+    asm!(
+        "
+        push {{r0, r4}} // r0 be used as scratch register for throw-away loads
+        mov  r12, #-8   // Stack offset; initial value accounts for saved registers
+
+    1:  // Repeatedly touch the guard page to trigger faults and allocate more stack
+        sub  r12, r12, 4096  // Page size in bytes
+        ldr  r0,  [sp, r12]
+        subs r4,  r4,  1024  // Page size in 4-byte units
+        bgt  1b
+
+        pop  {{r0, r4}}
+        lsl  r4,  2     // Convert 4-byte units to single bytes, as expected by caller
+        blx  lr
+        "
+    )
+}
+
+// These are Microsoft C Runtime Library functions that LLVM expects to be available when
+// it is making PE files for Arm.
+cfg_if::cfg_if! {
+    if #[cfg(all(target_os = "uefi", target_arch = "arm"))] {
+        /// Convert 64-bit unsigned int to double-precision float
+        #[no_mangle]
+        pub unsafe extern "C" fn __u64tod(i: u64) -> f64 {
+            __floatundidf(i)
+        }
+
+        /// Convert 64-bit unsigned int to single-precision float
+        #[no_mangle]
+        pub unsafe extern "C" fn __u64tos(i: u64) -> f32 {
+            __floatundisf(i)
+        }
+
+        /// Division with remainder for unsigned 32-bit integers
+        #[no_mangle]
+        pub unsafe extern "C" fn __rt_udiv(d: u32, n: u32) -> rt_div_result<u32> {
+            let mut result: rt_div_result<u32> = rt_div_result::default();
+            result.q = __udivmodsi4(n, d, Some(&mut result.rem));
+            result
+        }
+
+        /// Division with remainder for unsigned 64-bit integers
+        #[no_mangle]
+        pub unsafe extern "C" fn __rt_udiv64(d: u64, n: u64) -> rt_div_result<u64> {
+            let mut result: rt_div_result<u64> = rt_div_result::default();
+            result.q = __udivmoddi4(n, d, Some(&mut result.rem));
+            result
+        }
+
+        /// Division with remainder for signed 32-bit integers
+        #[no_mangle]
+        pub unsafe extern "C" fn __rt_sdiv(d: i32, n: i32) -> rt_div_result<i32> {
+            let mut result: rt_div_result<i32> = rt_div_result::default();
+            result.q = __divmodsi4(n, d, &mut result.rem);
+            result
+        }
+
+        /// Division with remainder for unsigned 64-bit integers
+        #[no_mangle]
+        pub unsafe extern "C" fn __rt_sdiv64(d: i64, n: i64) -> rt_div_result<i64> {
+            let mut result: rt_div_result<i64> = rt_div_result::default();
+            result.q = __divmoddi4(n, d, &mut result.rem);
+            result
+        }
+
+        /// Quotient and remainder
+        #[repr(C)]
+        #[derive(Debug, Default)]
+        pub struct rt_div_result<T> {
+            q: T,
+            rem: T,
+        }
+
+        extern "C" {
+            // Functions from compiler-builtins that corespond to the MS CRT __u64to*
+            // functions above.
+            fn __floatundidf(i: u64) -> f64;
+            fn __floatundisf(i: u64) -> f32;
+
+            // Functions from compiler-builtins that correspond to the MS CRT __rt_*div*
+            // functions above. Note that they have swapped arguments compared to CRT.
+            fn __udivmodsi4(n: u32, d: u32, rem: Option<&mut u32>) -> u32;
+            fn __udivmoddi4(n: u64, d: u64, rem: Option<&mut u64>) -> u64;
+            fn __divmodsi4(n: i32, d: i32, rem: &mut i32) -> i32;
+            fn __divmoddi4(n: i64, d: i64, rem: &mut i64) -> i64;
+
+        }
+    }
+}

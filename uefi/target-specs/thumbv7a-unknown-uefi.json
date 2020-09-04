@@ -1,0 +1,46 @@
+{
+  "arch": "arm",
+	"data-layout": "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64",
+  "disable-redzone": true,
+  "emit-debug-gdb-scripts": false,
+  "env": "",
+  "exe-suffix": ".efi",
+  "executables": true,
+  "features": "",
+	"linker": "rust-lld",
+  "linker-flavor": "lld-link",
+  "lld-flavor": "link",
+  "llvm-target": "thumbv7-unknown-windows-eabi",
+  "max-atomic-width": 64,
+  "os": "uefi",
+  "panic-strategy": "abort",
+	"pre-link-args": {
+		"lld-link": [
+			"/NOLOGO",
+			"/NXCOMPAT",
+      "/OPT:NOLBR",
+			"/entry:efi_main",
+			"/subsystem:efi_application"
+		],
+		"msvc": [
+			"/NOLOGO",
+			"/NXCOMPAT",
+      "/OPT:NOLBR",
+			"/entry:efi_main",
+			"/subsystem:efi_application"
+		]
+	},
+	"relocation-model": "static",
+  "target-c-int-width": "32",
+  "target-endian": "little",
+  "target-pointer-width": "32",
+  "unsupported-abis": [
+    "stdcall",
+    "fastcall",
+    "vectorcall",
+    "thiscall",
+    "win64",
+    "sysv64"
+  ],
+  "vendor": "unknown"
+}

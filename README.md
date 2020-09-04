@@ -18,7 +18,7 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 Tested on macOS and Linux.
 
   * Rust 1.48.0 _nightly_ toolchain, for better cross-compilation features in Cargo
-  * [QEMU](https://www.qemu.org/) 5.0
+  * [QEMU](https://www.qemu.org/) 5.1
   * bash, for the UEFI launcher script
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
@@ -30,12 +30,14 @@ Suggested additional tools:
 
 ## Build
 
-Note that when building, running, or testing with Cargo, the default target will *depend
-on your current directory*:
-  * From the main directory, Cargo will build for your host system by default.
-  * From the `uefi/` directory, Cargo will build for the `x86_64-unknown-uefi` target,
-    along with flags to compile the standard Rust libraries. This is configured in
-    `uefi/.cargo/config.toml`.
+Note that when building, running, or testing with Cargo, the build settings will *depend
+on your current directory* due to the provided [Cargo configuration
+files](https://doc.rust-lang.org/cargo/reference/config.html):
+  * From the main directory, Cargo will build for your host system by default, using the
+    prebuilt standard Rust libraries from your toolchain.
+  * From the `uefi/` directory, Cargo will compile the standard rust libraries for the
+    specified `--target`, which is `x86_64-unknown-uefi` by default. This is configured in
+    [`uefi/.cargo/config.toml`](uefi/.cargo/config.toml).
 
 To build the libraries for your host system:
 
@@ -43,24 +45,41 @@ To build the libraries for your host system:
 cargo build
 ```
 
-To build the AMD64 UEFI bootloader:
+To build the UEFI bootloader for the target system:
 
 ```bash
-(cd uefi && cargo build)
+(cd uefi && cargo build --target target-specs/<ARCH>-unknown-uefi.json)
+
+# Or alternatively, from outside the uefi/ directory:
+cargo build --package tartan-uefi -Z build-std \
+    --target uefi/target-specs/<ARCH>-unknown-uefi.json
 ```
 
+Where `<ARCH>` is one of:
+  * `x86_64`
+  * `i686`
+  * `aarch64`
+  * `thumbv7a`
+
 The UEFI application (a PE image) will be emitted at
-`target/x86_64-unknown-uefi/debug/tartan-uefi.efi`.
+`target/<ARCH>-unknown-uefi/debug/tartan-uefi.efi`.
 
 
 ## Run UEFI bootloader
 
 ```bash
-(cd uefi && cargo run)
+(cd uefi && cargo run --target target-specs/<ARCH>-unknown-uefi.json)
+
+# Or alternatively, from outside the uefi/ directory:
+cargo run --package tartan-uefi -Z build-std \
+    --target uefi/target-specs/<ARCH>-unknown-uefi.json
 ```
 
 This launches the UEFI application in QEMU using
 [`uefi/script/boot.sh`](uefi/script/boot.sh).
+
+Note that the `thumbv7a` target does not boot due to a PE machine type mismatch (see
+`boot.sh`).
 
 
 ## Test

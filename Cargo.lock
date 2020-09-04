@@ -694,6 +694,7 @@ name = "tartan-uefi"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "cfg-if",
  "crc-any",
  "log",
  "rlibc",
