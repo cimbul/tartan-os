@@ -89,4 +89,5 @@ qemu-system-"$qemu_suffix" \
     -drive if=pflash,format=raw,unit=1,file="$target_dir"/"$efi_vars" \
     -drive if=virtio,id=stick,format=raw,file=fat:rw:"$boot_dir" \
     -nographic \
+    -gdb tcp::1234 \
     -net none

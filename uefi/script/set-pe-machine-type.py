@@ -1,27 +1,18 @@
 #!/usr/bin/env python3
 
+# Add the script directory to the PYTHONPATH
+import os.path
+import sys
+sys.path.append(os.path.dirname(__file__))
+
+from pe_format import seek_file_header
+
 
 def set_machine_type(pe_path, machine_type):
-    # See https://docs.microsoft.com/en-us/windows/win32/debug/pe-format
-
     with open(pe_path, 'r+b') as pe_file:
-        # Offset to PE signature stored at 0x3c. Microsoft's spec doesn't say how long
-        # this field is, but in other places I've seen 4 bytes.
-        pe_file.seek(0x3c)
-        file_offset = int.from_bytes(pe_file.read(4), byteorder='little')
-        pe_file.seek(file_offset)
+        seek_file_header(pe_file)
 
-        # Verify that the PE header is where we think it should be
-        actual_signature = pe_file.read(4)
-        if actual_signature != b'PE\0\0':
-            raise Exception(
-                'Invalid PE signature at offset 0x{:x}: {}'.format(
-                    file_offset,
-                    actual_signature,
-                )
-            )
-
-        # The machine type is a two-byte field immediately after the PE header
+        # The machine type is a two-byte field at the start of the PE header
         pe_file.write(machine_type.to_bytes(2, byteorder='little'))
 
 
