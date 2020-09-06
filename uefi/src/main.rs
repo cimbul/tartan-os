@@ -343,42 +343,78 @@ cfg_if::cfg_if! {
 
         /// Division with remainder for unsigned 32-bit integers
         #[no_mangle]
-        pub unsafe extern "C" fn __rt_udiv(d: u32, n: u32) -> rt_div_result<u32> {
-            let mut result: rt_div_result<u32> = rt_div_result::default();
-            result.q = __udivmodsi4(n, d, Some(&mut result.rem));
-            result
+        #[naked]
+        pub unsafe fn __rt_udiv() {
+            asm!(
+                "
+                // Swap arguments, because MS CRT and ARM RTABI use opposite orders
+                // r0 <-> r1
+                mov  r12, r0
+                mov  r0,  r1
+                mov  r1,  r12
+                // Jump directly to the corresponding ARM RTABI function
+                b    __aeabi_uidivmod
+                "
+            );
         }
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
-        pub unsafe extern "C" fn __rt_udiv64(d: u64, n: u64) -> rt_div_result<u64> {
-            let mut result: rt_div_result<u64> = rt_div_result::default();
-            result.q = __udivmoddi4(n, d, Some(&mut result.rem));
-            result
+        #[naked]
+        pub unsafe fn __rt_udiv64() {
+            asm!(
+                "
+                // Swap arguments, because MS CRT and ARM RTABI use opposite orders
+                // r0 <-> r2 (lower 32b)
+                mov  r12, r0
+                mov  r0,  r2
+                mov  r2,  r12
+                // r1 <-> r3 (upper 32b)
+                mov  r12, r1
+                mov  r1,  r3
+                mov  r3,  r12
+                // Jump directly to the corresponding ARM RTABI function
+                b    __aeabi_uldivmod
+                "
+            );
         }
 
         /// Division with remainder for signed 32-bit integers
         #[no_mangle]
-        pub unsafe extern "C" fn __rt_sdiv(d: i32, n: i32) -> rt_div_result<i32> {
-            let mut result: rt_div_result<i32> = rt_div_result::default();
-            result.q = __divmodsi4(n, d, &mut result.rem);
-            result
+        #[naked]
+        pub unsafe fn __rt_sdiv() {
+            asm!(
+                "
+                // Swap arguments, because MS CRT and ARM RTABI use opposite orders
+                // r0 <-> r1
+                mov  r12, r0
+                mov  r0,  r1
+                mov  r1,  r12
+                // Jump directly to the corresponding ARM RTABI function
+                b    __aeabi_idivmod
+                "
+            );
         }
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
-        pub unsafe extern "C" fn __rt_sdiv64(d: i64, n: i64) -> rt_div_result<i64> {
-            let mut result: rt_div_result<i64> = rt_div_result::default();
-            result.q = __divmoddi4(n, d, &mut result.rem);
-            result
-        }
-
-        /// Quotient and remainder
-        #[repr(C)]
-        #[derive(Debug, Default)]
-        pub struct rt_div_result<T> {
-            q: T,
-            rem: T,
+        #[naked]
+        pub unsafe fn __rt_sdiv64() {
+            asm!(
+                "
+                // Swap arguments, because MS CRT and ARM RTABI use opposite orders
+                // r0 <-> r2 (lower 32b)
+                mov  r12, r0
+                mov  r0,  r2
+                mov  r2,  r12
+                // r1 <-> r3 (upper 32b)
+                mov  r12, r1
+                mov  r1,  r3
+                mov  r3,  r12
+                // Jump directly to the corresponding ARM RTABI function
+                b    __aeabi_ldivmod
+                "
+            );
         }
 
         extern "C" {
@@ -386,14 +422,6 @@ cfg_if::cfg_if! {
             // functions above.
             fn __floatundidf(i: u64) -> f64;
             fn __floatundisf(i: u64) -> f32;
-
-            // Functions from compiler-builtins that correspond to the MS CRT __rt_*div*
-            // functions above. Note that they have swapped arguments compared to CRT.
-            fn __udivmodsi4(n: u32, d: u32, rem: Option<&mut u32>) -> u32;
-            fn __udivmoddi4(n: u64, d: u64, rem: Option<&mut u64>) -> u64;
-            fn __divmodsi4(n: i32, d: i32, rem: &mut i32) -> i32;
-            fn __divmoddi4(n: i64, d: i64, rem: &mut i64) -> i64;
-
         }
     }
 }

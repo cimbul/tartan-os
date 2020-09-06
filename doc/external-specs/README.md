@@ -4,6 +4,10 @@ Links to some of the specifications relevant to Tartan OS are listed below. This
 a convenient place to store them. Other than this README, nothing here will be checked
 into Git, because many of these documents don't allow free (libre) redistribution.
 
+**See also**: LLVM's [Architecture & Platform Information for Compiler
+Writers](https://llvm.org/docs/CompilerWriterInfo.html), which covers much of the same
+ground.
+
 
 ## Processor manuals
 
@@ -148,7 +152,9 @@ Architecture-specific extensions (psABI):
     * [Procedure Call Standard](https://developer.arm.com/documentation/ihi0042/latest)
       (AAPCS) v2020Q2
     * [Exception Handling ABI](https://developer.arm.com/documentation/ihi0038/latest)
-      (EHABI) v2.10
+      (EHABI) vB (2.10), Nov 2015
+      [Run-time ABI](https://developer.arm.com/documentation/ihi0043/latest)
+      (RTABI) vD (2.09), Nov 2012
   * 64-bit:
     * [Procedure Call Standard](https://github.com/ARM-software/abi-aa/releases)
       (AAPCS64) v2020Q2
