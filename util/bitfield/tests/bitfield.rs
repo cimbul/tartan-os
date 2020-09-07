@@ -1,8 +1,8 @@
 #![feature(custom_inner_attributes)]
 #![rustfmt::skip]
 
-use tartan_util::bitfield::{get_bit, get_bits, set_bit, set_bits};
-use tartan_util::bitfield;
+use tartan_bitfield::{get_bit, get_bits, set_bit, set_bits};
+use tartan_bitfield::bitfield;
 use core::mem;
 
 #[test]

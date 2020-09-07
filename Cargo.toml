@@ -4,5 +4,5 @@ members = [
 	"arch",
 	"pci",
 	"uefi",
-	"util",
+	"util/bitfield",
 ]

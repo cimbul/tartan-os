@@ -67,7 +67,7 @@ impl ConfigAccess for MemMapConfigAccess {
 #[cfg(any(arch = "x86", arch = "x86_64"))]
 pub mod io {
     use tartan_arch as arch;
-    use tartan_util::bitfield;
+    use tartan_bitfield::bitfield;
 
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
     pub struct IOConfigAccess;

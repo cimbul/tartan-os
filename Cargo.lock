@@ -675,12 +675,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "tartan-bitfield"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "criterion-macro",
+ "paste",
+]
+
+[[package]]
 name = "tartan-pci"
 version = "0.1.0"
 dependencies = [
  "log",
  "tartan-arch",
- "tartan-util",
+ "tartan-bitfield",
 ]
 
 [[package]]
@@ -694,15 +703,6 @@ dependencies = [
  "tartan-acpi",
  "tartan-pci",
  "utf16_lit",
-]
-
-[[package]]
-name = "tartan-util"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "criterion-macro",
- "paste",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 use crate::INVALID_VENDOR;
-use tartan_util::bitfield;
+use tartan_bitfield::bitfield;
 
 
 pub trait FixedConfigRegister: From<u32> {

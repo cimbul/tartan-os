@@ -1,5 +1,5 @@
 [package]
-name = "tartan-util"
+name = "tartan-bitfield"
 version = "0.1.0"
 authors = ["Tim Yates <cimbul@gmail.com>"]
 edition = "2018"

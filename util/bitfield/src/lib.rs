@@ -1,3 +1,5 @@
+#![no_std]
+
 use core::convert::From;
 use core::default::Default;
 use core::ops;
@@ -52,15 +54,15 @@ macro_rules! bitfield {
         [ $bit:literal ]
         $vis:vis $field:ident
     ] => {
-        $crate::bitfield::paste! {
+        $crate::paste! {
             $( #[$meta] )*
             $vis fn $field(&self) -> bool {
-                $crate::bitfield::get_bit(self.0, $bit)
+                $crate::get_bit(self.0, $bit)
             }
 
             $( #[$meta] )*
             $vis fn [< set_ $field >](&mut self, value: bool) {
-                self.0 = $crate::bitfield::set_bit(self.0, $bit, value);
+                self.0 = $crate::set_bit(self.0, $bit, value);
             }
         }
     };
@@ -88,12 +90,12 @@ macro_rules! bitfield {
         $vis:vis $field:ident
         : $underlying_type:ty as $interface_type:ty
     ] => {
-        $crate::bitfield::paste! {
+        $crate::paste! {
             $( #[$meta] )*
             $vis fn $field(&self) -> $interface_type {
-                use $crate::bitfield::TruncateInto;
+                use $crate::TruncateInto;
                 let underlying: $underlying_type =
-                    $crate::bitfield::get_bits(self.0, $lsb, $msb).truncate_into();
+                    $crate::get_bits(self.0, $lsb, $msb).truncate_into();
                 underlying.into()
             }
 
@@ -101,7 +103,7 @@ macro_rules! bitfield {
             $vis fn [< set_ $field >](&mut self, value: $interface_type) {
                 let underlying: $underlying_type = value.into();
                 self.0 =
-                    $crate::bitfield::set_bits(self.0, $lsb, $msb, underlying.into());
+                    $crate::set_bits(self.0, $lsb, $msb, underlying.into());
             }
         }
     };

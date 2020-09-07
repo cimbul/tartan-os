@@ -6,7 +6,8 @@ use criterion::{
     black_box, measurement::Measurement, BenchmarkGroup, BenchmarkId, Criterion,
 };
 use criterion_macro::criterion;
-use tartan_util::bitfield;
+use tartan_bitfield as bitfield;
+use tartan_bitfield::bitfield;
 
 
 fn benchmark_group<F, M>(c: &mut Criterion<M>, s: &str, f: F)
