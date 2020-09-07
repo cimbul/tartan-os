@@ -82,6 +82,8 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         let image_base = (*loaded_image).image_base;
         writeln_result!(out, "Image base: {:p}", image_base)?;
 
+        // fakepoint();
+
         writeln_result!(out, "Testing compiler intrinsics...");
         intrinsics::test();
         writeln_result!(out, "Success!");
@@ -114,6 +116,12 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         enumerate_pci(&mut out)?;
     }
 
+    loop {}
+}
+
+/// A fake breakpoint. Stay in an endless loop until we can attach a debugger and manually
+/// return.
+fn fakepoint() {
     loop {}
 }
 
