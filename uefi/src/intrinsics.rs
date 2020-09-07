@@ -1,5 +1,5 @@
-/// This module contains some compiler-rt intrinsics that are missing from the
-/// compiler-builtins crate, or otherwise don't function properly.
+//! This module contains some compiler-rt intrinsics that are missing from the
+//! compiler-builtins crate, or otherwise don't function properly.
 
 extern crate compiler_builtins;
 
@@ -220,7 +220,6 @@ pub fn test() {
 // which doesn't have access to the test crate.
 #[allow(clippy::module_name_repetitions)]
 mod test {
-    use log::{debug, error};
     use core::hint::black_box;
 
     pub fn test_stack_probe() {

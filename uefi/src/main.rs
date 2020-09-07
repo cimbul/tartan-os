@@ -84,9 +84,9 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
         // fakepoint();
 
-        writeln_result!(out, "Testing compiler intrinsics...");
+        writeln_result!(out, "Testing compiler intrinsics...")?;
         intrinsics::test();
-        writeln_result!(out, "Success!");
+        writeln_result!(out, "Success!")?;
 
         writeln_result!(out, "Attempting heap allocation")?;
         writeln_result!(out, "Testing... {}", String::from("Success!"))?;
@@ -121,6 +121,7 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
 /// A fake breakpoint. Stay in an endless loop until we can attach a debugger and manually
 /// return.
+#[allow(dead_code)]
 fn fakepoint() {
     loop {}
 }
