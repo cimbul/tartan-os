@@ -6,12 +6,12 @@
 #![feature(asm)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
+#![feature(rustc_private)]
 #![feature(test)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
 extern crate alloc;
-extern crate rlibc;
 
 mod intrinsics;
 
