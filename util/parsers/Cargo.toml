@@ -1,5 +1,5 @@
 [package]
-name = "tartan-acpi"
+name = "tartan-parsers"
 version = "0.1.0"
 authors = ["Tim Yates <cimbul@gmail.com>"]
 edition = "2018"
@@ -9,12 +9,4 @@ homepage = "https://github.com/cimbul/tartan-os"
 publish = false
 
 [dependencies]
-# Internal
-tartan-parsers = {path = "../util/parsers"}
-# External
-bitflags = "1.2.1"
-static_assertions = "1.1.0"
 nom = {version = "5.1.2", features = ["alloc"], default-features = false}
-
-[dev-dependencies]
-insta = {version = "0.16.1", features = ["glob"]}

@@ -12,7 +12,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
-use self::state::{ErrorWithPosition, ParserState};
+use self::state::{ParserState, ReplaceableParseError};
 use crate::aml::term::TermObject;
 use crate::aml::AMLTable;
 use crate::DescriptionHeader;
@@ -27,6 +27,8 @@ use nom::error::{context, ErrorKind, ParseError};
 use nom::multi;
 use nom::sequence::{preceded, tuple};
 use nom::IResult;
+use tartan_parsers::error::{err, ErrorWithPosition};
+use tartan_parsers::{opcode, struct_parser};
 
 
 #[cfg(test)]
@@ -37,7 +39,9 @@ mod test;
 ///
 /// # Errors
 /// Returns an error if the AML contents cannot be parsed.
-pub fn parse_table(data: &[u8]) -> Result<AMLTable<'_>, ErrorWithPosition<'_>> {
+pub fn parse_table(
+    data: &[u8],
+) -> Result<AMLTable<'_>, ErrorWithPosition<'_, ParserState<'_>>> {
     const HEADER_SIZE: usize = mem::size_of::<DescriptionHeader>();
 
     let state = ParserState::new(data);
@@ -51,11 +55,11 @@ pub fn parse_table(data: &[u8]) -> Result<AMLTable<'_>, ErrorWithPosition<'_>> {
 
         // Check data using header
         if header.length as usize != data.len() {
-            return util::err(state, ErrorKind::Eof);
+            return err(state, ErrorKind::Eof);
         }
         let checksum = data.iter().fold(0_u8, |a, b| a.wrapping_add(*b));
         if checksum != 0 {
-            return util::err(state, ErrorKind::Verify);
+            return err(state, ErrorKind::Verify);
         }
 
         let body_parser =
@@ -89,13 +93,10 @@ pub type AMLParseResult<'a, T, E> = IResult<ParserState<'a>, T, E>;
 
 
 /// Trait "alias" for error type used by AML parsers
-pub trait AMLParseError<'a>:
-    state::ReplaceableParseError<&'a [u8], ParserState<'a>>
-{
-}
+pub trait AMLParseError<'a>: ReplaceableParseError<&'a [u8], ParserState<'a>> {}
 
 impl<'a, T> AMLParseError<'a> for T where
-    T: state::ReplaceableParseError<&'a [u8], ParserState<'a>>
+    T: ReplaceableParseError<&'a [u8], ParserState<'a>>
 {
 }
 
@@ -103,12 +104,9 @@ impl<'a, T> AMLParseError<'a> for T where
 /// Parser context needed to disambiguate grammar
 pub mod state {
     use super::super::name::{to_path, NameSeg, NameString};
-    use super::util::err;
     use super::*;
-    use core::cmp::min;
-    use core::fmt::{self, Display, Formatter};
-    use nom::error::{VerboseError, VerboseErrorKind};
-    use nom::{InputIter, InputLength};
+    use nom::error::VerboseError;
+    use nom::{AsBytes, InputIter, InputLength};
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -139,10 +137,6 @@ pub mod state {
     impl<'a> ParserState<'a> {
         pub fn new(data: &'a [u8]) -> Self {
             Self { data, current_scope: vec![], method_signatures: vec![] }
-        }
-
-        pub fn position_in(&'a self, full_input: &'a [u8]) -> Position<'a> {
-            Position { state: self, full_input }
         }
 
         /// Get the argument count of the named method, if it is declared
@@ -208,6 +202,18 @@ pub mod state {
         }
     }
 
+    impl<'a> AsBytes for ParserState<'a> {
+        fn as_bytes(&self) -> &[u8] {
+            self.data
+        }
+    }
+
+    impl<'a> From<&'a [u8]> for ParserState<'a> {
+        fn from(data: &'a [u8]) -> Self {
+            Self::new(data)
+        }
+    }
+
     impl<'a> InputIter for ParserState<'a> {
         type Item = <&'a [u8] as InputIter>::Item;
         type Iter = <&'a [u8] as InputIter>::Iter;
@@ -229,107 +235,6 @@ pub mod state {
     impl InputLength for ParserState<'_> {
         fn input_len(&self) -> usize {
             self.data.input_len()
-        }
-    }
-
-
-    /// Helper struct that prints human-readable position information when formatted with
-    /// `Display`.
-    pub struct Position<'a> {
-        pub state: &'a ParserState<'a>,
-        pub full_input: &'a [u8],
-    }
-
-    impl Display for Position<'_> {
-        fn fmt(&self, out: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-            if self.full_input.is_empty() {
-                return writeln!(out, "in empty input");
-            }
-
-            // NOTE: nom's Offset implementation can panic. Avoid it.
-            let full_input_pos = self.full_input.as_ptr() as usize;
-            let state_pos = self.state.data.as_ptr() as usize;
-            let offset = match state_pos.checked_sub(full_input_pos) {
-                Some(o) => o,
-                None => return writeln!(out, "at unknown/invalid offset"),
-            };
-
-            let context_start = offset.saturating_sub(10);
-            let context_end = min(offset + 10, self.full_input.len());
-            let context_slice = &self.full_input[context_start..context_end];
-
-            write!(out, "at offset {0} ({0:#x}):\n ", offset)?;
-            for byte in context_slice {
-                let ascii_char = match byte {
-                    b if b.is_ascii_graphic() => *b as char,
-                    b' ' => ' ',
-                    _ => '.',
-                };
-                write!(out, " {:2}", ascii_char)?;
-            }
-            write!(out, "\n ")?;
-            for byte in context_slice {
-                write!(out, " {:02x}", byte)?;
-            }
-            write!(
-                out,
-                "\n  {caret:>caret_offset$}\n",
-                caret = '^',
-                caret_offset = (offset - context_start) * 3 + 1,
-            )
-        }
-    }
-
-
-    /// A parser error with position info useful for printing human-readable messages.
-    #[derive(Debug, Clone)]
-    pub struct ErrorWithPosition<'a> {
-        pub error: VerboseError<ParserState<'a>>,
-        pub full_input: &'a [u8],
-    }
-
-    impl<'a> ErrorWithPosition<'a> {
-        pub fn new(
-            wrapped_error: nom::Err<VerboseError<ParserState<'a>>>,
-            full_input: &'a [u8],
-        ) -> Self {
-            match wrapped_error {
-                nom::Err::Error(error) | nom::Err::Failure(error) => {
-                    ErrorWithPosition { error, full_input }
-                }
-                nom::Err::Incomplete(_) => {
-                    let error = VerboseError::from_error_kind(
-                        ParserState::new(full_input),
-                        ErrorKind::Complete,
-                    );
-                    ErrorWithPosition { error, full_input }
-                }
-            }
-        }
-    }
-
-    impl Display for ErrorWithPosition<'_> {
-        fn fmt(&self, out: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-            if self.error.errors.is_empty() {
-                return writeln!(out, "Unknown parsing error");
-            }
-
-            for (state, kind) in &self.error.errors {
-                match kind {
-                    VerboseErrorKind::Context(context) => {
-                        write!(out, "In {}", context)?;
-                    }
-                    VerboseErrorKind::Char(c) => {
-                        write!(out, "Expected '{}'", c)?;
-                    }
-                    VerboseErrorKind::Nom(e) => {
-                        write!(out, "Failed {}", e.description())?;
-                    }
-                }
-                write!(out, " {}", state.position_in(self.full_input))?;
-            }
-
-            Ok(())
         }
     }
 
@@ -457,70 +362,6 @@ mod util {
         };
     }
 
-    /// Parse struct fields in order using an initializer-like syntax
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # #[macro_use] extern crate tartan_acpi;
-    /// # use nom::IResult;
-    /// # use nom::character::complete::alphanumeric1;
-    /// # use nom::number::complete::le_u16;
-    /// #
-    /// type Parser<'a, T> = fn(&'a [u8]) -> IResult<&'a [u8], T, ()>;
-    ///
-    /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    /// struct Foo<'a> { a: u16, b: &'a [u8] };
-    ///
-    /// // Will parse `a`, then `b`, and return the struct if both succeed
-    /// let parse_foo: Parser<Foo> = struct_parser!(
-    ///     Foo {
-    ///         a: le_u16,
-    ///         b: alphanumeric1,
-    ///     }
-    /// );
-    ///
-    /// assert_eq!(
-    ///     parse_foo(b"\x34\x12Bar10"),
-    ///     Ok((b"" as &[u8], Foo { a: 0x1234, b: b"Bar10" }))
-    /// );
-    /// ```
-    #[macro_export]
-    macro_rules! struct_parser {
-        // Struct form
-        [
-            $struct:ident $( :: $struct_x:ident )* {
-                $( $field:ident : $parser:expr ),+
-                $(,)?
-            }
-        ] => {
-            |i| {
-                $( let (i, $field) = $parser(i)?; )+
-                let result = ($struct $(::$struct_x)* { $($field),+ });
-                Ok((i, result))
-            }
-        };
-
-        // Tuple form
-        [
-            $struct:ident $( :: $struct_x:ident )* (
-                $( $parser:expr ),+
-                $(,)?
-            )
-        ] => {
-            |i| {
-                let (i, t) = nom::sequence::tuple(( $($parser),+ ))(i)?;
-                let result = Fn::call(& $struct $(::$struct_x)*, t);
-                Ok((i, result))
-            }
-        };
-    }
-
-    /// Shortcut for constructing parser errors
-    pub fn err<I, O, E: ParseError<I>>(i: I, kind: ErrorKind) -> IResult<I, O, E> {
-        Err(nom::Err::Error(E::from_error_kind(i, kind)))
-    }
-
     /// Recognizes a single byte. Possibly slightly more efficient than `bytes::tag()`
     /// with a one-byte string, but I didn't actually profile it.
     pub fn tag_byte<'a, E: ParseError<ParserState<'a>>>(
@@ -567,48 +408,6 @@ mod util {
                 core::str::from_utf8_unchecked(str_bytes)
             };
             Ok((i, str_utf8))
-        }
-    }
-
-    /// Transforms a parser error (recoverable) to a failure (non-recoverable). This
-    /// avoids pointless backtracking when we know that no alternatives will succeed.
-    ///
-    /// Unlike [`nom::combinator::cut`], this doesn't duplicate the input for no apparent
-    /// reason.
-    pub fn cut<P, I, O, E>(parser: P) -> impl Fn(I) -> IResult<I, O, E>
-    where
-        P: Fn(I) -> IResult<I, O, E>,
-        E: ParseError<I>,
-    {
-        move |i| match parser(i) {
-            Err(nom::Err::Error(e)) => Err(nom::Err::Failure(e)),
-            other => other,
-        }
-    }
-
-    /// Combinator for productions that use a deterministic opcode
-    ///
-    /// If a production is preceded by an unambiguous opcode, then we can avoid
-    /// backtracking when parsing the rest. This enables better error messages in addition
-    /// to faster parsing.
-    pub fn opcode<'a, O1, O2, E, P, Q>(
-        description: &'static str,
-        opcode_parser: P,
-        body_parser: Q,
-    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>
-    where
-        P: Fn(ParserState<'a>) -> AMLParseResult<'a, O1, E>,
-        Q: Fn(ParserState<'a>) -> AMLParseResult<'a, O2, E>,
-        E: ParseError<ParserState<'a>>,
-    {
-        move |i| match preceded(&opcode_parser, cut(&body_parser))(i.clone()) {
-            Err(nom::Err::Failure(e)) => {
-                // Only add context to *failures*, on the assumption that these will only
-                // come from the opcode body, and we don't want to add context when the
-                // opcode itself wasn't recognized.
-                Err(nom::Err::Failure(E::add_context(i, description, e)))
-            }
-            other => other,
         }
     }
 }
@@ -1055,7 +854,7 @@ mod package {
             let (outer_state, package_length) = PackageLength::parse(outer_state)?;
             let body_length = match package_length.body_length {
                 Some(l) => l,
-                None => return util::err(outer_state, ErrorKind::Verify),
+                None => return err(outer_state, ErrorKind::Verify),
             };
             let (outer_state, package_data) =
                 ParserState::lift(bytes::take(body_length))(outer_state)?;

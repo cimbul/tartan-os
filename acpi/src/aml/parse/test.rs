@@ -16,7 +16,7 @@ macro_rules! assert_parses_stateful {
                     stringify!($parser),
                     input,
                     expected_output,
-                    crate::aml::parse::state::ErrorWithPosition::new(e, input.data),
+                    tartan_parsers::error::ErrorWithPosition::new(e, input.data),
                 ),
                 Ok((actual_end_state, actual_output)) => {
                     assert!(

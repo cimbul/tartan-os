@@ -665,6 +665,7 @@ dependencies = [
  "insta",
  "nom",
  "static_assertions",
+ "tartan-parsers",
 ]
 
 [[package]]
@@ -681,6 +682,13 @@ dependencies = [
  "criterion",
  "criterion-macro",
  "paste",
+]
+
+[[package]]
+name = "tartan-parsers"
+version = "0.1.0"
+dependencies = [
+ "nom",
 ]
 
 [[package]]

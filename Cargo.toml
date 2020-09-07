@@ -5,4 +5,5 @@ members = [
 	"pci",
 	"uefi",
 	"util/bitfield",
+	"util/parsers",
 ]
