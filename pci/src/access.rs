@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 use crate::config::FixedConfigRegister;
 use crate::{MAX_DEVICE, MAX_FUNCTION};
 use core::ops::RangeInclusive;

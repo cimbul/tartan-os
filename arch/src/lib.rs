@@ -1,5 +1,7 @@
 #![no_std]
 #![feature(asm)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
 
 use cfg_if::cfg_if;
 

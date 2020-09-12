@@ -1,6 +1,8 @@
 //! Utilities for nom parsers
 
 #![no_std]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
 
 use nom::error::ParseError;
 use nom::sequence::preceded;

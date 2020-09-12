@@ -1,4 +1,7 @@
 #![no_std]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::similar_names)]
 
 use core::convert::From;
 use core::default::Default;
@@ -28,7 +31,7 @@ macro_rules! bitfield {
 
         impl $struct {
             $(
-                bitfield! {
+                $crate::bitfield! {
                     @field
                     $( #[$field_meta] )*
                     [ $field_lsb $( .. $field_msb )? ]
@@ -78,7 +81,7 @@ macro_rules! bitfield {
     ] => {
         $crate::bitfield! {
             @field
-            $( #[$meta:meta] )*
+            $( #[$meta] )*
             [$lsb..$msb] $vis $field: $field_type as $field_type
         }
     };

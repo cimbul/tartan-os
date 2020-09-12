@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 use insta::{assert_debug_snapshot, glob, with_settings};
 use std::fs;
 use tartan_acpi::aml::parse::parse_table;

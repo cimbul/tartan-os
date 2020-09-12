@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 #![feature(custom_inner_attributes)]
 #![rustfmt::skip]
 
@@ -175,6 +176,7 @@ fn test_set_bit_panic_u128_overflow() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn test_get_bits() {
     for i in 0..=8 {
         assert_eq!(get_bits(0x00_u8, 0, i), 0);

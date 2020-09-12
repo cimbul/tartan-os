@@ -1,4 +1,6 @@
 #![no_std]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
 
 use access::{ConfigAccess, ConfigSelector};
 use config::{HeaderRegister0, HeaderRegister3};

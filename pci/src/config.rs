@@ -15,7 +15,7 @@ bitfield! {
 }
 
 impl HeaderRegister0 {
-    pub fn valid(&self) -> bool {
+    pub fn valid(self) -> bool {
         self.vendor() != INVALID_VENDOR
     }
 }
