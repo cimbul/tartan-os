@@ -11,9 +11,12 @@ use alloc::vec::Vec;
 pub mod parse;
 
 
+/// An ACPI table that contains AML, such as the DSDT or an SSDT.
 #[derive(Debug, PartialEq, Eq)]
 pub struct AMLTable<'a> {
+    /// Common ACPI table header
     pub header: DescriptionHeader,
+    /// Top-level AML objects defined in the table
     pub body: Vec<term::TermObject<'a>>,
 }
 
@@ -76,7 +79,9 @@ pub mod name {
     /// Fully qualified object path, either absolute or relative.
     #[derive(Clone, PartialEq, Eq)]
     pub struct NameString {
+        /// Specifies how to resolve this path as absolute or relative.
         pub anchor: PathAnchor,
+        /// Segments of the path
         pub path: Vec<NameSeg>,
     }
 

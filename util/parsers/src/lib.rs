@@ -1,6 +1,7 @@
 //! Utilities for nom parsers
 
 #![no_std]
+#![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 

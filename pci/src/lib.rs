@@ -1,18 +1,31 @@
+//! Support for Peripheral Component Interconnect (PCI) and PCI Express (`PCIe`) devices.
+
 #![no_std]
+#![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
 use access::{ConfigAccess, ConfigSelector};
 use config::{HeaderRegister0, HeaderRegister3};
 
+/// Access methods for PCI configuration space.
 pub mod access;
+
+/// Data exposed in PCI configuration space.
 pub mod config;
 
+/// Highest device number allowed by the PCI specification.
 pub const MAX_DEVICE: u8 = (1 << 5) - 1;
+
+/// Highest function number allowed by the PCI specification.
 pub const MAX_FUNCTION: u8 = (1 << 3) - 1;
+
+/// Placeholder value that will always be returned in the vendor field when querying PCI
+/// configuration space for a device that does not exist.
 pub const INVALID_VENDOR: u16 = 0xffff;
 
 
+/// Iterate over the devices and functions present on the specified bus.
 pub fn enumerate_bus<'a, A>(
     access: &'a A,
     bus_selector: ConfigSelector,
@@ -25,6 +38,7 @@ where
 }
 
 
+/// Iterate over the devices present on the specified bus.
 pub fn enumerate_bus_devices<'a, A>(
     access: &'a A,
     bus_selector: ConfigSelector,
@@ -42,6 +56,7 @@ where
     })
 }
 
+/// Iterate over the functions available on the specified device.
 pub fn enumerate_device_functions<'a, A>(
     access: &'a A,
     device_selector: ConfigSelector,
@@ -51,7 +66,7 @@ where
 {
     let fn_0_register: HeaderRegister3 = access.get_fixed_register(device_selector);
     let function_range =
-        if fn_0_register.header_type().multi_function() { 0..MAX_FUNCTION } else { 0..1 };
+        if fn_0_register.multi_function() { 0..MAX_FUNCTION } else { 0..1 };
     function_range.filter_map(move |function| {
         let fn_selector = ConfigSelector { function, ..device_selector };
         if check_valid(access, fn_selector) {
@@ -62,6 +77,7 @@ where
     })
 }
 
+/// Return true if a function is available at the specified selector.
 pub fn check_valid<A>(access: &A, selector: ConfigSelector) -> bool
 where
     A: ConfigAccess,

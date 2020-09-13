@@ -1,3 +1,4 @@
+/// Access to I/O space
 pub mod io {
     /// Read an 8-bit value from the port at the given address in I/O space.
     ///

@@ -1,5 +1,8 @@
+//! Architecture-specific bindings for Tartan OS
+
 #![no_std]
 #![feature(asm)]
+#![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 

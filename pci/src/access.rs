@@ -5,26 +5,42 @@ use crate::{MAX_DEVICE, MAX_FUNCTION};
 use core::ops::RangeInclusive;
 
 
+/// Provides methods to access PCI configuration space.
+///
+/// Implementations may only offer access to a limited number of registers on a specific
+/// range of segments/busses.
 pub trait ConfigAccess {
+    /// Get a specific 32-bit register in PCI configuration space.
     fn get_register(&self, selector: ConfigSelector, register: u16) -> u32;
 
+    /// Get a register in PCI configuration space with an offset defined by the output
+    /// type.
     fn get_fixed_register<T: FixedConfigRegister>(&self, selector: ConfigSelector) -> T {
         self.get_register(selector, T::REGISTER_NUMBER.into()).into()
     }
 }
 
 
+/// Logical PCI address for a function of a specific segment/bus/device.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct ConfigSelector {
+    /// Segment group as defined by PCI Express. Always zero for PCI Local Bus devices.
     pub segment_group: u16,
+    /// PCI bus number within the indicated segment group. The root bus is always bus
+    /// zero.
     pub bus: u8,
+    /// PCI device number on the indicated bus.
     pub device: u8,
+    /// PCI function number on the indicated device. Usually zero, but may be nonzero for
+    /// multi-function devices.
     pub function: u8,
 }
 
 
+/// Access to memory-mapped PCI configuration space
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemMapConfigAccess {
+    /// Address of register 0 on bus
     base_address: usize,
     bus_range: RangeInclusive<u8>,
 }
@@ -66,11 +82,18 @@ impl ConfigAccess for MemMapConfigAccess {
 }
 
 
+/// Support for the I/O based configuration access method on x86/x86-64.
+///
+/// Note that other architectures have no concept of I/O space.
 #[cfg(any(arch = "x86", arch = "x86_64"))]
 pub mod io {
     use tartan_arch as arch;
     use tartan_bitfield::bitfield;
 
+    /// I/O based configuration access method on x86/x86-64.
+    ///
+    /// This method only supports the 256 bits of I/O space defined by the PCI Local Bus
+    /// specification, and it has no concept of segment groups, which must always be zero.
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
     pub struct IOConfigAccess;
 
@@ -103,6 +126,7 @@ pub mod io {
 
 
     bitfield! {
+        /// Index value written to the `CONFIG_ADDRESS` port
         struct IOConfigAddress(u32) {
             [31    ] pub enable,
             [16..24] pub bus:             u8,
