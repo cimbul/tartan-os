@@ -101,6 +101,50 @@ impl FixedConfigRegister for HeaderRegister3 {
 
 
 bitfield! {
+    /// Tenth register of the standard configuration header for general-purpose devices
+    /// (header type `0x00`).
+    pub struct Type0HeaderRegister11(u32) {
+        /// ID of the device as defined by the card manufacturer.
+        [16..32] pub subsystem: u16,
+        /// ID of the card manufacturer, which may be different than the chipset
+        /// manufacturer. Uses the same values defined by PCI-SIG for the vendor ID.
+        [ 0..16] pub subsystem_vendor: u16,
+    }
+}
+
+
+bitfield! {
+    /// Twelfth register of the standard configuration header for general-purpose devices.
+    pub struct Type0HeaderRegister13(u32) {
+        /// Offset within this function's configuration space that points to the first
+        /// of a linked list of "capabilities" supported by the device. Only valid if the
+        /// appropriate bit is set in the [`StatusRegister`].
+        [0..8] pub capabilities_offset: u8,
+    }
+}
+
+
+bitfield! {
+    /// Fourtheenth register of the standard configuration header for general-purpose
+    /// devices.
+    pub struct Type0HeaderRegister15(u32) {
+        /// Indicates the longest period the device can wait to access the PCI bus, in
+        /// units of 0.25 µs.
+        [24..32] pub max_latency: u8,
+        /// Indicates the desired length of bursts in units of 0.25 µs.
+        [16..24] pub min_grant: u8,
+        /// Indicates which of the four interrupt pins on the PCI bus that the device uses
+        /// (0 for `INTA#` through 3 for `INTC#`). Single-function devices always use
+        /// `INTA#`.
+        [ 8..16] pub interrupt_pin: u8,
+        /// Indicates which system interrupt number the function uses, as defined by the
+        /// system's interrupt controller.
+        [ 0.. 8] pub interrupt_line: u8,
+    }
+}
+
+
+bitfield! {
     /// Control bits set by the host
     pub struct CommandRegister(u16) {
         /// Controls whether the device is prohibited from asserting its interrupt pin.
@@ -188,4 +232,92 @@ bitfield! {
         /// that the test failed.
         [0..4] pub completion_code: u8,
     }
+}
+
+
+/// A pointer to a memory or I/O space that is used to interact with the function.
+///
+/// The meaning of the addressed space is defined by the specific function's interface.
+#[repr(transparent)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct BaseAddressRegister(u32);
+
+impl BaseAddressRegister {
+    /// Indicates whether this BAR points to memory or I/O space
+    pub fn address_space(self) -> AddressSpace {
+        if self.0 & 1 == 0 {
+            AddressSpace::Memory
+        } else {
+            AddressSpace::IO
+        }
+    }
+
+    /// Indicates whether the host can safely cache the memory addressed by this BAR
+    pub fn prefetchable(self) -> bool {
+        if self.address_space() == AddressSpace::Memory {
+            self.0 & 0b1000 != 0
+        } else {
+            false
+        }
+    }
+
+    /// Size of address bus supported by this PCI function.
+    ///
+    /// Addresses in I/O space are always 32-bits wide.
+    pub fn address_width(self) -> AddressWidth {
+        if self.address_space() == AddressSpace::IO {
+            AddressWidth::U32
+        } else {
+            match (self.0 & 0b0110) >> 1 {
+                0 => AddressWidth::U32,
+                2 => AddressWidth::U64,
+                _ => AddressWidth::Invalid,
+            }
+        }
+    }
+
+    /// The address as a 32-bit number.
+    ///
+    /// If the [`address_width`](Self::address_width) for this BAR is 64 bits, then this
+    /// will only return the lower half of the address.
+    pub fn address_u32(self) -> u32 {
+        if self.address_space() == AddressSpace::IO {
+            self.0 & 0xffff_fffc
+        } else {
+            self.0 & 0xffff_fff0
+        }
+    }
+
+    /// The address as a 64-bit number, when combined with the value of the following
+    /// register.
+    ///
+    /// If the `address_width` of this BAR is 32 bits, then the value of the next register
+    /// will be ignored. Thus, this is safe to use with any address width.
+    pub fn address_u64(self, next_register: u32) -> u64 {
+        let mut address = u64::from(self.address_u32());
+        if self.address_width() == AddressWidth::U64 {
+            address &= u64::from(next_register) << 32
+        }
+        address
+    }
+}
+
+/// Differentiates between memory and I/O addresses
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AddressSpace {
+    /// This address is in the normal memory address space
+    Memory,
+    /// This address is in I/O space (supported on x86/x86-64 only)
+    IO,
+}
+
+/// Size of address bus supported by a PCI function
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AddressWidth {
+    /// 32-bit address bus
+    U32,
+    /// 64-bit address bus
+    U64,
+    /// Unknown address bus width
+    Invalid,
 }
