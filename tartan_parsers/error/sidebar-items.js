@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["err","Shortcut for constructing parser errors"]],"struct":[["ErrorWithPosition","A parser error with position info useful for printing human-readable messages."],["Position","Helper struct that prints human-readable position information when formatted with `Display`."]]});

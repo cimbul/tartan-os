@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["io",""]]});
+initSidebarItems({"mod":[["io","Access to I/O space"]]});

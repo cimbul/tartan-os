@@ -124,7 +124,7 @@
 
     <span class="kw">const</span> <span class="ident">VOID_PTR_LAYOUT</span>: <span class="ident">Layout</span> <span class="op">=</span> <span class="ident">Layout</span>::<span class="ident">new</span>::<span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span><span class="op">&gt;</span>();
 
-    <span class="kw">fn</span> <span class="ident">extend_layout_for_alignment</span>(<span class="ident">orig_layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> (<span class="ident">Layout</span>, <span class="ident">usize</span>) {
+    <span class="kw">fn</span> <span class="ident">extend_layout_for_alignment</span>(<span class="ident">orig_layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Layout</span>, <span class="ident">usize</span>) {
         <span class="comment">// To manually align the memory region, so we need extra space for:</span>
         <span class="comment">//  * A place to store the original pointer that allocate_pool() gave us, so that</span>
         <span class="comment">//    we can recover it for free_pool()</span>
@@ -140,13 +140,13 @@
         (<span class="ident">adjusted_layout</span>, <span class="ident">saved_ptr_offset</span>)
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
         <span class="kw">let</span> <span class="ident">system_table</span> <span class="op">=</span> <span class="ident">SYSTEM_TABLE</span>.<span class="ident">expect</span>(<span class="string">&quot;System table not initialized&quot;</span>);
         <span class="kw">let</span> <span class="ident">boot_services</span> <span class="op">=</span>
             (<span class="kw-2">*</span><span class="ident">system_table</span>).<span class="ident">boot_services</span>.<span class="ident">expect</span>(<span class="string">&quot;Boot services unavailable&quot;</span>);
 
         <span class="kw">let</span> (<span class="ident">adjusted_layout</span>, <span class="ident">saved_ptr_offset</span>) <span class="op">=</span>
-            <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;=</span> <span class="self">Self</span>::<span class="ident">UEFI_ALIGNMENT</span> {
+            <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">UEFI_ALIGNMENT</span> {
                 <span class="comment">// allocate_pool() will give the proper alignment. No adjustment needed.</span>
                 (<span class="ident">layout</span>, <span class="number">0</span>)
             } <span class="kw">else</span> {
@@ -165,7 +165,7 @@
         <span class="kw">if</span> <span class="ident">adjusted_layout</span>.<span class="ident">align</span>() <span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">UEFI_ALIGNMENT</span> {
             <span class="kw">let</span> <span class="ident">orig_address</span> <span class="op">=</span> <span class="ident">buffer</span> <span class="kw">as</span> <span class="ident">usize</span>;
             <span class="kw">let</span> <span class="ident">align_offset</span> <span class="op">=</span> <span class="ident">orig_address</span> <span class="op">%</span> <span class="ident">adjusted_layout</span>.<span class="ident">align</span>();
-            <span class="kw">if</span> <span class="ident">align_offset</span> <span class="op">!=</span> <span class="number">0</span> {
+            <span class="kw">if</span> <span class="ident">align_offset</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
                 <span class="comment">// Shift to accommodate alignment</span>
                 <span class="kw">let</span> <span class="ident">shifted_ptr</span> <span class="op">=</span> <span class="ident">orig_address</span> <span class="op">+</span> (<span class="ident">adjusted_layout</span>.<span class="ident">align</span>() <span class="op">-</span> <span class="ident">align_offset</span>);
                 <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">shifted_ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>;
@@ -185,7 +185,7 @@
         <span class="kw">let</span> <span class="ident">boot_services</span> <span class="op">=</span>
             (<span class="kw-2">*</span><span class="ident">system_table</span>).<span class="ident">boot_services</span>.<span class="ident">expect</span>(<span class="string">&quot;Boot services unavailable&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">original_ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;=</span> <span class="self">Self</span>::<span class="ident">UEFI_ALIGNMENT</span> {
+        <span class="kw">let</span> <span class="ident">original_ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">UEFI_ALIGNMENT</span> {
             <span class="comment">// We gave Rust the pointer that came from allocate_pool() directly</span>
             <span class="ident">buffer</span>.<span class="ident">cast</span>()
         } <span class="kw">else</span> {
@@ -204,7 +204,7 @@
 }
 
 <span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">GlobalAlloc</span> <span class="kw">for</span> <span class="ident">BootAllocator</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
         <span class="ident">BootAllocator</span>::<span class="ident">alloc</span>(<span class="ident">layout</span>)
     }
 

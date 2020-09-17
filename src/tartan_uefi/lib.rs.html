@@ -807,6 +807,35 @@
 <span id="806">806</span>
 <span id="807">807</span>
 <span id="808">808</span>
+<span id="809">809</span>
+<span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Support for Unified Extensible Firmware Interface</span>
 <span class="doccomment">//!</span>
@@ -833,9 +862,15 @@
 <span class="attribute">#[<span class="ident">macro_use</span>]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span>;
 
+
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="ident">usize</span>);
+
+<span class="kw">impl</span> <span class="ident">Handle</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NULL</span>: <span class="ident">Handle</span> <span class="op">=</span> <span class="ident">Handle</span>(<span class="number">0</span>);
+}
+
 
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
@@ -845,39 +880,39 @@
 <span class="kw">impl</span> <span class="ident">Revision</span> {
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_80</span>;
 
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_80</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">80</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_70</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">70</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_60</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">60</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_50</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">50</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_40</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">40</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_31</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">31</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_30</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">30</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_20</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">20</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_00</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>( <span class="number">2</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>      );
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_02</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="number">16</span>) <span class="op">|</span>  <span class="number">2</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_80</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">80</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_70</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">70</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_60</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">60</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_50</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">50</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_40</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">40</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_31</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">31</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_30</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">30</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_20</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">20</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_00</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>( <span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>      );
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_02</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span>  <span class="number">2</span>);
 }
 
 <span class="kw">impl</span> <span class="ident">Revision</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">major_version</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">u16</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">major_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
         <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
-        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&gt;&gt;</span> <span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>
+        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">minor_version</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">u16</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">minor_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
         <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">/</span> <span class="number">10</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fix_version</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">u16</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fix_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
         <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">%</span> <span class="number">10</span>
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Revision</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="macro">write</span><span class="macro">!</span>(
             <span class="ident">f</span>,
             <span class="string">&quot;{}.{}.{}&quot;</span>,
@@ -957,17 +992,17 @@
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">COMPROMISED_DATA</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>);
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HTTP_ERROR</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>);
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_error</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&amp;</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span>) <span class="op">!=</span> <span class="number">0</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_error</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&amp;</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_warning</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span> <span class="op">!=</span> <span class="ident">Status</span>::<span class="ident">SUCCESS</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_warning</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Status</span>::<span class="ident">SUCCESS</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
     }
 
     <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].</span>
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_errors_doc</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_result</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_result</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_error</span>() {
             <span class="prelude-val">Err</span>(<span class="self">self</span>)
         } <span class="kw">else</span> {
@@ -977,7 +1012,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Status</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="prelude-ty">Result</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">status</span>: <span class="ident">Status</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">status</span>: <span class="ident">Status</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">status</span>.<span class="ident">into_result</span>()
     }
 }
@@ -1061,7 +1096,7 @@
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span>;
     <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span>;
 
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span>;
+    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span>;
 
     <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>)
     <span class="kw">where</span>
@@ -1076,7 +1111,7 @@
     <span class="kw">fn</span> <span class="ident">verify_signature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">actual_signature</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">signature</span>;
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_signature</span> <span class="op">==</span> <span class="self">Self</span>::<span class="ident">SIGNATURE</span>,
+            <span class="ident">actual_signature</span> <span class="op">=</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">SIGNATURE</span>,
             <span class="string">&quot;Signature mismatch. Expected {:x}, received {:x}&quot;</span>,
             <span class="ident">actual_signature</span>,
             <span class="self">Self</span>::<span class="ident">SIGNATURE</span>,
@@ -1086,7 +1121,7 @@
     <span class="kw">fn</span> <span class="ident">verify_revision</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">actual_revision</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">revision</span>;
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_revision</span> <span class="op">&gt;=</span> <span class="self">Self</span>::<span class="ident">MIN_REVISION</span>,
+            <span class="ident">actual_revision</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">MIN_REVISION</span>,
             <span class="string">&quot;Revision {} older than minimum supported revision {}&quot;</span>,
             <span class="ident">actual_revision</span>,
             <span class="self">Self</span>::<span class="ident">MIN_REVISION</span>,
@@ -1099,7 +1134,7 @@
     {
         <span class="kw">let</span> <span class="ident">actual_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">header_size</span> <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_size</span> <span class="op">&gt;=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>(),
+            <span class="ident">actual_size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>(),
             <span class="string">&quot;Header size {} was less than expected {} bytes&quot;</span>,
             <span class="ident">actual_size</span>,
             <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>(),
@@ -1137,7 +1172,7 @@
         <span class="kw">let</span> <span class="ident">orig_remainder</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">crc32</span>;
         <span class="kw">let</span> <span class="ident">actual_remainder</span> <span class="op">=</span> <span class="ident">crc</span>.<span class="ident">get_crc</span>();
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_remainder</span> <span class="op">==</span> <span class="ident">orig_remainder</span>,
+            <span class="ident">actual_remainder</span> <span class="op">=</span><span class="op">=</span> <span class="ident">orig_remainder</span>,
             <span class="string">&quot;Calculated CRC {:x} does not match listed value {:x}&quot;</span>,
             <span class="ident">actual_remainder</span>,
             <span class="ident">orig_remainder</span>,
@@ -1174,7 +1209,7 @@
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">SystemTable</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5453_5953_2049_4249</span>;
     <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
+    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
 }
@@ -1213,7 +1248,7 @@
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">RuntimeServices</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5652_4553_544e_5552</span>;
     <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
+    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
 }
@@ -1233,22 +1268,22 @@
         <span class="ident">memory_type</span>: <span class="ident">MemoryType</span>,
         <span class="ident">page_count</span>: <span class="ident">usize</span>,
         <span class="ident">physical_address</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u64</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     <span class="kw">pub</span> <span class="ident">free_pages</span>:
-        <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">physical_address</span>: <span class="ident">u64</span>, <span class="ident">page_count</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+        <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">physical_address</span>: <span class="ident">u64</span>, <span class="ident">page_count</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     <span class="kw">pub</span> <span class="ident">get_memory_map</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
         <span class="ident">map_size</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">usize</span>,
         <span class="ident">map</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
         <span class="ident">map_key</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">usize</span>,
         <span class="ident">descriptor_size</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">usize</span>,
         <span class="ident">descriptor_version</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">u32</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     <span class="kw">pub</span> <span class="ident">allocate_pool</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
         <span class="ident">pool_type</span>: <span class="ident">MemoryType</span>,
         <span class="ident">size</span>: <span class="ident">usize</span>,
         <span class="ident">buffer</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">Status</span>,
-    <span class="kw">pub</span> <span class="ident">free_pool</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">buffer</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
+    <span class="kw">pub</span> <span class="ident">free_pool</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">buffer</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
 
     <span class="comment">// Event &amp; Timer Services</span>
     <span class="ident">create_event</span>: <span class="ident">usize</span>,
@@ -1266,7 +1301,7 @@
         <span class="ident">handle</span>: <span class="ident">Handle</span>,
         <span class="ident">protocol</span>: <span class="kw-2">&amp;</span><span class="ident">GUID</span>,
         <span class="ident">interface</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     <span class="ident">reserved</span>: <span class="ident">usize</span>,
     <span class="ident">register_protocol_notify</span>: <span class="ident">usize</span>,
     <span class="ident">locate_handle</span>: <span class="ident">usize</span>,
@@ -1290,7 +1325,14 @@
     <span class="ident">disconnect_controller</span>: <span class="ident">usize</span>,
 
     <span class="comment">// Open and Close Protocol Services</span>
-    <span class="ident">open_protocol</span>: <span class="ident">usize</span>,
+    <span class="kw">pub</span> <span class="ident">open_protocol</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
+        <span class="ident">handle</span>: <span class="ident">Handle</span>,
+        <span class="ident">guid</span>: <span class="kw-2">&amp;</span><span class="ident">GUID</span>,
+        <span class="ident">interface</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span>,
+        <span class="ident">agent_handle</span>: <span class="ident">Handle</span>,
+        <span class="ident">controller_handle</span>: <span class="ident">Handle</span>,
+        <span class="ident">attributes</span>: <span class="ident">OpenProtocolAttributes</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     <span class="ident">close_protocol</span>: <span class="ident">usize</span>,
     <span class="ident">open_protocol_information</span>: <span class="ident">usize</span>,
 
@@ -1313,7 +1355,7 @@
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">BootServices</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5652_4553_544f_4f42</span>;
     <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
+    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
 }
@@ -1323,19 +1365,19 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GUID</span>(<span class="ident">u32</span>, <span class="ident">u16</span>, <span class="ident">u16</span>, [<span class="ident">u8</span>; <span class="number">8</span>]);
 
 <span class="kw">impl</span> <span class="ident">GUID</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
         <span class="ident">GUID</span>(
-            (<span class="ident">n</span> <span class="op">&gt;&gt;</span> <span class="number">96</span>) <span class="kw">as</span> <span class="ident">u32</span>,
-            (<span class="ident">n</span> <span class="op">&gt;&gt;</span> <span class="number">80</span>) <span class="kw">as</span> <span class="ident">u16</span>,
-            (<span class="ident">n</span> <span class="op">&gt;&gt;</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">u16</span>,
+            (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">96</span>) <span class="kw">as</span> <span class="ident">u32</span>,
+            (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">80</span>) <span class="kw">as</span> <span class="ident">u16</span>,
+            (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">u16</span>,
             (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">to_be_bytes</span>(),
         )
     }
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">GUID</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="ident">n</span>)
     }
 }
@@ -1402,7 +1444,7 @@
 <span class="kw">impl</span> <span class="ident">MemoryMap</span> {
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MIN_VERSION</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span>;
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">MemoryMap</span> {
             <span class="ident">raw_map</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
             <span class="ident">key</span>: <span class="number">0</span>,
@@ -1419,7 +1461,7 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_version</span> <span class="op">&gt;=</span> <span class="self">Self</span>::<span class="ident">MIN_VERSION</span>,
+            <span class="self">self</span>.<span class="ident">descriptor_version</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">MIN_VERSION</span>,
             <span class="string">&quot;Descriptor version {} less than required version {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">descriptor_version</span>,
             <span class="self">Self</span>::<span class="ident">MIN_VERSION</span>,
@@ -1428,14 +1470,14 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_descriptor_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">&gt;=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
+            <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
             <span class="string">&quot;Descriptor size {} shorter than required {} bytes&quot;</span>,
             <span class="self">self</span>.<span class="ident">descriptor_size</span>,
             <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
         );
 
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">%</span> <span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>() <span class="op">==</span> <span class="number">0</span>,
+            <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">%</span> <span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Descriptor size {} not a multiple of the MemoryDescriptor struct alignment \
              {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">descriptor_size</span>,
@@ -1445,14 +1487,14 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">==</span> <span class="number">0</span>,
+            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Memory map total size {} is not a multiple of descriptor size {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>(),
             <span class="self">self</span>.<span class="ident">descriptor_size</span>,
         );
 
         <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>().<span class="ident">align_offset</span>(<span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>()) <span class="op">==</span> <span class="number">0</span>,
+            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>().<span class="ident">align_offset</span>(<span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>()) <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Memory map at {:p} not aligned properly for dereferencing. Required: {:x}&quot;</span>,
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>(),
             <span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
@@ -1460,7 +1502,7 @@
     }
 
     <span class="doccomment">/// Iterate over memory descriptors contained in the map.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_ptr_alignment</span>)]</span>
 
         <span class="comment">// SAFETY: We check the pointer alignment in the verify() call. Since</span>
@@ -1475,7 +1517,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">MemoryMap</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span>::<span class="ident">new</span>()
     }
 }
@@ -1538,6 +1580,22 @@
     }
 }
 
+
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>);
+
+<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
+<span class="kw">impl</span> <span class="ident">OpenProtocolAttributes</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_HANDLE</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">GET</span>:       <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TEST</span>:      <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_CHILD</span>:  <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_DRIVER</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXCLUSIVE</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>);
+}
+
+
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">proto</span> {
     <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Handle</span>, <span class="ident">MemoryType</span>, <span class="ident">Status</span>, <span class="ident">SystemTable</span>, <span class="ident">GUID</span>};
     <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ffi</span>::<span class="ident">c_void</span>;
@@ -1562,11 +1620,11 @@
         <span class="kw">pub</span> <span class="ident">reset</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
             <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>,
             <span class="ident">extended_verification</span>: <span class="ident">bool</span>,
-        ) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
         <span class="kw">pub</span> <span class="ident">output_string</span>:
-            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
         <span class="kw">pub</span> <span class="ident">test_string</span>:
-            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
         <span class="ident">query_mode</span>: <span class="ident">usize</span>,
         <span class="ident">set_mode</span>: <span class="ident">usize</span>,
         <span class="ident">set_attribute</span>: <span class="ident">usize</span>,
@@ -1605,7 +1663,7 @@
         <span class="kw">pub</span> <span class="ident">image_size</span>: <span class="ident">u64</span>,
         <span class="kw">pub</span> <span class="ident">image_code_type</span>: <span class="ident">MemoryType</span>,
         <span class="kw">pub</span> <span class="ident">image_data_type</span>: <span class="ident">MemoryType</span>,
-        <span class="kw">pub</span> <span class="ident">unload</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) <span class="op">-&gt;</span> <span class="ident">Status</span>,
+        <span class="kw">pub</span> <span class="ident">unload</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Status</span>,
     }
 
     <span class="kw">impl</span> <span class="ident">Protocol</span> <span class="kw">for</span> <span class="ident">LoadedImage</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ConfigSelector",""],["IOConfigAccess",""],["MemMapConfigAccess",""]],"trait":[["ConfigAccess",""]]});
+initSidebarItems({"struct":[["ConfigSelector","Logical PCI address for a function of a specific segment/bus/device."],["MemMapConfigAccess","Access to memory-mapped PCI configuration space"]],"trait":[["ConfigAccess","Provides methods to access PCI configuration space."]]});

@@ -91,9 +91,8 @@
 <span id="90">90</span>
 <span id="91">91</span>
 <span id="92">92</span>
-<span id="93">93</span>
-<span id="94">94</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">/// Access to I/O space</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span> {
     <span class="doccomment">/// Read an 8-bit value from the port at the given address in I/O space.</span>
     <span class="doccomment">///</span>
@@ -101,15 +100,14 @@
     <span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an</span>
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u8</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">val</span>: <span class="ident">u8</span>;
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;in al, dx&quot;</span>
-            : <span class="string">&quot;={al}&quot;</span>(<span class="ident">val</span>)
-            : <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u8</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
+        <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u8</span>;
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;in al, dx&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;al&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
-        <span class="ident">val</span>
+        <span class="ident">data</span>
     }
 
     <span class="doccomment">/// Read a 16-bit value from the port at the given address in I/O space.</span>
@@ -118,15 +116,14 @@
     <span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an</span>
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u16</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">u16</span> {
-        <span class="kw">let</span> <span class="ident">val</span>: <span class="ident">u16</span>;
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;in ax, dx&quot;</span>
-            : <span class="string">&quot;={ax}&quot;</span>(<span class="ident">val</span>)
-            : <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u16</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
+        <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u16</span>;
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;in ax, dx&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;ax&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
-        <span class="ident">val</span>
+        <span class="ident">data</span>
     }
 
     <span class="doccomment">/// Read a 32-bit value from the port at the given address in I/O space.</span>
@@ -135,15 +132,14 @@
     <span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an</span>
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u32</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">u32</span> {
-        <span class="kw">let</span> <span class="ident">val</span>: <span class="ident">u32</span>;
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;in eax, dx&quot;</span>
-            : <span class="string">&quot;={eax}&quot;</span>(<span class="ident">val</span>)
-            : <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u32</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+        <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u32</span>;
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;in eax, dx&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
-        <span class="ident">val</span>
+        <span class="ident">data</span>
     }
 
     <span class="doccomment">/// Write an 8-bit value to the port at the given address in I/O space.</span>
@@ -153,10 +149,10 @@
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u8</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u8</span>) {
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;out dx, al&quot;</span>
-            :: <span class="string">&quot;{al}&quot;</span>(<span class="ident">data</span>), <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;out dx, al&quot;</span>,
+            <span class="kw">in</span>(<span class="string">&quot;al&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
     }
 
@@ -167,10 +163,10 @@
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u16</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u16</span>) {
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;out dx, ax&quot;</span>
-            :: <span class="string">&quot;{ax}&quot;</span>(<span class="ident">data</span>), <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;out dx, ax&quot;</span>,
+            <span class="kw">in</span>(<span class="string">&quot;ax&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
     }
 
@@ -181,10 +177,10 @@
     <span class="doccomment">/// interrupt, overwrite arbitrary memory with DMA, shut down the system, launch a</span>
     <span class="doccomment">/// missile. Use with caution.</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u32</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u32</span>) {
-        <span class="macro">llvm_asm</span><span class="macro">!</span>(
-            <span class="string">&quot;out dx, eax&quot;</span>
-            :: <span class="string">&quot;{eax}&quot;</span>(<span class="ident">data</span>), <span class="string">&quot;{dx}&quot;</span>(<span class="ident">addr</span>)
-            :: <span class="string">&quot;intel&quot;</span>, <span class="string">&quot;volatile&quot;</span>
+        <span class="macro">asm</span><span class="macro">!</span>(
+            <span class="string">&quot;out dx, eax&quot;</span>,
+            <span class="kw">in</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">data</span>,
+            <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
         );
     }
 }

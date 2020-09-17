@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["blob","Flattened device tree, a.k.a. devicetree blob (DTB), as defined in chapter 5 of the Devicetree spec."]]});
