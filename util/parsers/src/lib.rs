@@ -7,7 +7,7 @@
 
 use nom::error::ParseError;
 use nom::sequence::preceded;
-use nom::IResult;
+use nom::{IResult, InputLength};
 
 
 /// Helpers for reporting parsing errors
@@ -115,5 +115,63 @@ where
             Err(nom::Err::Failure(E::add_context(i, description, e)))
         }
         other => other,
+    }
+}
+
+
+/// Create an iterator that repeatedly executes the parser.
+///
+/// Unlike [`nom::combinator::iterator`], this yields a [`Result`] at every step, so
+/// errors are returned in the stream, and there is no separate `finish()` method. If the
+/// parser encounters an error, the iterator will yield that error and not attempt to
+/// parse any more elements.
+pub fn result_iterator<P, I, O, E>(
+    input: I,
+    parser: P,
+) -> impl Iterator<Item = Result<O, nom::Err<E>>>
+where
+    P: Fn(I) -> IResult<I, O, E>,
+    I: InputLength,
+    E: ParseError<I>,
+{
+    ResultIterator { input: Some(input), parser }
+}
+
+
+struct ResultIterator<P, I, O, E>
+where
+    P: Fn(I) -> IResult<I, O, E>,
+    I: InputLength,
+    E: ParseError<I>,
+{
+    input: Option<I>,
+    parser: P,
+}
+
+impl<P, I, O, E> Iterator for ResultIterator<P, I, O, E>
+where
+    P: Fn(I) -> IResult<I, O, E>,
+    I: InputLength,
+    E: ParseError<I>,
+{
+    type Item = Result<O, nom::Err<E>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut input = None;
+        core::mem::swap(&mut self.input, &mut input);
+        match input {
+            None => None,
+            Some(i) if i.input_len() == 0 => None,
+            Some(i) => match (self.parser)(i) {
+                Ok((rest, output)) => {
+                    self.input = Some(rest);
+                    Some(Ok(output))
+                }
+                Err(e) => {
+                    self.input = None;
+                    Some(Err(e))
+                }
+            },
+        }
     }
 }

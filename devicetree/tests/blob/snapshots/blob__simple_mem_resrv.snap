@@ -1,0 +1,12 @@
+---
+source: devicetree/tests/blob/main.rs
+expression: mem_reservations
+---
+[
+    Ok(
+        MemoryReservation {
+            address: 0,
+            size: 0,
+        },
+    ),
+]

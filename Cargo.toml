@@ -2,6 +2,7 @@
 members = [
 	"acpi",
 	"arch",
+	"devicetree",
 	"pci",
 	"uefi",
 	"util/bitfield",

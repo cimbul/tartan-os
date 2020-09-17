@@ -1,6 +1,5 @@
 //! Abstract syntax tree for ACPI Machine Language
 
-
 #![allow(clippy::module_name_repetitions)]
 
 

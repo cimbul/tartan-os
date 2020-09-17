@@ -1,0 +1,66 @@
+---
+source: devicetree/tests/blob/main.rs
+expression: structures
+---
+[
+    Ok(
+        BeginNode(
+            "",
+        ),
+    ),
+    Ok(
+        BeginNode(
+            "foo",
+        ),
+    ),
+    Ok(
+        Property {
+            name: "bar",
+            value: [
+                98,
+                97,
+                122,
+                0,
+            ],
+        },
+    ),
+    Ok(
+        Property {
+            name: "quux",
+            value: [
+                0,
+                0,
+                0,
+                66,
+            ],
+        },
+    ),
+    Ok(
+        EndNode,
+    ),
+    Ok(
+        BeginNode(
+            "blorg",
+        ),
+    ),
+    Ok(
+        Property {
+            name: "flarf",
+            value: [
+                110,
+                111,
+                114,
+                98,
+                108,
+                101,
+                0,
+            ],
+        },
+    ),
+    Ok(
+        EndNode,
+    ),
+    Ok(
+        EndNode,
+    ),
+]

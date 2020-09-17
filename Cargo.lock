@@ -685,6 +685,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tartan-devicetree"
+version = "0.1.0"
+dependencies = [
+ "insta",
+ "nom",
+ "tartan-parsers",
+]
+
+[[package]]
 name = "tartan-parsers"
 version = "0.1.0"
 dependencies = [

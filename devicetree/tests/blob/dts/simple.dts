@@ -1,0 +1,12 @@
+/dts-v1/;
+
+/ {
+	foo {
+		bar = "baz";
+		quux = <0x42>;
+	};
+
+	blorg {
+		flarf = "norble";
+	};
+};
