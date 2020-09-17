@@ -83,6 +83,7 @@
 #![no_std]
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::inline_always)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::similar_names)]
 
@@ -220,7 +221,6 @@ macro_rules! bitfield {
 /// assert_eq!(get_bit(0b0000_0100_u8, 2), true);
 /// assert_eq!(get_bit(0b0000_0100_u8, 3), false);
 /// ```
-#[inline(always)]
 #[must_use]
 pub fn get_bit<T>(val: T, bit_num: u8) -> bool
 where
@@ -244,7 +244,6 @@ where
 /// assert_eq!(set_bit(0b0000_0000_u8, 5, true), 0b0010_0000);
 /// assert_eq!(set_bit(0b1111_1111_u8, 0, false), 0b1111_1110);
 /// ```
-#[inline(always)]
 #[must_use]
 pub fn set_bit<T>(val: T, bit_num: u8, bit_val: bool) -> T
 where
@@ -271,7 +270,6 @@ where
 /// assert_eq!(get_bits(0b1100_1110_u8, 3, 7), 0b1001);
 /// assert_eq!(get_bits(0b1010_0101_u8, 6, 8), 0b10);
 /// ```
-#[inline]
 #[must_use]
 pub fn get_bits<T>(packed_val: T, lsb: u8, msb: u8) -> T
 where
@@ -300,7 +298,6 @@ where
 /// assert_eq!(set_bits(0b1111_1111_u8, 1, 5, 0b0000), 0b1110_0001);
 /// assert_eq!(set_bits(0b1010_0110_u8, 2, 6, 0b1110), 0b1011_1010);
 /// ```
-#[inline]
 #[must_use]
 pub fn set_bits<T>(packed_val: T, lsb: u8, msb: u8, field_val: T) -> T
 where
