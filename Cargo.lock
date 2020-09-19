@@ -665,6 +665,7 @@ dependencies = [
  "insta",
  "nom",
  "static_assertions",
+ "tartan-c-enum",
  "tartan-parsers",
 ]
 
@@ -683,6 +684,10 @@ dependencies = [
  "criterion-macro",
  "paste",
 ]
+
+[[package]]
+name = "tartan-c-enum"
+version = "0.1.0"
 
 [[package]]
 name = "tartan-devicetree"
@@ -718,6 +723,7 @@ dependencies = [
  "crc-any",
  "log",
  "tartan-acpi",
+ "tartan-c-enum",
  "tartan-pci",
  "utf16_lit",
 ]

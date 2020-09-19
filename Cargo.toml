@@ -6,5 +6,6 @@ members = [
 	"pci",
 	"uefi",
 	"util/bitfield",
+	"util/c_enum",
 	"util/parsers",
 ]

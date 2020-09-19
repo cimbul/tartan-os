@@ -11,6 +11,7 @@ publish = false
 [dependencies]
 # Internal
 tartan-acpi = {path = "../acpi"}
+tartan-c-enum = {path = "../util/c_enum"}
 tartan-pci = {path = "../pci"}
 # External
 bitflags = "1.2.1"

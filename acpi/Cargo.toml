@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 # Internal
+tartan-c-enum = {path = "../util/c_enum"}
 tartan-parsers = {path = "../util/parsers"}
 # External
 bitflags = "1.2.1"

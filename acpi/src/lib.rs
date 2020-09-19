@@ -13,6 +13,7 @@ extern crate alloc;
 use bitflags::bitflags;
 use core::mem::size_of;
 use static_assertions::const_assert_eq;
+use tartan_c_enum::c_enum;
 
 pub mod aml;
 
@@ -156,44 +157,38 @@ pub struct GenericAddress {
 const_assert_eq!(12, size_of::<GenericAddress>());
 
 
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// Type of register address
-pub struct AddressSpace(u8);
+c_enum! {
+    /// Type of register address
+    pub enum AddressSpace(u8) {
+        SYSTEM_MEMORY                   = 0x00,
+        SYSTEM_IO                       = 0x01,
+        PCI_CONFIGURATION               = 0x02,
+        EMBEDDED_CONTROLLER             = 0x03,
+        SM_BUS                          = 0x04,
+        SYSTEM_CMOS                     = 0x05,
+        PCI_BAR_TARGET                  = 0x06,
+        IPMI                            = 0x07,
+        GENERAL_PURPOSE_IO              = 0x08,
+        GENERIC_SERIAL_BUS              = 0x09,
+        PLATFORM_COMMUNICATIONS_CHANNEL = 0x0a,
 
-#[rustfmt::skip]
-impl AddressSpace {
-    pub const SYSTEM_MEMORY:                   AddressSpace = AddressSpace(0x00);
-    pub const SYSTEM_IO:                       AddressSpace = AddressSpace(0x01);
-    pub const PCI_CONFIGURATION:               AddressSpace = AddressSpace(0x02);
-    pub const EMBEDDED_CONTROLLER:             AddressSpace = AddressSpace(0x03);
-    pub const SM_BUS:                          AddressSpace = AddressSpace(0x04);
-    pub const SYSTEM_CMOS:                     AddressSpace = AddressSpace(0x05);
-    pub const PCI_BAR_TARGET:                  AddressSpace = AddressSpace(0x06);
-    pub const IPMI:                            AddressSpace = AddressSpace(0x07);
-    pub const GENERAL_PURPOSE_IO:              AddressSpace = AddressSpace(0x08);
-    pub const GENERIC_SERIAL_BUS:              AddressSpace = AddressSpace(0x09);
-    pub const PLATFORM_COMMUNICATIONS_CHANNEL: AddressSpace = AddressSpace(0x0A);
+        FUNCTIONAL_FIXED                = 0x7f,
 
-    pub const FUNCTIONAL_FIXED:                AddressSpace = AddressSpace(0x7F);
-
-    pub const OEM_DEFINED_MIN:                 AddressSpace = AddressSpace(0xC0);
-    pub const OEM_DEFINED_MAX:                 AddressSpace = AddressSpace(0xFF);
+        OEM_DEFINED_MIN                 = 0xc0,
+        OEM_DEFINED_MAX                 = 0xff,
+    }
 }
 
 
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// Memory width used to read/write from a register
-pub struct AccessSize(u8);
-
-#[rustfmt::skip]
-impl AccessSize {
-    pub const UNDEFINED: AccessSize = AccessSize(0);
-    pub const BYTE:      AccessSize = AccessSize(1);
-    pub const WORD:      AccessSize = AccessSize(2);
-    pub const DWORD:     AccessSize = AccessSize(3);
-    pub const QWORD:     AccessSize = AccessSize(4);
+c_enum! {
+    /// Memory width used to read/write from a register
+    pub enum AccessSize(u8) {
+        UNDEFINED = 0,
+        BYTE      = 1,
+        WORD      = 2,
+        DWORD     = 3,
+        QWORD     = 4,
+    }
 }
 
 

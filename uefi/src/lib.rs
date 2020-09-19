@@ -17,6 +17,7 @@ use core::fmt;
 use core::mem::{align_of, size_of};
 use core::slice;
 use crc_any::CRCu32;
+use tartan_c_enum::c_enum;
 
 pub mod allocator;
 pub mod global;
@@ -33,29 +34,26 @@ impl Handle {
 }
 
 
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Revision(pub u32);
-
-#[rustfmt::skip]
-impl Revision {
-    pub const LATEST: Revision = Revision::V2_80;
-
-    pub const V2_80: Revision = Revision((2 << 16) | 80);
-    pub const V2_70: Revision = Revision((2 << 16) | 70);
-    pub const V2_60: Revision = Revision((2 << 16) | 60);
-    pub const V2_50: Revision = Revision((2 << 16) | 50);
-    pub const V2_40: Revision = Revision((2 << 16) | 40);
-    pub const V2_31: Revision = Revision((2 << 16) | 31);
-    pub const V2_30: Revision = Revision((2 << 16) | 30);
-    pub const V2_20: Revision = Revision((2 << 16) | 20);
-    pub const V2_10: Revision = Revision((2 << 16) | 10);
-    pub const V2_00: Revision = Revision( 2 << 16      );
-    pub const V1_10: Revision = Revision((1 << 16) | 10);
-    pub const V1_02: Revision = Revision((1 << 16) |  2);
+c_enum! {
+    pub enum Revision(u32) {
+        V2_80 = (2 << 16) | 80,
+        V2_70 = (2 << 16) | 70,
+        V2_60 = (2 << 16) | 60,
+        V2_50 = (2 << 16) | 50,
+        V2_40 = (2 << 16) | 40,
+        V2_31 = (2 << 16) | 31,
+        V2_30 = (2 << 16) | 30,
+        V2_20 = (2 << 16) | 20,
+        V2_10 = (2 << 16) | 10,
+        V2_00 =  2 << 16      ,
+        V1_10 = (1 << 16) | 10,
+        V1_02 = (1 << 16) |  2,
+    }
 }
 
 impl Revision {
+    pub const LATEST: Revision = Revision::V2_80;
+
     pub fn major_version(self) -> u16 {
         #![allow(clippy::cast_possible_truncation)]
         (self.0 >> 16) as u16
@@ -102,56 +100,56 @@ mod test_revision {
 
 pub type Result = core::result::Result<Status, Status>;
 
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Status(usize);
+c_enum! {
+    pub enum Status(usize) {
+        // Appendix D
+        SUCCESS               = 0,
 
-#[rustfmt::skip]
+        WARN_UNKNOWN_GLYPH    = 1,
+        WARN_DELETE_FAILURE   = 2,
+        WARN_WRITE_FAILURE    = 3,
+        WARN_BUFFER_TOO_SMALL = 4,
+        WARN_STALE_DATA       = 5,
+        WARN_FILE_SYSTEM      = 6,
+        WARN_RESET_REQUIRED   = 7,
+
+        LOAD_ERROR            = Status::ERROR_BIT | 1,
+        INVALID_PARAMETER     = Status::ERROR_BIT | 2,
+        UNSUPPORTED           = Status::ERROR_BIT | 3,
+        BAD_BUFFER_SIZE       = Status::ERROR_BIT | 4,
+        BUFFER_TOO_SMALL      = Status::ERROR_BIT | 5,
+        NOT_READY             = Status::ERROR_BIT | 6,
+        DEVICE_ERROR          = Status::ERROR_BIT | 7,
+        WRITE_PROTECTED       = Status::ERROR_BIT | 8,
+        OUT_OF_RESOURCES      = Status::ERROR_BIT | 9,
+        VOLUME_CORRUPTED      = Status::ERROR_BIT | 10,
+        VOLUME_FULL           = Status::ERROR_BIT | 11,
+        NO_MEDIA              = Status::ERROR_BIT | 12,
+        MEDIA_CHANGED         = Status::ERROR_BIT | 13,
+        NOT_FOUND             = Status::ERROR_BIT | 14,
+        ACCESS_DENIED         = Status::ERROR_BIT | 15,
+        NO_RESPONSE           = Status::ERROR_BIT | 16,
+        NO_MAPPING            = Status::ERROR_BIT | 17,
+        TIMEOUT               = Status::ERROR_BIT | 18,
+        NOT_STARTED           = Status::ERROR_BIT | 19,
+        ALREADY_STARTED       = Status::ERROR_BIT | 20,
+        ABORTED               = Status::ERROR_BIT | 21,
+        ICMP_ERROR            = Status::ERROR_BIT | 22,
+        TFTP_ERROR            = Status::ERROR_BIT | 23,
+        PROTOCOL_ERROR        = Status::ERROR_BIT | 24,
+        INCOMPATIBLE_VERSION  = Status::ERROR_BIT | 25,
+        SECURITY_VIOLATION    = Status::ERROR_BIT | 26,
+        CRC_ERROR             = Status::ERROR_BIT | 27,
+        END_OF_MEDIA          = Status::ERROR_BIT | 28,
+        END_OF_FILE           = Status::ERROR_BIT | 31,
+        INVALID_LANGUAGE      = Status::ERROR_BIT | 32,
+        COMPROMISED_DATA      = Status::ERROR_BIT | 33,
+        HTTP_ERROR            = Status::ERROR_BIT | 35,
+    }
+}
+
 impl Status {
-    // Appendix D
-    pub const SUCCESS: Status = Status(0);
-
-    pub const WARN_UNKNOWN_GLYPH:    Status = Status(1);
-    pub const WARN_DELETE_FAILURE:   Status = Status(2);
-    pub const WARN_WRITE_FAILURE:    Status = Status(3);
-    pub const WARN_BUFFER_TOO_SMALL: Status = Status(4);
-    pub const WARN_STALE_DATA:       Status = Status(5);
-    pub const WARN_FILE_SYSTEM:      Status = Status(6);
-    pub const WARN_RESET_REQUIRED:   Status = Status(7);
-
     pub const ERROR_BIT: usize = 0x1_usize.reverse_bits(); // high bit
-    pub const LOAD_ERROR:           Status = Status(Status::ERROR_BIT | 1);
-    pub const INVALID_PARAMETER:    Status = Status(Status::ERROR_BIT | 2);
-    pub const UNSUPPORTED:          Status = Status(Status::ERROR_BIT | 3);
-    pub const BAD_BUFFER_SIZE:      Status = Status(Status::ERROR_BIT | 4);
-    pub const BUFFER_TOO_SMALL:     Status = Status(Status::ERROR_BIT | 5);
-    pub const NOT_READY:            Status = Status(Status::ERROR_BIT | 6);
-    pub const DEVICE_ERROR:         Status = Status(Status::ERROR_BIT | 7);
-    pub const WRITE_PROTECTED:      Status = Status(Status::ERROR_BIT | 8);
-    pub const OUT_OF_RESOURCES:     Status = Status(Status::ERROR_BIT | 9);
-    pub const VOLUME_CORRUPTED:     Status = Status(Status::ERROR_BIT | 10);
-    pub const VOLUME_FULL:          Status = Status(Status::ERROR_BIT | 11);
-    pub const NO_MEDIA:             Status = Status(Status::ERROR_BIT | 12);
-    pub const MEDIA_CHANGED:        Status = Status(Status::ERROR_BIT | 13);
-    pub const NOT_FOUND:            Status = Status(Status::ERROR_BIT | 14);
-    pub const ACCESS_DENIED:        Status = Status(Status::ERROR_BIT | 15);
-    pub const NO_RESPONSE:          Status = Status(Status::ERROR_BIT | 16);
-    pub const NO_MAPPING:           Status = Status(Status::ERROR_BIT | 17);
-    pub const TIMEOUT:              Status = Status(Status::ERROR_BIT | 18);
-    pub const NOT_STARTED:          Status = Status(Status::ERROR_BIT | 19);
-    pub const ALREADY_STARTED:      Status = Status(Status::ERROR_BIT | 20);
-    pub const ABORTED:              Status = Status(Status::ERROR_BIT | 21);
-    pub const ICMP_ERROR:           Status = Status(Status::ERROR_BIT | 22);
-    pub const TFTP_ERROR:           Status = Status(Status::ERROR_BIT | 23);
-    pub const PROTOCOL_ERROR:       Status = Status(Status::ERROR_BIT | 24);
-    pub const INCOMPATIBLE_VERSION: Status = Status(Status::ERROR_BIT | 25);
-    pub const SECURITY_VIOLATION:   Status = Status(Status::ERROR_BIT | 26);
-    pub const CRC_ERROR:            Status = Status(Status::ERROR_BIT | 27);
-    pub const END_OF_MEDIA:         Status = Status(Status::ERROR_BIT | 28);
-    pub const END_OF_FILE:          Status = Status(Status::ERROR_BIT | 31);
-    pub const INVALID_LANGUAGE:     Status = Status(Status::ERROR_BIT | 32);
-    pub const COMPROMISED_DATA:     Status = Status(Status::ERROR_BIT | 33);
-    pub const HTTP_ERROR:           Status = Status(Status::ERROR_BIT | 35);
 
     pub fn is_error(self) -> bool {
         (self.0 & Status::ERROR_BIT) != 0
@@ -687,39 +685,33 @@ impl Default for MemoryMap {
 // with fewer than 256 values. The text refers to reserved ranges up to 0xFFFFFFFF,
 // implying that it is at least 32 bits. From what I can tell, MSVC (which UEFI borrows a
 // lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MemoryType(u32);
-
-#[rustfmt::skip]
-impl MemoryType {
-    pub const RESERVED:              MemoryType = MemoryType(0);
-    pub const LOADER_CODE:           MemoryType = MemoryType(1);
-    pub const LOADER_DATA:           MemoryType = MemoryType(2);
-    pub const BOOT_SERVICES_CODE:    MemoryType = MemoryType(3);
-    pub const BOOT_SERVICES_DATA:    MemoryType = MemoryType(4);
-    pub const RUNTIME_SERVICES_CODE: MemoryType = MemoryType(5);
-    pub const RUNTIME_SERVICES_DATA: MemoryType = MemoryType(6);
-    pub const CONVENTIONAL:          MemoryType = MemoryType(7);
-    pub const UNUSABLE:              MemoryType = MemoryType(8);
-    pub const ACPI_RECLAIM:          MemoryType = MemoryType(9);
-    pub const ACPI_NVS:              MemoryType = MemoryType(10);
-    pub const MAPPED_IO:             MemoryType = MemoryType(11);
-    pub const MAPPED_IO_PORT_SPACE:  MemoryType = MemoryType(12);
-    pub const PAL_CODE:              MemoryType = MemoryType(13);
-    pub const PERSISTENT:            MemoryType = MemoryType(14);
+c_enum! {
+    pub enum MemoryType(u32) {
+        RESERVED              = 0,
+        LOADER_CODE           = 1,
+        LOADER_DATA           = 2,
+        BOOT_SERVICES_CODE    = 3,
+        BOOT_SERVICES_DATA    = 4,
+        RUNTIME_SERVICES_CODE = 5,
+        RUNTIME_SERVICES_DATA = 6,
+        CONVENTIONAL          = 7,
+        UNUSABLE              = 8,
+        ACPI_RECLAIM          = 9,
+        ACPI_NVS              = 10,
+        MAPPED_IO             = 11,
+        MAPPED_IO_PORT_SPACE  = 12,
+        PAL_CODE              = 13,
+        PERSISTENT            = 14,
+    }
 }
 
 // TODO: Same caveat as MemoryType
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct AllocateType(u32);
-
-#[rustfmt::skip]
-impl AllocateType {
-    pub const ANY_ADDRESS:   AllocateType = AllocateType(0);
-    pub const MAX_ADDRESS:   AllocateType = AllocateType(1);
-    pub const EXACT_ADDRESS: AllocateType = AllocateType(2);
+c_enum! {
+    pub enum AllocateType(u32) {
+        ANY_ADDRESS   = 0,
+        MAX_ADDRESS   = 1,
+        EXACT_ADDRESS = 2,
+    }
 }
 
 bitflags! {
@@ -742,18 +734,15 @@ bitflags! {
 }
 
 
-#[repr(transparent)]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct OpenProtocolAttributes(u32);
-
-#[rustfmt::skip]
-impl OpenProtocolAttributes {
-    pub const BY_HANDLE: OpenProtocolAttributes = OpenProtocolAttributes(1 << 0);
-    pub const GET:       OpenProtocolAttributes = OpenProtocolAttributes(1 << 1);
-    pub const TEST:      OpenProtocolAttributes = OpenProtocolAttributes(1 << 2);
-    pub const BY_CHILD:  OpenProtocolAttributes = OpenProtocolAttributes(1 << 3);
-    pub const BY_DRIVER: OpenProtocolAttributes = OpenProtocolAttributes(1 << 4);
-    pub const EXCLUSIVE: OpenProtocolAttributes = OpenProtocolAttributes(1 << 5);
+c_enum! {
+    pub enum OpenProtocolAttributes(u32) {
+        BY_HANDLE = 1 << 0,
+        GET       = 1 << 1,
+        TEST      = 1 << 2,
+        BY_CHILD  = 1 << 3,
+        BY_DRIVER = 1 << 4,
+        EXCLUSIVE = 1 << 5,
+    }
 }
 
 
