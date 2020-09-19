@@ -13,10 +13,23 @@ pub trait ConfigAccess {
     /// Get a specific 32-bit register in PCI configuration space.
     fn get_register(&self, selector: ConfigSelector, register: u16) -> u32;
 
+    /// Set a specific 32-bit register in PCI configuration space.
+    fn set_register(&self, selector: ConfigSelector, register: u16, value: u32);
+
     /// Get a register in PCI configuration space with an offset defined by the output
     /// type.
     fn get_fixed_register<T: FixedConfigRegister>(&self, selector: ConfigSelector) -> T {
         self.get_register(selector, T::REGISTER_NUMBER.into()).into()
+    }
+
+    /// Set a register in PCI configuration space with an offset defined by the input
+    /// type.
+    fn set_fixed_register<T: FixedConfigRegister>(
+        &self,
+        selector: ConfigSelector,
+        value: T,
+    ) {
+        self.set_register(selector, T::REGISTER_NUMBER.into(), value.into())
     }
 }
 
@@ -47,10 +60,8 @@ pub struct MemMapConfigAccess {
 
 impl MemMapConfigAccess {
     const MAP_SIZE: u16 = 1 << 10;
-}
 
-impl ConfigAccess for MemMapConfigAccess {
-    fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
+    fn register_address(&self, selector: ConfigSelector, register: u16) -> *mut u32 {
         assert!(
             self.bus_range.contains(&selector.bus),
             "Cannot access bus {} with this memory map (covers buses {}-{})",
@@ -76,8 +87,20 @@ impl ConfigAccess for MemMapConfigAccess {
             | usize::from(register) << 2;
         let address = self.base_address + offset;
 
-        let register_data_le = unsafe { *(address as *const u32) };
+        address as *mut u32
+    }
+}
+
+impl ConfigAccess for MemMapConfigAccess {
+    fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
+        let address = self.register_address(selector, register);
+        let register_data_le = unsafe { *address };
         u32::from_le(register_data_le)
+    }
+
+    fn set_register(&self, selector: ConfigSelector, register: u16, value: u32) {
+        let address = self.register_address(selector, register);
+        unsafe { *address = value.to_le() };
     }
 }
 
@@ -103,10 +126,8 @@ pub mod io {
     impl IOConfigAccess {
         const CONFIG_ADDRESS_PORT: u16 = 0xcf8;
         const CONFIG_DATA_PORT: u16 = 0xcfc;
-    }
 
-    impl ConfigAccess for IOConfigAccess {
-        fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
+        fn write_config_address(selector: ConfigSelector, register: u16) {
             assert!(
                 selector.segment_group == 0,
                 "IO-based PCI config only supports segment group 0 (requested {})",
@@ -118,12 +139,22 @@ pub mod io {
             let config_address = IOConfigAddress::new(selector, register_offset);
             let config_address_le = config_address.0.to_le();
 
-            let register_data_le = unsafe {
+            unsafe {
                 arch::io::out_u32(Self::CONFIG_ADDRESS_PORT, config_address_le);
-                arch::io::in_u32(Self::CONFIG_DATA_PORT)
             };
+        }
+    }
 
+    impl ConfigAccess for IOConfigAccess {
+        fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
+            Self::write_config_address(selector, register);
+            let register_data_le = unsafe { arch::io::in_u32(Self::CONFIG_DATA_PORT) };
             u32::from_le(register_data_le)
+        }
+
+        fn set_register(&self, selector: ConfigSelector, register: u16, value: u32) {
+            Self::write_config_address(selector, register);
+            unsafe { arch::io::out_u32(Self::CONFIG_DATA_PORT, value.to_le()) }
         }
     }
 

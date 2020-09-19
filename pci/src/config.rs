@@ -3,7 +3,7 @@ use tartan_bitfield::bitfield;
 
 
 /// A register type that is always located at a specific offset
-pub trait FixedConfigRegister: From<u32> {
+pub trait FixedConfigRegister: From<u32> + Into<u32> {
     /// Fixed offset for this register type
     const REGISTER_NUMBER: u8;
 }
