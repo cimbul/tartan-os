@@ -126,13 +126,13 @@ fn fakepoint() {
     loop {}
 }
 
-#[cfg(not(any(arch = "x86", arch = "x86_64")))]
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 fn enumerate_pci(_: &mut OutputStream) -> Result {
     // TODO
     Ok(Status::SUCCESS)
 }
 
-#[cfg(any(arch = "x86", arch = "x86_64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn enumerate_pci(out: &mut OutputStream) -> Result {
     use tartan_pci as pci;
     use tartan_pci::access::{io::IOConfigAccess, ConfigAccess, ConfigSelector};
@@ -154,15 +154,17 @@ fn enumerate_pci(out: &mut OutputStream) -> Result {
 
         let register_3: pci::config::HeaderRegister3 =
             access.get_fixed_register(selector);
-        let function_count_note = if register_3.header_type().multi_function() {
-            "multi-function"
+        let function_count_note = if selector.function != 0 {
+            "" // Does not apply when this is not the first function
+        } else if register_3.multi_function() {
+            " (multi-function)"
         } else {
-            "single-function"
+            " (single-function)"
         };
         writeln_result!(
             out,
-            "       header type {:02x} ({})",
-            register_3.header_type().header_type(),
+            "       header type {:02x}{}",
+            register_3.header_type(),
             function_count_note,
         )?;
 

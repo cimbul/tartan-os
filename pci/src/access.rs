@@ -85,8 +85,11 @@ impl ConfigAccess for MemMapConfigAccess {
 /// Support for the I/O based configuration access method on x86/x86-64.
 ///
 /// Note that other architectures have no concept of I/O space.
-#[cfg(any(arch = "x86", arch = "x86_64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod io {
+    use crate::access::{ConfigAccess, ConfigSelector};
+    use crate::MAX_DEVICE;
+    use core::convert::TryFrom;
     use tartan_arch as arch;
     use tartan_bitfield::bitfield;
 
