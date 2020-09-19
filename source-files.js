@@ -3,6 +3,7 @@ sourcesIndex["aml_parse"] = {"name":"","files":["aml-parse.rs"]};
 sourcesIndex["tartan_acpi"] = {"name":"","dirs":[{"name":"aml","files":["parse.rs"]}],"files":["aml.rs","lib.rs"]};
 sourcesIndex["tartan_arch"] = {"name":"","files":["lib.rs","x86_64.rs","x86_common.rs"]};
 sourcesIndex["tartan_bitfield"] = {"name":"","files":["lib.rs"]};
+sourcesIndex["tartan_c_enum"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["tartan_devicetree"] = {"name":"","files":["blob.rs","lib.rs"]};
 sourcesIndex["tartan_parsers"] = {"name":"","files":["error.rs","lib.rs"]};
 sourcesIndex["tartan_pci"] = {"name":"","files":["access.rs","config.rs","lib.rs"]};

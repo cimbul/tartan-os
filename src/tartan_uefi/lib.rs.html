@@ -825,17 +825,6 @@
 <span id="824">824</span>
 <span id="825">825</span>
 <span id="826">826</span>
-<span id="827">827</span>
-<span id="828">828</span>
-<span id="829">829</span>
-<span id="830">830</span>
-<span id="831">831</span>
-<span id="832">832</span>
-<span id="833">833</span>
-<span id="834">834</span>
-<span id="835">835</span>
-<span id="836">836</span>
-<span id="837">837</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Support for Unified Extensible Firmware Interface</span>
 <span class="doccomment">//!</span>
@@ -856,6 +845,7 @@
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">slice</span>;
 <span class="kw">use</span> <span class="ident">crc_any</span>::<span class="ident">CRCu32</span>;
+<span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">allocator</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">global</span>;
@@ -872,29 +862,26 @@
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Revision</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
-
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
-<span class="kw">impl</span> <span class="ident">Revision</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_80</span>;
-
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_80</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">80</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_70</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">70</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_60</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">60</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_50</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">50</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_40</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">40</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_31</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">31</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_30</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">30</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_20</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">20</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V2_00</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>( <span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>      );
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_10</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">V1_02</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span>  <span class="number">2</span>);
+<span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Revision</span>(<span class="ident">u32</span>) {
+        <span class="ident">V2_80</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">80</span>,
+        <span class="ident">V2_70</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">70</span>,
+        <span class="ident">V2_60</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">60</span>,
+        <span class="ident">V2_50</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">50</span>,
+        <span class="ident">V2_40</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">40</span>,
+        <span class="ident">V2_31</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">31</span>,
+        <span class="ident">V2_30</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">30</span>,
+        <span class="ident">V2_20</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">20</span>,
+        <span class="ident">V2_10</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>,
+        <span class="ident">V2_00</span> <span class="op">=</span>  <span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>      ,
+        <span class="ident">V1_10</span> <span class="op">=</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">10</span>,
+        <span class="ident">V1_02</span> <span class="op">=</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span>  <span class="number">2</span>,
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">Revision</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_80</span>;
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">major_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
         <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>
@@ -941,56 +928,56 @@
 
 <span class="kw">pub</span> <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Status</span>, <span class="ident">Status</span><span class="op">&gt;</span>;
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Status</span>(<span class="ident">usize</span>);
+<span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Status</span>(<span class="ident">usize</span>) {
+        <span class="comment">// Appendix D</span>
+        <span class="ident">SUCCESS</span>               <span class="op">=</span> <span class="number">0</span>,
 
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
+        <span class="ident">WARN_UNKNOWN_GLYPH</span>    <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">WARN_DELETE_FAILURE</span>   <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">WARN_WRITE_FAILURE</span>    <span class="op">=</span> <span class="number">3</span>,
+        <span class="ident">WARN_BUFFER_TOO_SMALL</span> <span class="op">=</span> <span class="number">4</span>,
+        <span class="ident">WARN_STALE_DATA</span>       <span class="op">=</span> <span class="number">5</span>,
+        <span class="ident">WARN_FILE_SYSTEM</span>      <span class="op">=</span> <span class="number">6</span>,
+        <span class="ident">WARN_RESET_REQUIRED</span>   <span class="op">=</span> <span class="number">7</span>,
+
+        <span class="ident">LOAD_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>,
+        <span class="ident">INVALID_PARAMETER</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>,
+        <span class="ident">UNSUPPORTED</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>,
+        <span class="ident">BAD_BUFFER_SIZE</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>,
+        <span class="ident">BUFFER_TOO_SMALL</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>,
+        <span class="ident">NOT_READY</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>,
+        <span class="ident">DEVICE_ERROR</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>,
+        <span class="ident">WRITE_PROTECTED</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>,
+        <span class="ident">OUT_OF_RESOURCES</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>,
+        <span class="ident">VOLUME_CORRUPTED</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>,
+        <span class="ident">VOLUME_FULL</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>,
+        <span class="ident">NO_MEDIA</span>              <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>,
+        <span class="ident">MEDIA_CHANGED</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>,
+        <span class="ident">NOT_FOUND</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>,
+        <span class="ident">ACCESS_DENIED</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>,
+        <span class="ident">NO_RESPONSE</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>,
+        <span class="ident">NO_MAPPING</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>,
+        <span class="ident">TIMEOUT</span>               <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>,
+        <span class="ident">NOT_STARTED</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>,
+        <span class="ident">ALREADY_STARTED</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>,
+        <span class="ident">ABORTED</span>               <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>,
+        <span class="ident">ICMP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>,
+        <span class="ident">TFTP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>,
+        <span class="ident">PROTOCOL_ERROR</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>,
+        <span class="ident">INCOMPATIBLE_VERSION</span>  <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>,
+        <span class="ident">SECURITY_VIOLATION</span>    <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>,
+        <span class="ident">CRC_ERROR</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>,
+        <span class="ident">END_OF_MEDIA</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>,
+        <span class="ident">END_OF_FILE</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>,
+        <span class="ident">INVALID_LANGUAGE</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>,
+        <span class="ident">COMPROMISED_DATA</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>,
+        <span class="ident">HTTP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>,
+    }
+}
+
 <span class="kw">impl</span> <span class="ident">Status</span> {
-    <span class="comment">// Appendix D</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SUCCESS</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">0</span>);
-
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_UNKNOWN_GLYPH</span>:    <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">1</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_DELETE_FAILURE</span>:   <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">2</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_WRITE_FAILURE</span>:    <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">3</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_BUFFER_TOO_SMALL</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">4</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_STALE_DATA</span>:       <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">5</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_FILE_SYSTEM</span>:      <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">6</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WARN_RESET_REQUIRED</span>:   <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">7</span>);
-
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ERROR_BIT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0x1_usize</span>.<span class="ident">reverse_bits</span>(); <span class="comment">// high bit</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LOAD_ERROR</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">INVALID_PARAMETER</span>:    <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UNSUPPORTED</span>:          <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BAD_BUFFER_SIZE</span>:      <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BUFFER_TOO_SMALL</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NOT_READY</span>:            <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">DEVICE_ERROR</span>:         <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">WRITE_PROTECTED</span>:      <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OUT_OF_RESOURCES</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VOLUME_CORRUPTED</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VOLUME_FULL</span>:          <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NO_MEDIA</span>:             <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MEDIA_CHANGED</span>:        <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NOT_FOUND</span>:            <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACCESS_DENIED</span>:        <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NO_RESPONSE</span>:          <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NO_MAPPING</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TIMEOUT</span>:              <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NOT_STARTED</span>:          <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ALREADY_STARTED</span>:      <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ABORTED</span>:              <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ICMP_ERROR</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TFTP_ERROR</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PROTOCOL_ERROR</span>:       <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">INCOMPATIBLE_VERSION</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SECURITY_VIOLATION</span>:   <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CRC_ERROR</span>:            <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">END_OF_MEDIA</span>:         <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">END_OF_FILE</span>:          <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">INVALID_LANGUAGE</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">COMPROMISED_DATA</span>:     <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HTTP_ERROR</span>:           <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>);
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_error</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         (<span class="self">self</span>.<span class="number">0</span> <span class="op">&amp;</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
@@ -1526,39 +1513,33 @@
 <span class="comment">// with fewer than 256 values. The text refers to reserved ranges up to 0xFFFFFFFF,</span>
 <span class="comment">// implying that it is at least 32 bits. From what I can tell, MSVC (which UEFI borrows a</span>
 <span class="comment">// lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryType</span>(<span class="ident">u32</span>);
-
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
-<span class="kw">impl</span> <span class="ident">MemoryType</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">RESERVED</span>:              <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">0</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LOADER_CODE</span>:           <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">1</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LOADER_DATA</span>:           <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">2</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BOOT_SERVICES_CODE</span>:    <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">3</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BOOT_SERVICES_DATA</span>:    <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">4</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">RUNTIME_SERVICES_CODE</span>: <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">5</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">RUNTIME_SERVICES_DATA</span>: <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">6</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CONVENTIONAL</span>:          <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">7</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UNUSABLE</span>:              <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">8</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_RECLAIM</span>:          <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">9</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_NVS</span>:              <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">10</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAPPED_IO</span>:             <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">11</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAPPED_IO_PORT_SPACE</span>:  <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">12</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PAL_CODE</span>:              <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">13</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PERSISTENT</span>:            <span class="ident">MemoryType</span> <span class="op">=</span> <span class="ident">MemoryType</span>(<span class="number">14</span>);
+<span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MemoryType</span>(<span class="ident">u32</span>) {
+        <span class="ident">RESERVED</span>              <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">LOADER_CODE</span>           <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">LOADER_DATA</span>           <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">BOOT_SERVICES_CODE</span>    <span class="op">=</span> <span class="number">3</span>,
+        <span class="ident">BOOT_SERVICES_DATA</span>    <span class="op">=</span> <span class="number">4</span>,
+        <span class="ident">RUNTIME_SERVICES_CODE</span> <span class="op">=</span> <span class="number">5</span>,
+        <span class="ident">RUNTIME_SERVICES_DATA</span> <span class="op">=</span> <span class="number">6</span>,
+        <span class="ident">CONVENTIONAL</span>          <span class="op">=</span> <span class="number">7</span>,
+        <span class="ident">UNUSABLE</span>              <span class="op">=</span> <span class="number">8</span>,
+        <span class="ident">ACPI_RECLAIM</span>          <span class="op">=</span> <span class="number">9</span>,
+        <span class="ident">ACPI_NVS</span>              <span class="op">=</span> <span class="number">10</span>,
+        <span class="ident">MAPPED_IO</span>             <span class="op">=</span> <span class="number">11</span>,
+        <span class="ident">MAPPED_IO_PORT_SPACE</span>  <span class="op">=</span> <span class="number">12</span>,
+        <span class="ident">PAL_CODE</span>              <span class="op">=</span> <span class="number">13</span>,
+        <span class="ident">PERSISTENT</span>            <span class="op">=</span> <span class="number">14</span>,
+    }
 }
 
 <span class="comment">// TODO: Same caveat as MemoryType</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AllocateType</span>(<span class="ident">u32</span>);
-
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
-<span class="kw">impl</span> <span class="ident">AllocateType</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ANY_ADDRESS</span>:   <span class="ident">AllocateType</span> <span class="op">=</span> <span class="ident">AllocateType</span>(<span class="number">0</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_ADDRESS</span>:   <span class="ident">AllocateType</span> <span class="op">=</span> <span class="ident">AllocateType</span>(<span class="number">1</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXACT_ADDRESS</span>: <span class="ident">AllocateType</span> <span class="op">=</span> <span class="ident">AllocateType</span>(<span class="number">2</span>);
+<span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AllocateType</span>(<span class="ident">u32</span>) {
+        <span class="ident">ANY_ADDRESS</span>   <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">MAX_ADDRESS</span>   <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">EXACT_ADDRESS</span> <span class="op">=</span> <span class="number">2</span>,
+    }
 }
 
 <span class="macro">bitflags</span><span class="macro">!</span> {
@@ -1581,18 +1562,15 @@
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>);
-
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
-<span class="kw">impl</span> <span class="ident">OpenProtocolAttributes</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_HANDLE</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">GET</span>:       <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TEST</span>:      <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_CHILD</span>:  <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BY_DRIVER</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXCLUSIVE</span>: <span class="ident">OpenProtocolAttributes</span> <span class="op">=</span> <span class="ident">OpenProtocolAttributes</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>);
+<span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>) {
+        <span class="ident">BY_HANDLE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>,
+        <span class="ident">GET</span>       <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>,
+        <span class="ident">TEST</span>      <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>,
+        <span class="ident">BY_CHILD</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>,
+        <span class="ident">BY_DRIVER</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>,
+        <span class="ident">EXCLUSIVE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>,
+    }
 }
 
 
