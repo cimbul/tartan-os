@@ -101,7 +101,7 @@ impl FixedConfigRegister for HeaderRegister3 {
 
 
 bitfield! {
-    /// Tenth register of the standard configuration header for general-purpose devices
+    /// Twelfth register of the standard configuration header for general-purpose devices
     /// (header type `0x00`).
     pub struct Type0HeaderRegister11(u32) {
         /// ID of the device as defined by the card manufacturer.
@@ -112,9 +112,14 @@ bitfield! {
     }
 }
 
+impl FixedConfigRegister for Type0HeaderRegister11 {
+    const REGISTER_NUMBER: u8 = 11;
+}
+
 
 bitfield! {
-    /// Twelfth register of the standard configuration header for general-purpose devices.
+    /// Fourtheenth register of the standard configuration header for general-purpose
+    /// devices.
     pub struct Type0HeaderRegister13(u32) {
         /// Offset within this function's configuration space that points to the first
         /// of a linked list of "capabilities" supported by the device. Only valid if the
@@ -123,9 +128,13 @@ bitfield! {
     }
 }
 
+impl FixedConfigRegister for Type0HeaderRegister13 {
+    const REGISTER_NUMBER: u8 = 13;
+}
+
 
 bitfield! {
-    /// Fourtheenth register of the standard configuration header for general-purpose
+    /// Sixteenth register of the standard configuration header for general-purpose
     /// devices.
     pub struct Type0HeaderRegister15(u32) {
         /// Indicates the longest period the device can wait to access the PCI bus, in
@@ -141,6 +150,10 @@ bitfield! {
         /// system's interrupt controller.
         [ 0.. 8] pub interrupt_line: u8,
     }
+}
+
+impl FixedConfigRegister for Type0HeaderRegister15 {
+    const REGISTER_NUMBER: u8 = 15;
 }
 
 
@@ -320,4 +333,15 @@ pub enum AddressWidth {
     U64,
     /// Unknown address bus width
     Invalid,
+}
+
+
+bitfield! {
+    /// Structure shared by all capability registers
+    pub struct GenericCapabilityRegister(u32) {
+        /// Capability ID defined by PCI-SIG
+        [ 0.. 8] pub id: u8,
+        /// Byte offset within capability space of next capability register, or 0 if none.
+        [ 8..16] pub next_offset: u8,
+    }
 }

@@ -179,6 +179,15 @@ fn enumerate_pci(out: &mut OutputStream) -> Result {
             class_register.interface(),
             class_register.revision(),
         )?;
+
+        for capability in pci::iter_capabilities(&access, selector) {
+            writeln_result!(
+                out,
+                "       capability {:02x} (register {:04x})",
+                capability.id,
+                capability.register,
+            )?;
+        }
     }
 
     Ok(Status::SUCCESS)

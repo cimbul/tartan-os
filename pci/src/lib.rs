@@ -6,7 +6,7 @@
 #![allow(clippy::must_use_candidate)]
 
 use access::{ConfigAccess, ConfigSelector};
-use config::{HeaderRegister0, HeaderRegister3};
+use core::iter;
 
 /// Access methods for PCI configuration space.
 pub mod access;
@@ -64,7 +64,8 @@ pub fn enumerate_device_functions<'a, A>(
 where
     A: ConfigAccess,
 {
-    let fn_0_register: HeaderRegister3 = access.get_fixed_register(device_selector);
+    let fn_0_register: config::HeaderRegister3 =
+        access.get_fixed_register(device_selector);
     let function_range =
         if fn_0_register.multi_function() { 0..MAX_FUNCTION } else { 0..1 };
     function_range.filter_map(move |function| {
@@ -82,6 +83,39 @@ pub fn check_valid<A>(access: &A, selector: ConfigSelector) -> bool
 where
     A: ConfigAccess,
 {
-    let id_register: HeaderRegister0 = access.get_fixed_register(selector);
+    let id_register: config::HeaderRegister0 = access.get_fixed_register(selector);
     id_register.valid()
+}
+
+/// Information to identify and locate capability registers
+pub struct CapabilityEntry {
+    /// Capability ID defined by PCI-SIG
+    pub id: u8,
+    /// Register number in config space (offset in 4-byte units) of the start of the
+    /// capability data.
+    pub register: u16,
+}
+
+/// Iterate over all capabilities defined in the configuration space for a PCI function
+pub fn iter_capabilities<'a, A>(
+    access: &'a A,
+    selector: ConfigSelector,
+) -> impl Iterator<Item = CapabilityEntry> + 'a
+where
+    A: ConfigAccess,
+{
+    let capability_header: config::Type0HeaderRegister13 =
+        access.get_fixed_register(selector);
+    let mut next_offset = capability_header.capabilities_offset();
+    iter::from_fn(move || {
+        if next_offset == 0 {
+            None
+        } else {
+            let register = u16::from(next_offset / 4);
+            let capability: config::GenericCapabilityRegister =
+                access.get_register(selector, register).into();
+            next_offset = capability.next_offset();
+            Some(CapabilityEntry { id: capability.id(), register })
+        }
+    })
 }
