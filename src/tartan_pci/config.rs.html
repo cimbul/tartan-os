@@ -322,6 +322,30 @@
 <span id="321">321</span>
 <span id="322">322</span>
 <span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">INVALID_VENDOR</span>;
 <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
@@ -426,7 +450,7 @@
 
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
-    <span class="doccomment">/// Tenth register of the standard configuration header for general-purpose devices</span>
+    <span class="doccomment">/// Twelfth register of the standard configuration header for general-purpose devices</span>
     <span class="doccomment">/// (header type `0x00`).</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister11</span>(<span class="ident">u32</span>) {
         <span class="doccomment">/// ID of the device as defined by the card manufacturer.</span>
@@ -437,9 +461,14 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister11</span> {
+    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">11</span>;
+}
+
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
-    <span class="doccomment">/// Twelfth register of the standard configuration header for general-purpose devices.</span>
+    <span class="doccomment">/// Fourtheenth register of the standard configuration header for general-purpose</span>
+    <span class="doccomment">/// devices.</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister13</span>(<span class="ident">u32</span>) {
         <span class="doccomment">/// Offset within this function&#39;s configuration space that points to the first</span>
         <span class="doccomment">/// of a linked list of &quot;capabilities&quot; supported by the device. Only valid if the</span>
@@ -448,9 +477,13 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister13</span> {
+    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">13</span>;
+}
+
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
-    <span class="doccomment">/// Fourtheenth register of the standard configuration header for general-purpose</span>
+    <span class="doccomment">/// Sixteenth register of the standard configuration header for general-purpose</span>
     <span class="doccomment">/// devices.</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister15</span>(<span class="ident">u32</span>) {
         <span class="doccomment">/// Indicates the longest period the device can wait to access the PCI bus, in</span>
@@ -466,6 +499,10 @@
         <span class="doccomment">/// system&#39;s interrupt controller.</span>
         [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">interrupt_line</span>: <span class="ident">u8</span>,
     }
+}
+
+<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister15</span> {
+    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">15</span>;
 }
 
 
@@ -645,6 +682,17 @@
     <span class="ident">U64</span>,
     <span class="doccomment">/// Unknown address bus width</span>
     <span class="ident">Invalid</span>,
+}
+
+
+<span class="macro">bitfield</span><span class="macro">!</span> {
+    <span class="doccomment">/// Structure shared by all capability registers</span>
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GenericCapabilityRegister</span>(<span class="ident">u32</span>) {
+        <span class="doccomment">/// Capability ID defined by PCI-SIG</span>
+        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">u8</span>,
+        <span class="doccomment">/// Byte offset within capability space of next capability register, or 0 if none.</span>
+        [ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">next_offset</span>: <span class="ident">u8</span>,
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "tartan_pci";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
