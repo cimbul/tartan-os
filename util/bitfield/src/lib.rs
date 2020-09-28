@@ -358,6 +358,16 @@ truncate_into_impl!(u16, u8);
 
 truncate_into_impl!(u8, u8);
 
+truncate_into_impl!(usize, usize);
+#[cfg(target_pointer_width = "64")]
+truncate_into_impl!(usize, u64);
+#[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
+truncate_into_impl!(usize, u32);
+#[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
+truncate_into_impl!(usize, u16);
+#[cfg(any(target_pointer_width = "64", target_pointer_width = "32"))]
+truncate_into_impl!(usize, u8);
+
 
 /// A type with an overflowing left shift operation. Also adds a saturating version.
 ///
@@ -371,7 +381,7 @@ where
     /// type. Return the shifted value along with a boolean indicating whether the shift
     /// count was wrapped.
     ///
-    /// Since this behavior is unintuitive and practically useless, see
+    /// Since this behavior is counterintuitive and practically useless, see
     /// [`saturating_shl`](Self::saturating_shl) for an alternative that behaves the way
     /// you probably expect.
     fn overflowing_shl(self, n: u32) -> (Self, bool);
@@ -403,6 +413,7 @@ overflowing_shl_impl!(u16);
 overflowing_shl_impl!(u32);
 overflowing_shl_impl!(u64);
 overflowing_shl_impl!(u128);
+overflowing_shl_impl!(usize);
 
 
 /// A type with an overflowing right shift operation. Also adds a saturating version.
@@ -417,7 +428,7 @@ where
     /// type. Return the shifted value along with a boolean indicating whether the shift
     /// count was wrapped.
     ///
-    /// Since this behavior is unintuitive and practically useless, see
+    /// Since this behavior is counterintuitive and practically useless, see
     /// [`saturating_shr`](Self::saturating_shr) for an alternative that behaves the way
     /// you probably expect.
     fn overflowing_shr(self, n: u32) -> (Self, bool);
@@ -449,3 +460,4 @@ overflowing_shr_impl!(u16);
 overflowing_shr_impl!(u32);
 overflowing_shr_impl!(u64);
 overflowing_shr_impl!(u128);
+overflowing_shr_impl!(usize);
