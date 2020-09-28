@@ -672,6 +672,10 @@ dependencies = [
 [[package]]
 name = "tartan-arch"
 version = "0.1.0"
+dependencies = [
+ "tartan-bitfield",
+ "tartan-c-enum",
+]
 
 [[package]]
 name = "tartan-bitfield"

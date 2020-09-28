@@ -17,4 +17,9 @@ macro_rules! arch_module {
 
 arch_module!(x86, target_arch = "x86");
 arch_module!(x86_64, target_arch = "x86_64");
-arch_module!(x86_common, any(target_arch = "x86", target_arch = "x86_64"));
+
+// We can't use #[macro_use] from within a macro
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", doc))]
+#[doc(cfg(any(target_arch = "x86", target_arch = "x86_64")))]
+#[macro_use]
+pub mod x86_common;

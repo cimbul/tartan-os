@@ -9,3 +9,6 @@ homepage = "https://github.com/cimbul/tartan-os"
 publish = false
 
 [dependencies]
+# Internal
+tartan-bitfield = {path = "../util/bitfield"}
+tartan-c-enum = {path = "../util/c_enum"}
