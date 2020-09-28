@@ -96,17 +96,39 @@ use core::ops;
 pub use paste::paste;
 
 
+/// Marker trait implemented by types defined with the [`bitfield`] macro.
+///
+/// This mainly exists to allow type inference in the [`bitfield_accessors`] macro, but it
+/// also aids documentation and may be useful in user code.
+pub trait Bitfield<T>
+where
+    Self: core::fmt::Debug + Default + Copy + Eq + From<T> + Into<T>,
+{
+    /// Construct a new bitfield type from its underlying representation
+    #[inline(always)]
+    fn new(value: T) -> Self {
+        value.into()
+    }
+
+    /// Unwrap the bitfield into its underlying representation
+    #[inline(always)]
+    fn value(self) -> T {
+        self.into()
+    }
+}
+
+
 /// Define a structure that wraps a number with accessors for certain bit ranges.
 ///
 /// See the crate documentation for an example.
 ///
 /// The structure will implement these traits, where `T` is the underlying type defined
 /// in parentheses immediately after the struct name.
+///   * [`Bitfield<T>`](Bitfield)
 ///   * [`Debug`]
 ///   * [`Default`]
-///   * [`Clone`]
 ///   * [`Copy`]
-///   * [`PartialEq`]
+///   * [`Eq`]
 ///   * [`Into<T>`](Into)
 ///   * [`From<T>`](From)
 #[macro_export]
@@ -129,24 +151,96 @@ macro_rules! bitfield {
         $struct_vis struct $struct($underlying_type);
 
         impl $struct {
-            $(
-                $crate::bitfield! {
-                    @field
+            $crate::bitfield_accessors! {
+                $(
                     $( #[$field_meta] )*
                     [ $field_lsb $( .. $field_msb )? ]
                     $field_vis $field
                     $( : $field_underlying_type $( as $field_interface_type )? )?
-                }
-            )*
+                ),*
+            }
         }
 
+        impl $crate::Bitfield<$underlying_type> for $struct {}
+
         impl ::core::convert::From<$underlying_type> for $struct {
+            #[inline(always)]
             fn from(val: $underlying_type) -> Self { Self(val) }
         }
 
         impl ::core::convert::From<$struct> for $underlying_type {
+            #[inline(always)]
             fn from(val: $struct) -> Self { val.0 }
         }
+    };
+}
+
+
+/// Define getters and setters for certain bit ranges. The containing type must
+/// implement the [`Bitfield`] trait.
+///
+/// This is most commonly invoked by the [`bitfield`] macro, but it can be used on its own
+/// to define common accessors as part of a trait, as in the example below:
+///
+/// ```
+/// # use tartan_bitfield::{Bitfield, bitfield, bitfield_accessors};
+/// #
+/// trait CommonFields: Bitfield<u32> {
+///     bitfield_accessors! {
+///         // Since these are part of a trait, the `pub` keyword must be omitted.
+///         [ 0.. 6] a: u8,
+///         [14]     b,
+///         [18..32] c: u16,
+///     }
+/// }
+///
+/// bitfield! {
+///     struct SomeFields(u32) {
+///         [ 7] pub x,
+///         [16] pub y,
+///     }
+/// }
+///
+/// bitfield! {
+///     struct OtherFields(u32) {
+///         [10] pub z,
+///         [12] pub q,
+///     }
+/// }
+///
+/// impl CommonFields for SomeFields {}
+/// impl CommonFields for OtherFields {}
+///
+/// let f = SomeFields(0xabcd_1234);
+/// assert_eq!(f.a(), 0x34); // has accessors from CommonFields
+/// assert_eq!(f.y(), true); // has accessors from SomeFields
+/// //assert_eq!(f.z(), false); // COMPILE ERROR: no accessors from OtherFields
+///
+/// let g = OtherFields(0xabcd_1234);
+/// assert_eq!(g.a(), 0x34); // has accessors from CommonFields
+/// //assert_eq!(g.y(), true); // COMPILE ERROR: no accessors from SomeFields
+/// assert_eq!(g.z(), false); // has accessors from OtherFields
+/// ```
+#[macro_export]
+macro_rules! bitfield_accessors {
+    [
+        $(
+            $( #[$meta:meta] )*
+            [ $lsb:literal $( .. $msb:literal )? ]
+            $vis:vis $field:ident
+            $( : $underlying_type:ty $( as $interface_type:ty )? )?
+        ),*
+        $(,)?
+    ] => {
+        $(
+            $crate::bitfield_accessors! {
+                @field
+                $( #[$meta] )*
+                [ $lsb $( .. $msb )? ]
+                $vis $field
+                $( : $underlying_type $( as $interface_type )? )?
+            }
+        )*
     };
 
     // Special case for single-bit boolean fields
@@ -159,12 +253,14 @@ macro_rules! bitfield {
         $crate::paste! {
             $( #[$meta] )*
             $vis fn $field(&self) -> bool {
-                $crate::get_bit(self.0, $bit)
+                $crate::get_bit(<Self as $crate::Bitfield<_>>::value(*self), $bit)
             }
 
             $( #[$meta] )*
             $vis fn [< set_ $field >](&mut self, value: bool) {
-                self.0 = $crate::set_bit(self.0, $bit, value);
+                let packed = <Self as $crate::Bitfield<_>>::value(*self);
+                *self = <Self as $crate::Bitfield<_>>::new(
+                    $crate::set_bit(packed, $bit, value));
             }
         }
     };
@@ -178,7 +274,7 @@ macro_rules! bitfield {
         $vis:vis $field:ident
         : $field_type:ty
     ] => {
-        $crate::bitfield! {
+        $crate::bitfield_accessors! {
             @field
             $( #[$meta] )*
             [$lsb..$msb] $vis $field: $field_type as $field_type
@@ -196,16 +292,18 @@ macro_rules! bitfield {
             $( #[$meta] )*
             $vis fn $field(&self) -> $interface_type {
                 use $crate::TruncateInto;
+                let packed = <Self as $crate::Bitfield<_>>::value(*self);
                 let underlying: $underlying_type =
-                    $crate::get_bits(self.0, $lsb, $msb).truncate_into();
+                    $crate::get_bits(packed, $lsb, $msb).truncate_into();
                 underlying.into()
             }
 
             $( #[$meta] )*
             $vis fn [< set_ $field >](&mut self, value: $interface_type) {
                 let underlying: $underlying_type = value.into();
-                self.0 =
-                    $crate::set_bits(self.0, $lsb, $msb, underlying.into());
+                let packed = <Self as $crate::Bitfield<_>>::value(*self);
+                *self = <Self as $crate::Bitfield<_>>::new(
+                    $crate::set_bits(packed, $lsb, $msb, underlying.into()));
             }
         }
     };
