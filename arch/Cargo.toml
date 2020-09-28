@@ -9,4 +9,3 @@ homepage = "https://github.com/cimbul/tartan-os"
 publish = false
 
 [dependencies]
-cfg-if = "0.1.10"

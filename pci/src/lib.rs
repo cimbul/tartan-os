@@ -1,6 +1,7 @@
 //! Support for Peripheral Component Interconnect (PCI) and PCI Express (`PCIe`) devices.
 
 #![no_std]
+#![feature(doc_cfg)]
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]

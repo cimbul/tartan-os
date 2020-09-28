@@ -108,12 +108,13 @@ impl ConfigAccess for MemMapConfigAccess {
 /// Support for the I/O based configuration access method on x86/x86-64.
 ///
 /// Note that other architectures have no concept of I/O space.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", doc))]
+#[doc(cfg(any(target_arch = "x86", target_arch = "x86_64")))]
 pub mod io {
     use crate::access::{ConfigAccess, ConfigSelector};
     use crate::MAX_DEVICE;
     use core::convert::TryFrom;
-    use tartan_arch as arch;
+    use tartan_arch::x86_common::io;
     use tartan_bitfield::bitfield;
 
     /// I/O based configuration access method on x86/x86-64.
@@ -140,7 +141,7 @@ pub mod io {
             let config_address_le = config_address.0.to_le();
 
             unsafe {
-                arch::io::out_u32(Self::CONFIG_ADDRESS_PORT, config_address_le);
+                io::out_u32(Self::CONFIG_ADDRESS_PORT, config_address_le);
             };
         }
     }
@@ -148,13 +149,13 @@ pub mod io {
     impl ConfigAccess for IOConfigAccess {
         fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
             Self::write_config_address(selector, register);
-            let register_data_le = unsafe { arch::io::in_u32(Self::CONFIG_DATA_PORT) };
+            let register_data_le = unsafe { io::in_u32(Self::CONFIG_DATA_PORT) };
             u32::from_le(register_data_le)
         }
 
         fn set_register(&self, selector: ConfigSelector, register: u16, value: u32) {
             Self::write_config_address(selector, register);
-            unsafe { arch::io::out_u32(Self::CONFIG_DATA_PORT, value.to_le()) }
+            unsafe { io::out_u32(Self::CONFIG_DATA_PORT, value.to_le()) }
         }
     }
 

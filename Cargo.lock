@@ -672,9 +672,6 @@ dependencies = [
 [[package]]
 name = "tartan-arch"
 version = "0.1.0"
-dependencies = [
- "cfg-if",
-]
 
 [[package]]
 name = "tartan-bitfield"
