@@ -23,7 +23,7 @@ pub struct OutputStream<'a> {
 
 impl<'a> OutputStream<'a> {
     pub fn new(out: &'a SimpleTextOutput) -> Self {
-        OutputStream { out, last_result: Ok(Status::SUCCESS) }
+        OutputStream { out, last_result: Ok(Status::Success) }
     }
 }
 

@@ -102,6 +102,7 @@ macro_rules! c_enum {
         impl $name {
             $(
                 $(#[$variant_meta])*
+                #[allow(non_upper_case_globals)]
                 pub const $variant_name: $name = $name($variant_value);
             )*
 

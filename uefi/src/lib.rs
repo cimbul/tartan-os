@@ -103,48 +103,48 @@ pub type Result = core::result::Result<Status, Status>;
 c_enum! {
     pub enum Status(usize) {
         // Appendix D
-        SUCCESS               = 0,
+        Success             = 0,
 
-        WARN_UNKNOWN_GLYPH    = 1,
-        WARN_DELETE_FAILURE   = 2,
-        WARN_WRITE_FAILURE    = 3,
-        WARN_BUFFER_TOO_SMALL = 4,
-        WARN_STALE_DATA       = 5,
-        WARN_FILE_SYSTEM      = 6,
-        WARN_RESET_REQUIRED   = 7,
+        WarnUnknownGlyph    = 1,
+        WarnDeleteFailure   = 2,
+        WarnWriteFailure    = 3,
+        WarnBufferTooSmall  = 4,
+        WarnStaleData       = 5,
+        WarnFileSystem      = 6,
+        WarnResetRequired   = 7,
 
-        LOAD_ERROR            = Status::ERROR_BIT | 1,
-        INVALID_PARAMETER     = Status::ERROR_BIT | 2,
-        UNSUPPORTED           = Status::ERROR_BIT | 3,
-        BAD_BUFFER_SIZE       = Status::ERROR_BIT | 4,
-        BUFFER_TOO_SMALL      = Status::ERROR_BIT | 5,
-        NOT_READY             = Status::ERROR_BIT | 6,
-        DEVICE_ERROR          = Status::ERROR_BIT | 7,
-        WRITE_PROTECTED       = Status::ERROR_BIT | 8,
-        OUT_OF_RESOURCES      = Status::ERROR_BIT | 9,
-        VOLUME_CORRUPTED      = Status::ERROR_BIT | 10,
-        VOLUME_FULL           = Status::ERROR_BIT | 11,
-        NO_MEDIA              = Status::ERROR_BIT | 12,
-        MEDIA_CHANGED         = Status::ERROR_BIT | 13,
-        NOT_FOUND             = Status::ERROR_BIT | 14,
-        ACCESS_DENIED         = Status::ERROR_BIT | 15,
-        NO_RESPONSE           = Status::ERROR_BIT | 16,
-        NO_MAPPING            = Status::ERROR_BIT | 17,
-        TIMEOUT               = Status::ERROR_BIT | 18,
-        NOT_STARTED           = Status::ERROR_BIT | 19,
-        ALREADY_STARTED       = Status::ERROR_BIT | 20,
-        ABORTED               = Status::ERROR_BIT | 21,
-        ICMP_ERROR            = Status::ERROR_BIT | 22,
-        TFTP_ERROR            = Status::ERROR_BIT | 23,
-        PROTOCOL_ERROR        = Status::ERROR_BIT | 24,
-        INCOMPATIBLE_VERSION  = Status::ERROR_BIT | 25,
-        SECURITY_VIOLATION    = Status::ERROR_BIT | 26,
-        CRC_ERROR             = Status::ERROR_BIT | 27,
-        END_OF_MEDIA          = Status::ERROR_BIT | 28,
-        END_OF_FILE           = Status::ERROR_BIT | 31,
-        INVALID_LANGUAGE      = Status::ERROR_BIT | 32,
-        COMPROMISED_DATA      = Status::ERROR_BIT | 33,
-        HTTP_ERROR            = Status::ERROR_BIT | 35,
+        LoadError           = Status::ERROR_BIT | 1,
+        InvalidParameter    = Status::ERROR_BIT | 2,
+        Unsupported         = Status::ERROR_BIT | 3,
+        BadBufferSize       = Status::ERROR_BIT | 4,
+        BufferTooSmall      = Status::ERROR_BIT | 5,
+        NotReady            = Status::ERROR_BIT | 6,
+        DeviceError         = Status::ERROR_BIT | 7,
+        WriteProtected      = Status::ERROR_BIT | 8,
+        OutOfResources      = Status::ERROR_BIT | 9,
+        VolumeCorrupted     = Status::ERROR_BIT | 10,
+        VolumeFull          = Status::ERROR_BIT | 11,
+        NoMedia             = Status::ERROR_BIT | 12,
+        MediaChanged        = Status::ERROR_BIT | 13,
+        NotFound            = Status::ERROR_BIT | 14,
+        AccessDenied        = Status::ERROR_BIT | 15,
+        NoResponse          = Status::ERROR_BIT | 16,
+        NoMapping           = Status::ERROR_BIT | 17,
+        Timeout             = Status::ERROR_BIT | 18,
+        NotStarted          = Status::ERROR_BIT | 19,
+        AlreadyStarted      = Status::ERROR_BIT | 20,
+        Aborted             = Status::ERROR_BIT | 21,
+        ICMPError           = Status::ERROR_BIT | 22,
+        TFTPError           = Status::ERROR_BIT | 23,
+        ProtocolError       = Status::ERROR_BIT | 24,
+        IncompatibleVersion = Status::ERROR_BIT | 25,
+        SecurityViolation   = Status::ERROR_BIT | 26,
+        CRCError            = Status::ERROR_BIT | 27,
+        EndOfMedia          = Status::ERROR_BIT | 28,
+        EndOfFile           = Status::ERROR_BIT | 31,
+        InvalidLanguage     = Status::ERROR_BIT | 32,
+        CompromisedData     = Status::ERROR_BIT | 33,
+        HTTPError           = Status::ERROR_BIT | 35,
     }
 }
 
@@ -156,7 +156,7 @@ impl Status {
     }
 
     pub fn is_warning(self) -> bool {
-        self != Status::SUCCESS && !self.is_error()
+        self != Status::Success && !self.is_error()
     }
 
     /// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].
@@ -183,22 +183,22 @@ mod test_status {
     #[test]
     fn test_equality() {
         let status = Status(1);
-        assert_eq!(status, Status::WARN_UNKNOWN_GLYPH);
-        assert_ne!(status, Status::SUCCESS);
-        assert_ne!(status, Status::LOAD_ERROR);
+        assert_eq!(status, Status::WarnUnknownGlyph);
+        assert_ne!(status, Status::Success);
+        assert_ne!(status, Status::LoadError);
     }
 
     #[test]
     fn test_is_error() {
-        assert_eq!(false, Status::SUCCESS.is_error());
+        assert_eq!(false, Status::Success.is_error());
 
-        assert_eq!(false, Status::WARN_UNKNOWN_GLYPH.is_error());
-        assert_eq!(false, Status::WARN_FILE_SYSTEM.is_error());
-        assert_eq!(false, Status::WARN_RESET_REQUIRED.is_error());
+        assert_eq!(false, Status::WarnUnknownGlyph.is_error());
+        assert_eq!(false, Status::WarnFileSystem.is_error());
+        assert_eq!(false, Status::WarnResetRequired.is_error());
 
-        assert_eq!(true, Status::LOAD_ERROR.is_error());
-        assert_eq!(true, Status::ACCESS_DENIED.is_error());
-        assert_eq!(true, Status::HTTP_ERROR.is_error());
+        assert_eq!(true, Status::LoadError.is_error());
+        assert_eq!(true, Status::AccessDenied.is_error());
+        assert_eq!(true, Status::HTTPError.is_error());
 
         if cfg!(target_pointer_width = "32") {
             assert_eq!(Status(0x0000_0000).is_error(), false);
@@ -217,15 +217,15 @@ mod test_status {
 
     #[test]
     fn test_is_warning() {
-        assert_eq!(false, Status::SUCCESS.is_warning());
+        assert_eq!(false, Status::Success.is_warning());
 
-        assert_eq!(true, Status::WARN_UNKNOWN_GLYPH.is_warning());
-        assert_eq!(true, Status::WARN_FILE_SYSTEM.is_warning());
-        assert_eq!(true, Status::WARN_RESET_REQUIRED.is_warning());
+        assert_eq!(true, Status::WarnUnknownGlyph.is_warning());
+        assert_eq!(true, Status::WarnFileSystem.is_warning());
+        assert_eq!(true, Status::WarnResetRequired.is_warning());
 
-        assert_eq!(false, Status::LOAD_ERROR.is_warning());
-        assert_eq!(false, Status::ACCESS_DENIED.is_warning());
-        assert_eq!(false, Status::HTTP_ERROR.is_warning());
+        assert_eq!(false, Status::LoadError.is_warning());
+        assert_eq!(false, Status::AccessDenied.is_warning());
+        assert_eq!(false, Status::HTTPError.is_warning());
 
         if cfg!(target_pointer_width = "32") {
             assert_eq!(Status(0x0000_0000).is_warning(), false);
@@ -244,10 +244,10 @@ mod test_status {
 
     #[test]
     fn test_into_result() {
-        assert_eq!(Status::SUCCESS.into_result(), Ok(Status::SUCCESS));
-        assert_eq!(Status::WARN_FILE_SYSTEM.into_result(), Ok(Status::WARN_FILE_SYSTEM));
-        assert_eq!(Status::LOAD_ERROR.into_result(), Err(Status::LOAD_ERROR));
-        assert_eq!(Status::HTTP_ERROR.into_result(), Err(Status::HTTP_ERROR));
+        assert_eq!(Status::Success.into_result(), Ok(Status::Success));
+        assert_eq!(Status::WarnFileSystem.into_result(), Ok(Status::WarnFileSystem));
+        assert_eq!(Status::LoadError.into_result(), Err(Status::LoadError));
+        assert_eq!(Status::HTTPError.into_result(), Err(Status::HTTPError));
     }
 }
 
@@ -687,30 +687,30 @@ impl Default for MemoryMap {
 // lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.
 c_enum! {
     pub enum MemoryType(u32) {
-        RESERVED              = 0,
-        LOADER_CODE           = 1,
-        LOADER_DATA           = 2,
-        BOOT_SERVICES_CODE    = 3,
-        BOOT_SERVICES_DATA    = 4,
-        RUNTIME_SERVICES_CODE = 5,
-        RUNTIME_SERVICES_DATA = 6,
-        CONVENTIONAL          = 7,
-        UNUSABLE              = 8,
-        ACPI_RECLAIM          = 9,
-        ACPI_NVS              = 10,
-        MAPPED_IO             = 11,
-        MAPPED_IO_PORT_SPACE  = 12,
-        PAL_CODE              = 13,
-        PERSISTENT            = 14,
+        Reserved            = 0,
+        LoaderCode          = 1,
+        LoaderData          = 2,
+        BootServicesCode    = 3,
+        BootServicesData    = 4,
+        RuntimeServicesCode = 5,
+        RuntimeServicesData = 6,
+        Conventional        = 7,
+        Unusable            = 8,
+        ACPIReclaim         = 9,
+        ACPINonVolatile     = 10,
+        MappedIO            = 11,
+        MappedIOPortSpace   = 12,
+        PALCode             = 13,
+        Persistent          = 14,
     }
 }
 
 // TODO: Same caveat as MemoryType
 c_enum! {
     pub enum AllocateType(u32) {
-        ANY_ADDRESS   = 0,
-        MAX_ADDRESS   = 1,
-        EXACT_ADDRESS = 2,
+        AnyAddress   = 0,
+        MaxAddress   = 1,
+        ExactAddress = 2,
     }
 }
 
@@ -736,12 +736,12 @@ bitflags! {
 
 c_enum! {
     pub enum OpenProtocolAttributes(u32) {
-        BY_HANDLE = 1 << 0,
-        GET       = 1 << 1,
-        TEST      = 1 << 2,
-        BY_CHILD  = 1 << 3,
-        BY_DRIVER = 1 << 4,
-        EXCLUSIVE = 1 << 5,
+        ByHandle  = 1 << 0,
+        Get       = 1 << 1,
+        Test      = 1 << 2,
+        ByChild   = 1 << 3,
+        ByDriver  = 1 << 4,
+        Exclusive = 1 << 5,
     }
 }
 

@@ -47,7 +47,7 @@ impl BootAllocator {
 
         let mut buffer: *mut c_void = ptr::null_mut();
         (boot_services.allocate_pool)(
-            MemoryType::LOADER_DATA,
+            MemoryType::LoaderData,
             adjusted_layout.size(),
             &mut buffer,
         )

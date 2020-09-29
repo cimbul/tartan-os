@@ -160,22 +160,22 @@ const_assert_eq!(12, size_of::<GenericAddress>());
 c_enum! {
     /// Type of register address
     pub enum AddressSpace(u8) {
-        SYSTEM_MEMORY                   = 0x00,
-        SYSTEM_IO                       = 0x01,
-        PCI_CONFIGURATION               = 0x02,
-        EMBEDDED_CONTROLLER             = 0x03,
-        SM_BUS                          = 0x04,
-        SYSTEM_CMOS                     = 0x05,
-        PCI_BAR_TARGET                  = 0x06,
-        IPMI                            = 0x07,
-        GENERAL_PURPOSE_IO              = 0x08,
-        GENERIC_SERIAL_BUS              = 0x09,
-        PLATFORM_COMMUNICATIONS_CHANNEL = 0x0a,
+        SystemMemory                  = 0x00,
+        SystemIO                      = 0x01,
+        PCIConfiguration              = 0x02,
+        EmbeddedController            = 0x03,
+        SMBus                         = 0x04,
+        SystemCMOS                    = 0x05,
+        PCIBARTarget                  = 0x06,
+        IPMI                          = 0x07,
+        GeneralPurposeIo              = 0x08,
+        GenericSerialBus              = 0x09,
+        PlatformCommunicationsChannel = 0x0a,
 
-        FUNCTIONAL_FIXED                = 0x7f,
+        FunctionalFixed               = 0x7f,
 
-        OEM_DEFINED_MIN                 = 0xc0,
-        OEM_DEFINED_MAX                 = 0xff,
+        OEMDefinedMin                 = 0xc0,
+        OEMDefinedMax                 = 0xff,
     }
 }
 
@@ -183,11 +183,11 @@ c_enum! {
 c_enum! {
     /// Memory width used to read/write from a register
     pub enum AccessSize(u8) {
-        UNDEFINED = 0,
-        BYTE      = 1,
-        WORD      = 2,
-        DWORD     = 3,
-        QWORD     = 4,
+        Undefined = 0,
+        Byte      = 1,
+        Word      = 2,
+        DWord     = 3,
+        QWord     = 4,
     }
 }
 

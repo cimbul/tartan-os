@@ -74,7 +74,7 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
             ((&mut loaded_image) as *mut *const LoadedImage).cast(),
             image_handle,
             Handle::NULL,
-            OpenProtocolAttributes::GET,
+            OpenProtocolAttributes::Get,
         )
         .into_result()?;
 
@@ -129,7 +129,7 @@ fn fakepoint() {
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 fn enumerate_pci(_: &mut OutputStream) -> Result {
     // TODO
-    Ok(Status::SUCCESS)
+    Ok(Status::Success)
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -190,7 +190,7 @@ fn enumerate_pci(out: &mut OutputStream) -> Result {
         }
     }
 
-    Ok(Status::SUCCESS)
+    Ok(Status::Success)
 }
 
 fn get_memory_map(
@@ -216,7 +216,7 @@ fn get_memory_map(
         };
         match result {
             Ok(_) => break,
-            Err(Status::BUFFER_TOO_SMALL) => {
+            Err(Status::BufferTooSmall) => {
                 // Allow room for another entry since we have to reallocate the buffer
                 memory_map_size += memory_map.descriptor_size
             }
