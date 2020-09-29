@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["io","Access to I/O space"]]});
+initSidebarItems({"mod":[["x86","Architecture-specific bindings for 32-bit x86 processors."],["x86_64","Architecture-specific bindings for 64-bit x86 processors."],["x86_common","Architecture-specific bindings common to 32-bit and 64-bit x86 processors."]]});

@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `uefi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_uefi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `uefi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_uefi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -931,48 +933,48 @@
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Status</span>(<span class="ident">usize</span>) {
         <span class="comment">// Appendix D</span>
-        <span class="ident">SUCCESS</span>               <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">Success</span>             <span class="op">=</span> <span class="number">0</span>,
 
-        <span class="ident">WARN_UNKNOWN_GLYPH</span>    <span class="op">=</span> <span class="number">1</span>,
-        <span class="ident">WARN_DELETE_FAILURE</span>   <span class="op">=</span> <span class="number">2</span>,
-        <span class="ident">WARN_WRITE_FAILURE</span>    <span class="op">=</span> <span class="number">3</span>,
-        <span class="ident">WARN_BUFFER_TOO_SMALL</span> <span class="op">=</span> <span class="number">4</span>,
-        <span class="ident">WARN_STALE_DATA</span>       <span class="op">=</span> <span class="number">5</span>,
-        <span class="ident">WARN_FILE_SYSTEM</span>      <span class="op">=</span> <span class="number">6</span>,
-        <span class="ident">WARN_RESET_REQUIRED</span>   <span class="op">=</span> <span class="number">7</span>,
+        <span class="ident">WarnUnknownGlyph</span>    <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">WarnDeleteFailure</span>   <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">WarnWriteFailure</span>    <span class="op">=</span> <span class="number">3</span>,
+        <span class="ident">WarnBufferTooSmall</span>  <span class="op">=</span> <span class="number">4</span>,
+        <span class="ident">WarnStaleData</span>       <span class="op">=</span> <span class="number">5</span>,
+        <span class="ident">WarnFileSystem</span>      <span class="op">=</span> <span class="number">6</span>,
+        <span class="ident">WarnResetRequired</span>   <span class="op">=</span> <span class="number">7</span>,
 
-        <span class="ident">LOAD_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>,
-        <span class="ident">INVALID_PARAMETER</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>,
-        <span class="ident">UNSUPPORTED</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>,
-        <span class="ident">BAD_BUFFER_SIZE</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>,
-        <span class="ident">BUFFER_TOO_SMALL</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>,
-        <span class="ident">NOT_READY</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>,
-        <span class="ident">DEVICE_ERROR</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>,
-        <span class="ident">WRITE_PROTECTED</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>,
-        <span class="ident">OUT_OF_RESOURCES</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>,
-        <span class="ident">VOLUME_CORRUPTED</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>,
-        <span class="ident">VOLUME_FULL</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>,
-        <span class="ident">NO_MEDIA</span>              <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>,
-        <span class="ident">MEDIA_CHANGED</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>,
-        <span class="ident">NOT_FOUND</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>,
-        <span class="ident">ACCESS_DENIED</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>,
-        <span class="ident">NO_RESPONSE</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>,
-        <span class="ident">NO_MAPPING</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>,
-        <span class="ident">TIMEOUT</span>               <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>,
-        <span class="ident">NOT_STARTED</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>,
-        <span class="ident">ALREADY_STARTED</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>,
-        <span class="ident">ABORTED</span>               <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>,
-        <span class="ident">ICMP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>,
-        <span class="ident">TFTP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>,
-        <span class="ident">PROTOCOL_ERROR</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>,
-        <span class="ident">INCOMPATIBLE_VERSION</span>  <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>,
-        <span class="ident">SECURITY_VIOLATION</span>    <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>,
-        <span class="ident">CRC_ERROR</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>,
-        <span class="ident">END_OF_MEDIA</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>,
-        <span class="ident">END_OF_FILE</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>,
-        <span class="ident">INVALID_LANGUAGE</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>,
-        <span class="ident">COMPROMISED_DATA</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>,
-        <span class="ident">HTTP_ERROR</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>,
+        <span class="ident">LoadError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>,
+        <span class="ident">InvalidParameter</span>    <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>,
+        <span class="ident">Unsupported</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>,
+        <span class="ident">BadBufferSize</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>,
+        <span class="ident">BufferTooSmall</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>,
+        <span class="ident">NotReady</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>,
+        <span class="ident">DeviceError</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>,
+        <span class="ident">WriteProtected</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>,
+        <span class="ident">OutOfResources</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>,
+        <span class="ident">VolumeCorrupted</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>,
+        <span class="ident">VolumeFull</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>,
+        <span class="ident">NoMedia</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>,
+        <span class="ident">MediaChanged</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>,
+        <span class="ident">NotFound</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>,
+        <span class="ident">AccessDenied</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>,
+        <span class="ident">NoResponse</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>,
+        <span class="ident">NoMapping</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>,
+        <span class="ident">Timeout</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>,
+        <span class="ident">NotStarted</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>,
+        <span class="ident">AlreadyStarted</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>,
+        <span class="ident">Aborted</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>,
+        <span class="ident">ICMPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>,
+        <span class="ident">TFTPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>,
+        <span class="ident">ProtocolError</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>,
+        <span class="ident">IncompatibleVersion</span> <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>,
+        <span class="ident">SecurityViolation</span>   <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>,
+        <span class="ident">CRCError</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>,
+        <span class="ident">EndOfMedia</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>,
+        <span class="ident">EndOfFile</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>,
+        <span class="ident">InvalidLanguage</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>,
+        <span class="ident">CompromisedData</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>,
+        <span class="ident">HTTPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>,
     }
 }
 
@@ -984,7 +986,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_warning</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Status</span>::<span class="ident">SUCCESS</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
+        <span class="self">self</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Status</span>::<span class="ident">Success</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
     }
 
     <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].</span>
@@ -1011,22 +1013,22 @@
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_equality</span>() {
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">1</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">WARN_UNKNOWN_GLYPH</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">SUCCESS</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">LOAD_ERROR</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>);
+        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">Success</span>);
+        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_is_error</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">SUCCESS</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">is_error</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WARN_UNKNOWN_GLYPH</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WARN_FILE_SYSTEM</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WARN_RESET_REQUIRED</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnResetRequired</span>.<span class="ident">is_error</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">LOAD_ERROR</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">ACCESS_DENIED</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">HTTP_ERROR</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">AccessDenied</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">is_error</span>());
 
         <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
             <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
@@ -1045,15 +1047,15 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_is_warning</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">SUCCESS</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">is_warning</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WARN_UNKNOWN_GLYPH</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WARN_FILE_SYSTEM</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WARN_RESET_REQUIRED</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnResetRequired</span>.<span class="ident">is_warning</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">LOAD_ERROR</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">ACCESS_DENIED</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">HTTP_ERROR</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">AccessDenied</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">is_warning</span>());
 
         <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
             <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
@@ -1072,10 +1074,10 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_into_result</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">SUCCESS</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">SUCCESS</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">WARN_FILE_SYSTEM</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">WARN_FILE_SYSTEM</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">LOAD_ERROR</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">LOAD_ERROR</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">HTTP_ERROR</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">HTTP_ERROR</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">Success</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">LoadError</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">HTTPError</span>));
     }
 }
 
@@ -1515,30 +1517,30 @@
 <span class="comment">// lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.</span>
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MemoryType</span>(<span class="ident">u32</span>) {
-        <span class="ident">RESERVED</span>              <span class="op">=</span> <span class="number">0</span>,
-        <span class="ident">LOADER_CODE</span>           <span class="op">=</span> <span class="number">1</span>,
-        <span class="ident">LOADER_DATA</span>           <span class="op">=</span> <span class="number">2</span>,
-        <span class="ident">BOOT_SERVICES_CODE</span>    <span class="op">=</span> <span class="number">3</span>,
-        <span class="ident">BOOT_SERVICES_DATA</span>    <span class="op">=</span> <span class="number">4</span>,
-        <span class="ident">RUNTIME_SERVICES_CODE</span> <span class="op">=</span> <span class="number">5</span>,
-        <span class="ident">RUNTIME_SERVICES_DATA</span> <span class="op">=</span> <span class="number">6</span>,
-        <span class="ident">CONVENTIONAL</span>          <span class="op">=</span> <span class="number">7</span>,
-        <span class="ident">UNUSABLE</span>              <span class="op">=</span> <span class="number">8</span>,
-        <span class="ident">ACPI_RECLAIM</span>          <span class="op">=</span> <span class="number">9</span>,
-        <span class="ident">ACPI_NVS</span>              <span class="op">=</span> <span class="number">10</span>,
-        <span class="ident">MAPPED_IO</span>             <span class="op">=</span> <span class="number">11</span>,
-        <span class="ident">MAPPED_IO_PORT_SPACE</span>  <span class="op">=</span> <span class="number">12</span>,
-        <span class="ident">PAL_CODE</span>              <span class="op">=</span> <span class="number">13</span>,
-        <span class="ident">PERSISTENT</span>            <span class="op">=</span> <span class="number">14</span>,
+        <span class="ident">Reserved</span>            <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">LoaderCode</span>          <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">LoaderData</span>          <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">BootServicesCode</span>    <span class="op">=</span> <span class="number">3</span>,
+        <span class="ident">BootServicesData</span>    <span class="op">=</span> <span class="number">4</span>,
+        <span class="ident">RuntimeServicesCode</span> <span class="op">=</span> <span class="number">5</span>,
+        <span class="ident">RuntimeServicesData</span> <span class="op">=</span> <span class="number">6</span>,
+        <span class="ident">Conventional</span>        <span class="op">=</span> <span class="number">7</span>,
+        <span class="ident">Unusable</span>            <span class="op">=</span> <span class="number">8</span>,
+        <span class="ident">ACPIReclaim</span>         <span class="op">=</span> <span class="number">9</span>,
+        <span class="ident">ACPINonVolatile</span>     <span class="op">=</span> <span class="number">10</span>,
+        <span class="ident">MappedIO</span>            <span class="op">=</span> <span class="number">11</span>,
+        <span class="ident">MappedIOPortSpace</span>   <span class="op">=</span> <span class="number">12</span>,
+        <span class="ident">PALCode</span>             <span class="op">=</span> <span class="number">13</span>,
+        <span class="ident">Persistent</span>          <span class="op">=</span> <span class="number">14</span>,
     }
 }
 
 <span class="comment">// TODO: Same caveat as MemoryType</span>
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AllocateType</span>(<span class="ident">u32</span>) {
-        <span class="ident">ANY_ADDRESS</span>   <span class="op">=</span> <span class="number">0</span>,
-        <span class="ident">MAX_ADDRESS</span>   <span class="op">=</span> <span class="number">1</span>,
-        <span class="ident">EXACT_ADDRESS</span> <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">AnyAddress</span>   <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">MaxAddress</span>   <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">ExactAddress</span> <span class="op">=</span> <span class="number">2</span>,
     }
 }
 
@@ -1564,12 +1566,12 @@
 
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>) {
-        <span class="ident">BY_HANDLE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>,
-        <span class="ident">GET</span>       <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>,
-        <span class="ident">TEST</span>      <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>,
-        <span class="ident">BY_CHILD</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>,
-        <span class="ident">BY_DRIVER</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>,
-        <span class="ident">EXCLUSIVE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>,
+        <span class="ident">ByHandle</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>,
+        <span class="ident">Get</span>       <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>,
+        <span class="ident">Test</span>      <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>,
+        <span class="ident">ByChild</span>   <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>,
+        <span class="ident">ByDriver</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>,
+        <span class="ident">Exclusive</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>,
     }
 }
 

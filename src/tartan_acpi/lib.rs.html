@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `acpi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_acpi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `acpi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_acpi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -383,22 +385,22 @@
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="doccomment">/// Type of register address</span>
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AddressSpace</span>(<span class="ident">u8</span>) {
-        <span class="ident">SYSTEM_MEMORY</span>                   <span class="op">=</span> <span class="number">0x00</span>,
-        <span class="ident">SYSTEM_IO</span>                       <span class="op">=</span> <span class="number">0x01</span>,
-        <span class="ident">PCI_CONFIGURATION</span>               <span class="op">=</span> <span class="number">0x02</span>,
-        <span class="ident">EMBEDDED_CONTROLLER</span>             <span class="op">=</span> <span class="number">0x03</span>,
-        <span class="ident">SM_BUS</span>                          <span class="op">=</span> <span class="number">0x04</span>,
-        <span class="ident">SYSTEM_CMOS</span>                     <span class="op">=</span> <span class="number">0x05</span>,
-        <span class="ident">PCI_BAR_TARGET</span>                  <span class="op">=</span> <span class="number">0x06</span>,
-        <span class="ident">IPMI</span>                            <span class="op">=</span> <span class="number">0x07</span>,
-        <span class="ident">GENERAL_PURPOSE_IO</span>              <span class="op">=</span> <span class="number">0x08</span>,
-        <span class="ident">GENERIC_SERIAL_BUS</span>              <span class="op">=</span> <span class="number">0x09</span>,
-        <span class="ident">PLATFORM_COMMUNICATIONS_CHANNEL</span> <span class="op">=</span> <span class="number">0x0a</span>,
+        <span class="ident">SystemMemory</span>                  <span class="op">=</span> <span class="number">0x00</span>,
+        <span class="ident">SystemIO</span>                      <span class="op">=</span> <span class="number">0x01</span>,
+        <span class="ident">PCIConfiguration</span>              <span class="op">=</span> <span class="number">0x02</span>,
+        <span class="ident">EmbeddedController</span>            <span class="op">=</span> <span class="number">0x03</span>,
+        <span class="ident">SMBus</span>                         <span class="op">=</span> <span class="number">0x04</span>,
+        <span class="ident">SystemCMOS</span>                    <span class="op">=</span> <span class="number">0x05</span>,
+        <span class="ident">PCIBARTarget</span>                  <span class="op">=</span> <span class="number">0x06</span>,
+        <span class="ident">IPMI</span>                          <span class="op">=</span> <span class="number">0x07</span>,
+        <span class="ident">GeneralPurposeIo</span>              <span class="op">=</span> <span class="number">0x08</span>,
+        <span class="ident">GenericSerialBus</span>              <span class="op">=</span> <span class="number">0x09</span>,
+        <span class="ident">PlatformCommunicationsChannel</span> <span class="op">=</span> <span class="number">0x0a</span>,
 
-        <span class="ident">FUNCTIONAL_FIXED</span>                <span class="op">=</span> <span class="number">0x7f</span>,
+        <span class="ident">FunctionalFixed</span>               <span class="op">=</span> <span class="number">0x7f</span>,
 
-        <span class="ident">OEM_DEFINED_MIN</span>                 <span class="op">=</span> <span class="number">0xc0</span>,
-        <span class="ident">OEM_DEFINED_MAX</span>                 <span class="op">=</span> <span class="number">0xff</span>,
+        <span class="ident">OEMDefinedMin</span>                 <span class="op">=</span> <span class="number">0xc0</span>,
+        <span class="ident">OEMDefinedMax</span>                 <span class="op">=</span> <span class="number">0xff</span>,
     }
 }
 
@@ -406,11 +408,11 @@
 <span class="macro">c_enum</span><span class="macro">!</span> {
     <span class="doccomment">/// Memory width used to read/write from a register</span>
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AccessSize</span>(<span class="ident">u8</span>) {
-        <span class="ident">UNDEFINED</span> <span class="op">=</span> <span class="number">0</span>,
-        <span class="ident">BYTE</span>      <span class="op">=</span> <span class="number">1</span>,
-        <span class="ident">WORD</span>      <span class="op">=</span> <span class="number">2</span>,
-        <span class="ident">DWORD</span>     <span class="op">=</span> <span class="number">3</span>,
-        <span class="ident">QWORD</span>     <span class="op">=</span> <span class="number">4</span>,
+        <span class="ident">Undefined</span> <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">Byte</span>      <span class="op">=</span> <span class="number">1</span>,
+        <span class="ident">Word</span>      <span class="op">=</span> <span class="number">2</span>,
+        <span class="ident">DWord</span>     <span class="op">=</span> <span class="number">3</span>,
+        <span class="ident">QWord</span>     <span class="op">=</span> <span class="number">4</span>,
     }
 }
 

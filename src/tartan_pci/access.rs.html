@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `pci/src/access.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>access.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_pci/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `pci/src/access.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>access.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../tartan_pci/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -212,6 +214,38 @@
 <span id="211">211</span>
 <span id="212">212</span>
 <span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">module_name_repetitions</span>)]</span>
 
@@ -228,10 +262,23 @@
     <span class="doccomment">/// Get a specific 32-bit register in PCI configuration space.</span>
     <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>;
 
+    <span class="doccomment">/// Set a specific 32-bit register in PCI configuration space.</span>
+    <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>);
+
     <span class="doccomment">/// Get a register in PCI configuration space with an offset defined by the output</span>
     <span class="doccomment">/// type.</span>
     <span class="kw">fn</span> <span class="ident">get_fixed_register</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">FixedConfigRegister</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
         <span class="self">self</span>.<span class="ident">get_register</span>(<span class="ident">selector</span>, <span class="ident">T</span>::<span class="ident">REGISTER_NUMBER</span>.<span class="ident">into</span>()).<span class="ident">into</span>()
+    }
+
+    <span class="doccomment">/// Set a register in PCI configuration space with an offset defined by the input</span>
+    <span class="doccomment">/// type.</span>
+    <span class="kw">fn</span> <span class="ident">set_fixed_register</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">FixedConfigRegister</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>,
+        <span class="ident">value</span>: <span class="ident">T</span>,
+    ) {
+        <span class="self">self</span>.<span class="ident">set_register</span>(<span class="ident">selector</span>, <span class="ident">T</span>::<span class="ident">REGISTER_NUMBER</span>.<span class="ident">into</span>(), <span class="ident">value</span>.<span class="ident">into</span>())
     }
 }
 
@@ -262,10 +309,8 @@
 
 <span class="kw">impl</span> <span class="ident">MemMapConfigAccess</span> {
     <span class="kw">const</span> <span class="ident">MAP_SIZE</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>;
-}
 
-<span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">MemMapConfigAccess</span> {
-    <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="kw">fn</span> <span class="ident">register_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u32</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
             <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">selector</span>.<span class="ident">bus</span>),
             <span class="string">&quot;Cannot access bus {} with this memory map (covers buses {}-{})&quot;</span>,
@@ -291,8 +336,20 @@
             <span class="op">|</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">register</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">base_address</span> <span class="op">+</span> <span class="ident">offset</span>;
 
-        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span>(<span class="ident">address</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u32</span>) };
+        <span class="ident">address</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u32</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">MemMapConfigAccess</span> {
+    <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+        <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">address</span> };
         <span class="ident">u32</span>::<span class="ident">from_le</span>(<span class="ident">register_data_le</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
+        <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+        <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">address</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">to_le</span>() };
     }
 }
 
@@ -300,12 +357,13 @@
 <span class="doccomment">/// Support for the I/O based configuration access method on x86/x86-64.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Note that other architectures have no concept of I/O space.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span> {
     <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
     <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">MAX_DEVICE</span>;
     <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
-    <span class="kw">use</span> <span class="ident">tartan_arch</span> <span class="kw">as</span> <span class="ident">arch</span>;
+    <span class="kw">use</span> <span class="ident">tartan_arch</span>::<span class="ident">x86_common</span>::<span class="ident">io</span>;
     <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
 
     <span class="doccomment">/// I/O based configuration access method on x86/x86-64.</span>
@@ -318,10 +376,8 @@
     <span class="kw">impl</span> <span class="ident">IOConfigAccess</span> {
         <span class="kw">const</span> <span class="ident">CONFIG_ADDRESS_PORT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0xcf8</span>;
         <span class="kw">const</span> <span class="ident">CONFIG_DATA_PORT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0xcfc</span>;
-    }
 
-    <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">IOConfigAccess</span> {
-        <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+        <span class="kw">fn</span> <span class="ident">write_config_address</span>(<span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) {
             <span class="macro">assert</span><span class="macro">!</span>(
                 <span class="ident">selector</span>.<span class="ident">segment_group</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
                 <span class="string">&quot;IO-based PCI config only supports segment group 0 (requested {})&quot;</span>,
@@ -333,12 +389,22 @@
             <span class="kw">let</span> <span class="ident">config_address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">new</span>(<span class="ident">selector</span>, <span class="ident">register_offset</span>);
             <span class="kw">let</span> <span class="ident">config_address_le</span> <span class="op">=</span> <span class="ident">config_address</span>.<span class="number">0</span>.<span class="ident">to_le</span>();
 
-            <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                <span class="ident">arch</span>::<span class="ident">io</span>::<span class="ident">out_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_ADDRESS_PORT</span>, <span class="ident">config_address_le</span>);
-                <span class="ident">arch</span>::<span class="ident">io</span>::<span class="ident">in_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_DATA_PORT</span>)
+            <span class="kw">unsafe</span> {
+                <span class="ident">io</span>::<span class="ident">out_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_ADDRESS_PORT</span>, <span class="ident">config_address_le</span>);
             };
+        }
+    }
 
+    <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">IOConfigAccess</span> {
+        <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+            <span class="self">Self</span>::<span class="ident">write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+            <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">in_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_DATA_PORT</span>) };
             <span class="ident">u32</span>::<span class="ident">from_le</span>(<span class="ident">register_data_le</span>)
+        }
+
+        <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
+            <span class="self">Self</span>::<span class="ident">write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+            <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">out_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_DATA_PORT</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) }
         }
     }
 
