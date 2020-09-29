@@ -12,7 +12,7 @@ extern crate compiler_builtins;
 // These are also provided by the rlibc crate, and some sources suggest to use that
 // instead. However, the functions in that crate are NOT marked as 'extern "C"', meaning
 // they only work on architectures where the Rust calling convention happens to match.
-// Notably, that isn't true when compliling for i686-unknown-uefi (and there is no
+// Notably, that isn't true when compiling for i686-unknown-uefi (and there is no
 // guarantee it will continue to match on any other targets).
 
 #[no_mangle]
@@ -42,15 +42,38 @@ pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
 
 
 
-// compiler-builtins doesn't mangle this name correctly for Windows's cdecl convention on
-// x86, which adds a leading underscore. It would be better to alias this symbol directly,
-// but I can't get LLVM ASM to handle that right.
+// compiler-builtins ships a version of this with a couple of problems on x86:
+//   * It doesn't mangle this name correctly for Windows's cdecl convention, which adds a
+//     leading underscore.
+//   * The caller expects the stack frame size (in eax) to be subtracted from the stack
+//     pointer, but the compiler-builtins version restores the stack pointer exactly as it
+//     was called.
+//
+// Both of these issues appear to be fixed in compiler-builtins 0.1.36, but there is no
+// way to control the version that Cargo picks for build-std.
+//
+// See https://github.com/rust-lang/compiler-builtins/pull/372.
 #[cfg(all(target_os = "uefi", target_arch = "x86"))]
 #[no_mangle]
 #[naked]
 pub unsafe fn __rust_probestack() {
-    // This looks recursive, but isn't. This function is ___rust_probestack (triple).
-    asm!("jmp __rust_probestack");
+    asm!(
+        "
+        // This looks recursive, but isn't. This function is ___rust_probestack (triple).
+        call __rust_probestack
+
+        // Subtract the requested stack frame size (eax) from the stack pointer.
+        sub  esp, eax
+
+        // Copy the return address to the right place since we messed with the stack
+        push ecx
+        mov  ecx, [esp + eax + 4]
+        mov  [esp + 4], ecx
+        pop  ecx
+
+        ret
+        "
+    );
 }
 
 
@@ -201,7 +224,7 @@ cfg_if::cfg_if! {
         }
 
         extern "C" {
-            // Functions from compiler-builtins that corespond to the MS CRT __u64to*
+            // Functions from compiler-builtins that correspond to the MS CRT __u64to*
             // functions above.
             fn __floatundidf(i: u64) -> f64;
             fn __floatundisf(i: u64) -> f32;
