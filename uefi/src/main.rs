@@ -114,6 +114,11 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         }
 
         enumerate_pci(&mut out)?;
+
+        describe_cpu_state(&mut out)?;
+
+        writeln_result!(out, "")?;
+        writeln_result!(out, "All done.")?;
     }
 
     loop {}
@@ -229,6 +234,53 @@ fn get_memory_map(
 
     memory_map.verify();
     Ok(memory_map)
+}
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+fn describe_cpu_state(_: &mut OutputStream) -> Result {
+    // TODO
+    Ok(Status::Success)
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn describe_cpu_state(out: &mut OutputStream) -> Result {
+    use tartan_arch::x86_common::{self, features, paging};
+
+    writeln_result!(out, "CPUID max basic: {:x?}", features::max_cpuid_index_basic())?;
+    writeln_result!(out, "CPUID max ext.: {:x?}", features::max_cpuid_index_extended())?;
+
+    let basic_features = features::Features::get();
+    writeln_result!(out, "{:#x?}", basic_features)?;
+    writeln_result!(out, "{:#x?}", features::ExtendedFeatures::get())?;
+    writeln_result!(out, "{:#x?}", features::AddressSpaceSizes::get())?;
+
+    writeln_result!(out, "{:#x?}", x86_common::FlagRegister::get())?;
+    writeln_result!(out, "{:#x?}", x86_common::ControlRegister0::get())?;
+    writeln_result!(out, "{:#x?}", x86_common::ControlRegister4::get())?;
+
+    writeln_result!(out, "{:#x?}", paging::ControlRegister2::get())?;
+    writeln_result!(out, "{:#x?}", paging::ControlRegister3::get())?;
+
+    #[allow(clippy::if_not_else)]
+    if !basic_features.extended_state_save() {
+        writeln_result!(out, "ExtendedControlRegister0 unsupported")?;
+    } else if !basic_features.extended_state_save_enabled() {
+        writeln_result!(out, "ExtendedControlRegister0 disabled")?;
+    } else {
+        writeln_result!(out, "{:#x?}", x86_common::ExtendedControlRegister0::get())?;
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        use tartan_arch::x86_64;
+
+        writeln_result!(out, "{:#x?}", x86_64::ControlRegister8::get())?;
+        writeln_result!(out, "{:#x?}", x86_64::ExtendedFeatureEnableRegister::get())?;
+    }
+
+    writeln_result!(out, "")?;
+
+    Ok(Status::Success)
 }
 
 #[cfg(not(test))]

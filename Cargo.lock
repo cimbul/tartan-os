@@ -724,6 +724,7 @@ dependencies = [
  "crc-any",
  "log",
  "tartan-acpi",
+ "tartan-arch",
  "tartan-c-enum",
  "tartan-pci",
  "utf16_lit",

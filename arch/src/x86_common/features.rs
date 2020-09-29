@@ -186,8 +186,8 @@ impl Features {
         // are older and more basic, so it makes sense to start the bit numbering with
         // those.
         let mut features = Self(0);
-        features.0 &= u64::from(result[3]);
-        features.0 &= u64::from(result[2]) << 32;
+        features.0 |= u64::from(result[3]);
+        features.0 |= u64::from(result[2]) << 32;
         features
     }
 }
@@ -226,11 +226,11 @@ bitfield! {
 impl ExtendedFeatures {
     /// Retrieve the extended feature list from the processor using the CPUID instruction.
     pub fn get() -> Self {
-        let result = cpuid(1, 0);
+        let result = cpuid(0x8000_0001, 0);
         // Same ordering rationale as with Features
         let mut features = Self(0);
-        features.0 &= u64::from(result[3]);
-        features.0 &= u64::from(result[2]) << 32;
+        features.0 |= u64::from(result[3]);
+        features.0 |= u64::from(result[2]) << 32;
         features
     }
 }

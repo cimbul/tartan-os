@@ -55,11 +55,12 @@ bitfield! {
         [16] pub resume,
         /// `VM`: Enable virtual real mode.
         [17] pub virtual_8086_mode,
-        /// `AC`: In combination with other flags, enable strict alignment checks for
-        /// memory accesses in privilege level 3.
-        ///
+        /// `AC`: Enable strict alignment checks for memory accesses in privilege level 3.
         /// In privilege level 0, allow access to pages assigned to lower privilege
-        /// levels. See [`ControlRegister4::supervisor_access_prevention`].
+        /// levels.
+        ///
+        /// Alignment checking requires [`ControlRegister0::alignment_check_mask`]. Access
+        /// protection requires [`ControlRegister4::supervisor_access_prevention`].
         [18] pub alignment_check_or_access_control,
         /// `VIF`: Virtual counterpart to the `interrupt_enabled` flag, used with
         /// [VME](ControlRegister4::virtual_8086_extensions) or
@@ -184,8 +185,8 @@ macro_rules! indexed_register_access {
                     );
                 }
                 let mut value = Self(0);
-                value.0 &= u64::from(lower);
-                value.0 &= u64::from(upper) << 32;
+                value.0 |= u64::from(lower);
+                value.0 |= u64::from(upper) << 32;
                 value
             }
 
@@ -240,8 +241,8 @@ bitfield! {
         [30] pub cache_disabled,
         /// `CR0.NW`: Disable write-back/write-through caching.
         [29] pub cache_not_write_through,
-        /// `CR0.AM`: In combination with other flags, enables strict alignment checks for
-        /// memory access.
+        /// `CR0.AM`: Enables strict alignment checks for memory access, in combination
+        /// with [`FlagRegister::alignment_check_or_access_control`].
         [18] pub alignment_check_mask,
         /// `CR0.WP`: Enforce read-only pages even in supervisor mode.
         [16] pub write_protect,

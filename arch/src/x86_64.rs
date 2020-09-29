@@ -28,7 +28,10 @@ bitfield! {
         [0] pub syscall,
         /// `IA32_EFER.LME`: Support 64-bit mode.
         [8] pub long_mode_enabled,
-        /// `IA32_EFER.LMA`: Indicates 64-bit mode is active.
+        /// `IA32_EFER.LMA`: Indicates 64-bit mode is active. Read-only.
+        ///
+        /// This is logically the equivalent to `[Self::long_mode_enabled] &
+        /// [ControlRegister0::paging]`.
         [10] pub long_mode_active,
         /// `IA32-EFER.NXE`: Support no-execute (NX) bit in page tables.
         [11] pub no_execute,
