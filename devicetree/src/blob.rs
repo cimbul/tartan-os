@@ -28,10 +28,10 @@ impl<'a> Tree<'a> {
     /// Parse a devicetree blob that begins at the specified memory address.
     ///
     /// # Safety
-    /// The pointer must hold the address of the first byte of a valid devictree blob, and
-    /// it must uphold all the invariants of [`core::slice::from_raw_parts`] for a slice
-    /// beginning at the specified address and extending the total length of the DTB as
-    /// given in its header.
+    /// The pointer must hold the address of the first byte of a valid devicetree blob,
+    /// and it must uphold all the invariants of [`core::slice::from_raw_parts`] for a
+    /// slice beginning at the specified address and extending the total length of the DTB
+    /// as given in its header.
     ///
     /// # Errors
     /// If the header does not have the correct magic number, or any other properties of
@@ -209,7 +209,7 @@ pub enum StructureData<'a> {
         /// The name of the property.
         ///
         /// The Devicetree spec lists a number of common property names, but the system
-        /// is open for extension, so it may not be recognizeable.
+        /// is open for extension, so it may not be recognizable.
         name: &'a str,
 
         /// The value of the property.
@@ -285,6 +285,7 @@ impl<'a> StructureToken<'a> {
 
 fn parse_c_string<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], &str, E> {
     map_res(terminated(bytes::take_until(&[0_u8] as &[u8]), bytes::tag([0_u8])), |s| {
+        #[allow(clippy::map_err_ignore)]
         str::from_utf8(s).map_err(|_| E::from_error_kind(i, ErrorKind::Verify))
     })(i)
 }
