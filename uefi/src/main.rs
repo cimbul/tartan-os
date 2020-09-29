@@ -249,7 +249,7 @@ fn describe_cpu_state(out: &mut OutputStream) -> Result {
     writeln_result!(out, "CPUID max basic: {:x?}", features::max_cpuid_index_basic())?;
     writeln_result!(out, "CPUID max ext.: {:x?}", features::max_cpuid_index_extended())?;
 
-    let basic_features = features::Features::get();
+    let basic_features = features::BasicFeatures::get();
     writeln_result!(out, "{:#x?}", basic_features)?;
     writeln_result!(out, "{:#x?}", features::ExtendedFeatures::get())?;
     writeln_result!(out, "{:#x?}", features::AddressSpaceSizes::get())?;

@@ -34,7 +34,7 @@ pub fn max_cpuid_index_extended() -> u32 {
 
 bitfield! {
     /// Primary feature list returned in `CPUID.01H:ECX+EDX`.
-    pub struct Features(u64) {
+    pub struct BasicFeatures(u64) {
         // Bits 0..32 from EDX
 
         /// `FPU`: The processor has a built-in x87 floating-point unit
@@ -178,7 +178,7 @@ bitfield! {
     }
 }
 
-impl Features {
+impl BasicFeatures {
     /// Retrieve the feature list from the processor using the CPUID instruction.
     pub fn get() -> Self {
         let result = cpuid(1, 0);

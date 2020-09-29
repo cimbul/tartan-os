@@ -3,7 +3,7 @@
 use tartan_bitfield::bitfield;
 
 #[cfg(doc)]
-use features::Features;
+use features::BasicFeatures;
 
 pub mod features;
 pub mod io;
@@ -297,18 +297,18 @@ bitfield! {
         /// `CR4.VME`: Enable interrupts and exception handling in [virtual
         /// real-mode](EFLAGS::virtual_8086_mode).
         ///
-        /// Requires [`Features::virtual_8086_extensions`].
+        /// Requires [`BasicFeatures::virtual_8086_extensions`].
         [0] pub virtual_8086_extensions,
 
         /// `CR4.PVI`: Enable virtual interrupts in protected mode.
         ///
-        /// Requires [`Features::virtual_8086_extensions`].
+        /// Requires [`BasicFeatures::virtual_8086_extensions`].
         [1] pub protected_virtual_interrupts,
 
         /// `CR4.TSD`: Disable access to processor timestamp counter except in privilege
         /// level 0.
         ///
-        /// Requires [`Features::timestamp_counter`].
+        /// Requires [`BasicFeatures::timestamp_counter`].
         [2] pub timestamp_disabled,
 
         /// `CR4.DE`: Enable newer debug register scheme where `DR4` and `DR5` are
@@ -316,7 +316,7 @@ bitfield! {
         ///
         /// When this flag is clear, they are equivalent to `DR6` and `DR7`.
         ///
-        /// Requires [`Features::debugging_extensions`].
+        /// Requires [`BasicFeatures::debugging_extensions`].
         [3] pub debugging_extensions,
 
         /// `CR4.PSE`: Support large pages (4MB). Applies to 32-bit mode only.
@@ -324,24 +324,24 @@ bitfield! {
         /// When this flag is clear in 32-bit mode, pages are always 4KB. Large pages are
         /// always enabled in 64-bit mode.
         ///
-        /// Requires [`Features::page_size_extensions`].
+        /// Requires [`BasicFeatures::page_size_extensions`].
         [4] pub page_size_extensions,
 
         /// `CR4.PAE`: Enable pages to map to physical addresses larger than 32-bits.
         ///
         /// Required for 64-bit mode.
         ///
-        /// Requires [`Features::physical_address_extension`].
+        /// Requires [`BasicFeatures::physical_address_extension`].
         [5] pub physical_address_extension,
 
         /// `CR4.MCE`: Enable machine-check exception.
         ///
-        /// Requires [`Features::machine_check_exception`].
+        /// Requires [`BasicFeatures::machine_check_exception`].
         [6] pub machine_check_exception,
 
         /// `CR4.PGE`: Enable global pages, which are shared across task contexts.
         ///
-        /// Requires [`Features::global_pages`].
+        /// Requires [`BasicFeatures::global_pages`].
         [7] pub global_pages,
 
         /// `CR4.PCE`: Allow access to performance monitoring counter in privilege levels
@@ -352,7 +352,7 @@ bitfield! {
         ///
         /// These instructions require special support from the operating system.
         ///
-        /// Requires [`Features::fpu_save`].
+        /// Requires [`BasicFeatures::fpu_save`].
         [9] pub sse_and_fpu_save,
 
         /// `CR4.OSXMMEXCPT`: Enable unmasked SIMD floating-point exception handling for
@@ -372,12 +372,12 @@ bitfield! {
 
         /// `CR4.VMX` (**Intel-only**): Enable virtual machine extensions.
         ///
-        /// Requires [`Features::virtual_machine_extensions`].
+        /// Requires [`BasicFeatures::virtual_machine_extensions`].
         [13] pub virtual_machine_extensions,
 
         /// `CR4.SME` (**Intel-only**): Enable safer-mode extensions.
         ///
-        /// Requires [`Features::safer_mode_extensions`].
+        /// Requires [`BasicFeatures::safer_mode_extensions`].
         [14] pub safer_mode_extensions,
 
         /// `CR4.FSGSBASE`: Enable instructions to load/store the `FS` and `GS` base
@@ -388,7 +388,7 @@ bitfield! {
 
         /// `CR4.PCIDE`: Enable process-context identifiers (PCID) in 64-bit mode.
         ///
-        /// Requires [`Features::process_context_ids`].
+        /// Requires [`BasicFeatures::process_context_ids`].
         #[cfg(any(target_arch = "x86_64", doc))]
         #[doc(cfg(target_arch = "x86_64"))]
         [17] pub process_context_ids,
@@ -398,7 +398,7 @@ bitfield! {
         ///
         /// These instructions require special support from the operating system.
         ///
-        /// Requires [`Features::extended_state_save`].
+        /// Requires [`BasicFeatures::extended_state_save`].
         [18] pub extended_state_save,
 
         /// `CR4.SMEP`: Enable execution prevention in privilege level 0.
@@ -436,7 +436,7 @@ bitfield! {
     /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to
     /// work with the actual register.
     ///
-    /// Requires [`Features::extended_state_save`].
+    /// Requires [`BasicFeatures::extended_state_save`].
     pub struct ExtendedControlRegister0(u64) {
         /// `XCR0.X87`: Hardcoded to 1.
         [0] pub fpu,

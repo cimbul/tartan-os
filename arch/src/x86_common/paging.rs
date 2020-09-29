@@ -4,7 +4,7 @@ use crate::simple_register_access;
 use tartan_bitfield::{bitfield, bitfield_accessors, Bitfield};
 
 #[cfg(doc)]
-use super::features::Features;
+use super::features::BasicFeatures;
 #[cfg(doc)]
 use super::ControlRegister4;
 #[cfg(doc)]
@@ -114,8 +114,8 @@ pub trait DirectPageTableEntry: GenericPageTableEntry {
 
         /// `PAT`: Used to associate this page with a page attribute table.
         ///
-        /// In 32-bit mode, requires [`Features::page_attribute_table`]. Always applicable
-        /// in 64-bit mode.
+        /// In 32-bit mode, requires [`BasicFeatures::page_attribute_table`]. Always
+        /// applicable in 64-bit mode.
         //
         // NOTE: This bit is remapped for implementations of `HybridPageTableEntry`.
         [7] attribute_table,
