@@ -147,7 +147,7 @@ macro_rules! bitfield {
     ] => {
         $( #[$struct_meta] )*
         #[repr(transparent)]
-        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+        #[derive(Default, Clone, Copy, PartialEq, Eq)]
         $struct_vis struct $struct($underlying_type);
 
         impl $struct {
@@ -171,6 +171,18 @@ macro_rules! bitfield {
         impl ::core::convert::From<$struct> for $underlying_type {
             #[inline(always)]
             fn from(val: $struct) -> Self { val.0 }
+        }
+
+        impl ::core::fmt::Debug for $struct {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                let mut struct_out = f.debug_struct(stringify!($struct));
+                struct_out.field("<value>", &self.0);
+                $(
+                    $(#[$field_meta])*
+                    struct_out.field(stringify!($field), &self.$field());
+                )*
+                struct_out.finish()
+            }
         }
     };
 }
