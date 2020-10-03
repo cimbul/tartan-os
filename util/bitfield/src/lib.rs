@@ -134,31 +134,48 @@ where
 #[macro_export]
 macro_rules! bitfield {
     [
-        $( #[$struct_meta:meta] )*
-        $struct_vis:vis struct $struct:ident($underlying_type:ty) {
-            $(
-                $( #[$field_meta:meta] )*
-                [ $field_lsb:literal $( .. $field_msb:literal )? ]
-                $field_vis:vis $field:ident
-                $( : $field_underlying_type:ty $( as $field_interface_type:ty )? )?
-            ),*
-            $(,)?
+        $( #[$meta:meta] )*
+        $vis:vis struct $struct:ident($underlying_type:ty) {
+            $($body:tt)*
         }
     ] => {
-        $( #[$struct_meta] )*
+        $crate::bitfield_without_debug! {
+            $(#[$meta])*
+            $vis struct $struct($underlying_type) {
+                $($body)*
+            }
+        }
+
+        impl ::core::fmt::Debug for $struct {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                let mut struct_out = f.debug_struct(stringify!($struct));
+                struct_out.field("<value>", &self.0);
+                self.fmt_fields(&mut struct_out);
+                struct_out.finish()
+            }
+        }
+    }
+}
+
+/// Same as the [`bitfield`] macro without a [`Debug`] implementation provided.
+///
+/// Since Debug is required by the [`Bitfield`] trait, the caller must provide their own
+/// implementation.
+#[macro_export]
+macro_rules! bitfield_without_debug {
+    [
+        $( #[$meta:meta] )*
+        $vis:vis struct $struct:ident($underlying_type:ty) {
+            $($body:tt)*
+        }
+    ] => {
+        $( #[$meta] )*
         #[repr(transparent)]
         #[derive(Default, Clone, Copy, PartialEq, Eq)]
-        $struct_vis struct $struct($underlying_type);
+        $vis struct $struct($underlying_type);
 
         impl $struct {
-            $crate::bitfield_accessors! {
-                $(
-                    $( #[$field_meta] )*
-                    [ $field_lsb $( .. $field_msb )? ]
-                    $field_vis $field
-                    $( : $field_underlying_type $( as $field_interface_type )? )?
-                ),*
-            }
+            $crate::bitfield_accessors! { $($body)* }
         }
 
         impl $crate::Bitfield<$underlying_type> for $struct {}
@@ -171,18 +188,6 @@ macro_rules! bitfield {
         impl ::core::convert::From<$struct> for $underlying_type {
             #[inline(always)]
             fn from(val: $struct) -> Self { val.0 }
-        }
-
-        impl ::core::fmt::Debug for $struct {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                let mut struct_out = f.debug_struct(stringify!($struct));
-                struct_out.field("<value>", &self.0);
-                $(
-                    $(#[$field_meta])*
-                    struct_out.field(stringify!($field), &self.$field());
-                )*
-                struct_out.finish()
-            }
         }
     };
 }
@@ -263,6 +268,15 @@ macro_rules! bitfield_accessors {
                 $( : $underlying_type $( as $interface_type )? )?
             }
         )*
+
+        /// Print this object's bitfield values. Helper method for `Debug`
+        /// implementations.
+        fn fmt_fields(&self, f: &mut ::core::fmt::DebugStruct) {
+            $(
+                $(#[$meta])*
+                f.field(stringify!($field), &self.$field());
+            )*
+        }
     };
 
     // Special case for single-bit boolean fields
