@@ -112,7 +112,10 @@ macro_rules! c_enum {
             /// version is declared `const` (which is currently unstable on traits).
             pub const fn name(self) -> Option<&'static str> {
                 match self {
-                    $( Self::$variant_name => Some(stringify!($variant_name)), )*
+                    $(
+                        $(#[$variant_meta])*
+                        Self::$variant_name => Some(stringify!($variant_name)),
+                    )*
                     _ => None,
                 }
             }
