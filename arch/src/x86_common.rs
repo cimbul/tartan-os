@@ -8,6 +8,7 @@ use features::BasicFeatures;
 use protection::IOPermissionBitmap;
 
 pub mod features;
+pub mod interrupt;
 pub mod io;
 pub mod paging;
 pub mod protection;
