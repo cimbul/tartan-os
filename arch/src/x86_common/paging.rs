@@ -83,7 +83,8 @@ pub trait GenericPageTableEntry: Bitfield<usize> {
         /// `R/W`: Allows writes to this memory region.
         [1] writable,
 
-        /// `U/S`: Allows access to this memory region from permission levels 1–3.
+        /// `U/S`: Allows access to this memory region from permission level 3. Otherwise,
+        /// it is only accessible from levels 0–2.
         [2] user,
 
         /// `PWT`: Enables write-through caching for this memory region.

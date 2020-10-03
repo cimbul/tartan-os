@@ -56,7 +56,7 @@ bitfield! {
         /// `VM`: Enable virtual real mode.
         [17] pub virtual_8086_mode,
         /// `AC`: Enable strict alignment checks for memory accesses in privilege level 3.
-        /// In privilege level 0, allow access to pages assigned to lower privilege
+        /// In privilege levels 0–2, allow access to pages assigned to lower privilege
         /// levels.
         ///
         /// Alignment checking requires [`ControlRegister0::alignment_check_mask`]. Access
@@ -244,7 +244,8 @@ bitfield! {
         /// `CR0.AM`: Enables strict alignment checks for memory access, in combination
         /// with [`FlagRegister::alignment_check_or_access_control`].
         [18] pub alignment_check_mask,
-        /// `CR0.WP`: Enforce read-only pages even in supervisor mode.
+        /// `CR0.WP`: Enforce read-only pages even in privilege levels 0–2. They are
+        /// always enforced in level 3.
         [16] pub write_protect,
         /// `CR0.NE`: Use internal error mechanism for FPU errors, rather than DOS-style.
         [ 5] pub native_fpu_error,
@@ -401,14 +402,14 @@ bitfield! {
         /// Requires [`BasicFeatures::extended_state_save`].
         [18] pub extended_state_save,
 
-        /// `CR4.SMEP`: Enable execution prevention in privilege level 0.
+        /// `CR4.SMEP`: Enable execution prevention in privilege levels 0–2.
         [20] pub supervisor_execution_prevention,
 
-        /// `CR4.SMAP`: Enable access prevention in privilege level 0.
+        /// `CR4.SMAP`: Enable access prevention in privilege levels 0–2.
         [21] pub supervisor_access_prevention,
 
         /// `CR4.PKE`: Use page protection keys in 64-bit mode to control access from
-        /// privilege levels 1–3.
+        /// privilege level 3.
         #[cfg(any(target_arch = "x86_64", doc))]
         #[doc(cfg(target_arch = "x86_64"))]
         [22] pub user_protection_keys,
@@ -418,7 +419,7 @@ bitfield! {
         [23] pub control_flow_enforcement,
 
         /// `CR4.PKS` (**Intel-only**): Use page protection keys in 64-bit mode to control
-        /// access from privilege level 0.
+        /// access from privilege levels 0-2.
         #[cfg(any(target_arch = "x86_64", doc))]
         #[doc(cfg(target_arch = "x86_64"))]
         [24] pub supervisor_protection_keys,
