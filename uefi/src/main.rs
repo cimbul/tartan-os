@@ -244,7 +244,7 @@ fn describe_cpu_state(_: &mut OutputStream) -> Result {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn describe_cpu_state(out: &mut OutputStream) -> Result {
-    use tartan_arch::x86_common::{self, features, paging};
+    use tartan_arch::x86_common::{self, features, interrupt, paging, protection};
 
     writeln_result!(out, "CPUID max basic: {:x?}", features::max_cpuid_index_basic())?;
     writeln_result!(out, "CPUID max ext.: {:x?}", features::max_cpuid_index_extended())?;

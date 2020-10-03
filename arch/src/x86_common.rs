@@ -4,10 +4,13 @@ use tartan_bitfield::bitfield;
 
 #[cfg(doc)]
 use features::BasicFeatures;
+#[cfg(doc)]
+use protection::IOPermissionBitmap;
 
 pub mod features;
 pub mod io;
 pub mod paging;
+pub mod protection;
 
 
 bitfield! {
@@ -44,6 +47,10 @@ bitfield! {
         [11] pub signed_overflow,
         /// `IOPL`: Sets the privilege threshold for a task to access I/O address space.
         /// Smaller numbers are higher privilege.
+        ///
+        /// Individual I/O ports may still be accessible at lower privilege levels
+        /// (greater numeric values) if allowed by [`IOPermissionBitmap`] for the current
+        /// task.
         [12..14] pub io_privilege_level: u8,
         /// `NT`: Indicates that the processor should switch back to a parent task when it
         /// executes an `IRET` instruction.

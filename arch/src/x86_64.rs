@@ -3,6 +3,8 @@
 use tartan_bitfield::bitfield;
 use crate::{model_specific_register_access, simple_register_access};
 
+pub mod protection;
+
 
 bitfield! {
     /// `CR8`: System control register for controlling interrupts based on priority.
