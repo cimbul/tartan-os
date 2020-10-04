@@ -3,9 +3,12 @@
 //! This includes the minimal support for segmented memory and hardware task management
 //! that is required to operate in protected mode with a flat memory model.
 
+use core::fmt;
 use core::num::NonZeroU16;
 use static_assertions::const_assert_eq;
-use tartan_bitfield::{bitfield, bitfield_accessors, get_bit, set_bit, Bitfield};
+use tartan_bitfield::{
+    bitfield, bitfield_accessors, bitfield_without_debug, get_bit, set_bit, Bitfield,
+};
 use tartan_c_enum::c_enum;
 
 #[cfg(doc)]
@@ -441,6 +444,52 @@ impl SystemDescriptorType {
 }
 
 
+
+/// Generic entry in a global/local/interrupt descriptor table. Can be a
+/// [`SegmentDescriptor`] or [`GateDescriptor`], depending on the type flags.
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GenericDescriptor {
+    lower: u32,
+
+    /// Common descriptor settings.
+    pub flags: GenericDescriptorFlags,
+
+    #[cfg(any(target_arch = "x86_64", doc))]
+    #[doc(cfg(target_arch = "x86_64"))]
+    upper: u32,
+
+    // NOTE: In some cases, The processor verifies that this isn't a 32-bit descriptor by
+    // looking for the type field (bits 8..13) in this DWord and making sure it is 0.
+    #[cfg(any(target_arch = "x86_64", doc))]
+    #[doc(cfg(target_arch = "x86_64"))]
+    _reserved: u32,
+}
+
+#[cfg(target_arch = "x86")]
+const_assert_eq!(8, core::mem::size_of::<GenericDescriptor>());
+
+#[cfg(target_arch = "x86_64")]
+const_assert_eq!(16, core::mem::size_of::<GenericDescriptor>());
+
+
+bitfield_without_debug! {
+    /// Settings for [`GenericDescriptor`]s.
+    pub struct GenericDescriptorFlags(u32) {}
+}
+
+impl fmt::Debug for GenericDescriptorFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut struct_fmt = f.debug_struct("GenericDescriptorFlags");
+        struct_fmt.field("<value>", &self.0);
+        self.fmt_fields(&mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        struct_fmt.finish()
+    }
+}
+
+impl DescriptorFlags for GenericDescriptorFlags {}
+
 /// An entry in a segment descriptor table that defines a new segment. This includes code,
 /// data, task state (TSS), and local descriptor table (LDT) segments.
 ///
@@ -455,7 +504,7 @@ impl SystemDescriptorType {
 ///       16 bytes. This is fine, since the first 8 bytes are compatible and the rest will
 ///       be ignored.
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct SegmentDescriptor {
     lower: u32,
 
@@ -555,8 +604,18 @@ impl SegmentDescriptor {
     }
 }
 
+impl fmt::Debug for SegmentDescriptor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("SegmentDescriptor")
+            .field("address", &self.address())
+            .field("limit", &self.limit())
+            .field("flags", &self.flags)
+            .finish()
+    }
+}
 
-bitfield! {
+
+bitfield_without_debug! {
     /// Settings for [`SegmentDescriptor`]s.
     pub struct SegmentDescriptorFlags(u32) {
         /// `AVL`: Ignored bit that can be used by the operating system.
@@ -567,6 +626,16 @@ bitfield! {
         /// `G`: Indicates that the segment limit is in units of 4KB. Otherwise, it is in
         /// bytes.
         [23] pub granularity,
+    }
+}
+
+impl fmt::Debug for SegmentDescriptorFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut struct_fmt = f.debug_struct("SegmentDescriptorFlags");
+        struct_fmt.field("<value>", &self.0);
+        self.fmt_fields(&mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        struct_fmt.finish()
     }
 }
 
@@ -583,7 +652,7 @@ impl DescriptorFlags for SegmentDescriptorFlags {}
 ///   * Task gates, which support hardware task switching. These are not supported in
 ///     64-bit mode.
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct GateDescriptor {
     lower: u32,
 
@@ -660,8 +729,18 @@ impl GateDescriptor {
     }
 }
 
+impl fmt::Debug for GateDescriptor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("GateDescriptor")
+            .field("selector", &self.selector())
+            .field("entry_point_offset", &self.entry_point_offset())
+            .field("flags", &self.flags)
+            .finish()
+    }
+}
 
-bitfield! {
+
+bitfield_without_debug! {
     /// Settings for [`GateDescriptor`]s.
     pub struct GateDescriptorFlags(u32) {
         /// Number of stack parameters to copy if the code segment referenced by a call
@@ -680,6 +759,16 @@ bitfield! {
         #[cfg(any(target_arch = "x86_64", doc))]
         #[doc(cfg(target_arch = "x86_64"))]
         [0..2] pub interrupt_stack_index: u8,
+    }
+}
+
+impl fmt::Debug for GateDescriptorFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut struct_fmt = f.debug_struct("GateDescriptorFlags");
+        struct_fmt.field("<value>", &self.0);
+        self.fmt_fields(&mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        struct_fmt.finish()
     }
 }
 

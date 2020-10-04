@@ -278,7 +278,45 @@ fn describe_cpu_state(out: &mut OutputStream) -> Result {
         writeln_result!(out, "{:#x?}", x86_64::ExtendedFeatureEnableRegister::get())?;
     }
 
+    writeln_result!(out, "{:#x?}", interrupt::InterruptDescriptorTableRegister::get())?;
+    writeln_result!(out, "{:#x?}", protection::GlobalDescriptorTableRegister::get())?;
+    describe_segment_register(out, "LDTR", protection::LocalDescriptorTableRegister::get())?;
+    describe_segment_register(out, "TR", protection::TaskRegister::get())?;
+    describe_segment_register(out, "CS", protection::SegmentRegister::Code.get())?;
+    describe_segment_register(out, "DS", protection::SegmentRegister::Data.get())?;
+    describe_segment_register(out, "SS", protection::SegmentRegister::Stack.get())?;
+    describe_segment_register(out, "ES", protection::SegmentRegister::Extra.get())?;
+    describe_segment_register(out, "FS", protection::SegmentRegister::ExtraF.get())?;
+    describe_segment_register(out, "GS", protection::SegmentRegister::ExtraG.get())?;
+
+    // writeln_result!(out, "{:#x?}")?;
+
+    Ok(Status::Success)
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn describe_segment_register(
+    out: &mut OutputStream,
+    name: &str,
+    selector: tartan_arch::x86_common::protection::Selector,
+) -> Result {
+    use tartan_arch::x86_common::protection::{
+        DescriptorFlags, GateDescriptor, GenericDescriptor, SegmentDescriptor,
+    };
+
     writeln_result!(out, "")?;
+    writeln_result!(out, "{}:", name)?;
+    writeln_result!(out, "{:#x?}", selector)?;
+
+    let descriptor = selector.descriptor_address() as *const GenericDescriptor;
+    let descriptor_flags = unsafe { (*descriptor).flags };
+    if descriptor_flags.is_gate() {
+        let gate_descriptor = unsafe { &*(descriptor as *const GateDescriptor) };
+        writeln_result!(out, "{:#x?}", *gate_descriptor)?;
+    } else {
+        let seg_descriptor = unsafe { &*(descriptor as *const SegmentDescriptor) };
+        writeln_result!(out, "{:#x?}", *seg_descriptor)?;
+    }
 
     Ok(Status::Success)
 }
