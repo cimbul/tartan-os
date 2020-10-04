@@ -5,8 +5,9 @@
 //! #
 //! c_enum! {
 //!     pub enum Example(u16) {
-//!         Foo = 0,
+//!         Foo,
 //!         Bar = 2,
+//!         Quux,
 //!         Baz = 0xffff,
 //!     }
 //! }
@@ -16,6 +17,10 @@
 //! assert_eq!(x, Example::from(2));
 //! assert_eq!(u16::from(x), 2);
 //! assert_eq!(x.name(), Some("Bar"));
+//!
+//! // Omitted variant values assigned in sequence
+//! assert_eq!(u16::from(Example::Foo), 0);
+//! assert_eq!(u16::from(Example::Quux), 3);
 //!
 //! // Unknown value
 //! let y = Example::from(0xcafe);
@@ -89,7 +94,7 @@ macro_rules! c_enum {
         $vis:vis enum $name:ident($repr_type:ty) {
             $(
                 $( #[$variant_meta:meta] )*
-                $variant_name:ident = $variant_value:expr
+                $variant_name:ident $( = $variant_value:expr )?
             ),*
             $(,)?
         }
@@ -100,11 +105,14 @@ macro_rules! c_enum {
         pub struct $name($repr_type);
 
         impl $name {
-            $(
-                $(#[$variant_meta])*
-                #[allow(non_upper_case_globals)]
-                pub const $variant_name: $name = $name($variant_value);
-            )*
+            $crate::c_enum! {
+                @variants
+                default = 0;
+                $(
+                    $( #[$variant_meta] )*
+                    $variant_name $( = $variant_value )?
+                ),*
+            }
 
             /// The name of the enum variant in code, if one is defined for this value.
             ///
@@ -153,6 +161,66 @@ macro_rules! c_enum {
             fn from(enum_value: $name) -> Self {
                 enum_value.0
             }
+        }
+    };
+
+    // No variants
+    [
+        @variants
+        default = $default_value:expr;
+    ] => {
+        // Done
+    };
+
+    // Explicit value
+    [
+        @variants
+        default = $default_value:expr;
+        $( #[$current_meta:meta] )*
+        $current_name:ident = $current_value:expr
+        $(
+            ,
+            $( #[$rest_meta:meta] )*
+            $rest_name:ident $( = $rest_value:expr )?
+        )*
+    ] => {
+        $(#[$current_meta])*
+        #[allow(non_upper_case_globals)]
+        pub const $current_name: Self = Self($current_value);
+
+        $crate::c_enum! {
+            @variants
+            default = $current_value + 1;
+            $(
+                $(#[$rest_meta])*
+                $rest_name $( = $rest_value )?
+            ),*
+        }
+    };
+
+    // Default value
+    [
+        @variants
+        default = $default_value:expr;
+        $( #[$current_meta:meta] )*
+        $current_name:ident
+        $(
+            ,
+            $( #[$rest_meta:meta] )*
+            $rest_name:ident $( = $rest_value:expr )?
+        )*
+    ] => {
+        $(#[$current_meta])*
+        #[allow(non_upper_case_globals)]
+        pub const $current_name: Self = Self($default_value);
+
+        $crate::c_enum! {
+            @variants
+            default = $default_value + 1;
+            $(
+                $(#[$rest_meta])*
+                $rest_name $( = $rest_value )?
+            ),*
         }
     };
 }
