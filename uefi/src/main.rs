@@ -280,7 +280,11 @@ fn describe_cpu_state(out: &mut OutputStream) -> Result {
 
     writeln_result!(out, "{:#x?}", interrupt::InterruptDescriptorTableRegister::get())?;
     writeln_result!(out, "{:#x?}", protection::GlobalDescriptorTableRegister::get())?;
-    describe_segment_register(out, "LDTR", protection::LocalDescriptorTableRegister::get())?;
+    describe_segment_register(
+        out,
+        "LDTR",
+        protection::LocalDescriptorTableRegister::get(),
+    )?;
     describe_segment_register(out, "TR", protection::TaskRegister::get())?;
     describe_segment_register(out, "CS", protection::SegmentRegister::Code.get())?;
     describe_segment_register(out, "DS", protection::SegmentRegister::Data.get())?;

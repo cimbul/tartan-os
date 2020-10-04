@@ -244,9 +244,8 @@ impl Selector {
     pub fn descriptor_address(self) -> usize {
         let global_table = GlobalDescriptorTableRegister::get();
         let table_address = if self.local() {
-            let local_table = unsafe {
-                &*(LocalDescriptorTableRegister::current_descriptor())
-            };
+            let local_table =
+                unsafe { &*(LocalDescriptorTableRegister::current_descriptor()) };
             local_table.address()
         } else {
             global_table.address
@@ -426,19 +425,19 @@ impl SystemDescriptorType {
         {
             matches!(
                 self,
-                Self::CallGate | Self::CallGate16Bit |
-                Self::InterruptGate | Self::InterruptGate16Bit |
-                Self::TrapGate | Self::TrapGate16Bit |
-                Self::TaskGate)
+                Self::CallGate
+                    | Self::CallGate16Bit
+                    | Self::InterruptGate
+                    | Self::InterruptGate16Bit
+                    | Self::TrapGate
+                    | Self::TrapGate16Bit
+                    | Self::TaskGate
+            )
         }
 
         #[cfg(target_arch = "x86_64")]
         {
-            matches!(
-                self,
-                Self::CallGate |
-                Self::InterruptGate |
-                Self::TrapGate)
+            matches!(self, Self::CallGate | Self::InterruptGate | Self::TrapGate)
         }
     }
 }
