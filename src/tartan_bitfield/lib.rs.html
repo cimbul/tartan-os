@@ -592,6 +592,32 @@
 <span id="589">589</span>
 <span id="590">590</span>
 <span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Define structures that wrap a number with accessors for certain bit ranges.</span>
 <span class="doccomment">//!</span>
@@ -729,31 +755,48 @@
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">bitfield</span> {
     [
-        $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_meta</span>:<span class="ident">meta</span>]</span> )<span class="op">*</span>
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_vis</span>:<span class="ident">vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>:<span class="ident">ty</span>) {
-            $(
-                $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_meta</span>:<span class="ident">meta</span>]</span> )<span class="op">*</span>
-                [ <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_lsb</span>:<span class="ident">literal</span> $( .. <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_msb</span>:<span class="ident">literal</span> )<span class="question-mark">?</span> ]
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_vis</span>:<span class="ident">vis</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>:<span class="ident">ident</span>
-                $( : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_underlying_type</span>:<span class="ident">ty</span> $( <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_interface_type</span>:<span class="ident">ty</span> )<span class="question-mark">?</span> )<span class="question-mark">?</span>
-            ),<span class="op">*</span>
-            $(,)<span class="question-mark">?</span>
+        $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>:<span class="ident">meta</span>]</span> )<span class="op">*</span>
+        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vis</span>:<span class="ident">vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>:<span class="ident">ty</span>) {
+            $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">body</span>:<span class="ident">tt</span>)<span class="op">*</span>
         }
     ] <span class="op">=</span><span class="op">&gt;</span> {
-        $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_meta</span>]</span> )<span class="op">*</span>
+        <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">bitfield_without_debug</span><span class="macro">!</span> {
+            $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>]</span>)<span class="op">*</span>
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>) {
+                $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">body</span>)<span class="op">*</span>
+            }
+        }
+
+        <span class="kw">impl</span> ::<span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {
+            <span class="kw">fn</span> <span class="macro-nonterminal">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> ::<span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> ::<span class="ident">core</span>::<span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">struct_out</span> <span class="op">=</span> <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="kw">struct</span>));
+                <span class="macro-nonterminal">struct_out</span>.<span class="ident">field</span>(<span class="string">&quot;&lt;value&gt;&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>);
+                <span class="self">self</span>.<span class="ident">fmt_fields</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">struct_out</span>);
+                <span class="ident">struct_out</span>.<span class="ident">finish</span>()
+            }
+        }
+    }
+}
+
+<span class="doccomment">/// Same as the [`bitfield`] macro without a [`Debug`] implementation provided.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Since Debug is required by the [`Bitfield`] trait, the caller must provide their own</span>
+<span class="doccomment">/// implementation.</span>
+<span class="attribute">#[<span class="ident">macro_export</span>]</span>
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">bitfield_without_debug</span> {
+    [
+        $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>:<span class="ident">meta</span>]</span> )<span class="op">*</span>
+        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vis</span>:<span class="ident">vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>:<span class="ident">ty</span>) {
+            $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">body</span>:<span class="ident">tt</span>)<span class="op">*</span>
+        }
+    ] <span class="op">=</span><span class="op">&gt;</span> {
+        $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>]</span> )<span class="op">*</span>
         <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>);
+        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vis</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>);
 
         <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">bitfield_accessors</span><span class="macro">!</span> {
-                $(
-                    $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_meta</span>]</span> )<span class="op">*</span>
-                    [ <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_lsb</span> $( .. <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_msb</span> )<span class="question-mark">?</span> ]
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_vis</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>
-                    $( : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_underlying_type</span> $( <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_interface_type</span> )<span class="question-mark">?</span> )<span class="question-mark">?</span>
-                ),<span class="op">*</span>
-            }
+            <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">bitfield_accessors</span><span class="macro">!</span> { $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">body</span>)<span class="op">*</span> }
         }
 
         <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">Bitfield</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {}
@@ -846,6 +889,15 @@
                 $( : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span> $( <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">interface_type</span> )<span class="question-mark">?</span> )<span class="question-mark">?</span>
             }
         )<span class="op">*</span>
+
+        <span class="doccomment">/// Print this object&#39;s bitfield values. Helper method for `Debug`</span>
+        <span class="doccomment">/// implementations.</span>
+        <span class="kw">fn</span> <span class="ident">fmt_fields</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> ::<span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">DebugStruct</span>) {
+            $(
+                $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>]</span>)<span class="op">*</span>
+                <span class="ident">f</span>.<span class="ident">field</span>(<span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>());
+            )<span class="op">*</span>
+        }
     };
 
     <span class="comment">// Special case for single-bit boolean fields</span>

@@ -302,7 +302,7 @@
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
     <span class="doccomment">/// Primary feature list returned in `CPUID.01H:ECX+EDX`.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Features</span>(<span class="ident">u64</span>) {
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BasicFeatures</span>(<span class="ident">u64</span>) {
         <span class="comment">// Bits 0..32 from EDX</span>
 
         <span class="doccomment">/// `FPU`: The processor has a built-in x87 floating-point unit</span>
@@ -446,7 +446,7 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Features</span> {
+<span class="kw">impl</span> <span class="ident">BasicFeatures</span> {
     <span class="doccomment">/// Retrieve the feature list from the processor using the CPUID instruction.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">cpuid</span>(<span class="number">1</span>, <span class="number">0</span>);
@@ -454,8 +454,8 @@
         <span class="comment">// are older and more basic, so it makes sense to start the bit numbering with</span>
         <span class="comment">// those.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> <span class="op">=</span> <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="ident">features</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
-        <span class="ident">features</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">2</span>]) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
+        <span class="ident">features</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
+        <span class="ident">features</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">2</span>]) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
         <span class="ident">features</span>
     }
 }
@@ -494,11 +494,11 @@
 <span class="kw">impl</span> <span class="ident">ExtendedFeatures</span> {
     <span class="doccomment">/// Retrieve the extended feature list from the processor using the CPUID instruction.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">cpuid</span>(<span class="number">1</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">cpuid</span>(<span class="number">0x8000_0001</span>, <span class="number">0</span>);
         <span class="comment">// Same ordering rationale as with Features</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> <span class="op">=</span> <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="ident">features</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
-        <span class="ident">features</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">2</span>]) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
+        <span class="ident">features</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
+        <span class="ident">features</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">result</span>[<span class="number">2</span>]) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
         <span class="ident">features</span>
     }
 }

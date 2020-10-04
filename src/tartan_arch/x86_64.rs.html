@@ -39,11 +39,18 @@
 <span id="36">36</span>
 <span id="37">37</span>
 <span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Architecture-specific bindings for 64-bit x86 processors.</span>
 
 <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">model_specific_register_access</span>, <span class="ident">simple_register_access</span>};
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">protection</span>;
 
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
@@ -70,7 +77,10 @@
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">syscall</span>,
         <span class="doccomment">/// `IA32_EFER.LME`: Support 64-bit mode.</span>
         [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">long_mode_enabled</span>,
-        <span class="doccomment">/// `IA32_EFER.LMA`: Indicates 64-bit mode is active.</span>
+        <span class="doccomment">/// `IA32_EFER.LMA`: Indicates 64-bit mode is active. Read-only.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// This is logically the equivalent to `[Self::long_mode_enabled] &amp;</span>
+        <span class="doccomment">/// [ControlRegister0::paging]`.</span>
         [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">long_mode_active</span>,
         <span class="doccomment">/// `IA32-EFER.NXE`: Support no-execute (NX) bit in page tables.</span>
         [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">no_execute</span>,

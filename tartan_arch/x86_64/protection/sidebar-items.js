@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["TaskStateSegmentHeader","Stack and I/O permission map pointers that make up the most significant part of a task state segment (TSS)."]]});

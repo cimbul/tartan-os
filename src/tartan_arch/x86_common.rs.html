@@ -494,17 +494,31 @@
 <span id="491">491</span>
 <span id="492">492</span>
 <span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Architecture-specific bindings common to 32-bit and 64-bit x86 processors.</span>
 
 <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident">features</span>::<span class="ident">Features</span>;
+<span class="kw">use</span> <span class="ident">features</span>::<span class="ident">BasicFeatures</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
+<span class="kw">use</span> <span class="ident">protection</span>::<span class="ident">IOPermissionBitmap</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">features</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">interrupt</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">paging</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">protection</span>;
 
 
 <span class="macro">bitfield</span><span class="macro">!</span> {
@@ -541,6 +555,10 @@
         [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">signed_overflow</span>,
         <span class="doccomment">/// `IOPL`: Sets the privilege threshold for a task to access I/O address space.</span>
         <span class="doccomment">/// Smaller numbers are higher privilege.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// Individual I/O ports may still be accessible at lower privilege levels</span>
+        <span class="doccomment">/// (greater numeric values) if allowed by [`IOPermissionBitmap`] for the current</span>
+        <span class="doccomment">/// task.</span>
         [<span class="number">12</span>..<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">io_privilege_level</span>: <span class="ident">u8</span>,
         <span class="doccomment">/// `NT`: Indicates that the processor should switch back to a parent task when it</span>
         <span class="doccomment">/// executes an `IRET` instruction.</span>
@@ -552,11 +570,12 @@
         [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">resume</span>,
         <span class="doccomment">/// `VM`: Enable virtual real mode.</span>
         [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">virtual_8086_mode</span>,
-        <span class="doccomment">/// `AC`: In combination with other flags, enable strict alignment checks for</span>
-        <span class="doccomment">/// memory accesses in privilege level 3.</span>
+        <span class="doccomment">/// `AC`: Enable strict alignment checks for memory accesses in privilege level 3.</span>
+        <span class="doccomment">/// In privilege levels 0–2, allow access to pages assigned to lower privilege</span>
+        <span class="doccomment">/// levels.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// In privilege level 0, allow access to pages assigned to lower privilege</span>
-        <span class="doccomment">/// levels. See [`ControlRegister4::supervisor_access_prevention`].</span>
+        <span class="doccomment">/// Alignment checking requires [`ControlRegister0::alignment_check_mask`]. Access</span>
+        <span class="doccomment">/// protection requires [`ControlRegister4::supervisor_access_prevention`].</span>
         [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">alignment_check_or_access_control</span>,
         <span class="doccomment">/// `VIF`: Virtual counterpart to the `interrupt_enabled` flag, used with</span>
         <span class="doccomment">/// [VME](ControlRegister4::virtual_8086_extensions) or</span>
@@ -681,8 +700,8 @@
                     );
                 }
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">Self</span>(<span class="number">0</span>);
-                <span class="ident">value</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">lower</span>);
-                <span class="ident">value</span>.<span class="number">0</span> <span class="op">&amp;=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">upper</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
+                <span class="ident">value</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">lower</span>);
+                <span class="ident">value</span>.<span class="number">0</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u64</span>::<span class="ident">from</span>(<span class="ident">upper</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>;
                 <span class="ident">value</span>
             }
 
@@ -737,10 +756,11 @@
         [<span class="number">30</span>] <span class="kw">pub</span> <span class="ident">cache_disabled</span>,
         <span class="doccomment">/// `CR0.NW`: Disable write-back/write-through caching.</span>
         [<span class="number">29</span>] <span class="kw">pub</span> <span class="ident">cache_not_write_through</span>,
-        <span class="doccomment">/// `CR0.AM`: In combination with other flags, enables strict alignment checks for</span>
-        <span class="doccomment">/// memory access.</span>
+        <span class="doccomment">/// `CR0.AM`: Enables strict alignment checks for memory access, in combination</span>
+        <span class="doccomment">/// with [`FlagRegister::alignment_check_or_access_control`].</span>
         [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">alignment_check_mask</span>,
-        <span class="doccomment">/// `CR0.WP`: Enforce read-only pages even in supervisor mode.</span>
+        <span class="doccomment">/// `CR0.WP`: Enforce read-only pages even in privilege levels 0–2. They are</span>
+        <span class="doccomment">/// always enforced in level 3.</span>
         [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">write_protect</span>,
         <span class="doccomment">/// `CR0.NE`: Use internal error mechanism for FPU errors, rather than DOS-style.</span>
         [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">native_fpu_error</span>,
@@ -793,18 +813,18 @@
         <span class="doccomment">/// `CR4.VME`: Enable interrupts and exception handling in [virtual</span>
         <span class="doccomment">/// real-mode](EFLAGS::virtual_8086_mode).</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::virtual_8086_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::virtual_8086_extensions`].</span>
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">virtual_8086_extensions</span>,
 
         <span class="doccomment">/// `CR4.PVI`: Enable virtual interrupts in protected mode.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::virtual_8086_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::virtual_8086_extensions`].</span>
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">protected_virtual_interrupts</span>,
 
         <span class="doccomment">/// `CR4.TSD`: Disable access to processor timestamp counter except in privilege</span>
         <span class="doccomment">/// level 0.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::timestamp_counter`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::timestamp_counter`].</span>
         [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">timestamp_disabled</span>,
 
         <span class="doccomment">/// `CR4.DE`: Enable newer debug register scheme where `DR4` and `DR5` are</span>
@@ -812,7 +832,7 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// When this flag is clear, they are equivalent to `DR6` and `DR7`.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::debugging_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::debugging_extensions`].</span>
         [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">debugging_extensions</span>,
 
         <span class="doccomment">/// `CR4.PSE`: Support large pages (4MB). Applies to 32-bit mode only.</span>
@@ -820,24 +840,24 @@
         <span class="doccomment">/// When this flag is clear in 32-bit mode, pages are always 4KB. Large pages are</span>
         <span class="doccomment">/// always enabled in 64-bit mode.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::page_size_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::page_size_extensions`].</span>
         [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">page_size_extensions</span>,
 
         <span class="doccomment">/// `CR4.PAE`: Enable pages to map to physical addresses larger than 32-bits.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Required for 64-bit mode.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::physical_address_extension`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::physical_address_extension`].</span>
         [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">physical_address_extension</span>,
 
         <span class="doccomment">/// `CR4.MCE`: Enable machine-check exception.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::machine_check_exception`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::machine_check_exception`].</span>
         [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">machine_check_exception</span>,
 
         <span class="doccomment">/// `CR4.PGE`: Enable global pages, which are shared across task contexts.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::global_pages`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::global_pages`].</span>
         [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">global_pages</span>,
 
         <span class="doccomment">/// `CR4.PCE`: Allow access to performance monitoring counter in privilege levels</span>
@@ -848,7 +868,7 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// These instructions require special support from the operating system.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::fpu_save`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::fpu_save`].</span>
         [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">sse_and_fpu_save</span>,
 
         <span class="doccomment">/// `CR4.OSXMMEXCPT`: Enable unmasked SIMD floating-point exception handling for</span>
@@ -868,12 +888,12 @@
 
         <span class="doccomment">/// `CR4.VMX` (**Intel-only**): Enable virtual machine extensions.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::virtual_machine_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::virtual_machine_extensions`].</span>
         [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">virtual_machine_extensions</span>,
 
         <span class="doccomment">/// `CR4.SME` (**Intel-only**): Enable safer-mode extensions.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::safer_mode_extensions`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::safer_mode_extensions`].</span>
         [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">safer_mode_extensions</span>,
 
         <span class="doccomment">/// `CR4.FSGSBASE`: Enable instructions to load/store the `FS` and `GS` base</span>
@@ -884,7 +904,7 @@
 
         <span class="doccomment">/// `CR4.PCIDE`: Enable process-context identifiers (PCID) in 64-bit mode.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::process_context_ids`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::process_context_ids`].</span>
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
         <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
         [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">process_context_ids</span>,
@@ -894,17 +914,17 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// These instructions require special support from the operating system.</span>
         <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`Features::extended_state_save`].</span>
+        <span class="doccomment">/// Requires [`BasicFeatures::extended_state_save`].</span>
         [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">extended_state_save</span>,
 
-        <span class="doccomment">/// `CR4.SMEP`: Enable execution prevention in privilege level 0.</span>
+        <span class="doccomment">/// `CR4.SMEP`: Enable execution prevention in privilege levels 0–2.</span>
         [<span class="number">20</span>] <span class="kw">pub</span> <span class="ident">supervisor_execution_prevention</span>,
 
-        <span class="doccomment">/// `CR4.SMAP`: Enable access prevention in privilege level 0.</span>
+        <span class="doccomment">/// `CR4.SMAP`: Enable access prevention in privilege levels 0–2.</span>
         [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">supervisor_access_prevention</span>,
 
         <span class="doccomment">/// `CR4.PKE`: Use page protection keys in 64-bit mode to control access from</span>
-        <span class="doccomment">/// privilege levels 1–3.</span>
+        <span class="doccomment">/// privilege level 3.</span>
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
         <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
         [<span class="number">22</span>] <span class="kw">pub</span> <span class="ident">user_protection_keys</span>,
@@ -914,7 +934,7 @@
         [<span class="number">23</span>] <span class="kw">pub</span> <span class="ident">control_flow_enforcement</span>,
 
         <span class="doccomment">/// `CR4.PKS` (**Intel-only**): Use page protection keys in 64-bit mode to control</span>
-        <span class="doccomment">/// access from privilege level 0.</span>
+        <span class="doccomment">/// access from privilege levels 0-2.</span>
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
         <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
         [<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">supervisor_protection_keys</span>,
@@ -932,7 +952,7 @@
     <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to</span>
     <span class="doccomment">/// work with the actual register.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Requires [`Features::extended_state_save`].</span>
+    <span class="doccomment">/// Requires [`BasicFeatures::extended_state_save`].</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExtendedControlRegister0</span>(<span class="ident">u64</span>) {
         <span class="doccomment">/// `XCR0.X87`: Hardcoded to 1.</span>
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">fpu</span>,

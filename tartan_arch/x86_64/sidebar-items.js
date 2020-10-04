@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ControlRegister8","`CR8`: System control register for controlling interrupts based on priority."],["ExtendedFeatureEnableRegister","`IA32_EFER`: Model-specific register that controls features relating to 64-bit operation."]]});
+initSidebarItems({"mod":[["protection","Support for protected mode operation."]],"struct":[["ControlRegister8","`CR8`: System control register for controlling interrupts based on priority."],["ExtendedFeatureEnableRegister","`IA32_EFER`: Model-specific register that controls features relating to 64-bit operation."]]});

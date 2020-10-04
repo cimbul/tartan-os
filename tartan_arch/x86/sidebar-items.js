@@ -1,1 +1,1 @@
-initSidebarItems({});
+initSidebarItems({"mod":[["protection","Support for protected mode operation."]]});

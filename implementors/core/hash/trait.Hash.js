@@ -1,4 +1,5 @@
 (function() {var implementors = {};
 implementors["tartan_acpi"] = [{"text":"impl Hash for AddressSpace","synthetic":false,"types":[]},{"text":"impl Hash for AccessSize","synthetic":false,"types":[]},{"text":"impl Hash for FixedFlags","synthetic":false,"types":[]}];
+implementors["tartan_arch"] = [{"text":"impl Hash for InterruptVector","synthetic":false,"types":[]},{"text":"impl Hash for SystemDescriptorType","synthetic":false,"types":[]}];
 implementors["tartan_uefi"] = [{"text":"impl Hash for Revision","synthetic":false,"types":[]},{"text":"impl Hash for Status","synthetic":false,"types":[]},{"text":"impl Hash for MemoryType","synthetic":false,"types":[]},{"text":"impl Hash for AllocateType","synthetic":false,"types":[]},{"text":"impl Hash for MemoryAttributes","synthetic":false,"types":[]},{"text":"impl Hash for OpenProtocolAttributes","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
