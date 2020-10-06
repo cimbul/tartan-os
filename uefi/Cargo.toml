@@ -12,10 +12,10 @@ publish = false
 # Internal
 tartan-acpi = {path = "../acpi"}
 tartan-arch = {path = "../arch"}
+tartan-bitfield = {path = "../util/bitfield"}
 tartan-c-enum = {path = "../util/c_enum"}
 tartan-pci = {path = "../pci"}
 # External
-bitflags = "1.2.1"
 cfg-if = "0.1.10"
 crc-any = {version = "2.3.5", default-features = false}
 log = "0.4.11"

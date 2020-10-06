@@ -10,10 +10,10 @@ publish = false
 
 [dependencies]
 # Internal
+tartan-bitfield = {path = "../util/bitfield"}
 tartan-c-enum = {path = "../util/c_enum"}
 tartan-parsers = {path = "../util/parsers"}
 # External
-bitflags = "1.2.1"
 static_assertions = "1.1.0"
 nom = {version = "5.1.2", features = ["alloc"], default-features = false}
 

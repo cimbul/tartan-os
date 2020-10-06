@@ -10,13 +10,13 @@
 extern crate alloc;
 
 use ::alloc::vec::Vec;
-use bitflags::bitflags;
 use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
 use core::mem::{align_of, size_of};
 use core::slice;
 use crc_any::CRCu32;
+use tartan_bitfield::bitfield;
 use tartan_c_enum::c_enum;
 
 pub mod allocator;
@@ -714,22 +714,22 @@ c_enum! {
     }
 }
 
-bitflags! {
-    pub struct MemoryAttributes: u64 {
-        const SUPPORTS_UNCACHEABLE     = 0x0000_0000_0000_0001_u64;
-        const SUPPORTS_WRITE_COMBINING = 0x0000_0000_0000_0002_u64;
-        const SUPPORTS_WRITE_THROUGH   = 0x0000_0000_0000_0004_u64;
-        const SUPPORTS_WRITE_BACK      = 0x0000_0000_0000_0008_u64;
-        const SUPPORTS_UNCACHEABLE_SEM = 0x0000_0000_0000_0010_u64;
-        const SUPPORTS_WRITE_PROTECT   = 0x0000_0000_0000_1000_u64;
-        const SUPPORTS_READ_PROTECT    = 0x0000_0000_0000_2000_u64;
-        const SUPPORTS_EXEC_PROTECT    = 0x0000_0000_0000_4000_u64;
-        const NONVOLATILE              = 0x0000_0000_0000_8000_u64;
-        const MORE_RELIABLE            = 0x0000_0000_0001_0000_u64;
-        const SUPPORTS_READ_ONLY       = 0x0000_0000_0002_0000_u64;
-        const SPECIFIC_PURPOSE         = 0x0000_0000_0004_0000_u64;
-        const SUPPORTS_CPU_CRYPTO      = 0x0000_0000_0008_0000_u64;
-        const RUNTIME                  = 0x8000_0000_0000_0000_u64;
+bitfield! {
+    pub struct MemoryAttributes(u64) {
+        [0] pub supports_uncacheable,
+        [1] pub supports_write_combining,
+        [2] pub supports_write_through,
+        [4] pub supports_write_back,
+        [5] pub supports_uncacheable_sem,
+        [12] pub supports_write_protect,
+        [13] pub supports_read_protect,
+        [14] pub supports_exec_protect,
+        [15] pub nonvolatile,
+        [16] pub more_reliable,
+        [17] pub supports_read_only,
+        [18] pub specific_purpose,
+        [19] pub supports_cpu_crypto,
+        [63] pub runtime,
     }
 }
 

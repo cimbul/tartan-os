@@ -10,9 +10,9 @@
 
 extern crate alloc;
 
-use bitflags::bitflags;
 use core::mem::size_of;
 use static_assertions::const_assert_eq;
+use tartan_bitfield::bitfield;
 use tartan_c_enum::c_enum;
 
 pub mod aml;
@@ -192,30 +192,30 @@ c_enum! {
 }
 
 
-bitflags! {
+bitfield! {
     /// Support flags from Fixed ACPI Description Table
-    pub struct FixedFlags: u32 {
-        const X86_WBINVD_SUPPORTED                  = 1;
-        const X86_WBINVD_REQUIRES_FLUSH             = 1 << 1;
-        const C1_SUPPORTED                          = 1 << 2;
-        const C2_MULTI_CPU_SUPPORTED                = 1 << 3;
-        const POWER_BUTTON_IS_CONTROL_METHOD_DEVICE = 1 << 4;
-        const SLEEP_BUTTON_IS_CONTROL_METHOD_DEVICE = 1 << 5;
-        const RTC_NOT_FIXED                         = 1 << 6;
-        const RTC_CAN_WAKE_S4                       = 1 << 7;
-        const TIMER_VALUE_32_BIT                    = 1 << 8;
-        const DOCK_CAPABLE                          = 1 << 9;
-        const FIXED_DESCRIPTION_RESET_SUPPORTED     = 1 << 10;
-        const SEALED_CASE                           = 1 << 11;
-        const HEADLESS                              = 1 << 12;
-        const EXECUTE_INSTRUCTION_AFTER_SLP_TYP     = 1 << 13;
-        const PCI_EXPRESS_WAKE                      = 1 << 14;
-        const USE_PLATFORM_CLOCK                    = 1 << 15;
-        const RTC_STATUS_VALID_AFTER_S4             = 1 << 16;
-        const REMOTE_POWER_ON_SUPPORTED             = 1 << 17;
-        const FORCE_APIC_CLUSTER_MODEL              = 1 << 18;
-        const FORCE_APIC_PHYSICAL_DESTINATION_MODE  = 1 << 19;
-        const HARDWARE_REDUCED_ACPI                 = 1 << 20;
-        const LOW_POWER_S0_IDLE                     = 1 << 21;
+    pub struct FixedFlags(u32) {
+        [0] pub x86_wbinvd_supported,
+        [1] pub x86_wbinvd_requires_flush,
+        [2] pub c1_supported,
+        [3] pub c2_multi_cpu_supported,
+        [4] pub power_button_is_control_method_device,
+        [5] pub sleep_button_is_control_method_device,
+        [6] pub rtc_not_fixed,
+        [7] pub rtc_can_wake_s4,
+        [8] pub timer_value_32_bit,
+        [9] pub dock_capable,
+        [10] pub fixed_description_reset_supported,
+        [11] pub sealed_case,
+        [12] pub headless,
+        [13] pub execute_instruction_after_slp_typ,
+        [14] pub pci_express_wake,
+        [15] pub use_platform_clock,
+        [16] pub rtc_status_valid_after_s4,
+        [17] pub remote_power_on_supported,
+        [18] pub force_apic_cluster_model,
+        [19] pub force_apic_physical_destination_mode,
+        [20] pub hardware_reduced_acpi,
+        [21] pub low_power_s0_idle,
     }
 }

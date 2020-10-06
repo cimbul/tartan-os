@@ -661,10 +661,10 @@ dependencies = [
 name = "tartan-acpi"
 version = "0.1.0"
 dependencies = [
- "bitflags",
  "insta",
  "nom",
  "static_assertions",
+ "tartan-bitfield",
  "tartan-c-enum",
  "tartan-parsers",
 ]
@@ -720,12 +720,12 @@ dependencies = [
 name = "tartan-uefi"
 version = "0.1.0"
 dependencies = [
- "bitflags",
  "cfg-if",
  "crc-any",
  "log",
  "tartan-acpi",
  "tartan-arch",
+ "tartan-bitfield",
  "tartan-c-enum",
  "tartan-pci",
  "utf16_lit",
