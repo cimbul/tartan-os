@@ -67,6 +67,7 @@
 pub trait CEnum<T>
 where
     Self: core::fmt::Debug
+        + Default
         + Clone
         + Copy
         + PartialEq
@@ -101,7 +102,7 @@ macro_rules! c_enum {
     ] => {
         $(#[$meta])*
         #[repr(transparent)]
-        #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
         pub struct $name($repr_type);
 
         impl $name {
