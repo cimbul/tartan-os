@@ -701,6 +701,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tartan-elf"
+version = "0.1.0"
+dependencies = [
+ "static_assertions",
+ "tartan-bitfield",
+ "tartan-c-enum",
+]
+
+[[package]]
 name = "tartan-parsers"
 version = "0.1.0"
 dependencies = [

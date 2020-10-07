@@ -3,6 +3,7 @@ members = [
 	"acpi",
 	"arch",
 	"devicetree",
+	"elf",
 	"pci",
 	"uefi",
 	"util/bitfield",

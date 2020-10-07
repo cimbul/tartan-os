@@ -1,0 +1,16 @@
+[package]
+name = "tartan-elf"
+version = "0.1.0"
+authors = ["Tim Yates <cimbul@gmail.com>"]
+edition = "2018"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+homepage = "https://github.com/cimbul/tartan-os"
+publish = false
+
+[dependencies]
+# Internal
+tartan-bitfield = {path = "../util/bitfield"}
+tartan-c-enum = {path = "../util/c_enum"}
+# External
+static_assertions = "1.1.0"
