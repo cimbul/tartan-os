@@ -57,6 +57,45 @@ const_assert_eq!(size_of::<HeaderNative>(), size_of::<Header<u32>>());
 #[cfg(target_pointer_width = "64")]
 const_assert_eq!(size_of::<HeaderNative>(), size_of::<Header<u64>>());
 
+impl<Addr: Copy> Header<Addr> {
+    /// Expected value of the [`version`](Self::version) field.
+    pub const VERSION: u32 = 1;
+
+    /// Checks that the header represents a valid ELF file for the current platform, and
+    /// panics otherwise
+    pub fn verify_native(&self) {
+        self.ident.verify_native();
+        assert!(
+            self.version == Self::VERSION,
+            "Unsupported ELF header version {:#x}",
+            self.version,
+        );
+        assert!(
+            usize::from(self.header_size) >= size_of::<Self>(),
+            "Invalid ELF header size {:#x}. Expected at least {:#x} bytes.",
+            self.header_size,
+            size_of::<Self>(),
+        );
+        assert!(
+            usize::from(self.program_header_size) >= size_of::<ProgramHeaderNative>(),
+            "Invalid program header size {:#x}. Expected at least {:#x} bytes.",
+            self.program_header_size,
+            size_of::<ProgramHeaderNative>(),
+        );
+        assert!(
+            usize::from(self.section_header_size) >= size_of::<SectionHeaderNative>(),
+            "Invalid section header size {:#x}. Expected at least {:#x} bytes.",
+            self.section_header_size,
+            size_of::<SectionHeaderNative>(),
+        );
+        assert!(
+            self.machine == Machine::NATIVE,
+            "Unsupported ELF machine type {:?}",
+            self.machine,
+        );
+    }
+}
+
 
 /// Initial header which has the same layout in all ELF variants and determines how to
 /// interpret the rest of the file (endianness, sizes).
@@ -87,6 +126,37 @@ impl HeaderIdent {
 
     /// Expected value of the [`header_version`](Self::header_version) field.
     pub const VERSION: u8 = 1;
+
+    /// Checks that the header represents a valid ELF file, of any variant, and panics
+    /// otherwise.
+    pub fn verify_format(&self) {
+        assert!(
+            self.magic == Self::MAGIC,
+            "Unrecognized magic number for ELF file: {:#x?}",
+            self.magic,
+        );
+        assert!(
+            self.header_version == Self::VERSION,
+            "Unsupported ELF identity header version {:#x}",
+            self.header_version,
+        );
+    }
+
+    /// Checks that the header represents an ELF file in the native endianness and address
+    /// size, and panics otherwise.
+    pub fn verify_native(&self) {
+        self.verify_format();
+        assert!(
+            self.endianness == Endianness::NATIVE,
+            "ELF variant {:?} not supported on this architecture",
+            self.endianness,
+        );
+        assert!(
+            self.class == FileClass::NATIVE,
+            "ELF variant {:?} not supported on this architecture",
+            self.class,
+        );
+    }
 }
 
 
@@ -102,6 +172,16 @@ c_enum! {
     }
 }
 
+impl FileClass {
+    /// The expected file class for the current platform.
+    #[cfg(any(target_pointer_width = "32", doc))]
+    pub const NATIVE: FileClass = FileClass::Size32;
+
+    /// The expected file class for the current platform.
+    #[cfg(target_pointer_width = "64")]
+    pub const NATIVE: FileClass = FileClass::Size64;
+}
+
 
 c_enum! {
     /// Specifies whether the file uses big or little endian byte ordering.
@@ -113,6 +193,16 @@ c_enum! {
         /// File uses big-endian (MSB-first) byte ordering.
         Big,
     }
+}
+
+impl Endianness {
+    /// The expected endianness value for the current platform.
+    #[cfg(any(target_endian = "little", doc))]
+    pub const NATIVE: Endianness = Endianness::Little;
+
+    /// The expected endianness value for the current platform.
+    #[cfg(target_endian = "big")]
+    pub const NATIVE: Endianness = Endianness::Big;
 }
 
 
@@ -222,6 +312,24 @@ c_enum! {
         /// RISC-V
         RISCV = 243,
     }
+}
+
+impl Machine {
+    /// The expected machine type for the current platform.
+    #[cfg(any(target_arch = "x86", doc))]
+    pub const NATIVE: Machine = Machine::X86;
+
+    /// The expected machine type for the current platform.
+    #[cfg(target_arch = "x86_64")]
+    pub const NATIVE: Machine = Machine::X86_64;
+
+    /// The expected machine type for the current platform.
+    #[cfg(target_arch = "arm")]
+    pub const NATIVE: Machine = Machine::Arm;
+
+    /// The expected machine type for the current platform.
+    #[cfg(target_arch = "aarch64")]
+    pub const NATIVE: Machine = Machine::Arm64;
 }
 
 

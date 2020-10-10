@@ -24,14 +24,16 @@ use tartan_uefi::allocator::BootAllocator;
 
 use alloc::string::String;
 use core::fmt::Write;
+use core::mem;
 use log::info;
+use tartan_elf as elf;
 use tartan_uefi::global::SYSTEM_TABLE;
-use tartan_uefi::io::{Logger, OutputStream};
-use tartan_uefi::proto::{LoadedImage, Protocol};
+use tartan_uefi::io::{encode_c_utf16, Logger, OutputStream};
+use tartan_uefi::proto::{File, FileAttributes, FileMode, LoadedImage, SimpleFileSystem};
 use tartan_uefi::writeln_result;
 use tartan_uefi::{
-    BootServices, Handle, MemoryMap, OpenProtocolAttributes, Result, Status, SystemTable,
-    Table,
+    AllocateType, BootServices, Handle, MemoryType, Result, Status, SystemTable, Table,
+    PAGE_SIZE,
 };
 
 
@@ -49,7 +51,10 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
     }
 
     match efi_main_result(image_handle, system_table) {
-        Err(status) | Ok(status) => status,
+        Err(status) | Ok(status) => {
+            // It's not normal to return even if it's success, so panic either way
+            panic!("Main returned {:?}", status)
+        }
     }
 }
 
@@ -107,10 +112,15 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
     describe_cpu_state(&mut out)?;
 
-    writeln_result!(out, "")?;
-    writeln_result!(out, "All done.")?;
+    load_kernel(
+        &mut out,
+        image_handle,
+        loaded_image,
+        system_table,
+        "EFI\\BOOT\\TARTAN.ELF",
+    )?;
 
-    loop {}
+    Ok(Status::Success)
 }
 
 /// A fake breakpoint. Stay in an endless loop until we can attach a debugger and manually
@@ -274,6 +284,147 @@ fn describe_segment_register(
     }
 
     Ok(Status::Success)
+}
+
+fn load_kernel(
+    out: &mut OutputStream,
+    image_handle: Handle,
+    loaded_image: &LoadedImage,
+    system_table: &mut SystemTable,
+    path: &str,
+) -> Result {
+    writeln_result!(out, "Looking for kernel image at {}...", path)?;
+    let boot_services = system_table.boot_services.unwrap();
+    let file_system = boot_services
+        .get_protocol::<SimpleFileSystem>(loaded_image.device_handle, image_handle)?;
+    let root_dir = file_system.open_volume()?;
+    let kernel_file = root_dir.open(
+        &encode_c_utf16(path),
+        FileMode::Read,
+        FileAttributes::default(),
+    )?;
+
+    writeln_result!(out, "Verifying kernel image...")?;
+    let header = unsafe { read_struct::<elf::HeaderNative>(kernel_file)? };
+    header.verify_native();
+
+    writeln_result!(out, "Loading kernel image...")?;
+    for i in 0..usize::from(header.program_header_count) {
+        let position =
+            header.program_header_offset + usize::from(header.program_header_size) * i;
+        kernel_file.set_position(position as u64)?;
+
+        let program_header =
+            unsafe { read_struct::<elf::ProgramHeaderNative>(kernel_file)? };
+        if program_header.segment_type == elf::ProgramSegmentType::Loadable {
+            writeln_result!(
+                out,
+                "  Loading segment {} to address {:#x} (size {:#x})",
+                i,
+                program_header.physical_addr,
+                program_header.mem_size,
+            )?;
+
+            load_elf_segment(boot_services, kernel_file, &program_header)?;
+        } else {
+            writeln_result!(
+                out,
+                "  Skipping segment {} with type {:?}",
+                i,
+                program_header.segment_type,
+            )?;
+        }
+    }
+
+    writeln_result!(out, "Done loading kernel image.")?;
+
+    writeln_result!(
+        out,
+        "Exiting boot services and transferring control to kernel entry point {:#x}",
+        header.entry_point,
+    )?;
+
+    let _memory_map = unsafe { system_table.exit_boot_services(image_handle) };
+    unsafe {
+        tartan_arch::jump(header.entry_point);
+    }
+}
+
+unsafe fn read_struct<T: Default>(file: &File) -> core::result::Result<T, Status> {
+    let mut result = T::default();
+    let size = mem::size_of::<T>();
+    let read_count = file
+        .read(core::slice::from_raw_parts_mut(&mut result as *mut T as *mut u8, size))?;
+    if read_count == size {
+        Ok(result)
+    } else {
+        Err(Status::EndOfFile)
+    }
+}
+
+fn load_elf_segment(
+    boot_services: &BootServices,
+    file: &File,
+    program_header: &elf::ProgramHeaderNative,
+) -> Result {
+    let start_addr = as_usize(program_header.physical_addr);
+    let end_addr = start_addr + as_usize(program_header.mem_size);
+
+    // Reserve the pages required for this segment
+    let start_page = start_addr / PAGE_SIZE;
+    let end_page = if end_addr == 0 { 0 } else { 1 + (end_addr - 1) / PAGE_SIZE };
+    boot_services.allocate_pages(
+        AllocateType::ExactAddress,
+        MemoryType::LoaderData,
+        end_page - start_page,
+        Some((start_page * PAGE_SIZE) as u64),
+    )?;
+
+    // Load the part of the section contained in the file
+    if program_header.file_size > 0 {
+        #[allow(clippy::useless_conversion)] // Not useless on 32-bit platforms
+        file.set_position(u64::from(program_header.file_offset))?;
+        let read_count = unsafe {
+            file.read(core::slice::from_raw_parts_mut(
+                start_addr as *mut u8,
+                as_usize(program_header.file_size),
+            ))?
+        };
+        assert_eq!(
+            read_count,
+            as_usize(program_header.file_size),
+            "Could not read full program segment from file",
+        );
+    }
+
+    // Clear the BSS portion if present
+    if program_header.mem_size > program_header.file_size {
+        let zero_start_addr = start_addr + as_usize(program_header.file_size);
+        unsafe {
+            // TODO: Import memset? I assume this will optimize to it anyway.
+            for addr in zero_start_addr..end_addr {
+                *(addr as *mut u8) = 0;
+            }
+        }
+    }
+
+    Ok(Status::Success)
+}
+
+// The ELF format uses u32 to represent addresses for 32-bit systems. Define this function
+// to silence the spurious clippy warning (without scattering the code with #![allow]).
+#[cfg(target_pointer_width = "32")]
+fn as_usize(n: u32) -> usize {
+    #![allow(clippy::cast_possible_truncation)]
+    n as usize
+}
+
+// The ELF format uses u64 to represent addresses for 64-bit systems. Define this function
+// to silence the spurious clippy warning (without scattering the code with #![allow]).
+#[cfg(target_pointer_width = "64")]
+fn as_usize(n: u64) -> usize {
+    #![allow(clippy::cast_possible_truncation)]
+    n as usize
 }
 
 #[cfg(not(test))]

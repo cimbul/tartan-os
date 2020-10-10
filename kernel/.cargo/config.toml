@@ -1,0 +1,9 @@
+# Settings required for cross-compiling the kernel. These are only used by Cargo if you
+# run it from within the kernel/ directory.
+
+[build]
+target = "target-specs/x86_64-unknown-tartan.json"  # Override with --target option
+
+[unstable]
+build-std = ["core", "alloc", "std"]
+build-std-features = []

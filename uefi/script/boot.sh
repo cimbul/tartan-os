@@ -19,6 +19,7 @@ target_dir="$(dirname "$executable")"
 case "$arch" in
     x86)
         boot_filename="BOOTIA32.EFI"
+        kernel_dir="${target_dir/i686-unknown-uefi/i686-unknown-tartan}"
         qemu_suffix="i386"
         efi_code="edk2-i386-code.fd"
         efi_vars="edk2-i386-vars.fd"
@@ -26,6 +27,7 @@ case "$arch" in
         ;;
     x86-64)
         boot_filename="BOOTX64.EFI"
+        kernel_dir="${target_dir/x86_64-unknown-uefi/x86_64-unknown-tartan}"
         qemu_suffix="x86_64"
         efi_code="edk2-x86_64-code.fd"
         efi_vars="edk2-i386-vars.fd"  # Shared with 32-bit
@@ -37,6 +39,7 @@ case "$arch" in
         # to override it with a Python script.
         pe_machine_type_override="0x01c2"
         boot_filename="BOOTARM.EFI"
+        kernel_dir="${target_dir/thumbv7a-unknown-uefi/arm-unknown-tartan}"
         qemu_suffix="arm"
         efi_code="edk2-arm-code.fd"
         efi_vars="edk2-arm-vars.fd"
@@ -48,6 +51,7 @@ case "$arch" in
     arm64)
         boot_filename="BOOTAA64.EFI"
         qemu_suffix="aarch64"
+        kernel_dir="${target_dir/aarch64-unknown-uefi/aarch64-unknown-tartan}"
         efi_code="edk2-aarch64-code.fd"
         efi_vars="edk2-arm-vars.fd"  # Shared with 32-bit
         qemu_args=(
@@ -64,6 +68,7 @@ esac
 boot_dir="$target_dir/boot-fs"
 mkdir -p "$boot_dir/EFI/BOOT"
 cp "$executable" "$boot_dir/EFI/BOOT/$boot_filename"
+cp "$kernel_dir/tartan-kernel" "$boot_dir/EFI/BOOT/TARTAN.ELF"
 
 # Override the PE machine type if necessary
 if [ -n "$pe_machine_type_override" ]; then

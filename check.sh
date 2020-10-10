@@ -15,6 +15,9 @@ cargo test --workspace
 
 # Cross-compiling can take a while, especially if it has to build the standard library.
 # Leave this for after the tests.
+for arch in x86_64 i686 aarch64 arm; do
+    (cd kernel && cargo build --target target-specs/$arch-unknown-tartan.json)
+done
 for arch in x86_64 i686 aarch64 thumbv7a; do
     (cd uefi && cargo build --target target-specs/$arch-unknown-uefi.json)
 done

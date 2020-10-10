@@ -4,6 +4,7 @@ members = [
 	"arch",
 	"devicetree",
 	"elf",
+	"kernel",
 	"pci",
 	"uefi",
 	"util/bitfield",

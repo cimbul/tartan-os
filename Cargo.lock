@@ -710,6 +710,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tartan-kernel"
+version = "0.1.0"
+
+[[package]]
 name = "tartan-parsers"
 version = "0.1.0"
 dependencies = [
@@ -736,6 +740,7 @@ dependencies = [
  "tartan-arch",
  "tartan-bitfield",
  "tartan-c-enum",
+ "tartan-elf",
  "tartan-pci",
  "utf16_lit",
 ]

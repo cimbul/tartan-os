@@ -19,7 +19,7 @@ Tested on macOS and Linux.
 
   * Rust 1.48.0 _nightly_ toolchain, for better cross-compilation features in Cargo
   * [QEMU](https://www.qemu.org/) 5.1
-  * bash, for the UEFI launcher script
+  * bash, for the QEMU launcher script
   * Python 3.2+ for booting 32-bit Arm only
 
 In order to edit the ACPI parser integration tests, you will also need tools documented
@@ -40,11 +40,31 @@ files](https://doc.rust-lang.org/cargo/reference/config.html):
     specified `--target`, which is `x86_64-unknown-uefi` by default. This is configured in
     [`uefi/.cargo/config.toml`](uefi/.cargo/config.toml).
 
-To build the libraries for your host system:
+### Libraries for host system
 
 ```bash
 cargo build
 ```
+
+### Kernel for target system
+
+To build the kernel for the target system:
+
+```bash
+(cd kernel && cargo build --target target-specs/<ARCH>-unknown-kernel.json)
+
+# Or alternatively, from outside the kernel/ directory:
+cargo build --package tartan-kernel -Z build-std \
+    --target kernel/target-specs/<ARCH>-unknown-kernel.json
+```
+
+Where `<ARCH>` is one of:
+  * `x86_64`
+  * `i686`
+  * `aarch64`
+  * `arm`
+
+### UEFI bootloader for target system
 
 To build the UEFI bootloader for the target system:
 
@@ -71,18 +91,20 @@ script when booting via `cargo run` (see below), but you will have to manually f
 you deploy the application yourself. See [`uefi/script/boot.sh`](uefi/script/boot.sh).
 
 
-## Run UEFI bootloader
+## Run in QEMU
 
 ```bash
-(cd uefi && cargo run --target target-specs/<ARCH>-unknown-uefi.json)
-
-# Or alternatively, from outside the uefi/ directory:
-cargo run --package tartan-uefi -Z build-std \
-    --target uefi/target-specs/<ARCH>-unknown-uefi.json
+./uefi/script/build-and-boot.sh <ARCH>
 ```
 
-This launches the UEFI application in QEMU using
-[`uefi/script/boot.sh`](uefi/script/boot.sh).
+Where `<ARCH>` is one of:
+  * `x86_64`
+  * `x86`
+  * `arm64`
+  * `arm`
+
+This builds the kernel and UEFI bootloader and then launches the UEFI application in QEMU
+using [`uefi/script/boot.sh`](uefi/script/boot.sh).
 
 
 ## Test

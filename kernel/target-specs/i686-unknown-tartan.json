@@ -1,0 +1,26 @@
+{
+	"arch": "x86",
+	"cpu": "pentium4",
+	"data-layout": "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:64-f64:32:64-f80:32-n8:16:32-S128",
+	"env": "",
+	"executables": true,
+	"has-elf-tls": true,
+	"linker": "rust-lld",
+	"linker-flavor": "ld.lld",
+	"linker-is-gnu": true,
+	"llvm-target": "i686-unknown-none",
+	"max-atomic-width": 64,
+	"os": "tartan",
+	"pre-link-args": {
+		"ld.lld": [
+			"--build-id",
+			"--hash-style=gnu",
+			"--Bstatic"
+		]
+	},
+	"stack-probes": true,
+	"target-c-int-width": "32",
+	"target-endian": "little",
+	"target-pointer-width": "32",
+	"vendor": "unknown"
+}

@@ -2,6 +2,8 @@
 
 use super::proto::SimpleTextOutput;
 use super::{Result, Status};
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use core::fmt::Write;
 
 #[macro_export]
@@ -81,4 +83,33 @@ impl log::Log for Logger<'_> {
     }
 
     fn flush(&self) {}
+}
+
+
+/// Convert a Rust string to a buffer containing a null-terminated UTF-16 string. Requires
+/// dynamic memory allocation.
+pub fn encode_c_utf16(string: &str) -> Box<[u16]> {
+    // Encoded length of each character plus 1 byte for null terminator
+    let encoded_length = 1 + string.chars().map(char::len_utf16).sum::<usize>();
+    let mut encoded = Vec::with_capacity(encoded_length);
+    encoded.extend(string.encode_utf16());
+    encoded.push(0);
+    encoded.into_boxed_slice()
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_encode_c_utf16() {
+        assert_eq!(*encode_c_utf16(""), [0x0]);
+        assert_eq!(*encode_c_utf16("z"), [0x7a, 0x0]);
+        assert_eq!(*encode_c_utf16("\0z"), [0x0, 0x7a, 0x0]);
+
+        assert_eq!(*encode_c_utf16("Eat up 🍔!"), [
+            0x45, 0x61, 0x74, 0x20, 0x75, 0x70, 0x20, 0xd83c, 0xdf54, 0x21, 0x0,
+        ]);
+    }
 }

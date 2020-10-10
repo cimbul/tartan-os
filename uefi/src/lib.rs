@@ -6,6 +6,7 @@
 #![feature(fn_traits)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::non_ascii_literal)]
 
 extern crate alloc;
 
@@ -948,12 +949,15 @@ c_enum! {
 
 
 pub mod proto {
-    use super::{Handle, MemoryType, Status, SystemTable, GUID};
+    use super::{Handle, MemoryType, Result, Status, SystemTable, GUID};
     use core::ffi::c_void;
+    use tartan_bitfield::bitfield;
+    use tartan_c_enum::c_enum;
 
     pub trait Protocol {
         const PROTOCOL_ID: GUID;
     }
+
 
     #[repr(C)]
     #[derive(Debug)]
@@ -996,6 +1000,7 @@ pub mod proto {
         pub cursor_visible: bool,
     }
 
+
     #[repr(C)]
     #[derive(Debug)]
     pub struct LoadedImage<'a> {
@@ -1022,6 +1027,247 @@ pub mod proto {
     }
 
     impl LoadedImage<'_> {
-        pub const LATEST_REVISION: u32 = 0x1000;
+        pub const MIN_REVISION: u32 = 0x1000;
+    }
+
+
+    /// Protocol for accessing a file system supported by UEFI (typically FAT).
+    #[repr(C)]
+    pub struct SimpleFileSystem {
+        /// Implemented revision of the SimpleFileSystem protocol.
+        pub revision: u64,
+        open_volume_: unsafe extern "C" fn(
+            this: &SimpleFileSystem,
+            root: &mut *const File,
+        ) -> Status,
+    }
+
+    impl Protocol for SimpleFileSystem {
+        const PROTOCOL_ID: GUID = GUID::from(0x964e5b22_6459_11d2_8e39_00a0c969723b);
+    }
+
+    impl SimpleFileSystem {
+        /// Minimum supported [`SimpleFileSystem::revision`]. Future versions are
+        /// guaranteed to be backwards-compatible.
+        pub const MIN_REVISION: u32 = 0x0001_0000;
+
+        /// Get a handle to the root of the file system.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It will also fail if the file system on
+        /// the device is not supported by the UEFI implementation.
+        pub fn open_volume(&self) -> core::result::Result<&File, Status> {
+            let mut root = core::ptr::null::<File>();
+            unsafe {
+                (self.open_volume_)(self, &mut root).into_result()?;
+                Ok(root.as_ref().unwrap())
+            }
+        }
+    }
+
+
+    /// Protocol for accessing a file or directory.
+    #[repr(C)]
+    pub struct File {
+        /// Implemented revision of the File protocol.
+        pub revision: u64,
+
+        open_: unsafe extern "C" fn(
+            this: &File,
+            file: &mut *const File,
+            path: *const u16,
+            mode: FileMode,
+            attributes: FileAttributes,
+        ) -> Status,
+        close_: unsafe extern "C" fn(this: &File) -> Status,
+        delete_: unsafe extern "C" fn(this: &File) -> Status,
+        read_: unsafe extern "C" fn(
+            this: &File,
+            count: &mut usize,
+            buffer: *mut c_void,
+        ) -> Status,
+        write_: unsafe extern "C" fn(
+            this: &File,
+            count: &mut usize,
+            buffer: *const c_void,
+        ) -> Status,
+        get_position_: unsafe extern "C" fn(this: &File, position: &mut u64) -> Status,
+        set_position_: unsafe extern "C" fn(this: &File, position: u64) -> Status,
+        get_info: usize,
+        set_info: usize,
+        flush_: unsafe extern "C" fn(this: &File) -> Status,
+
+        // Only available if revision >= 0x0002_0000
+        open_v2: usize,
+        read_v2: usize,
+        write_v2: usize,
+        flush_v2: usize,
+    }
+
+    impl File {
+        /// Minimum supported [`SimpleFileSystem::revision`]. Future versions are
+        /// guaranteed to be backwards-compatible.
+        pub const MIN_REVISION: u32 = 0x0001_0000;
+
+        /// Get a handle to a new file, relative to the directory represented by the
+        /// current instance.
+        ///
+        /// `path` uses the Windows path format without a drive name, e.g. `\FOO\BAR.TXT`
+        /// or `..\QUUX.DAT`.
+        ///
+        /// `attributes` is only used if the file is created.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It can also fail if access is denied or
+        /// there was an attempt to write to read-only media.
+        ///
+        /// # Panics
+        /// Panics if `path` is empty or does not end in a null character.
+        pub fn open(
+            &self,
+            path: &[u16],
+            mode: FileMode,
+            attributes: FileAttributes,
+        ) -> core::result::Result<&File, Status> {
+            assert!(!path.is_empty(), "Path cannot be empty");
+            assert!(*path.last().unwrap() == 0, "Path must be null-terminated");
+
+            let mut file = core::ptr::null::<File>();
+            unsafe {
+                (self.open_)(self, &mut file, path.as_ptr(), mode, attributes)
+                    .into_result()?;
+                Ok(file.as_ref().unwrap())
+            }
+        }
+
+        /// Flush and close the file or directory represented by the current instance.
+        pub fn close(&self) {
+            unsafe {
+                // The UEFI spec says this cannot fail
+                assert!((self.close_)(self) == Status::Success);
+            }
+        }
+
+        /// Delete the file or directory represented by the current instance.
+        ///
+        /// # Errors
+        /// This method cannot fail with an error, but it will return
+        /// [`Status::WarnDeleteFailure`] if the file could not be deleted.
+        pub fn delete(&self) -> Status {
+            unsafe { (self.delete_)(self) }
+        }
+
+        /// Read file contents or a directory entry into the buffer.
+        ///
+        /// If this is a file, it will read up to `buffer.len()` bytes. If it is a
+        /// directory, it will read a single directory entry if that entry can fit in the
+        /// buffer.
+        ///
+        /// On success, returns the number of bytes actually read.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. In addition, it will return:
+        ///   * [`Status::BufferTooSmall`] if this is a directory and the next entry could
+        ///     not fit into the buffer.
+        ///   * [`Status::DeviceError`] if the current position was already EOF.
+        pub fn read(&self, buffer: &mut [u8]) -> core::result::Result<usize, Status> {
+            let mut count = buffer.len();
+            unsafe {
+                (self.read_)(self, &mut count, buffer.as_mut_ptr().cast())
+                    .into_result()?;
+            }
+            Ok(count)
+        }
+
+        /// Write the contents of `buffer` out to the current position.
+        ///
+        /// On success, returns the number of bytes actually written, which will always
+        /// be the full buffer.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It addition, it will return:
+        ///    * `Status::Unsupported` if this is a directory.
+        ///    * `Status::AccessDenied` if the file is in read-only mode.
+        pub fn write(&self, buffer: &[u8]) -> core::result::Result<usize, Status> {
+            let mut count = buffer.len();
+            unsafe {
+                (self.write_)(self, &mut count, buffer.as_ptr().cast()).into_result()?;
+            }
+            Ok(count)
+        }
+
+        /// Get the handle's current position in the file.
+        ///
+        /// # Errors
+        /// This function will fail with:
+        ///    * [`Status::DeviceError`] if the file has been deleted.
+        ///    * [`Status::Unsupported`] if this is a directory.
+        pub fn get_position(&self) -> core::result::Result<u64, Status> {
+            let mut position = 0_u64;
+            unsafe {
+                (self.get_position_)(self, &mut position).into_result()?;
+            }
+            Ok(position)
+        }
+
+        /// Set the handle's current position in the file.
+        ///
+        /// If the position is `u64::MAX`, this will seek to the end of the file.
+        /// Otherwise, it seeks to the absolute position in bytes. If the position is
+        /// greater than the current file size, the file will grow to the given size.
+        ///
+        /// # Errors
+        /// This function will fail with:
+        ///    * [`Status::DeviceError`] if the file has been deleted.
+        ///    * [`Status::Unsupported`] if this is a directory.
+        pub fn set_position(&self, position: u64) -> Result {
+            unsafe { (self.set_position_)(self, position).into_result() }
+        }
+
+        /// Write any buffered changes.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It can also fail if access is denied or
+        /// there was an attempt to write to read-only media.
+        pub fn flush(&self) -> Result {
+            unsafe { (self.flush_)(self).into_result() }
+        }
+    }
+
+
+    c_enum! {
+        /// Controls how a file is opened.
+        ///
+        /// The UEFI spec defines separate read/write/create flags, but they are only
+        /// valid in specific combinations, so this enum defines those combinations.
+        pub enum FileMode(u64) {
+            /// File will be read, and should exist already.
+            Read = 0x1,
+            /// File will be read and written, and should exist already.
+            ReadWrite = 0x3,
+            /// File will be read and written, and will be created if it does not exist.
+            ReadWriteCreate = 0x8000_0000_0000_0003,
+        }
+    }
+
+    bitfield! {
+        /// Basic properties of a file or directory as defined by the FAT format.
+        pub struct FileAttributes(u64) {
+            /// Indicates the file should not be written.
+            [0] read_only,
+            /// Indicates the file should not be visible under normal circumstances.
+            [1] hidden,
+            /// Indicates the file is important to system operation.
+            [2] system,
+            /// Indicates that this is a folder.
+            [4] directory,
+            /// Indicates the file should needs to be backed up.
+            [5] archive,
+        }
     }
 }

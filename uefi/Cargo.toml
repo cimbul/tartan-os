@@ -14,6 +14,7 @@ tartan-acpi = {path = "../acpi"}
 tartan-arch = {path = "../arch"}
 tartan-bitfield = {path = "../util/bitfield"}
 tartan-c-enum = {path = "../util/c_enum"}
+tartan-elf = {path = "../elf"}
 tartan-pci = {path = "../pci"}
 # External
 cfg-if = "0.1.10"

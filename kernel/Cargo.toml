@@ -1,0 +1,9 @@
+[package]
+name = "tartan-kernel"
+version = "0.1.0"
+authors = ["Tim Yates <cimbul@gmail.com>"]
+edition = "2018"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+homepage = "https://github.com/cimbul/tartan-os"
+publish = false
