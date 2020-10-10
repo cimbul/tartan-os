@@ -25,6 +25,10 @@ pub mod global;
 pub mod io;
 
 
+/// Constant page size defined by UEFI specification for [`BootServices::allocate_pages`].
+pub const PAGE_SIZE: usize = 4096;
+
+
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Handle(usize);
@@ -251,6 +255,7 @@ mod test_status {
     }
 }
 
+
 pub trait Table {
     const SIGNATURE: u64;
     const MIN_REVISION: Revision;
@@ -339,6 +344,7 @@ pub trait Table {
     }
 }
 
+
 #[repr(C)]
 pub struct TableHeader {
     pub signature: u64,
@@ -347,6 +353,7 @@ pub struct TableHeader {
     pub crc32: u32,
     reserved: u32,
 }
+
 
 #[repr(C)]
 pub struct SystemTable<'a> {
@@ -372,6 +379,37 @@ impl Table for SystemTable<'_> {
         &self.header
     }
 }
+
+impl SystemTable<'_> {
+    /// Safe(r) wrapper around [`BootServices::exit_boot_services`] that fetches the
+    /// latest memory map and ensures that pointers to boot services are removed from the
+    /// system table on success.
+    ///
+    /// # Safety
+    /// After this succeeds, pointers to functions that provide any kind of boot services
+    /// are no longer valid. This includes the console streams and memory allocation,
+    /// which may be referenced by globals outside of the control of this object. It is
+    /// the caller's responsibility to make sure any dangling references are cleared or
+    /// unused.
+    pub unsafe fn exit_boot_services(&mut self, image_handle: Handle) -> MemoryMap {
+        let boot_services = self.boot_services.unwrap();
+        let memory_map = boot_services.get_memory_map();
+        // This shouldn't fail since we just got the memory map
+        boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
+
+        // Clear pointers to boot services and console streams, which are now invalid
+        self.boot_services = None;
+        self.console_in_handle = Handle::NULL;
+        self.console_in = None;
+        self.console_out_handle = Handle::NULL;
+        self.console_out = None;
+        self.std_err_handle = Handle::NULL;
+        self.std_err = None;
+
+        memory_map
+    }
+}
+
 
 #[repr(C)]
 pub struct RuntimeServices {
@@ -412,6 +450,7 @@ impl Table for RuntimeServices {
     }
 }
 
+
 #[repr(C)]
 pub struct BootServices {
     pub header: TableHeader,
@@ -422,7 +461,7 @@ pub struct BootServices {
 
     // Memory Services
     // NOTE: Physical addresses are represented as u64 even on 32-bit systems
-    pub allocate_pages: unsafe extern "C" fn(
+    allocate_pages_: unsafe extern "C" fn(
         allocate_type: AllocateType,
         memory_type: MemoryType,
         page_count: usize,
@@ -430,7 +469,7 @@ pub struct BootServices {
     ) -> Status,
     pub free_pages:
         unsafe extern "C" fn(physical_address: u64, page_count: usize) -> Status,
-    pub get_memory_map: unsafe extern "C" fn(
+    get_memory_map_: unsafe extern "C" fn(
         map_size: &mut usize,
         map: *mut c_void,
         map_key: &mut usize,
@@ -472,7 +511,8 @@ pub struct BootServices {
     start_image: usize,
     exit: usize,
     unload_image: usize,
-    exit_boot_services: usize,
+    exit_boot_services_:
+        unsafe extern "C" fn(image_handle: Handle, memory_map_key: usize) -> Status,
 
     // Miscellaneous Services
     get_next_monotonic_count: usize,
@@ -484,7 +524,7 @@ pub struct BootServices {
     disconnect_controller: usize,
 
     // Open and Close Protocol Services
-    pub open_protocol: unsafe extern "C" fn(
+    open_protocol_: unsafe extern "C" fn(
         handle: Handle,
         guid: &GUID,
         interface: *mut *const c_void,
@@ -518,6 +558,148 @@ impl Table for BootServices {
         &self.header
     }
 }
+
+impl BootServices {
+    /// Allocate a number of pages of a given type of memory, optionally constraining its
+    /// location.
+    ///
+    /// Pages are 4KB ([`PAGE_SIZE`]) on all platforms.
+    ///
+    /// The meaning of `reference_address` depends on `allocate_type`:
+    ///   * [`AnyAddress`](AllocateType::AnyAddress): Search for a block of pages anywhere
+    ///     in memory. `reference_address` is ignored, and should be `None`.
+    ///   * [`MaxAddress`](AllocateType::MaxAddress): Search for a block of pages below
+    ///     the given address.
+    ///   * [`ExactAddress`](AllocateType::ExactAddress): Reserve the block of pages
+    ///     starting at `reference_address`.
+    ///
+    /// # Errors
+    /// This function will return:
+    ///   * [`Status::OutOfResources`] if there was not enough memory available with the
+    ///     specified constraints.
+    ///   * [`Status::InvalidParameter`] if the memory type is unsupported.
+    ///   * [`Status::NotFound`] if the requested memory location is out of bounds of
+    ///     physical memory.
+    pub fn allocate_pages(
+        &self,
+        allocate_type: AllocateType,
+        memory_type: MemoryType,
+        page_count: usize,
+        reference_address: Option<u64>,
+    ) -> core::result::Result<u64, Status> {
+        let mut physical_address = reference_address.unwrap_or_default();
+        unsafe {
+            (self.allocate_pages_)(
+                allocate_type,
+                memory_type,
+                page_count,
+                &mut physical_address,
+            )
+            .into_result()?;
+        }
+        Ok(physical_address)
+    }
+
+
+    /// Get a map representing the status of all available memory.
+    pub fn get_memory_map(&self) -> MemoryMap {
+        let mut memory_map_size = 0_usize;
+        let mut memory_map = MemoryMap::new();
+
+        loop {
+            memory_map.raw_map.resize(memory_map_size, 0);
+
+            let result = unsafe {
+                (self.get_memory_map_)(
+                    &mut memory_map_size,
+                    // TODO: Make sure this is aligned properly. memory_map.verify() will
+                    // check and panic if it isn't, but we should be able to ensure it.
+                    memory_map.raw_map.as_mut_ptr().cast(),
+                    &mut memory_map.key,
+                    &mut memory_map.descriptor_size,
+                    &mut memory_map.descriptor_version,
+                )
+                .into_result()
+            };
+            match result {
+                Ok(_) => break,
+                Err(Status::BufferTooSmall) => {
+                    // Allow room for another entry since we have to reallocate the buffer
+                    memory_map_size += memory_map.descriptor_size
+                }
+                // We shouldn't run into any of the other errors listed in the spec.
+                Err(e) => panic!("Unexpected error from get_memory_map: {:?}", e),
+            }
+        }
+
+        // Trim anything that wasn't used
+        memory_map.raw_map.resize(memory_map_size, 0);
+
+        memory_map.verify();
+        memory_map
+    }
+
+
+    /// Get the implementation of a protocol offered by the given `handle`.
+    ///
+    /// For UEFI applications, `agent_handle` is the application's image handle. This
+    /// method does not offer all the options required by UEFI drivers.
+    ///
+    /// # Errors
+    /// Fails if `handle` is not valid, or it does not implement the specified protocol.
+    pub fn get_protocol<T: proto::Protocol>(
+        &self,
+        handle: Handle,
+        agent_handle: Handle,
+    ) -> core::result::Result<&T, Status> {
+        let mut protocol = core::ptr::null::<T>();
+        unsafe {
+            (self.open_protocol_)(
+                handle,
+                &T::PROTOCOL_ID,
+                ((&mut protocol) as *mut *const T).cast(),
+                agent_handle,
+                Handle::NULL,
+                OpenProtocolAttributes::Get,
+            )
+            .into_result()?;
+            Ok(protocol.as_ref().unwrap())
+        }
+    }
+
+    /// Signal to UEFI that the OS is now taking over.
+    ///
+    /// If this function exits successfully, the OS is now in charge of memory management,
+    /// and it is no longer safe to call any functions on [`BootServices`].
+    ///
+    /// In order to ensure that the OS has an accurate picture of the system, the caller
+    /// must pass the [`key`](MemoryMap::key) from a prior call to
+    /// [`BootServices::get_memory_map`]. If it does not match the latest value, this
+    /// function returns with an error and the caller will have to fetch a new map before
+    /// trying again.
+    ///
+    /// # Safety
+    /// If this function exits successfully, then this object is no longer valid. The
+    /// pointer to this table should be removed from the [`SystemTable`] and any other
+    /// copies should be deleted.
+    ///
+    /// If the function exits with an error, then it is only safe to call memory services
+    /// like [`allocate_pages`](Self::allocate_pages) and
+    /// [`get_memory_map`](Self::get_memory_map). Any other boot services may have been
+    /// unloaded already.
+    ///
+    /// # Errors
+    /// Will fail with [`Status::InvalidParameter`] if the `memory_map_key` does not match
+    /// the latest value.
+    pub unsafe fn exit_boot_services(
+        &self,
+        image_handle: Handle,
+        memory_map_key: usize,
+    ) -> Result {
+        (self.exit_boot_services_)(image_handle, memory_map_key).into_result()
+    }
+}
+
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -681,31 +863,50 @@ impl Default for MemoryMap {
     }
 }
 
-// TODO: The width of this type really isn't clear. The UEFI spec defines it as a C enum
-// with fewer than 256 values. The text refers to reserved ranges up to 0xFFFFFFFF,
-// implying that it is at least 32 bits. From what I can tell, MSVC (which UEFI borrows a
-// lot of conventions from) uses 32 bits for most enums, even on 64-bit systems.
 c_enum! {
     pub enum MemoryType(u32) {
+        /// Memory that is never available for use
         Reserved            = 0,
+        /// Memory used for UEFI application code.
         LoaderCode          = 1,
+        /// Memory allocated by UEFI applications.
         LoaderData          = 2,
+        /// Memory used for drivers that provide [`BootServices`].
         BootServicesCode    = 3,
+        /// Memory allocated by drivers that provide [`BootServices`].
         BootServicesData    = 4,
+        /// Memory used for drivers that provide [`RuntimeServices`].
         RuntimeServicesCode = 5,
+        /// Memory allocated by drivers that provide [`RuntimeServices`].
         RuntimeServicesData = 6,
+        /// Free memory.
         Conventional        = 7,
+        /// Damaged memory modules.
         Unusable            = 8,
+        /// Memory that can be used after the OS initializes ACPI.
         ACPIReclaim         = 9,
+        /// Memory that must be preserved in ACPI states S1–S3.
         ACPINonVolatile     = 10,
+        /// Memory mapped to device I/O.
         MappedIO            = 11,
+        /// Memory mapped to I/O ports.
         MappedIOPortSpace   = 12,
-        PALCode             = 13,
+        /// Memory used by processor firmware code.
+        ProcessorCode       = 13,
+        /// Free nonvolatile memory.
         Persistent          = 14,
+
+        /// Beginning of range (inclusive) for OEM-specific memory types
+        MinOEMDefined       = 0x7000_0000,
+        /// End of range (inclusive) for OEM-specific memory types
+        MaxOEMDefined       = 0x7fff_ffff,
+        /// Beginning of range (inclusive) for operating system-specific memory types
+        MinOSDefined        = 0x8000_0000,
+        /// End of range (inclusive) for operating system-specific memory types
+        MaxOSDefined        = 0xffff_ffff,
     }
 }
 
-// TODO: Same caveat as MemoryType
 c_enum! {
     pub enum AllocateType(u32) {
         AnyAddress   = 0,

@@ -54,72 +54,61 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
 }
 
 fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Result {
-    unsafe {
-        let mut out = OutputStream::new(&*system_table.console_out.unwrap());
-        writeln_result!(out, "Hello, world!\nWhat's up?")?;
+    let mut out = OutputStream::new(&*system_table.console_out.unwrap());
+    writeln_result!(out, "Hello, world!\nWhat's up?")?;
 
-        info!("Logging initialized");
+    info!("Logging initialized");
 
-        writeln_result!(out, "Verifying system tables...")?;
-        system_table.verify();
-        system_table.runtime_services.verify();
-        system_table.boot_services.unwrap().verify();
-        writeln_result!(out, "Verified!")?;
+    writeln_result!(out, "Verifying system tables...")?;
+    system_table.verify();
+    system_table.runtime_services.verify();
+    system_table.boot_services.unwrap().verify();
+    writeln_result!(out, "Verified!")?;
 
-        let mut loaded_image: *const LoadedImage = core::ptr::null();
-        let boot_services = system_table.boot_services.unwrap();
-        (boot_services.open_protocol)(
-            image_handle,
-            &LoadedImage::PROTOCOL_ID,
-            ((&mut loaded_image) as *mut *const LoadedImage).cast(),
-            image_handle,
-            Handle::NULL,
-            OpenProtocolAttributes::Get,
-        )
-        .into_result()?;
+    let boot_services = system_table.boot_services.unwrap();
+    let loaded_image =
+        boot_services.get_protocol::<LoadedImage>(image_handle, image_handle)?;
+    let image_base = loaded_image.image_base;
+    writeln_result!(out, "Image base: {:p}", image_base)?;
 
-        assert_ne!(loaded_image, core::ptr::null());
-        let image_base = (*loaded_image).image_base;
-        writeln_result!(out, "Image base: {:p}", image_base)?;
+    // fakepoint();
 
-        // fakepoint();
+    writeln_result!(out, "Testing compiler intrinsics...")?;
+    intrinsics::test();
+    writeln_result!(out, "Success!")?;
 
-        writeln_result!(out, "Testing compiler intrinsics...")?;
-        intrinsics::test();
-        writeln_result!(out, "Success!")?;
+    writeln_result!(out, "Attempting heap allocation")?;
+    writeln_result!(out, "Testing... {}", String::from("Success!"))?;
 
-        writeln_result!(out, "Attempting heap allocation")?;
-        writeln_result!(out, "Testing... {}", String::from("Success!"))?;
-
-        writeln_result!(out, "Fetching memory map")?;
-        let memory_map = get_memory_map(boot_services)?;
+    writeln_result!(out, "Fetching memory map")?;
+    let memory_map = boot_services.get_memory_map();
+    writeln_result!(
+        out,
+        "Got memory map: size = {} bytes ({} per descriptor), version {}, key = {}",
+        memory_map.raw_map.len(),
+        memory_map.descriptor_size,
+        memory_map.descriptor_version,
+        memory_map.key
+    )?;
+    for (i, descriptor) in memory_map.iter().enumerate() {
         writeln_result!(
             out,
-            "Got memory map: size = {} bytes ({} per descriptor), version {}, key = {}",
-            memory_map.raw_map.len(),
-            memory_map.descriptor_size,
-            memory_map.descriptor_version,
-            memory_map.key
+            "  #{:2}: {:8x} => {:x} + {:4x} pages, attr = {:16x}, {:?}",
+            i,
+            descriptor.physical_start,
+            descriptor.virtual_start,
+            descriptor.page_count,
+            u64::from(descriptor.attributes),
+            descriptor.memory_type
         )?;
-        for (i, descriptor) in memory_map.iter().enumerate() {
-            writeln_result!(
-                out,
-                "Region {}: {:x} => {:x} + {:3x} pages, {:?}",
-                i,
-                descriptor.physical_start,
-                descriptor.virtual_start,
-                descriptor.page_count,
-                descriptor.memory_type
-            )?;
-        }
-
-        enumerate_pci(&mut out)?;
-
-        describe_cpu_state(&mut out)?;
-
-        writeln_result!(out, "")?;
-        writeln_result!(out, "All done.")?;
     }
+
+    enumerate_pci(&mut out)?;
+
+    describe_cpu_state(&mut out)?;
+
+    writeln_result!(out, "")?;
+    writeln_result!(out, "All done.")?;
 
     loop {}
 }
@@ -196,44 +185,6 @@ fn enumerate_pci(out: &mut OutputStream) -> Result {
     }
 
     Ok(Status::Success)
-}
-
-fn get_memory_map(
-    boot_services: &BootServices,
-) -> core::result::Result<MemoryMap, Status> {
-    let mut memory_map_size = 0_usize;
-    let mut memory_map = MemoryMap::new();
-
-    loop {
-        memory_map.raw_map.resize(memory_map_size, 0);
-
-        let result = unsafe {
-            (boot_services.get_memory_map)(
-                &mut memory_map_size,
-                // TODO: Make sure this is aligned properly. memory_map.verify() will
-                // check and panic if it isn't, but we should be able to ensure it.
-                memory_map.raw_map.as_mut_ptr().cast(),
-                &mut memory_map.key,
-                &mut memory_map.descriptor_size,
-                &mut memory_map.descriptor_version,
-            )
-            .into_result()
-        };
-        match result {
-            Ok(_) => break,
-            Err(Status::BufferTooSmall) => {
-                // Allow room for another entry since we have to reallocate the buffer
-                memory_map_size += memory_map.descriptor_size
-            }
-            Err(e) => return Err(e),
-        }
-    }
-
-    // Trim anything that wasn't used
-    memory_map.raw_map.resize(memory_map_size, 0);
-
-    memory_map.verify();
-    Ok(memory_map)
 }
 
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
