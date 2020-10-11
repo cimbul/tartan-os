@@ -27,10 +27,10 @@ pub const INVALID_VENDOR: u16 = 0xffff;
 
 
 /// Iterate over the devices and functions present on the specified bus.
-pub fn enumerate_bus<'a, A>(
-    access: &'a A,
+pub fn enumerate_bus<A>(
+    access: &A,
     bus_selector: ConfigSelector,
-) -> impl Iterator<Item = ConfigSelector> + 'a
+) -> impl Iterator<Item = ConfigSelector> + '_
 where
     A: ConfigAccess,
 {
@@ -40,10 +40,10 @@ where
 
 
 /// Iterate over the devices present on the specified bus.
-pub fn enumerate_bus_devices<'a, A>(
-    access: &'a A,
+pub fn enumerate_bus_devices<A>(
+    access: &A,
     bus_selector: ConfigSelector,
-) -> impl Iterator<Item = ConfigSelector> + 'a
+) -> impl Iterator<Item = ConfigSelector> + '_
 where
     A: ConfigAccess,
 {
@@ -58,10 +58,10 @@ where
 }
 
 /// Iterate over the functions available on the specified device.
-pub fn enumerate_device_functions<'a, A>(
-    access: &'a A,
+pub fn enumerate_device_functions<A>(
+    access: &A,
     device_selector: ConfigSelector,
-) -> impl Iterator<Item = ConfigSelector> + 'a
+) -> impl Iterator<Item = ConfigSelector> + '_
 where
     A: ConfigAccess,
 {
@@ -98,10 +98,10 @@ pub struct CapabilityEntry {
 }
 
 /// Iterate over all capabilities defined in the configuration space for a PCI function
-pub fn iter_capabilities<'a, A>(
-    access: &'a A,
+pub fn iter_capabilities<A>(
+    access: &A,
     selector: ConfigSelector,
-) -> impl Iterator<Item = CapabilityEntry> + 'a
+) -> impl Iterator<Item = CapabilityEntry> + '_
 where
     A: ConfigAccess,
 {
