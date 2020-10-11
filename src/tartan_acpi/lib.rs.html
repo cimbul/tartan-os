@@ -235,9 +235,9 @@
 
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
 
-<span class="kw">use</span> <span class="ident">bitflags</span>::<span class="ident">bitflags</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>;
 <span class="kw">use</span> <span class="ident">static_assertions</span>::<span class="ident">const_assert_eq</span>;
+<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
 <span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">aml</span>;
@@ -417,31 +417,31 @@
 }
 
 
-<span class="macro">bitflags</span><span class="macro">!</span> {
+<span class="macro">bitfield</span><span class="macro">!</span> {
     <span class="doccomment">/// Support flags from Fixed ACPI Description Table</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FixedFlags</span>: <span class="ident">u32</span> {
-        <span class="kw">const</span> <span class="ident">X86_WBINVD_SUPPORTED</span>                  <span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">const</span> <span class="ident">X86_WBINVD_REQUIRES_FLUSH</span>             <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
-        <span class="kw">const</span> <span class="ident">C1_SUPPORTED</span>                          <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
-        <span class="kw">const</span> <span class="ident">C2_MULTI_CPU_SUPPORTED</span>                <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">3</span>;
-        <span class="kw">const</span> <span class="ident">POWER_BUTTON_IS_CONTROL_METHOD_DEVICE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>;
-        <span class="kw">const</span> <span class="ident">SLEEP_BUTTON_IS_CONTROL_METHOD_DEVICE</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>;
-        <span class="kw">const</span> <span class="ident">RTC_NOT_FIXED</span>                         <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">6</span>;
-        <span class="kw">const</span> <span class="ident">RTC_CAN_WAKE_S4</span>                       <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">7</span>;
-        <span class="kw">const</span> <span class="ident">TIMER_VALUE_32_BIT</span>                    <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
-        <span class="kw">const</span> <span class="ident">DOCK_CAPABLE</span>                          <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">9</span>;
-        <span class="kw">const</span> <span class="ident">FIXED_DESCRIPTION_RESET_SUPPORTED</span>     <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>;
-        <span class="kw">const</span> <span class="ident">SEALED_CASE</span>                           <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">11</span>;
-        <span class="kw">const</span> <span class="ident">HEADLESS</span>                              <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">12</span>;
-        <span class="kw">const</span> <span class="ident">EXECUTE_INSTRUCTION_AFTER_SLP_TYP</span>     <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">13</span>;
-        <span class="kw">const</span> <span class="ident">PCI_EXPRESS_WAKE</span>                      <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">14</span>;
-        <span class="kw">const</span> <span class="ident">USE_PLATFORM_CLOCK</span>                    <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">15</span>;
-        <span class="kw">const</span> <span class="ident">RTC_STATUS_VALID_AFTER_S4</span>             <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>;
-        <span class="kw">const</span> <span class="ident">REMOTE_POWER_ON_SUPPORTED</span>             <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">17</span>;
-        <span class="kw">const</span> <span class="ident">FORCE_APIC_CLUSTER_MODEL</span>              <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">18</span>;
-        <span class="kw">const</span> <span class="ident">FORCE_APIC_PHYSICAL_DESTINATION_MODE</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">19</span>;
-        <span class="kw">const</span> <span class="ident">HARDWARE_REDUCED_ACPI</span>                 <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>;
-        <span class="kw">const</span> <span class="ident">LOW_POWER_S0_IDLE</span>                     <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">21</span>;
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FixedFlags</span>(<span class="ident">u32</span>) {
+        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">x86_wbinvd_supported</span>,
+        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">x86_wbinvd_requires_flush</span>,
+        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">c1_supported</span>,
+        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">c2_multi_cpu_supported</span>,
+        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">power_button_is_control_method_device</span>,
+        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">sleep_button_is_control_method_device</span>,
+        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rtc_not_fixed</span>,
+        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">rtc_can_wake_s4</span>,
+        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">timer_value_32_bit</span>,
+        [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">dock_capable</span>,
+        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">fixed_description_reset_supported</span>,
+        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">sealed_case</span>,
+        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">headless</span>,
+        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">execute_instruction_after_slp_typ</span>,
+        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">pci_express_wake</span>,
+        [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">use_platform_clock</span>,
+        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">rtc_status_valid_after_s4</span>,
+        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">remote_power_on_supported</span>,
+        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">force_apic_cluster_model</span>,
+        [<span class="number">19</span>] <span class="kw">pub</span> <span class="ident">force_apic_physical_destination_mode</span>,
+        [<span class="number">20</span>] <span class="kw">pub</span> <span class="ident">hardware_reduced_acpi</span>,
+        [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">low_power_s0_idle</span>,
     }
 }
 </pre></div>

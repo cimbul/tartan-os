@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Logger",""],["OutputStream",""]]});
+initSidebarItems({"fn":[["encode_c_utf16","Convert a Rust string to a buffer containing a null-terminated UTF-16 string. Requires dynamic memory allocation."]],"struct":[["Logger",""],["OutputStream",""]]});

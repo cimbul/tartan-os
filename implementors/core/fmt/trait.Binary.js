@@ -1,4 +1,0 @@
-(function() {var implementors = {};
-implementors["tartan_acpi"] = [{"text":"impl Binary for FixedFlags","synthetic":false,"types":[]}];
-implementors["tartan_uefi"] = [{"text":"impl Binary for MemoryAttributes","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
