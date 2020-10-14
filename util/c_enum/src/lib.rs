@@ -58,6 +58,8 @@
 //! and are safe to use in FFI structs and functions.
 
 #![no_std]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
 
 /// Trait implemented by all [`c_enum`] types.
 ///
@@ -103,7 +105,7 @@ macro_rules! c_enum {
         $(#[$meta])*
         #[repr(transparent)]
         #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-        pub struct $name($repr_type);
+        $vis struct $name($repr_type);
 
         impl $name {
             $crate::c_enum! {
