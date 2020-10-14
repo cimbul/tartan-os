@@ -11,6 +11,7 @@
 	"llvm-target": "i686-unknown-none",
 	"max-atomic-width": 64,
 	"os": "tartan",
+	"panic-strategy": "abort",
 	"pre-link-args": {
 		"ld.lld": [
 			"--build-id",

@@ -6,6 +6,7 @@ members = [
 	"elf",
 	"kernel",
 	"pci",
+	"serial",
 	"uefi",
 	"util/bitfield",
 	"util/c_enum",

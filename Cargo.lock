@@ -712,6 +712,9 @@ dependencies = [
 [[package]]
 name = "tartan-kernel"
 version = "0.1.0"
+dependencies = [
+ "tartan-serial",
+]
 
 [[package]]
 name = "tartan-parsers"
@@ -727,6 +730,15 @@ dependencies = [
  "log",
  "tartan-arch",
  "tartan-bitfield",
+]
+
+[[package]]
+name = "tartan-serial"
+version = "0.1.0"
+dependencies = [
+ "tartan-arch",
+ "tartan-bitfield",
+ "tartan-c-enum",
 ]
 
 [[package]]

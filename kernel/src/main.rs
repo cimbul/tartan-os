@@ -3,19 +3,38 @@
 #![feature(link_args)]
 #![feature(start)]
 
+use tartan_serial::{LineMode, UART};
+
+
 #[used]
 static mut X: usize = 0;
 
-#[cfg(not(test))]
 #[no_mangle]
-#[start]
+#[cfg_attr(not(test), start)]
 fn _start(_: isize, _: *const *const u8) -> isize {
+    let mut serial = find_uart();
+    serial.reset();
+    serial.set_line_mode(LineMode::default());
+    serial.write(b"Hello, world!\r\n");
+
     loop {
         unsafe {
             X = X.wrapping_add(1);
         }
     }
 }
+
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn find_uart() -> impl UART {
+    tartan_serial::model_16550::UART16550::new(0x3f8)
+}
+
+#[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+fn find_uart() -> impl UART {
+    tartan_serial::NullUART
+}
+
 
 #[cfg(not(test))]
 #[panic_handler]
