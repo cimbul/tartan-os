@@ -1,9 +1,13 @@
 #![no_std]
 #![feature(lang_items)]
 #![feature(link_args)]
+#![feature(rustc_private)]
 #![feature(start)]
 
 use tartan_serial::{LineMode, UART};
+
+
+mod intrinsics;
 
 
 #[used]
