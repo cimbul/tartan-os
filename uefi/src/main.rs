@@ -108,6 +108,8 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
         )?;
     }
 
+    print_device_tree(&mut out)?;
+
     enumerate_pci(&mut out)?;
 
     describe_cpu_state(&mut out)?;
@@ -129,6 +131,62 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 fn fakepoint() {
     loop {}
 }
+
+#[cfg(not(any(target_arch = "arm", target_arch = "aarch64")))]
+fn print_device_tree(_: &mut OutputStream) -> Result {
+    // TODO
+    Ok(Status::Success)
+}
+
+#[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+fn print_device_tree(out: &mut OutputStream) -> Result {
+    use tartan_devicetree::Value;
+    use tartan_devicetree::blob::{StructureData, Tree};
+
+    writeln_result!(out, "Devicetree:")?;
+
+    let devicetree = unsafe { Tree::from_ptr::<()>(0x4000_0000 as *const u8) }
+        .expect("Error parsing Devicetree");
+    let mut indent = 0_usize;
+    for structure_data_result in devicetree.structure_iter::<()>() {
+        let structure_data = structure_data_result.expect("Error parsing Devicetree");
+        match structure_data {
+            StructureData::BeginNode(name) => {
+                let display_name = if name.is_empty() { "/" } else { name };
+                writeln_result!(
+                    out,
+                    "{0:1$}{2} {{",
+                    "",
+                    2 * indent,
+                    display_name,
+                )?;
+                indent += 1;
+            }
+            StructureData::EndNode => {
+                indent -= 1;
+                writeln_result!(
+                    out,
+                    "{0:1$}}}",
+                    "",
+                    2 * indent,
+                )?;
+            }
+            StructureData::Property { name, value } => {
+                writeln_result!(
+                    out,
+                    "{0:1$}{2} = {3:?}",
+                    "",
+                    2 * indent,
+                    name,
+                    value,
+                )?;
+            }
+        }
+    }
+
+    Ok(Status::Success)
+}
+
 
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 fn enumerate_pci(_: &mut OutputStream) -> Result {

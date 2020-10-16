@@ -1,6 +1,7 @@
 //! Flattened device tree, a.k.a. devicetree blob (DTB), as defined in chapter 5 of the
 //! Devicetree spec.
 
+use crate::{MemoryReservation, Value};
 use core::convert::TryInto;
 use core::mem::{size_of, size_of_val};
 use core::slice;
@@ -103,7 +104,7 @@ impl<'a> Tree<'a> {
                 Ok(StructureToken::BeginNode(n)) => Some(Ok(StructureData::BeginNode(n))),
                 Ok(StructureToken::EndNode) => Some(Ok(StructureData::EndNode)),
                 Ok(StructureToken::Property { name_offset, value }) => {
-                    let value: &'a [u8] = value;
+                    let value = Value { data: value };
                     match self.get_string(name_offset) {
                         Err(e) => Some(Err(e)),
                         Ok(name) => Some(Ok(StructureData::Property { name, value })),
@@ -171,16 +172,6 @@ impl Header {
 }
 
 
-/// Indicates an area of memory that the kernel does not have full control over: e.g.,
-/// ROMs, firmware.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct MemoryReservation {
-    /// Start address of the reserved memory
-    pub address: u64,
-    /// Size of the reserved memory in bytes
-    pub size: u64,
-}
-
 impl MemoryReservation {
     fn parse<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         let parser = struct_parser! {
@@ -218,12 +209,12 @@ pub enum StructureData<'a> {
         /// Devicetree spec include:
         ///   * empty values,
         ///   * null-terminated strings or lists of them,
-        ///   * little-endian 32-bit or 64-bit integers
+        ///   * big-endian 32-bit or 64-bit integers
         ///   * "phandles," or 32-bit numbers that uniquely identify another node
         ///
         /// However, different properties can define their own representation, so it is
         /// not possible to infer the type of an unrecognized property.
-        value: &'a [u8],
+        value: Value<'a>,
     },
 }
 
