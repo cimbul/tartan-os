@@ -1,6 +1,9 @@
 #![no_std]
+#![feature(asm)]
+#![feature(global_asm)]
 #![feature(lang_items)]
 #![feature(link_args)]
+#![feature(naked_functions)]
 #![feature(rustc_private)]
 #![feature(start)]
 
@@ -10,12 +13,85 @@ use tartan_serial::{LineMode, UART};
 mod intrinsics;
 
 
+global_asm!(
+    "
+    .section .bss
+    .balign 16
+stack_bottom:
+    .skip 0x1000
+    .global stack_top
+stack_top:
+    "
+);
+
+
 #[used]
 static mut X: usize = 0;
 
-#[no_mangle]
-#[cfg_attr(not(test), start)]
+// Dummy implementation when building for host
+#[start]
+#[cfg(not(target_os = "tartan"))]
 fn _start(_: isize, _: *const *const u8) -> isize {
+    kernel_main()
+}
+
+#[start]
+#[naked]
+#[no_mangle]
+#[cfg(target_os = "tartan")]
+fn _start(_: isize, _: *const *const u8) -> isize {
+    unsafe {
+        #[cfg(target_arch = "x86")]
+        asm!(
+            "
+            mov esp, offset stack_top  // Set up initial stack
+            call {}                    // Call real main function
+        2:  hlt                        // Halt if main function ever returns
+            jmp 2b
+            ",
+            sym kernel_main,
+            options(noreturn),
+        );
+
+        #[cfg(target_arch = "x86_64")]
+        asm!(
+            "
+            mov rsp, offset stack_top  // Set up initial stack
+            call {}                    // Call real main function
+        2:  hlt                        // Halt if main function ever returns
+            jmp 2b
+            ",
+            sym kernel_main,
+            options(noreturn),
+        );
+
+        #[cfg(target_arch = "arm")]
+        asm!(
+            "
+            ldr sp, =stack_top  // Set up initial stack
+            blx {}              // Call real main function
+        1:  b 1b                // Spin if main function ever returns
+            ",
+            sym kernel_main,
+            options(noreturn),
+        );
+
+        #[cfg(target_arch = "aarch64")]
+        asm!(
+            "
+            ldr x0, =stack_top  // Set up initial stack
+            mov sp, x0
+            bl {}               // Call real main function
+        1:  wfe                 // Halt if main function ever returns
+            b 1b
+            ",
+            sym kernel_main,
+            options(noreturn),
+        );
+    }
+}
+
+fn kernel_main() -> ! {
     let mut serial = find_uart();
     serial.reset();
     serial.set_line_mode(LineMode::default());
