@@ -25,6 +25,27 @@ pub trait UART {
 }
 
 
+/// Newtype wrapper that allows a UART implementation to be used by [`core::fmt::write`].
+pub struct UARTWriteAdapter<T: UART>(pub T);
+
+impl<T: UART> core::fmt::Write for UARTWriteAdapter<T> {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        // Transform "\n" into "\r\n" while writing
+        let bytes = s.as_bytes();
+        let mut first = true;
+        for chunk in bytes.split(|&c| c == b'\n') {
+            if first {
+                first = false;
+            } else {
+                self.0.write(b"\r\n");
+            }
+            self.0.write(chunk);
+        }
+        Ok(())
+    }
+}
+
+
 /// Speed and other line protocol settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LineMode {

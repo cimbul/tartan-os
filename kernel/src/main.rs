@@ -4,10 +4,12 @@
 #![feature(lang_items)]
 #![feature(link_args)]
 #![feature(naked_functions)]
+#![feature(panic_info_message)]
 #![feature(rustc_private)]
 #![feature(start)]
 
-use tartan_serial::{LineMode, UART};
+use core::fmt::Write;
+use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
 mod intrinsics;
@@ -96,7 +98,9 @@ fn kernel_main() -> ! {
     let mut serial = find_uart();
     serial.reset();
     serial.set_line_mode(LineMode::default());
-    serial.write(b"Hello, world!\r\n");
+    let mut out = UARTWriteAdapter(serial);
+
+    writeln!(out, "Hello, world!").unwrap();
 
     loop {
         unsafe {
@@ -119,7 +123,25 @@ fn find_uart() -> impl UART {
 
 #[cfg(not(test))]
 #[panic_handler]
-fn panic_handler(_: &core::panic::PanicInfo) -> ! {
+fn panic_handler(info: &core::panic::PanicInfo) -> ! {
+    // Not much we can do with Err results in a panic handler
+    #![allow(unused_must_use)]
+
+    let mut serial = find_uart();
+    serial.reset();
+    serial.set_line_mode(LineMode::default());
+    let mut out = UARTWriteAdapter(serial);
+
+    writeln!(out, "!!! Panic !!!");
+    match info.location() {
+        Some(location) => writeln!(out, "Location: {}", location),
+        None => writeln!(out, "No location information"),
+    };
+    match info.message() {
+        Some(arguments) => core::fmt::write(&mut out, *arguments),
+        None => writeln!(out, "No additional message"),
+    };
+
     loop {}
 }
 
