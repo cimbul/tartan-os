@@ -15,7 +15,8 @@ pub mod blob;
 /// intelligent formatting of unknown properties.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Value<'a> {
-    pub data: &'a [u8]
+    /// Property value as raw bytes
+    pub data: &'a [u8],
 }
 
 impl<'a> Value<'a> {

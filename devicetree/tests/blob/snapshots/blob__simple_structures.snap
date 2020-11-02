@@ -16,23 +16,13 @@ expression: structures
     Ok(
         Property {
             name: "bar",
-            value: [
-                98,
-                97,
-                122,
-                0,
-            ],
+            value: <62617a00> "baz",
         },
     ),
     Ok(
         Property {
             name: "quux",
-            value: [
-                0,
-                0,
-                0,
-                66,
-            ],
+            value: <00000042>,
         },
     ),
     Ok(
@@ -46,15 +36,7 @@ expression: structures
     Ok(
         Property {
             name: "flarf",
-            value: [
-                110,
-                111,
-                114,
-                98,
-                108,
-                101,
-                0,
-            ],
+            value: <6e6f7262 6c6500> "norble",
         },
     ),
     Ok(

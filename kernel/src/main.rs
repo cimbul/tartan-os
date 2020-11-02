@@ -13,6 +13,7 @@ use tartan_serial::{LineMode, UART};
 mod intrinsics;
 
 
+#[cfg(target_os = "tartan")]
 global_asm!(
     "
     .section .bss

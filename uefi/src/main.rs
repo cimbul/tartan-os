@@ -140,7 +140,6 @@ fn print_device_tree(_: &mut OutputStream) -> Result {
 
 #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
 fn print_device_tree(out: &mut OutputStream) -> Result {
-    use tartan_devicetree::Value;
     use tartan_devicetree::blob::{StructureData, Tree};
 
     writeln_result!(out, "Devicetree:")?;
@@ -153,33 +152,15 @@ fn print_device_tree(out: &mut OutputStream) -> Result {
         match structure_data {
             StructureData::BeginNode(name) => {
                 let display_name = if name.is_empty() { "/" } else { name };
-                writeln_result!(
-                    out,
-                    "{0:1$}{2} {{",
-                    "",
-                    2 * indent,
-                    display_name,
-                )?;
+                writeln_result!(out, "{0:1$}{2} {{", "", 2 * indent, display_name,)?;
                 indent += 1;
             }
             StructureData::EndNode => {
                 indent -= 1;
-                writeln_result!(
-                    out,
-                    "{0:1$}}}",
-                    "",
-                    2 * indent,
-                )?;
+                writeln_result!(out, "{0:1$}}}", "", 2 * indent,)?;
             }
             StructureData::Property { name, value } => {
-                writeln_result!(
-                    out,
-                    "{0:1$}{2} = {3:?}",
-                    "",
-                    2 * indent,
-                    name,
-                    value,
-                )?;
+                writeln_result!(out, "{0:1$}{2} = {3:?}", "", 2 * indent, name, value,)?;
             }
         }
     }
