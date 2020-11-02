@@ -713,6 +713,8 @@ dependencies = [
 name = "tartan-kernel"
 version = "0.1.0"
 dependencies = [
+ "static_assertions",
+ "tartan-bitfield",
  "tartan-serial",
 ]
 

@@ -39,3 +39,15 @@ pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
 pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
     compiler_builtins::mem::bcmp(s1, s2, n)
 }
+
+
+// For some reason, the complier generates references to these intrinsics when handling
+// alloc errors, even though we abort on panic.
+
+#[no_mangle]
+#[cfg(target_arch = "arm")]
+pub fn __aeabi_unwind_cpp_pr0() {}
+
+#[no_mangle]
+#[cfg(target_arch = "arm")]
+pub fn __aeabi_unwind_cpp_pr1() {}

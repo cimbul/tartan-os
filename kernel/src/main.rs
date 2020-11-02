@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(alloc_error_handler)]
 #![feature(asm)]
 #![feature(global_asm)]
 #![feature(lang_items)]
@@ -8,10 +9,15 @@
 #![feature(rustc_private)]
 #![feature(start)]
 
+extern crate alloc;
+
+use alloc::string::String;
 use core::fmt::Write;
+use core::mem::MaybeUninit;
 use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
+mod allocator;
 mod intrinsics;
 
 
@@ -102,6 +108,14 @@ fn kernel_main() -> ! {
 
     writeln!(out, "Hello, world!").unwrap();
 
+    unsafe {
+        ALLOCATOR.init(allocator::BlockList::from_block(&mut HEAP));
+    }
+
+    let mut heap_message = String::from("This came from...");
+    heap_message.push_str("the heap!");
+    writeln!(out, "{}", heap_message).unwrap();
+
     loop {
         unsafe {
             X = X.wrapping_add(1);
@@ -120,6 +134,17 @@ fn find_uart() -> impl UART {
     tartan_serial::NullUART
 }
 
+
+#[cfg_attr(not(test), global_allocator)]
+static mut ALLOCATOR: allocator::Allocator = allocator::Allocator::uninitialized();
+
+static mut HEAP: [MaybeUninit<usize>; 0x8000] = [MaybeUninit::uninit(); 0x8000];
+
+#[cfg(not(test))]
+#[alloc_error_handler]
+fn alloc_error(layout: core::alloc::Layout) -> ! {
+    panic!("Allocating {} bytes failed", layout.size());
+}
 
 #[cfg(not(test))]
 #[panic_handler]

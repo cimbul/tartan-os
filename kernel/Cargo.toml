@@ -10,4 +10,7 @@ publish = false
 
 [dependencies]
 # Internal
+tartan-bitfield = {path = "../util/bitfield"}
 tartan-serial = {path = "../serial"}
+# External
+static_assertions = "1.1.0"
