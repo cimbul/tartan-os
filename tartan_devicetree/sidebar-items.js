@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["blob","Flattened device tree, a.k.a. devicetree blob (DTB), as defined in chapter 5 of the Devicetree spec."]]});
+initSidebarItems({"mod":[["blob","Flattened device tree, a.k.a. devicetree blob (DTB), as defined in chapter 5 of the Devicetree spec."]],"struct":[["MemoryReservation","Indicates an area of memory that the kernel does not have full control over: e.g., ROMs, firmware."],["Value","Wrapper for a raw byte array used as the value of a Devicetree property. Used for intelligent formatting of unknown properties."]]});

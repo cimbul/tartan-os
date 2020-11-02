@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["_start",""],["eh_personality",""],["panic_handler",""]],"static":[["X",""]]});
+initSidebarItems({"fn":[["_start",""],["eh_personality",""],["find_uart",""],["kernel_main",""],["panic_handler",""]],"mod":[["intrinsics","This module contains some compiler-rt intrinsics that are missing from the compiler-builtins crate, or otherwise don't function properly."]],"static":[["X",""]]});
