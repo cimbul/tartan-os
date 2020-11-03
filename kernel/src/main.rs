@@ -29,7 +29,7 @@ global_asm!(
     .section .bss
     .balign 16
 stack_bottom:
-    .skip 0x1000
+    .skip 0x4000
     .global stack_top
 stack_top:
     "
