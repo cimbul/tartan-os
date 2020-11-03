@@ -45,6 +45,8 @@ pub fn parse_table(
     const HEADER_SIZE: usize = mem::size_of::<DescriptionHeader>();
 
     let state = ParserState::new(data);
+    let mut body_parser =
+        context("table body", all_consuming(multi::many0(TermObject::parse)));
     let parser = || {
         let (state, header_slice) = ParserState::lift(bytes::take(HEADER_SIZE))(state)?;
         let mut header_array = [0_u8; HEADER_SIZE];
@@ -62,8 +64,6 @@ pub fn parse_table(
             return err(state, ErrorKind::Verify);
         }
 
-        let body_parser =
-            context("table body", all_consuming(multi::many0(TermObject::parse)));
         let (state, body) = body_parser(state)?;
 
         Ok((state, AMLTable { header, body }))
@@ -106,7 +106,8 @@ pub mod state {
     use super::super::name::{to_path, NameSeg, NameString};
     use super::*;
     use nom::error::VerboseError;
-    use nom::{AsBytes, InputIter, InputLength};
+    use nom::{AsBytes, InputIter, InputLength, Needed, Parser};
+    use tartan_parsers::error::GeneralParseError;
 
 
     /// Expected argument count for a method in the ACPI namespace.
@@ -158,10 +159,10 @@ pub mod state {
         pub fn in_scope<P, O, E>(
             self,
             new_scope: &NameString,
-            parser: P,
+            mut parser: P,
         ) -> AMLParseResult<'a, O, E>
         where
-            P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
+            P: Parser<ParserState<'a>, O, E>,
             E: AMLParseError<'a>,
         {
             let new_scope_abs = match new_scope.resolve_as_decl(&self.current_scope) {
@@ -172,7 +173,7 @@ pub mod state {
             let previous_scope = self.current_scope.clone();
             let inner_state = ParserState { current_scope: new_scope_abs, ..self };
 
-            let (inner_state, result) = parser(inner_state)?;
+            let (inner_state, result) = parser.parse(inner_state)?;
 
             let outer_state =
                 ParserState { current_scope: previous_scope, ..inner_state };
@@ -181,13 +182,13 @@ pub mod state {
 
         /// Wraps a byte-oriented parser to work with `ParserState`
         pub fn lift<P, O, E>(
-            parser: P,
-        ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
+            mut parser: P,
+        ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
         where
-            P: Fn(&'a [u8]) -> IResult<&[u8], O, E::From>,
+            P: Parser<&'a [u8], O, E::From>,
             E: AMLParseError<'a>,
         {
-            move |input| match parser(input.data) {
+            move |input| match parser.parse(input.data) {
                 Ok((output_data, output_value)) => {
                     Ok((ParserState { data: output_data, ..input }, output_value))
                 }
@@ -227,7 +228,7 @@ pub mod state {
         fn position<P: Fn(Self::Item) -> bool>(&self, pred: P) -> Option<usize> {
             self.data.position(pred)
         }
-        fn slice_index(&self, i: usize) -> Option<usize> {
+        fn slice_index(&self, i: usize) -> Result<usize, Needed> {
             self.data.slice_index(i)
         }
     }
@@ -242,8 +243,8 @@ pub mod state {
     /// Helper trait used to convert a parser error from one input type to another.
     ///
     /// Used by [`ParserState::lift`].
-    pub trait ReplaceableParseError<F, T>: ParseError<T> {
-        type From: ParseError<F>;
+    pub trait ReplaceableParseError<F, T>: GeneralParseError<T> {
+        type From: GeneralParseError<F>;
         fn replace_input(from: Self::From, input: T) -> Self;
     }
 
@@ -315,6 +316,7 @@ mod num {
 #[macro_use]
 mod util {
     use super::*;
+    use nom::Parser;
 
     /// Defines a byte slice parser function, avoiding repetitive type parameters
     #[macro_export]
@@ -329,7 +331,8 @@ mod util {
         ] => {
             parser_fn! {
                 $(#[$meta])* $vis $name($($a)? i) -> $ret_typ {
-                    let parser = $imp;
+                    #[allow(unused_mut)] // Sometimes needed, sometimes not
+                    let mut parser = $imp;
                     parser(i)
                 }
             }
@@ -366,7 +369,7 @@ mod util {
     /// with a one-byte string, but I didn't actually profile it.
     pub fn tag_byte<'a, E: ParseError<ParserState<'a>>>(
         b: u8,
-    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<u8, E> {
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<u8, E> {
         move |i: ParserState<'_>| {
             if i.data.is_empty() {
                 err(i, ErrorKind::Tag)
@@ -385,9 +388,11 @@ mod util {
     /// ```text
     /// ExtOpPrefix := 0x5B
     /// ```
-    pub fn ext_op<'a, O, E, P>(p: P) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
+    pub fn ext_op<'a, O, E, P>(
+        p: P,
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
     where
-        P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
+        P: Parser<ParserState<'a>, O, E>,
         E: ParseError<ParserState<'a>>,
     {
         preceded(tag_byte(0x5b), p)
@@ -774,6 +779,7 @@ pub mod data {
 /// Variable-length "package" encoding, defined in §20.2.4
 mod package {
     use super::*;
+    use nom::Parser;
 
     /// The inner and outer size of a length-prefixed package
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -845,11 +851,12 @@ mod package {
     /// Execute a parser inside a length-prefixed package
     pub fn in_package<'a, P, O, E>(
         inner_parser: P,
-    ) -> impl Fn(ParserState<'a>) -> AMLParseResult<O, E>
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
     where
-        P: Fn(ParserState<'a>) -> AMLParseResult<O, E>,
+        P: Parser<ParserState<'a>, O, E>,
         E: AMLParseError<'a>,
     {
+        let mut consuming_inner_parser = all_consuming(inner_parser);
         move |outer_state: ParserState<'a>| {
             let (outer_state, package_length) = PackageLength::parse(outer_state)?;
             let body_length = match package_length.body_length {
@@ -860,8 +867,7 @@ mod package {
                 ParserState::lift(bytes::take(body_length))(outer_state)?;
 
             let inner_state = ParserState { data: package_data, ..outer_state.clone() };
-            let (inner_state, parsed_package) =
-                all_consuming(&inner_parser)(inner_state)?;
+            let (inner_state, parsed_package) = consuming_inner_parser(inner_state)?;
             let outer_state = ParserState { data: outer_state.data, ..inner_state };
 
             Ok((outer_state, parsed_package))
@@ -2663,7 +2669,7 @@ pub mod term {
         /// CopyObjectOp        := 0x9D
         /// ```
         copy_object -> ExpressionOpcode<'a> = opcode(
-            "copy expresssion",
+            "copy expression",
             tag_byte(0x9d),
             struct_parser! {
                 ExpressionOpcode::CopyObject(TermArg::parse, SimpleName::parse)

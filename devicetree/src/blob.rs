@@ -8,11 +8,12 @@ use core::slice;
 use core::str;
 use nom::branch::alt;
 use nom::bytes::complete as bytes;
-use nom::combinator::{map, map_res, value, verify};
+use nom::combinator::{map, map_parser, value, verify};
 use nom::error::{ErrorKind, ParseError};
 use nom::number::complete as num;
 use nom::sequence::{preceded, terminated};
 use nom::IResult;
+use tartan_parsers::error::{err, GeneralParseError};
 use tartan_parsers::{opcode, result_iterator, struct_parser};
 
 
@@ -95,7 +96,7 @@ impl<'a> Tree<'a> {
     /// Iterate over elements in the device tree. Note that this does not directly iterate
     /// over *nodes*, but rather events that indicate the start of a node (including its
     /// children), a property defined on the node, or the end of a node.
-    pub fn structure_iter<E: ParseError<&'a [u8]>>(
+    pub fn structure_iter<E: GeneralParseError<&'a [u8]>>(
         self: &'a Tree<'a>,
     ) -> impl Iterator<Item = Result<StructureData<'a>, nom::Err<E>>> {
         result_iterator(self.structure_block, StructureToken::parse)
@@ -117,7 +118,7 @@ impl<'a> Tree<'a> {
 
 
     /// Retrieve a null-terminated string at the given offset in the strings block
-    fn get_string<E: ParseError<&'a [u8]>>(
+    fn get_string<E: GeneralParseError<&'a [u8]>>(
         self: &Tree<'a>,
         offset: u32,
     ) -> Result<&'a str, nom::Err<E>> {
@@ -229,7 +230,7 @@ enum StructureToken<'a> {
 }
 
 impl<'a> StructureToken<'a> {
-    fn parse<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse<E: GeneralParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
         alt((
             Self::parse_begin_node,
             Self::parse_end_node,
@@ -239,7 +240,9 @@ impl<'a> StructureToken<'a> {
         ))(i)
     }
 
-    fn parse_begin_node<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse_begin_node<E: GeneralParseError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&[u8], Self, E> {
         opcode(
             "begin node",
             bytes::tag(1_u32.to_be_bytes()),
@@ -251,7 +254,9 @@ impl<'a> StructureToken<'a> {
         value(Self::EndNode, bytes::tag(2_u32.to_be_bytes()))(i)
     }
 
-    fn parse_property<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse_property<E: GeneralParseError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&[u8], Self, E> {
         opcode(
             "property",
             bytes::tag(3_u32.to_be_bytes()),
@@ -274,10 +279,14 @@ impl<'a> StructureToken<'a> {
 }
 
 
-fn parse_c_string<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], &str, E> {
-    map_res(terminated(bytes::take_until(&[0_u8] as &[u8]), bytes::tag([0_u8])), |s| {
-        #[allow(clippy::map_err_ignore)]
-        str::from_utf8(s).map_err(|_| E::from_error_kind(i, ErrorKind::Verify))
+fn parse_c_string<'a, E: GeneralParseError<&'a [u8]>>(
+    i: &'a [u8],
+) -> IResult<&[u8], &str, E> {
+    let null_terminated_bytes =
+        terminated(bytes::take_until(&[0_u8] as &[u8]), bytes::tag([0_u8]));
+    map_parser(null_terminated_bytes, |b| match str::from_utf8(b) {
+        Ok(s) => Ok((&[] as &[u8], s)),
+        Err(_) => err(i, ErrorKind::Verify),
     })(i)
 }
 

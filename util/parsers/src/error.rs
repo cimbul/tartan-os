@@ -1,7 +1,19 @@
 use core::cmp::min;
 use core::fmt;
-use nom::error::{ErrorKind, ParseError, VerboseError, VerboseErrorKind};
+use nom::error::{ContextError, ErrorKind, ParseError, VerboseError, VerboseErrorKind};
 use nom::{AsBytes, IResult};
+
+
+/// Trait alias combining the nom error traits [`ParseError`](nom::error::ParseError) and
+/// [`ContextError`](nom::error::ContextError).
+#[allow(clippy::module_name_repetitions)]
+pub trait GeneralParseError<I>
+where
+    Self: ParseError<I> + ContextError<I>,
+{
+}
+
+impl<T, I> GeneralParseError<I> for T where T: ParseError<I> + ContextError<I> {}
 
 
 /// Shortcut for constructing parser errors

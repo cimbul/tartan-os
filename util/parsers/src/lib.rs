@@ -5,9 +5,10 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 
-use nom::error::ParseError;
+use nom::combinator::cut;
+use nom::error::{ContextError, ParseError};
 use nom::sequence::preceded;
-use nom::{IResult, InputLength};
+use nom::{IResult, InputLength, Parser};
 
 
 /// Helpers for reporting parsing errors
@@ -74,23 +75,6 @@ macro_rules! struct_parser {
 }
 
 
-/// Transforms a parser error (recoverable) to a failure (non-recoverable). This
-/// avoids pointless backtracking when we know that no alternatives will succeed.
-///
-/// Unlike [`nom::combinator::cut`], this doesn't duplicate the input for no apparent
-/// reason.
-pub fn cut<P, I, O, E>(parser: P) -> impl Fn(I) -> IResult<I, O, E>
-where
-    P: Fn(I) -> IResult<I, O, E>,
-    E: ParseError<I>,
-{
-    move |i| match parser(i) {
-        Err(nom::Err::Error(e)) => Err(nom::Err::Failure(e)),
-        other => other,
-    }
-}
-
-
 /// Combinator for productions that use a deterministic opcode
 ///
 /// If a production is preceded by an unambiguous opcode, then we can avoid
@@ -100,14 +84,15 @@ pub fn opcode<I, O1, O2, E, P, Q>(
     description: &'static str,
     opcode_parser: P,
     body_parser: Q,
-) -> impl Fn(I) -> IResult<I, O2, E>
+) -> impl FnMut(I) -> IResult<I, O2, E>
 where
     I: Clone,
-    P: Fn(I) -> IResult<I, O1, E>,
-    Q: Fn(I) -> IResult<I, O2, E>,
-    E: ParseError<I>,
+    P: Parser<I, O1, E>,
+    Q: Parser<I, O2, E>,
+    E: ParseError<I> + ContextError<I>,
 {
-    move |i| match preceded(&opcode_parser, cut(&body_parser))(i.clone()) {
+    let mut parser = preceded(opcode_parser, cut(body_parser));
+    move |i: I| match parser.parse(i.clone()) {
         Err(nom::Err::Failure(e)) => {
             // Only add context to *failures*, on the assumption that these will only
             // come from the opcode body, and we don't want to add context when the

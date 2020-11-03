@@ -96,31 +96,31 @@ mod util {
 
     #[test]
     fn test_tag_byte() {
-        let tag_ab = tag_byte(0xab);
-        assert_errors!(&tag_ab, &[]);
-        assert_errors!(&tag_ab, &[0x12]);
-        assert_errors!(&tag_ab, &[0x0f]);
-        assert_parses!(&tag_ab, &[0xab],       &[],     0xab);
-        assert_parses!(&tag_ab, &[0xab, 0xcd], &[0xcd], 0xab);
+        let mut tag_ab = tag_byte(0xab);
+        assert_errors!(&mut tag_ab, &[]);
+        assert_errors!(&mut tag_ab, &[0x12]);
+        assert_errors!(&mut tag_ab, &[0x0f]);
+        assert_parses!(&mut tag_ab, &[0xab],       &[],     0xab);
+        assert_parses!(&mut tag_ab, &[0xab, 0xcd], &[0xcd], 0xab);
 
-        let tag_0f = tag_byte(0x0f);
-        assert_errors!(&tag_0f, &[]);
-        assert_errors!(&tag_0f, &[0x12]);
-        assert_errors!(&tag_0f, &[0xab]);
-        assert_parses!(&tag_0f, &[0x0f],       &[],     0x0f);
-        assert_parses!(&tag_0f, &[0x0f, 0x9a], &[0x9a], 0x0f);
+        let mut tag_0f = tag_byte(0x0f);
+        assert_errors!(&mut tag_0f, &[]);
+        assert_errors!(&mut tag_0f, &[0x12]);
+        assert_errors!(&mut tag_0f, &[0xab]);
+        assert_parses!(&mut tag_0f, &[0x0f],       &[],     0x0f);
+        assert_parses!(&mut tag_0f, &[0x0f, 0x9a], &[0x9a], 0x0f);
     }
 
     #[test]
     fn test_ext_op() {
-        let ext_xyz = ext_op(ParserState::lift(bytes::is_a("XYZ")));
-        assert_errors!(&ext_xyz, b"");
-        assert_errors!(&ext_xyz, b"\xd8");
-        assert_errors!(&ext_xyz, b"\x5b");
-        assert_errors!(&ext_xyz, b"\xd8ZZZ");
-        assert_parses!(&ext_xyz, b"\x5bZZZ",  b"",  b"ZZZ");
-        assert_parses!(&ext_xyz, b"\x5bZZZA", b"A", b"ZZZ");
-        assert_errors!(&ext_xyz, b"\x5bAZZZ");
+        let mut ext_xyz = ext_op(ParserState::lift(bytes::is_a("XYZ")));
+        assert_errors!(&mut ext_xyz, b"");
+        assert_errors!(&mut ext_xyz, b"\xd8");
+        assert_errors!(&mut ext_xyz, b"\x5b");
+        assert_errors!(&mut ext_xyz, b"\xd8ZZZ");
+        assert_parses!(&mut ext_xyz, b"\x5bZZZ",  b"",  b"ZZZ");
+        assert_parses!(&mut ext_xyz, b"\x5bZZZA", b"A", b"ZZZ");
+        assert_errors!(&mut ext_xyz, b"\x5bAZZZ");
     }
 
     #[test]
@@ -567,31 +567,31 @@ mod package {
 
     #[test]
     fn test_package() {
-        let package_xyz = in_package(
+        let mut package_xyz = in_package(
             ParserState::lift(bytes::take_while(|b| b"XYZ".contains(&b))));
-        assert_errors!(&package_xyz, b"");
-        assert_errors!(&package_xyz, b"\x00");
-        assert_parses!(&package_xyz, b"\x01", b"", b"");
-        assert_errors!(&package_xyz, b"\x02");
-        assert_errors!(&package_xyz, b"\x02A");
-        assert_parses!(&package_xyz, b"\x02Z",   b"",  b"Z");
-        assert_parses!(&package_xyz, b"\x02ZZ",  b"Z", b"Z");  // Can't read past end
-        assert_parses!(&package_xyz, b"\x02ZA",  b"A", b"Z");
-        assert_parses!(&package_xyz, b"\x03ZZ",  b"",  b"ZZ");
-        assert_errors!(&package_xyz, b"\x03");
-        assert_errors!(&package_xyz, b"\x04Z");
-        assert_errors!(&package_xyz, b"\x04ZA");
+        assert_errors!(&mut package_xyz, b"");
+        assert_errors!(&mut package_xyz, b"\x00");
+        assert_parses!(&mut package_xyz, b"\x01", b"", b"");
+        assert_errors!(&mut package_xyz, b"\x02");
+        assert_errors!(&mut package_xyz, b"\x02A");
+        assert_parses!(&mut package_xyz, b"\x02Z",   b"",  b"Z");
+        assert_parses!(&mut package_xyz, b"\x02ZZ",  b"Z", b"Z");  // Can't read past end
+        assert_parses!(&mut package_xyz, b"\x02ZA",  b"A", b"Z");
+        assert_parses!(&mut package_xyz, b"\x03ZZ",  b"",  b"ZZ");
+        assert_errors!(&mut package_xyz, b"\x03");
+        assert_errors!(&mut package_xyz, b"\x04Z");
+        assert_errors!(&mut package_xyz, b"\x04ZA");
 
         // Fails if inner parser requires more data
-        let package_take_4 = in_package(ParserState::lift(bytes::take(4_usize)));
-        assert_errors!(&package_take_4, b"\x00");
-        assert_errors!(&package_take_4, b"\x01");
-        assert_errors!(&package_take_4, b"\x02A");
-        assert_errors!(&package_take_4, b"\x03AB");
-        assert_errors!(&package_take_4, b"\x04ABC");
-        assert_parses!(&package_take_4, b"\x05ABCD",  b"",  b"ABCD");
-        assert_parses!(&package_take_4, b"\x05ABCDE", b"E", b"ABCD");
-        assert_errors!(&package_take_4, b"\x06ABCDE");  // Must consume whole package
+        let mut package_take_4 = in_package(ParserState::lift(bytes::take(4_usize)));
+        assert_errors!(&mut package_take_4, b"\x00");
+        assert_errors!(&mut package_take_4, b"\x01");
+        assert_errors!(&mut package_take_4, b"\x02A");
+        assert_errors!(&mut package_take_4, b"\x03AB");
+        assert_errors!(&mut package_take_4, b"\x04ABC");
+        assert_parses!(&mut package_take_4, b"\x05ABCD",  b"",  b"ABCD");
+        assert_parses!(&mut package_take_4, b"\x05ABCDE", b"E", b"ABCD");
+        assert_errors!(&mut package_take_4, b"\x06ABCDE");  // Must consume whole package
     }
 }
 
