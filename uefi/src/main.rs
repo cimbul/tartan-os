@@ -110,8 +110,6 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 
     print_device_tree(&mut out)?;
 
-    describe_cpu_state(&mut out)?;
-
     load_kernel(
         &mut out,
         image_handle,
@@ -166,95 +164,6 @@ fn print_device_tree(out: &mut OutputStream) -> Result {
     Ok(Status::Success)
 }
 
-
-#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
-fn describe_cpu_state(_: &mut OutputStream) -> Result {
-    // TODO
-    Ok(Status::Success)
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn describe_cpu_state(out: &mut OutputStream) -> Result {
-    use tartan_arch::x86_common::{self, features, interrupt, paging, protection};
-
-    writeln_result!(out, "CPUID max basic: {:x?}", features::max_cpuid_index_basic())?;
-    writeln_result!(out, "CPUID max ext.: {:x?}", features::max_cpuid_index_extended())?;
-
-    let basic_features = features::BasicFeatures::get();
-    writeln_result!(out, "{:#x?}", basic_features)?;
-    writeln_result!(out, "{:#x?}", features::ExtendedFeatures::get())?;
-    writeln_result!(out, "{:#x?}", features::AddressSpaceSizes::get())?;
-
-    writeln_result!(out, "{:#x?}", x86_common::FlagRegister::get())?;
-    writeln_result!(out, "{:#x?}", x86_common::ControlRegister0::get())?;
-    writeln_result!(out, "{:#x?}", x86_common::ControlRegister4::get())?;
-
-    writeln_result!(out, "{:#x?}", paging::ControlRegister2::get())?;
-    writeln_result!(out, "{:#x?}", paging::ControlRegister3::get())?;
-
-    #[allow(clippy::if_not_else)]
-    if !basic_features.extended_state_save() {
-        writeln_result!(out, "ExtendedControlRegister0 unsupported")?;
-    } else if !basic_features.extended_state_save_enabled() {
-        writeln_result!(out, "ExtendedControlRegister0 disabled")?;
-    } else {
-        writeln_result!(out, "{:#x?}", x86_common::ExtendedControlRegister0::get())?;
-    }
-
-    #[cfg(target_arch = "x86_64")]
-    {
-        use tartan_arch::x86_64;
-
-        writeln_result!(out, "{:#x?}", x86_64::ControlRegister8::get())?;
-        writeln_result!(out, "{:#x?}", x86_64::ExtendedFeatureEnableRegister::get())?;
-    }
-
-    writeln_result!(out, "{:#x?}", interrupt::InterruptDescriptorTableRegister::get())?;
-    writeln_result!(out, "{:#x?}", protection::GlobalDescriptorTableRegister::get())?;
-    describe_segment_register(
-        out,
-        "LDTR",
-        protection::LocalDescriptorTableRegister::get(),
-    )?;
-    describe_segment_register(out, "TR", protection::TaskRegister::get())?;
-    describe_segment_register(out, "CS", protection::SegmentRegister::Code.get())?;
-    describe_segment_register(out, "DS", protection::SegmentRegister::Data.get())?;
-    describe_segment_register(out, "SS", protection::SegmentRegister::Stack.get())?;
-    describe_segment_register(out, "ES", protection::SegmentRegister::Extra.get())?;
-    describe_segment_register(out, "FS", protection::SegmentRegister::ExtraF.get())?;
-    describe_segment_register(out, "GS", protection::SegmentRegister::ExtraG.get())?;
-
-    // writeln_result!(out, "{:#x?}")?;
-
-    Ok(Status::Success)
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn describe_segment_register(
-    out: &mut OutputStream,
-    name: &str,
-    selector: tartan_arch::x86_common::protection::Selector,
-) -> Result {
-    use tartan_arch::x86_common::protection::{
-        DescriptorFlags, GateDescriptor, GenericDescriptor, SegmentDescriptor,
-    };
-
-    writeln_result!(out, "")?;
-    writeln_result!(out, "{}:", name)?;
-    writeln_result!(out, "{:#x?}", selector)?;
-
-    let descriptor = selector.descriptor_address() as *const GenericDescriptor;
-    let descriptor_flags = unsafe { (*descriptor).flags };
-    if descriptor_flags.is_gate() {
-        let gate_descriptor = unsafe { &*(descriptor as *const GateDescriptor) };
-        writeln_result!(out, "{:#x?}", *gate_descriptor)?;
-    } else {
-        let seg_descriptor = unsafe { &*(descriptor as *const SegmentDescriptor) };
-        writeln_result!(out, "{:#x?}", *seg_descriptor)?;
-    }
-
-    Ok(Status::Success)
-}
 
 fn load_kernel(
     out: &mut OutputStream,

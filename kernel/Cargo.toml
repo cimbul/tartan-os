@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 # Internal
+tartan-arch = {path = "../arch"}
 tartan-bitfield = {path = "../util/bitfield"}
 tartan-pci = {path = "../pci"}
 tartan-serial = {path = "../serial"}

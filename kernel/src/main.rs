@@ -18,6 +18,7 @@ use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
 mod allocator;
+mod cpu;
 mod intrinsics;
 mod pci;
 
@@ -117,6 +118,7 @@ fn kernel_main() -> ! {
     heap_message.push_str("the heap!");
     writeln!(out, "{}", heap_message).unwrap();
 
+    cpu::print_state(&mut out).unwrap();
     pci::print_devices(&mut out).unwrap();
 
     writeln!(out, "Done doing anything useful.").unwrap();

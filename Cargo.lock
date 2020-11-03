@@ -745,6 +745,7 @@ name = "tartan-kernel"
 version = "0.1.0"
 dependencies = [
  "static_assertions",
+ "tartan-arch",
  "tartan-bitfield",
  "tartan-pci",
  "tartan-serial",
