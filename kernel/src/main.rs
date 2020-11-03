@@ -19,6 +19,7 @@ use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 mod allocator;
 mod intrinsics;
+mod pci;
 
 
 #[cfg(target_os = "tartan")]
@@ -115,6 +116,10 @@ fn kernel_main() -> ! {
     let mut heap_message = String::from("This came from...");
     heap_message.push_str("the heap!");
     writeln!(out, "{}", heap_message).unwrap();
+
+    pci::print_devices(&mut out).unwrap();
+
+    writeln!(out, "Done doing anything useful.").unwrap();
 
     loop {
         unsafe {
