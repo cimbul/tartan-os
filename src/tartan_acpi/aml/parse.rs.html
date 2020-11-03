@@ -2947,6 +2947,12 @@
 <span id="2944">2944</span>
 <span id="2945">2945</span>
 <span id="2946">2946</span>
+<span id="2947">2947</span>
+<span id="2948">2948</span>
+<span id="2949">2949</span>
+<span id="2950">2950</span>
+<span id="2951">2951</span>
+<span id="2952">2952</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Parsers for AML bytecode.</span>
 <span class="doccomment">//!</span>
@@ -2995,6 +3001,8 @@
     <span class="kw">const</span> <span class="ident">HEADER_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">DescriptionHeader</span><span class="op">&gt;</span>();
 
     <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">ParserState</span>::<span class="ident">new</span>(<span class="ident">data</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">body_parser</span> <span class="op">=</span>
+        <span class="ident">context</span>(<span class="string">&quot;table body&quot;</span>, <span class="ident">all_consuming</span>(<span class="ident">multi</span>::<span class="ident">many0</span>(<span class="ident">TermObject</span>::<span class="ident">parse</span>)));
     <span class="kw">let</span> <span class="ident">parser</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
         <span class="kw">let</span> (<span class="ident">state</span>, <span class="ident">header_slice</span>) <span class="op">=</span> <span class="ident">ParserState</span>::<span class="ident">lift</span>(<span class="ident">bytes</span>::<span class="ident">take</span>(<span class="ident">HEADER_SIZE</span>))(<span class="ident">state</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">header_array</span> <span class="op">=</span> [<span class="number">0_u8</span>; <span class="ident">HEADER_SIZE</span>];
@@ -3012,8 +3020,6 @@
             <span class="kw">return</span> <span class="ident">err</span>(<span class="ident">state</span>, <span class="ident">ErrorKind</span>::<span class="ident">Verify</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">body_parser</span> <span class="op">=</span>
-            <span class="ident">context</span>(<span class="string">&quot;table body&quot;</span>, <span class="ident">all_consuming</span>(<span class="ident">multi</span>::<span class="ident">many0</span>(<span class="ident">TermObject</span>::<span class="ident">parse</span>)));
         <span class="kw">let</span> (<span class="ident">state</span>, <span class="ident">body</span>) <span class="op">=</span> <span class="ident">body_parser</span>(<span class="ident">state</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((<span class="ident">state</span>, <span class="ident">AMLTable</span> { <span class="ident">header</span>, <span class="ident">body</span> }))
@@ -3056,7 +3062,8 @@
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">name</span>::{<span class="ident">to_path</span>, <span class="ident">NameSeg</span>, <span class="ident">NameString</span>};
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">nom</span>::<span class="ident">error</span>::<span class="ident">VerboseError</span>;
-    <span class="kw">use</span> <span class="ident">nom</span>::{<span class="ident">AsBytes</span>, <span class="ident">InputIter</span>, <span class="ident">InputLength</span>};
+    <span class="kw">use</span> <span class="ident">nom</span>::{<span class="ident">AsBytes</span>, <span class="ident">InputIter</span>, <span class="ident">InputLength</span>, <span class="ident">Needed</span>, <span class="ident">Parser</span>};
+    <span class="kw">use</span> <span class="ident">tartan_parsers</span>::<span class="ident">error</span>::<span class="ident">GeneralParseError</span>;
 
 
     <span class="doccomment">/// Expected argument count for a method in the ACPI namespace.</span>
@@ -3108,10 +3115,10 @@
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_scope</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>(
             <span class="self">self</span>,
             <span class="ident">new_scope</span>: <span class="kw-2">&amp;</span><span class="ident">NameString</span>,
-            <span class="ident">parser</span>: <span class="ident">P</span>,
+            <span class="kw-2">mut</span> <span class="ident">parser</span>: <span class="ident">P</span>,
         ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
         <span class="kw">where</span>
-            <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+            <span class="ident">P</span>: <span class="ident">Parser</span><span class="op">&lt;</span><span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
             <span class="ident">E</span>: <span class="ident">AMLParseError</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
         {
             <span class="kw">let</span> <span class="ident">new_scope_abs</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">new_scope</span>.<span class="ident">resolve_as_decl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">current_scope</span>) {
@@ -3122,7 +3129,7 @@
             <span class="kw">let</span> <span class="ident">previous_scope</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_scope</span>.<span class="ident">clone</span>();
             <span class="kw">let</span> <span class="ident">inner_state</span> <span class="op">=</span> <span class="ident">ParserState</span> { <span class="ident">current_scope</span>: <span class="ident">new_scope_abs</span>, ..<span class="self">self</span> };
 
-            <span class="kw">let</span> (<span class="ident">inner_state</span>, <span class="ident">result</span>) <span class="op">=</span> <span class="ident">parser</span>(<span class="ident">inner_state</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> (<span class="ident">inner_state</span>, <span class="ident">result</span>) <span class="op">=</span> <span class="ident">parser</span>.<span class="ident">parse</span>(<span class="ident">inner_state</span>)<span class="question-mark">?</span>;
 
             <span class="kw">let</span> <span class="ident">outer_state</span> <span class="op">=</span>
                 <span class="ident">ParserState</span> { <span class="ident">current_scope</span>: <span class="ident">previous_scope</span>, ..<span class="ident">inner_state</span> };
@@ -3131,13 +3138,13 @@
 
         <span class="doccomment">/// Wraps a byte-oriented parser to work with `ParserState`</span>
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lift</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>(
-            <span class="ident">parser</span>: <span class="ident">P</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
+            <span class="kw-2">mut</span> <span class="ident">parser</span>: <span class="ident">P</span>,
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
         <span class="kw">where</span>
-            <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">O</span>, <span class="ident">E</span>::<span class="ident">From</span><span class="op">&gt;</span>,
+            <span class="ident">P</span>: <span class="ident">Parser</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">O</span>, <span class="ident">E</span>::<span class="ident">From</span><span class="op">&gt;</span>,
             <span class="ident">E</span>: <span class="ident">AMLParseError</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
         {
-            <span class="kw">move</span> <span class="op">|</span><span class="ident">input</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">parser</span>(<span class="ident">input</span>.<span class="ident">data</span>) {
+            <span class="kw">move</span> <span class="op">|</span><span class="ident">input</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">parser</span>.<span class="ident">parse</span>(<span class="ident">input</span>.<span class="ident">data</span>) {
                 <span class="prelude-val">Ok</span>((<span class="ident">output_data</span>, <span class="ident">output_value</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="prelude-val">Ok</span>((<span class="ident">ParserState</span> { <span class="ident">data</span>: <span class="ident">output_data</span>, ..<span class="ident">input</span> }, <span class="ident">output_value</span>))
                 }
@@ -3177,7 +3184,7 @@
         <span class="kw">fn</span> <span class="ident">position</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">Fn</span>(<span class="self">Self</span>::<span class="ident">Item</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pred</span>: <span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">position</span>(<span class="ident">pred</span>)
         }
-        <span class="kw">fn</span> <span class="ident">slice_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">slice_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Needed</span><span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">slice_index</span>(<span class="ident">i</span>)
         }
     }
@@ -3192,8 +3199,8 @@
     <span class="doccomment">/// Helper trait used to convert a parser error from one input type to another.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Used by [`ParserState::lift`].</span>
-    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ReplaceableParseError</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">ParseError</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">type</span> <span class="ident">From</span>: <span class="ident">ParseError</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>;
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ReplaceableParseError</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">GeneralParseError</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">type</span> <span class="ident">From</span>: <span class="ident">GeneralParseError</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>;
         <span class="kw">fn</span> <span class="ident">replace_input</span>(<span class="ident">from</span>: <span class="self">Self</span>::<span class="ident">From</span>, <span class="ident">input</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
     }
 
@@ -3265,6 +3272,7 @@
 <span class="attribute">#[<span class="ident">macro_use</span>]</span>
 <span class="kw">mod</span> <span class="ident">util</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">nom</span>::<span class="ident">Parser</span>;
 
     <span class="doccomment">/// Defines a byte slice parser function, avoiding repetitive type parameters</span>
     <span class="attribute">#[<span class="ident">macro_export</span>]</span>
@@ -3279,7 +3287,8 @@
         ] <span class="op">=</span><span class="op">&gt;</span> {
             <span class="macro">parser_fn</span><span class="macro">!</span> {
                 $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vis</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>)<span class="question-mark">?</span> <span class="ident">i</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret_typ</span> {
-                    <span class="kw">let</span> <span class="ident">parser</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span>;
+                    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_mut</span>)]</span> <span class="comment">// Sometimes needed, sometimes not</span>
+                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">parser</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span>;
                     <span class="ident">parser</span>(<span class="ident">i</span>)
                 }
             }
@@ -3316,7 +3325,7 @@
     <span class="doccomment">/// with a one-byte string, but I didn&#39;t actually profile it.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tag_byte</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>: <span class="ident">ParseError</span><span class="op">&lt;</span><span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="ident">b</span>: <span class="ident">u8</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">E</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">E</span><span class="op">&gt;</span> {
         <span class="kw">move</span> <span class="op">|</span><span class="ident">i</span>: <span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="ident">i</span>.<span class="ident">data</span>.<span class="ident">is_empty</span>() {
                 <span class="ident">err</span>(<span class="ident">i</span>, <span class="ident">ErrorKind</span>::<span class="ident">Tag</span>)
@@ -3335,9 +3344,11 @@
     <span class="doccomment">/// ```text</span>
     <span class="doccomment">/// ExtOpPrefix := 0x5B</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ext_op</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">O</span>, <span class="ident">E</span>, <span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ext_op</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">O</span>, <span class="ident">E</span>, <span class="ident">P</span><span class="op">&gt;</span>(
+        <span class="ident">p</span>: <span class="ident">P</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">P</span>: <span class="ident">Parser</span><span class="op">&lt;</span><span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
         <span class="ident">E</span>: <span class="ident">ParseError</span><span class="op">&lt;</span><span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
         <span class="ident">preceded</span>(<span class="ident">tag_byte</span>(<span class="number">0x5b</span>), <span class="ident">p</span>)
@@ -3724,6 +3735,7 @@
 <span class="doccomment">/// Variable-length &quot;package&quot; encoding, defined in §20.2.4</span>
 <span class="kw">mod</span> <span class="ident">package</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">nom</span>::<span class="ident">Parser</span>;
 
     <span class="doccomment">/// The inner and outer size of a length-prefixed package</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
@@ -3795,11 +3807,12 @@
     <span class="doccomment">/// Execute a parser inside a length-prefixed package</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">P</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>(
         <span class="ident">inner_parser</span>: <span class="ident">P</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AMLParseResult</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">P</span>: <span class="ident">Parser</span><span class="op">&lt;</span><span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>,
         <span class="ident">E</span>: <span class="ident">AMLParseError</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
     {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">consuming_inner_parser</span> <span class="op">=</span> <span class="ident">all_consuming</span>(<span class="ident">inner_parser</span>);
         <span class="kw">move</span> <span class="op">|</span><span class="ident">outer_state</span>: <span class="ident">ParserState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">|</span> {
             <span class="kw">let</span> (<span class="ident">outer_state</span>, <span class="ident">package_length</span>) <span class="op">=</span> <span class="ident">PackageLength</span>::<span class="ident">parse</span>(<span class="ident">outer_state</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> <span class="ident">body_length</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">package_length</span>.<span class="ident">body_length</span> {
@@ -3810,8 +3823,7 @@
                 <span class="ident">ParserState</span>::<span class="ident">lift</span>(<span class="ident">bytes</span>::<span class="ident">take</span>(<span class="ident">body_length</span>))(<span class="ident">outer_state</span>)<span class="question-mark">?</span>;
 
             <span class="kw">let</span> <span class="ident">inner_state</span> <span class="op">=</span> <span class="ident">ParserState</span> { <span class="ident">data</span>: <span class="ident">package_data</span>, ..<span class="ident">outer_state</span>.<span class="ident">clone</span>() };
-            <span class="kw">let</span> (<span class="ident">inner_state</span>, <span class="ident">parsed_package</span>) <span class="op">=</span>
-                <span class="ident">all_consuming</span>(<span class="kw-2">&amp;</span><span class="ident">inner_parser</span>)(<span class="ident">inner_state</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> (<span class="ident">inner_state</span>, <span class="ident">parsed_package</span>) <span class="op">=</span> <span class="ident">consuming_inner_parser</span>(<span class="ident">inner_state</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> <span class="ident">outer_state</span> <span class="op">=</span> <span class="ident">ParserState</span> { <span class="ident">data</span>: <span class="ident">outer_state</span>.<span class="ident">data</span>, ..<span class="ident">inner_state</span> };
 
             <span class="prelude-val">Ok</span>((<span class="ident">outer_state</span>, <span class="ident">parsed_package</span>))
@@ -5613,7 +5625,7 @@
         <span class="doccomment">/// CopyObjectOp        := 0x9D</span>
         <span class="doccomment">/// ```</span>
         <span class="ident">copy_object</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">opcode</span>(
-            <span class="string">&quot;copy expresssion&quot;</span>,
+            <span class="string">&quot;copy expression&quot;</span>,
             <span class="ident">tag_byte</span>(<span class="number">0x9d</span>),
             <span class="macro">struct_parser</span><span class="macro">!</span> {
                 <span class="ident">ExpressionOpcode</span>::<span class="ident">CopyObject</span>(<span class="ident">TermArg</span>::<span class="ident">parse</span>, <span class="ident">SimpleName</span>::<span class="ident">parse</span>)
