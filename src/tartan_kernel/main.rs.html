@@ -191,6 +191,13 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_error_handler</span>)]</span>
@@ -212,7 +219,9 @@
 
 
 <span class="kw">mod</span> <span class="ident">allocator</span>;
+<span class="kw">mod</span> <span class="ident">cpu</span>;
 <span class="kw">mod</span> <span class="ident">intrinsics</span>;
+<span class="kw">mod</span> <span class="ident">pci</span>;
 
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>)]</span>
@@ -221,7 +230,7 @@
     .section .bss
     .balign 16
 stack_bottom:
-    .skip 0x1000
+    .skip 0x4000
     .global stack_top
 stack_top:
     &quot;</span>
@@ -309,6 +318,11 @@ stack_top:
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap_message</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="string">&quot;This came from...&quot;</span>);
     <span class="ident">heap_message</span>.<span class="ident">push_str</span>(<span class="string">&quot;the heap!&quot;</span>);
     <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">heap_message</span>).<span class="ident">unwrap</span>();
+
+    <span class="ident">cpu</span>::<span class="ident">print_state</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
+    <span class="ident">pci</span>::<span class="ident">print_devices</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
+
+    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;Done doing anything useful.&quot;</span>).<span class="ident">unwrap</span>();
 
     <span class="kw">loop</span> {
         <span class="kw">unsafe</span> {
