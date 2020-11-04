@@ -71,7 +71,7 @@ fn describe_segment_register(
         DescriptorFlags, GateDescriptor, GenericDescriptor, SegmentDescriptor,
     };
 
-    writeln!(out, "")?;
+    writeln!(out)?;
     writeln!(out, "{}:", name)?;
     writeln!(out, "{:#x?}", selector)?;
 

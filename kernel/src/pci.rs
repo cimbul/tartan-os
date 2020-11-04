@@ -58,8 +58,7 @@ pub fn print_devices(out: &mut dyn fmt::Write) -> fmt::Result {
             writeln!(
                 out,
                 "       capability {:02x} (register {:04x})",
-                capability.id,
-                capability.register,
+                capability.id, capability.register,
             )?;
         }
     }
