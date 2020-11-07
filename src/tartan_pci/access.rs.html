@@ -246,6 +246,7 @@
 <span id="243">243</span>
 <span id="244">244</span>
 <span id="245">245</span>
+<span id="246">246</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">module_name_repetitions</span>)]</span>
 
@@ -303,8 +304,9 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemMapConfigAccess</span> {
     <span class="doccomment">/// Address of register 0 on bus</span>
-    <span class="ident">base_address</span>: <span class="ident">usize</span>,
-    <span class="ident">bus_range</span>: <span class="ident">RangeInclusive</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">base_address</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Bus numbers covered by this memory map</span>
+    <span class="kw">pub</span> <span class="ident">bus_range</span>: <span class="ident">RangeInclusive</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">MemMapConfigAccess</span> {
@@ -343,13 +345,13 @@
 <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">MemMapConfigAccess</span> {
     <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">address</span> };
+        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">read_volatile</span>(<span class="ident">address</span>) };
         <span class="ident">u32</span>::<span class="ident">from_le</span>(<span class="ident">register_data_le</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">address</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">to_le</span>() };
+        <span class="kw">unsafe</span> { <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">write_volatile</span>(<span class="ident">address</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) };
     }
 }
 

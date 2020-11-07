@@ -68,22 +68,52 @@
 <span id="65">65</span>
 <span id="66">66</span>
 <span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_devices</span>(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dyn</span> <span class="ident">fmt</span>::<span class="ident">Write</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-    <span class="comment">// TODO</span>
-    <span class="prelude-val">Ok</span>(())
-}
+<span class="kw">use</span> <span class="ident">tartan_pci</span> <span class="kw">as</span> <span class="ident">pci</span>;
+<span class="kw">use</span> <span class="ident">tartan_pci</span>::<span class="ident">access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_devices</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dyn</span> <span class="ident">fmt</span>::<span class="ident">Write</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-    <span class="kw">use</span> <span class="ident">tartan_pci</span> <span class="kw">as</span> <span class="ident">pci</span>;
-    <span class="kw">use</span> <span class="ident">tartan_pci</span>::<span class="ident">access</span>::{<span class="ident">io</span>::<span class="ident">IOConfigAccess</span>, <span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
+    <span class="ident">tartan_pci</span>::<span class="ident">access</span>::<span class="ident">io</span>::<span class="ident">IOConfigAccess</span>
+}
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
+    <span class="ident">tartan_pci</span>::<span class="ident">access</span>::<span class="ident">MemMapConfigAccess</span> {
+        <span class="ident">base_address</span>: <span class="number">0x3f00_0000</span>,
+        <span class="ident">bus_range</span>: <span class="number">0x00</span>..<span class="op">=</span><span class="number">0x0f</span>,
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
+    <span class="ident">tartan_pci</span>::<span class="ident">access</span>::<span class="ident">MemMapConfigAccess</span> {
+        <span class="ident">base_address</span>: <span class="number">0x0000_0040_1000_0000</span>,
+        <span class="ident">bus_range</span>: <span class="number">0x00</span>..<span class="op">=</span><span class="number">0xff</span>,
+    }
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_devices</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dyn</span> <span class="ident">fmt</span>::<span class="ident">Write</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
     <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;Enumerating PCI devices on bus 0&quot;</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">access</span> <span class="op">=</span> <span class="ident">IOConfigAccess</span>;
+    <span class="kw">let</span> <span class="ident">access</span> <span class="op">=</span> <span class="ident">find_pci_access</span>();
     <span class="kw">for</span> <span class="ident">selector</span> <span class="kw">in</span> <span class="ident">pci</span>::<span class="ident">enumerate_bus</span>(<span class="kw-2">&amp;</span><span class="ident">access</span>, <span class="ident">ConfigSelector</span>::<span class="ident">default</span>()) {
         <span class="kw">let</span> <span class="ident">id_register</span>: <span class="ident">pci</span>::<span class="ident">config</span>::<span class="ident">HeaderRegister0</span> <span class="op">=</span>
             <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);

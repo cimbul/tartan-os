@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["print_devices",""]]});
+initSidebarItems({"fn":[["find_pci_access",""],["print_devices",""]]});
