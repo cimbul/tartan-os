@@ -4,7 +4,7 @@
 // TODO: Remove this once full functionality is implemented
 #![allow(unused)]
 
-use crate::{LineMode, Parity, UART};
+use crate::{baud_from_divisor, divisor_from_baud, LineMode, Parity, WordLength, UART};
 use core::convert::TryInto;
 use tartan_arch::x86_common::io;
 use tartan_bitfield::bitfield;
@@ -42,7 +42,7 @@ pub struct UART16550<A: RegisterAccess = ActualRegisterAccess> {
 }
 
 impl<A: RegisterAccess> UART16550<A> {
-    const MAX_BITS_PER_SECOND: u32 = 115_200;
+    const MAX_BAUD: u32 = 115_200;
 
     fn pop_rx_queue(&mut self) -> u8 {
         self.set_divisor_access(false);
@@ -117,23 +117,6 @@ impl<A: RegisterAccess> UART16550<A> {
         line_control.set_divisor_access(value);
         self.set_line_control(line_control);
     }
-
-    fn bit_rate_from_divisor(divisor: u16) -> u32 {
-        if divisor == 0 {
-            0
-        } else {
-            Self::MAX_BITS_PER_SECOND / u32::from(divisor)
-        }
-    }
-
-    fn divisor_from_bit_rate(bits_per_second: u32) -> u16 {
-        #[allow(clippy::cast_possible_truncation)]
-        if bits_per_second == 0 || bits_per_second >= Self::MAX_BITS_PER_SECOND {
-            1
-        } else {
-            (Self::MAX_BITS_PER_SECOND / bits_per_second) as u16
-        }
-    }
 }
 
 impl UART16550<ActualRegisterAccess> {
@@ -154,7 +137,7 @@ impl<A: RegisterAccess> UART for UART16550<A> {
     fn line_mode(&mut self) -> LineMode {
         let line_control = self.line_control();
         let mut line_mode = LineMode::default();
-        line_mode.bits_per_second = Self::bit_rate_from_divisor(self.divisor());
+        line_mode.baud = baud_from_divisor(Self::MAX_BAUD, u32::from(self.divisor()));
         line_mode.data_bits = line_control.word_length().bits();
         line_mode.parity = line_control.parity();
         line_mode.extended_stop = line_control.extended_stop();
@@ -162,7 +145,8 @@ impl<A: RegisterAccess> UART for UART16550<A> {
     }
 
     fn set_line_mode(&mut self, line_mode: LineMode) {
-        self.set_divisor(Self::divisor_from_bit_rate(line_mode.bits_per_second));
+        #[allow(clippy::cast_possible_truncation)]
+        self.set_divisor(divisor_from_baud(Self::MAX_BAUD, line_mode.baud) as u16);
 
         let mut line_control = self.line_control();
         line_control.set_word_length(
@@ -175,9 +159,11 @@ impl<A: RegisterAccess> UART for UART16550<A> {
 
     fn write(&mut self, data: &[u8]) {
         for &byte in data {
+            // FIXME (sync)
             while !self.line_status().tx_empty() {}
             self.push_tx_queue(byte);
         }
+        // FIXME (sync)
         while !self.line_status().tx_empty() {}
     }
 }
@@ -247,74 +233,25 @@ bitfield! {
         [2]    pub extended_stop,
         [3]    pub parity_enabled,
         [4]    pub parity_even,
-        [5]    pub parity_stick,
+        [5]    pub parity_sticky,
         [6]    pub break_enabled,
         [7]    pub divisor_access,
     }
 }
 
 impl LineControlRegister {
-    pub fn parity(self) -> Parity {
-        if self.parity_enabled() {
-            match (self.parity_stick(), self.parity_even()) {
-                (false, false) => Parity::Odd,
-                (false, true) => Parity::Even,
-                (true, false) => Parity::High,
-                (true, true) => Parity::Low,
-            }
-        } else {
-            Parity::None
-        }
+    fn parity(self) -> Parity {
+        Parity::from_flags(
+            self.parity_enabled(),
+            self.parity_even(),
+            self.parity_sticky(),
+        )
     }
 
     pub fn set_parity(&mut self, value: Parity) {
-        self.set_parity_enabled(value != Parity::None);
-        self.set_parity_even(value == Parity::Even || value == Parity::Low);
-        self.set_parity_stick(value == Parity::High || value == Parity::Low);
-    }
-}
-
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum WordLength {
-    Five,
-    Six,
-    Seven,
-    Eight,
-}
-
-impl WordLength {
-    pub fn bits(self) -> u8 {
-        match self {
-            Self::Five => 5,
-            Self::Six => 6,
-            Self::Seven => 7,
-            Self::Eight => 8,
-        }
-    }
-
-    pub fn from_bits(bits: u8) -> Option<WordLength> {
-        match bits {
-            5 => Some(Self::Five),
-            6 => Some(Self::Six),
-            7 => Some(Self::Seven),
-            8 => Some(Self::Eight),
-            _ => None,
-        }
-    }
-}
-
-impl From<u8> for WordLength {
-    fn from(value: u8) -> Self {
-        // For two bit values, this enum is exhaustive
-        (value & 0b11).try_into().unwrap()
-    }
-}
-
-impl From<WordLength> for u8 {
-    fn from(value: WordLength) -> Self {
-        value as u8
+        self.set_parity_enabled(value.enabled_flag());
+        self.set_parity_even(value.even_flag());
+        self.set_parity_sticky(value.sticky_flag());
     }
 }
 

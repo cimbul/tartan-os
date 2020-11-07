@@ -7,6 +7,8 @@
 #![allow(clippy::must_use_candidate)]
 
 
+pub mod model_pl011;
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64", doc))]
 #[doc(cfg(any(target_arch = "x86", target_arch = "x86_64")))]
 pub mod model_16550;
@@ -49,8 +51,8 @@ impl<T: UART> core::fmt::Write for UARTWriteAdapter<T> {
 /// Speed and other line protocol settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LineMode {
-    /// Baud rate of line protocol.
-    pub bits_per_second: u32,
+    /// Bits per second (including non-data bits) of line protocol.
+    pub baud: u32,
     /// Number of data bits per word in line protocol.
     pub data_bits: u8,
     /// Parity setting for line protocol.
@@ -62,7 +64,7 @@ pub struct LineMode {
 impl Default for LineMode {
     fn default() -> LineMode {
         LineMode {
-            bits_per_second: 9600,
+            baud: 9600,
             data_bits: 8,
             parity: Parity::default(),
             extended_stop: false,
@@ -86,6 +88,33 @@ pub enum Parity {
     Low,
 }
 
+impl Parity {
+    fn from_flags(enabled: bool, even: bool, sticky: bool) -> Self {
+        if enabled {
+            match (sticky, even) {
+                (false, false) => Self::Odd,
+                (false, true) => Self::Even,
+                (true, false) => Self::High,
+                (true, true) => Self::Low,
+            }
+        } else {
+            Self::None
+        }
+    }
+
+    fn enabled_flag(self) -> bool {
+        self != Self::None
+    }
+
+    fn even_flag(self) -> bool {
+        self == Self::Even || self == Self::Low
+    }
+
+    fn sticky_flag(self) -> bool {
+        self == Self::High || self == Self::Low
+    }
+}
+
 impl Default for Parity {
     fn default() -> Self {
         Self::None
@@ -103,5 +132,74 @@ impl UART for NullUART {
 
     fn line_mode(&mut self) -> LineMode {
         LineMode::default()
+    }
+}
+
+
+/// Common two-bit register encoding for setting the data word length.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum WordLength {
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
+
+impl WordLength {
+    pub fn bits(self) -> u8 {
+        match self {
+            Self::Five => 5,
+            Self::Six => 6,
+            Self::Seven => 7,
+            Self::Eight => 8,
+        }
+    }
+
+    pub fn from_bits(bits: u8) -> Option<WordLength> {
+        match bits {
+            5 => Some(Self::Five),
+            6 => Some(Self::Six),
+            7 => Some(Self::Seven),
+            8 => Some(Self::Eight),
+            _ => None,
+        }
+    }
+}
+
+impl From<u8> for WordLength {
+    fn from(value: u8) -> Self {
+        match value & 0b11 {
+            0 => Self::Five,
+            1 => Self::Six,
+            2 => Self::Seven,
+            3 => Self::Eight,
+            // For two bit values, the cases above are exhaustive
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl From<WordLength> for u8 {
+    fn from(value: WordLength) -> Self {
+        value as u8
+    }
+}
+
+
+
+fn baud_from_divisor(max_baud: u32, divisor: u32) -> u32 {
+    if divisor == 0 {
+        0
+    } else {
+        max_baud / divisor
+    }
+}
+
+fn divisor_from_baud(max_baud: u32, baud: u32) -> u32 {
+    if baud == 0 || baud >= max_baud {
+        1
+    } else {
+        max_baud / baud
     }
 }

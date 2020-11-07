@@ -138,7 +138,13 @@ fn find_uart() -> impl UART {
 
 #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
 fn find_uart() -> impl UART {
-    tartan_serial::NullUART
+    use tartan_serial::model_pl011::{RegisterBlock, UARTPL011};
+
+    // FIXME: Hardcoded values copied from QEMU's "virt" board device tree
+    UARTPL011 {
+        register_block: unsafe { &mut *(0x0900_0000 as *mut RegisterBlock) },
+        base_clock_rate: 24_000_000,
+    }
 }
 
 

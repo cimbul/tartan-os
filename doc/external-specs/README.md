@@ -175,3 +175,5 @@ Architecture-specific extensions (psABI):
   * [USB Human Interface Devices](https://www.usb.org/hid)
     * [Device Class Definition for HID 1.11](https://www.usb.org/document-library/device-class-definition-hid-111)
       v1.11, Jun 2001
+  * [PrimeCell UART (PL011) Technical Reference Manual](https://developer.arm.com/documentation/ddi0183/latest)
+    vG, Dec 2017
