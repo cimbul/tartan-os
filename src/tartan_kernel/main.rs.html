@@ -198,6 +198,12 @@
 <span id="195">195</span>
 <span id="196">196</span>
 <span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_error_handler</span>)]</span>
@@ -339,7 +345,13 @@ stack_top:
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>))]</span>
 <span class="kw">fn</span> <span class="ident">find_uart</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">UART</span> {
-    <span class="ident">tartan_serial</span>::<span class="ident">NullUART</span>
+    <span class="kw">use</span> <span class="ident">tartan_serial</span>::<span class="ident">model_pl011</span>::{<span class="ident">RegisterBlock</span>, <span class="ident">UARTPL011</span>};
+
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
+    <span class="ident">UARTPL011</span> {
+        <span class="ident">register_block</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span>(<span class="number">0x0900_0000</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">RegisterBlock</span>) },
+        <span class="ident">base_clock_rate</span>: <span class="number">24_000_000</span>,
+    }
 }
 
 

@@ -9,6 +9,6 @@ sourcesIndex["tartan_elf"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["tartan_kernel"] = {"name":"","files":["allocator.rs","cpu.rs","intrinsics.rs","main.rs","pci.rs"]};
 sourcesIndex["tartan_parsers"] = {"name":"","files":["error.rs","lib.rs"]};
 sourcesIndex["tartan_pci"] = {"name":"","files":["access.rs","config.rs","lib.rs"]};
-sourcesIndex["tartan_serial"] = {"name":"","files":["lib.rs","model_16550.rs"]};
+sourcesIndex["tartan_serial"] = {"name":"","files":["lib.rs","model_16550.rs","model_pl011.rs"]};
 sourcesIndex["tartan_uefi"] = {"name":"","files":["allocator.rs","global.rs","io.rs","lib.rs"]};
 createSourceSidebar();
