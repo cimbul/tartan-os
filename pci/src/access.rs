@@ -54,8 +54,9 @@ pub struct ConfigSelector {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemMapConfigAccess {
     /// Address of register 0 on bus
-    base_address: usize,
-    bus_range: RangeInclusive<u8>,
+    pub base_address: usize,
+    /// Bus numbers covered by this memory map
+    pub bus_range: RangeInclusive<u8>,
 }
 
 impl MemMapConfigAccess {
@@ -94,13 +95,13 @@ impl MemMapConfigAccess {
 impl ConfigAccess for MemMapConfigAccess {
     fn get_register(&self, selector: ConfigSelector, register: u16) -> u32 {
         let address = self.register_address(selector, register);
-        let register_data_le = unsafe { *address };
+        let register_data_le = unsafe { core::ptr::read_volatile(address) };
         u32::from_le(register_data_le)
     }
 
     fn set_register(&self, selector: ConfigSelector, register: u16, value: u32) {
         let address = self.register_address(selector, register);
-        unsafe { *address = value.to_le() };
+        unsafe { core::ptr::write_volatile(address, value.to_le()) };
     }
 }
 
