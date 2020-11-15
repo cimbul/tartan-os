@@ -438,10 +438,12 @@ pub mod name {
     impl<'a> Parse<'a> for NameSeg {
         parser_fn!(parse('a i) -> Self {
             const fn is_lead_name_char(b: u8) -> bool {
+                #![allow(clippy::manual_range_contains)] // Spurious: not allowed in const
                 b >= b'A' && b <= b'Z' || b == b'_'
             }
 
             const fn is_name_char(b: u8) -> bool {
+                #![allow(clippy::manual_range_contains)] // Spurious: not allowed in const
                 is_lead_name_char(b) || b >= b'0' && b <= b'9'
             }
 

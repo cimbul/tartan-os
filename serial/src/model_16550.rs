@@ -136,12 +136,12 @@ impl<A: RegisterAccess> UART for UART16550<A> {
 
     fn line_mode(&mut self) -> LineMode {
         let line_control = self.line_control();
-        let mut line_mode = LineMode::default();
-        line_mode.baud = baud_from_divisor(Self::MAX_BAUD, u32::from(self.divisor()));
-        line_mode.data_bits = line_control.word_length().bits();
-        line_mode.parity = line_control.parity();
-        line_mode.extended_stop = line_control.extended_stop();
-        line_mode
+        LineMode {
+            baud: baud_from_divisor(Self::MAX_BAUD, u32::from(self.divisor())),
+            data_bits: line_control.word_length().bits(),
+            parity: line_control.parity(),
+            extended_stop: line_control.extended_stop(),
+        }
     }
 
     fn set_line_mode(&mut self, line_mode: LineMode) {

@@ -149,9 +149,10 @@ pub fn initialize_segments() {
 
     // Set the GDTR to use our global descriptor table, and point the segment selectors
     // (CS, DS, SS, etc.) to the new descriptors.
-    let mut gdtr = GlobalDescriptorTableRegister::default();
-    gdtr.address = unsafe { &GLOBAL_DESCRIPTOR_TABLE as *const _ as usize };
-    gdtr.limit = (size_of::<GlobalDescriptorTable>() - 1).try_into().unwrap();
+    let gdtr = GlobalDescriptorTableRegister {
+        address: unsafe { &GLOBAL_DESCRIPTOR_TABLE as *const _ as usize },
+        limit: (size_of::<GlobalDescriptorTable>() - 1).try_into().unwrap(),
+    };
     unsafe {
         GlobalDescriptorTableRegister::set_with_segments(
             &gdtr,
@@ -172,6 +173,8 @@ pub fn initialize_segments() {
 }
 
 fn make_code_descriptor() -> SegmentDescriptor {
+    #![allow(clippy::field_reassign_with_default)] // Spurious: constructor is private
+
     let mut flags = SegmentDescriptorFlags::default();
     flags.set_present(true);
     flags.set_granularity(true);
@@ -192,6 +195,8 @@ fn make_code_descriptor() -> SegmentDescriptor {
 }
 
 fn make_data_descriptor() -> SegmentDescriptor {
+    #![allow(clippy::field_reassign_with_default)] // Spurious: constructor is private
+
     let mut flags = SegmentDescriptorFlags::default();
     flags.set_present(true);
     flags.set_granularity(true);
@@ -209,6 +214,8 @@ fn make_data_descriptor() -> SegmentDescriptor {
 }
 
 fn make_task_state_descriptor() -> SegmentDescriptor {
+    #![allow(clippy::field_reassign_with_default)] // Spurious: constructor is private
+
     let mut flags = SegmentDescriptorFlags::default();
     flags.set_present(true);
     flags.set_is_application(false);
@@ -301,13 +308,16 @@ pub fn initialize_interrupts() {
     forward_interrupt!(31);
 
     // Point the IDTR to our IDT
-    let mut idtr = InterruptDescriptorTableRegister::default();
-    idtr.address = unsafe { &INTERRUPT_DESCRIPTOR_TABLE as *const _ as usize };
-    idtr.limit = (size_of::<InterruptDescriptorTable>() - 1).try_into().unwrap();
+    let idtr = InterruptDescriptorTableRegister {
+        address: unsafe { &INTERRUPT_DESCRIPTOR_TABLE as *const _ as usize },
+        limit: (size_of::<InterruptDescriptorTable>() - 1).try_into().unwrap(),
+    };
     unsafe { InterruptDescriptorTableRegister::set(&idtr) };
 }
 
 fn make_interrupt_gate(code_segment: Selector, handler: unsafe fn()) -> GateDescriptor {
+    #![allow(clippy::field_reassign_with_default)] // Spurious: constructor is private
+
     let mut flags = GateDescriptorFlags::default();
     flags.set_present(true);
     flags.set_is_application(false);
