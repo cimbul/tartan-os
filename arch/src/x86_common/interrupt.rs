@@ -52,7 +52,9 @@ c_enum! {
         MachineCheck = 18,
         /// `#XM`: Unmasked floating-point error during SIMD operation.
         SIMDFloatingPointError = 19,
-        /// `#VE`:
+        /// `#VE`: Improper use of virtualization extensions.
+        ///
+        /// See [`ControlRegister4::virtual_machine_extensions`].
         VirtualizationException = 20,
         /// `#CP`: Improper branching detected by control-flow guard.
         ///
@@ -96,14 +98,14 @@ impl InterruptDescriptorTableRegister {
         value
     }
 
-    /// Update the register with the value in this struct.
+    /// Update the register to the given value.
     ///
     /// # Safety
     /// This register can have fundamental affects on how programs execute.
-    pub unsafe fn set(&self) {
+    pub unsafe fn set(value: &Self) {
         asm!(
             "lidt [{0}]",
-            in(reg) &self,
+            in(reg) value,
         );
     }
 }

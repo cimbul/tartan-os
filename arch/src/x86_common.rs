@@ -1,4 +1,4 @@
-//! Architecture-specific bindings common to 32-bit and 64-bit x86 processors.
+//! Architecture-specific primitives common to 32-bit and 64-bit x86 processors.
 
 use tartan_bitfield::bitfield;
 
@@ -109,8 +109,7 @@ impl FlagRegister {
         value
     }
 
-    /// Update the `EFLAGS` register with the values in this struct, as permission level
-    /// allows.
+    /// Update the `EFLAGS` register with the given value, as permission level allows.
     ///
     /// Some flags will be unaffected depending on the processor mode and permission level
     /// flags. See the reference for the POPF instruction in the _Intel 64 and IA-32
@@ -121,14 +120,14 @@ impl FlagRegister {
     /// and other programs, including memory safety. See volume 1 §3.4.3 ("EFLAGS
     /// Register") and volume 3 §2.3 ("System Flags and Fields in the EFLAGS Register") of
     /// the _Intel 64 and IA-32 Architectures Software Developer's Manual_.
-    pub unsafe fn set(self) {
+    pub unsafe fn set(value: Self) {
         #[cfg(target_arch = "x86")]
         asm!(
             "
             push {0:e}
             popfd
             ",
-            in(reg) self.0,
+            in(reg) value.0,
         );
 
         #[cfg(target_arch = "x86_64")]
@@ -137,7 +136,7 @@ impl FlagRegister {
             push {0:r}
             popfq
             ",
-            in(reg) self.0,
+            in(reg) value.0,
         );
     }
 }
@@ -160,15 +159,15 @@ macro_rules! simple_register_access {
                 value
             }
 
-            /// Update the register with the value in this struct.
+            /// Update the register to the given value.
             ///
             /// # Safety
             /// Altering certain system flags can have dramatic effects on the execution
             /// of this and other programs, including memory safety.
-            pub unsafe fn set(self) {
+            pub unsafe fn set(value: Self) {
                 asm!(
                     concat!("mov ", $register, ", {0}"),
-                    in(reg) self.0,
+                    in(reg) value.0,
                 );
             }
         }
@@ -198,15 +197,15 @@ macro_rules! indexed_register_access {
                 value
             }
 
-            /// Update the register with the value in this struct.
+            /// Update the register to the given value.
             ///
             /// # Safety
             /// Altering certain system flags can have dramatic effects on the execution
             /// of this and other programs, including memory safety.
-            pub unsafe fn set(self) {
+            pub unsafe fn set(value: Self) {
                 #![allow(clippy::cast_possible_truncation)]
-                let lower = self.0 as u32;
-                let upper = (self.0 >> 32) as u32;
+                let lower = value.0 as u32;
+                let upper = (value.0 >> 32) as u32;
                 asm!(
                     $write_instr,
                     in("ecx") $index,

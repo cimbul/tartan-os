@@ -18,6 +18,7 @@ use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
 mod allocator;
+mod arch;
 mod cpu;
 mod intrinsics;
 mod pci;
@@ -103,6 +104,8 @@ fn _start(_: isize, _: *const *const u8) -> isize {
 }
 
 fn kernel_main() -> ! {
+    arch::initialize();
+
     let mut serial = find_uart();
     serial.reset();
     serial.set_line_mode(LineMode::default());

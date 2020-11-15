@@ -210,7 +210,7 @@ dependencies = [
  "crossbeam-utils 0.7.2",
  "lazy_static",
  "maybe-uninit",
- "memoffset",
+ "memoffset 0.5.5",
  "scopeguard",
 ]
 
@@ -433,6 +433,15 @@ name = "memoffset"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c198b026e1bbf08a937e94c6c60f9ec4a2267f5b0d2eec9c1b21b061ce2be55f"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
+name = "memoffset"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "157b4208e3059a8f9e78d559edc658e13df41410cb3ae03979c83130067fdd87"
 dependencies = [
  "autocfg",
 ]
@@ -744,6 +753,8 @@ dependencies = [
 name = "tartan-kernel"
 version = "0.1.0"
 dependencies = [
+ "memoffset 0.6.1",
+ "paste",
  "static_assertions",
  "tartan-arch",
  "tartan-bitfield",

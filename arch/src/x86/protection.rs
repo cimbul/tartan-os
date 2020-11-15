@@ -125,6 +125,46 @@ pub struct TaskStateSegmentHeader {
 
 const_assert_eq!(108, core::mem::size_of::<TaskStateSegmentHeader>());
 
+impl TaskStateSegmentHeader {
+    /// Create a new zero-initialized header
+    pub const fn new() -> Self {
+        Self {
+            previous_task: 0,
+            privileged_stack: [PrivilegedStack::new(); 3],
+            control_register_3: 0,
+            instruction_pointer: 0,
+            flags: 0,
+            general_a: 0,
+            general_c: 0,
+            general_d: 0,
+            general_b: 0,
+            stack_pointer: 0,
+            base_pointer: 0,
+            source_index: 0,
+            destination_index: 0,
+            general_segment_e: Selector::null(),
+            code_segment: Selector::null(),
+            stack_segment: Selector::null(),
+            data_segment: Selector::null(),
+            general_segment_f: Selector::null(),
+            general_segment_g: Selector::null(),
+            local_descriptor_table: Selector::null(),
+            debug_trap: false,
+            io_permission_map_offset: 0,
+            shadow_stack_pointer: 0,
+
+            _reserved_a: 0,
+            _reserved_b: 0,
+            _reserved_c: 0,
+            _reserved_d: 0,
+            _reserved_e: 0,
+            _reserved_f: 0,
+            _reserved_g: 0,
+            _reserved_h: 0,
+        }
+    }
+}
+
 
 /// Stack pointer and segment for a given privilege level
 #[repr(C)]
@@ -137,6 +177,16 @@ pub struct PrivilegedStack {
 }
 
 const_assert_eq!(8, core::mem::size_of::<PrivilegedStack>());
+
+impl PrivilegedStack {
+    /// Create a new zero-initialized stack pointer
+    pub const fn new() -> Self {
+        Self {
+            pointer: 0,
+            segment: Selector::null(),
+        }
+    }
+}
 
 
 

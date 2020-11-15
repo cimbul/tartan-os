@@ -42,15 +42,88 @@ impl GlobalDescriptorTableRegister {
         value
     }
 
-    /// Update the register with the value in this struct.
+    /// Update the register to the given value.
     ///
     /// # Safety
     /// This register fundamentally affects memory accesses and can have an impact on
     /// memory safety.
-    pub unsafe fn set(&self) {
+    pub unsafe fn set(value: &Self) {
         asm!(
             "lgdt [{0}]",
-            in(reg) &self,
+            in(reg) value,
+        );
+    }
+
+    /// Update the global descriptor table pointer and all segment registers.
+    ///
+    /// # Safety
+    /// This register fundamentally affects memory accesses and can have an impact on
+    /// memory safety.
+    pub unsafe fn set_with_segments(
+        gdt_pointer: &Self,
+        code_selector: Selector,
+        data_selector: Selector,
+    ) {
+        // TODO: Disable interrupts?
+
+        #[cfg(target_arch = "x86")]
+        asm!(
+            "
+            // Set the global descriptor table register
+            lgdt [{gdt_pointer}]
+
+            // Update the data segment selectors
+            mov ds, {data_selector:e}
+            mov es, {data_selector:e}
+            mov fs, {data_selector:e}
+            mov gs, {data_selector:e}
+            mov ss, {data_selector:e}
+
+            // Update the code segment selector. Directly loading the CS register doesn't
+            // work, so we use a far return. The 'return' is really a jump to the next
+            // instruction using a far pointer we push onto the stack, consisting of:
+            //   * [rsp]     = 32-bit offset
+            //   * [rsp + 4] = 32-bit segment selector (zero-extended from 16 bits)
+            push {code_selector:e}
+            mov eax, offset .dummy_target
+            push eax
+            retf
+        .dummy_target:
+            ",
+            gdt_pointer = in(reg) gdt_pointer,
+            data_selector = in(reg) u16::from(data_selector),
+            code_selector = in(reg) u16::from(code_selector),
+            out("eax") _,
+        );
+
+        #[cfg(target_arch = "x86_64")]
+        asm!(
+            "
+            // Set the global descriptor table register
+            lgdt [{gdt_pointer}]
+
+            // Update the data segment selectors
+            mov ds, {data_selector:r}
+            mov es, {data_selector:r}
+            mov fs, {data_selector:r}
+            mov gs, {data_selector:r}
+            mov ss, {data_selector:r}
+
+            // Update the code segment selector. Directly loading the CS register doesn't
+            // work, so we use a far return. The 'return' is really a jump to the next
+            // instruction using a far pointer we push onto the stack, consisting of:
+            //   * [rsp]     = 64-bit offset
+            //   * [rsp + 8] = 64-bit segment selector (zero-extended from 16 bits)
+            push {code_selector:r}
+            lea rax, [rip + .dummy_target]
+            push rax
+            rex64 retf
+        .dummy_target:
+            ",
+            gdt_pointer = in(reg) gdt_pointer,
+            data_selector = in(reg) u16::from(data_selector),
+            code_selector = in(reg) u16::from(code_selector),
+            out("rax") _,
         );
     }
 }
@@ -221,6 +294,20 @@ bitfield! {
 impl Selector {
     const OFFSET_MASK: u16 = 0xfff8;
 
+    /// Create a new selector with the given field values
+    pub const fn new(offset: u16, privilege_level: u8, local: bool) -> Self {
+        // TODO: Rework bitfield crate to allow creating in const contexts
+        let value = offset & Self::OFFSET_MASK
+            | (privilege_level & 0b11) as u16
+            | (local as u16) << 2;
+        Self(value)
+    }
+
+    /// Create a null selector
+    pub const fn null() -> Self {
+        Self(0)
+    }
+
     /// The offset of the referenced segment entry in the descriptor table.
     pub fn offset(self) -> u16 {
         self.0 & Self::OFFSET_MASK
@@ -242,13 +329,12 @@ impl Selector {
 
     /// Calculate the address of the descriptor referenced by this selector
     pub fn descriptor_address(self) -> usize {
-        let global_table = GlobalDescriptorTableRegister::get();
         let table_address = if self.local() {
             let local_table =
                 unsafe { &*(LocalDescriptorTableRegister::current_descriptor()) };
             local_table.address()
         } else {
-            global_table.address
+            GlobalDescriptorTableRegister::get().address
         };
         table_address + self.offset() as usize
     }
@@ -260,13 +346,50 @@ pub trait DescriptorFlags: Bitfield<u32> {
     bitfield_accessors! {
         /// If this is a system descriptor, indicates which type.
         ///
-        /// Only applies if [`application_descriptor`](Self::is_application) is false.
+        /// Only applies if [`is_application`](Self::is_application) is false.
         [ 8..12] system_type: u8 as SystemDescriptorType,
 
-        /// If this is a code or data descriptor, indicates which type.
+        /// The processor sets this bit whenever a segment register points to this
+        /// segment.
         ///
-        /// Only applies if [`application_descriptor`](Self::is_application) is true.
-        [ 0..32] application_flags: u32 as ApplicationDescriptorFlags,
+        /// The process never resets this itself, but it can be cleared manually.
+        ///
+        /// Only applies if [`is_application`](Self::is_application) is true.
+        [ 8] application_accessed,
+
+        /// If this is a code descriptor, indicates that the segment can be read.
+        /// Otherwise, it is execute-only.
+        ///
+        /// Only applies if [`is_application`](Self::is_application) and
+        /// [`is_code`](Self::is_code) are true.
+        [ 9] code_readable,
+
+        /// If this is a data descriptor, indicates that this segment is writable.
+        ///
+        /// Required for stack segments.
+        ///
+        /// Only applies if [`is_application`](Self::is_application) is true and
+        /// [`code_descriptor`](Self::is_code) is false.
+        [ 9] data_writable,
+
+        /// If this is a code descriptor, indicates that this segment can be executed
+        /// with lower privileges than [`privilege_level`](Self::privilege_level).
+        ///
+        /// Only applies if [`is_application`](Self::is_application) and
+        /// [`is_code`](Self::is_code) are true.
+        [10] code_conforming,
+
+        /// If this is a data descriptor, indicates that the segment expands toward lower
+        /// addresses (stack-like) if its limit is changed.
+        ///
+        /// Only applies if [`is_application`](Self::is_application) is true and
+        /// [`is_code`](Self::is_code) is false.
+        [10] data_expand_down,
+
+        /// Indicates whether this is a code (true) or data (false) descriptor.
+        ///
+        /// Only applies if [`is_application`](Self::is_application) is true.
+        [11] is_code,
 
         /// `S`: Indicates that this is an application section descriptor if true.
         /// Otherwise, this is a system descriptor.
@@ -291,60 +414,19 @@ pub trait DescriptorFlags: Bitfield<u32> {
 
         /// `P`: Indicates that the segment is defined.
         [15] present,
-    }
-
-    /// Indicates that this is a [`GateDescriptor`].
-    fn is_gate(&self) -> bool {
-        !self.is_application() && self.system_type().is_gate()
-    }
-}
-
-
-bitfield! {
-    /// Flags for code and data segment descriptors.
-    pub struct ApplicationDescriptorFlags(u32) {
-        /// The processor sets this bit whenever a segment register points to this
-        /// segment.
-        ///
-        /// The process never resets this itself, but it can be cleared manually.
-        [ 8] pub accessed,
-
-        /// If this is a code descriptor, indicates that the segment can be read.
-        /// Otherwise, it is execute-only.
-        [ 9] pub code_readable,
-
-        /// If this is a data descriptor, indicates that this segment is writable.
-        ///
-        /// Required for stack segments.
-        ///
-        /// Only applies if [`code_descriptor`](Self::code_descriptor) is false.
-        [ 9] pub data_writable,
-
-        /// If this is a code descriptor, indicates that this segment can be executed
-        /// with lower privileges than [`privilege_level`](Self::privilege_level).
-        ///
-        /// Only applies if [`code_descriptor`](Self::code_descriptor) is true.
-        [10] pub code_conforming,
-
-        /// If this is a data descriptor, indicates that the segment expands toward lower
-        /// addresses (stack-like) if its limit is changed.
-        ///
-        /// Only applies if [`code_descriptor`](Self::code_descriptor) is true.
-        [10] pub data_expand_down,
-
-        /// Indicates whether this is a code (true) or data (false) descriptor.
-        [11] pub code_descriptor,
 
         /// `L`: If this is a code segment, indicates that it should be executed in 64-bit
         /// mode.
         ///
         /// Mutually exclusive with [`mode_32`](Self::mode_32).
         ///
-        /// Only applies if [`code_descriptor`](Self::code_descriptor) and
-        /// [`ExtendedFeatureEnableRegister::long_mode_active`] are true.
+        /// Only applies if all of the following are true:
+        ///   * [`is_application`](Self::is_application)
+        ///   * [`is_code`](Self::is_code)
+        ///   * [`ExtendedFeatureEnableRegister::long_mode_active`]
         #[cfg(any(target_arch = "x86_64", doc))]
         #[doc(cfg(target_arch = "x86_64"))]
-        [21] pub code_mode_64,
+        [21] code_mode_64,
 
         /// `D`/`B`: Indicates that the segment uses 32-bit mode. Otherwise, it is 16-bit,
         /// unless [`code_mode_64`](Self::code_mode_64) is set.
@@ -352,7 +434,14 @@ bitfield! {
         /// Besides the address/operand sizes for instructions in code segments, this also
         /// affects the upper bound of stack-like data segments with the
         /// [`data_expand_down`](Self::data_expand_down) flag set.
-        [22] pub mode_32,
+        ///
+        /// Only applies if [`is_application`](Self::is_application) is true.
+        [22] application_mode_32,
+    }
+
+    /// Indicates that this is a [`GateDescriptor`].
+    fn is_gate(&self) -> bool {
+        !self.is_application() && self.system_type().is_gate()
     }
 }
 
@@ -537,6 +626,18 @@ impl SegmentDescriptor {
     const ADDRESS_MASK_FLAGS_LOWER: u32 = 0x0000_00ff;
     const ADDRESS_MASK_FLAGS_UPPER: u32 = 0xff00_0000;
 
+    /// Create a zero-initialized descriptor
+    pub const fn new() -> Self {
+        #[cfg(target_arch = "x86")]
+        let value = Self { lower: 0, flags: SegmentDescriptorFlags(0) };
+
+        #[cfg(target_arch = "x86_64")]
+        let value =
+            Self { lower: 0, flags: SegmentDescriptorFlags(0), upper: 0, _reserved: 0 };
+
+        value
+    }
+
     /// Base virtual address of the segment, to which offsets are added.
     ///
     /// In 64-bit mode, this is ignored and assumed to be 0 for code and data segments,
@@ -573,9 +674,9 @@ impl SegmentDescriptor {
     /// address.
     ///
     /// If this is a stack-like data segment
-    /// ([`data_expand_down`](ApplicationDescriptorFlags::data_expand_down)), then this
-    /// value is the *exclusive minimum* offset value. Otherwise, this is the *inclusive
-    /// maximum* offset value (i.e., size - 1).
+    /// ([`data_expand_down`](DescriptorFlags::data_expand_down)), then this value is the
+    /// *exclusive minimum* offset value. Otherwise, this is the *inclusive maximum*
+    /// offset value (i.e., size - 1).
     ///
     /// This value may be in bytes or in 4KB units, depending on
     /// [`flags.granularity`](SegmentDescriptorFlags::granularity).
@@ -610,6 +711,12 @@ impl fmt::Debug for SegmentDescriptor {
             .field("limit", &self.limit())
             .field("flags", &self.flags)
             .finish()
+    }
+}
+
+impl Default for SegmentDescriptor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -680,6 +787,18 @@ impl GateDescriptor {
     const OFFSET_MASK_LOWER: u32 = 0x0000_ffff;
     const OFFSET_MASK_UPPER: u32 = 0xffff_0000;
 
+    /// Create a zero-initialized descriptor
+    pub const fn new() -> Self {
+        #[cfg(target_arch = "x86")]
+        let value = Self { lower: 0, flags: GateDescriptorFlags(0) };
+
+        #[cfg(target_arch = "x86_64")]
+        let value =
+            Self { lower: 0, flags: GateDescriptorFlags(0), upper: 0, _reserved: 0 };
+
+        value
+    }
+
     /// Selector that points to the code or task state segment to be accessed through this
     /// gate.
     ///
@@ -735,6 +854,12 @@ impl fmt::Debug for GateDescriptor {
             .field("entry_point_offset", &self.entry_point_offset())
             .field("flags", &self.flags)
             .finish()
+    }
+}
+
+impl Default for GateDescriptor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

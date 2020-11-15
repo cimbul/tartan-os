@@ -1,4 +1,4 @@
-//! Architecture-specific bindings for Tartan OS
+//! Architecture-specific primitives for Tartan OS
 
 #![no_std]
 #![feature(asm)]

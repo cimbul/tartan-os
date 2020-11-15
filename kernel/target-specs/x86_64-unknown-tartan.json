@@ -5,6 +5,7 @@
 	"disable-redzone": true,
 	"env": "",
 	"executables": true,
+  "features": "-mmx,-sse,+soft-float",
 	"has-elf-tls": true,
 	"linker": "rust-lld",
 	"linker-flavor": "ld.lld",
