@@ -41,42 +41,6 @@ pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
 }
 
 
-
-// compiler-builtins ships a version of this with a couple of problems on x86:
-//   * It doesn't mangle this name correctly for Windows's cdecl convention, which adds a
-//     leading underscore.
-//   * The caller expects the stack frame size (in eax) to be subtracted from the stack
-//     pointer, but the compiler-builtins version restores the stack pointer exactly as it
-//     was called.
-//
-// Both of these issues appear to be fixed in compiler-builtins 0.1.36, but there is no
-// way to control the version that Cargo picks for build-std.
-//
-// See https://github.com/rust-lang/compiler-builtins/pull/372.
-#[cfg(all(target_os = "uefi", target_arch = "x86"))]
-#[no_mangle]
-#[naked]
-pub unsafe fn __rust_probestack() {
-    asm!(
-        "
-        // This looks recursive, but isn't. This function is ___rust_probestack (triple).
-        call __rust_probestack
-
-        // Subtract the requested stack frame size (eax) from the stack pointer.
-        sub  esp, eax
-
-        // Copy the return address to the right place since we messed with the stack
-        push ecx
-        mov  ecx, [esp + eax + 4]
-        mov  [esp + 4], ecx
-        pop  ecx
-
-        ret
-        "
-    );
-}
-
-
 /// This is a Microsoft C Runtime Library function that LLVM expects to be available when
 /// it is making PE files for Arm.
 #[cfg(all(target_os = "uefi", target_arch = "aarch64"))]
