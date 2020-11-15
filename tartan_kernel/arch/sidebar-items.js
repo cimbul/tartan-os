@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["x86_64","Architecture-specific bindings for 64-bit Intel x86-based processors"],["x86_common","Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors"]]});
