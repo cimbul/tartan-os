@@ -1,10 +1,5 @@
 [target.x86_64-unknown-uefi]
 runner = ["uefi/script/boot.sh", "x86-64"]
-# Work around an issue compiling memchr 2.2+ with soft floats enabled
-# https://github.com/rust-lang/rust/issues/61721
-# https://github.com/BurntSushi/rust-memchr/blob/378bb1ca/build.rs#L8
-rustflags = ["--cfg", "memchr_disable_auto_simd"]
-# rustflags = ["-C", "target-feature=-sse,-sse2,-sse3,-sse4.1,-sse4.2,-sse4a,-ssse3"]
 
 [target.i686-unknown-uefi]
 runner = ["uefi/script/boot.sh", "x86"]
