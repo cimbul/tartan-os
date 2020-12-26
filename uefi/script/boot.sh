@@ -15,19 +15,18 @@ if [ -z "$arch" ] || [ -z "$executable" ]; then
 fi
 
 target_dir="$(dirname "$executable")"
+kernel_dir="${target_dir/-uefi/-tartan}"
 
 case "$arch" in
-    x86)
+    i686)
         boot_filename="BOOTIA32.EFI"
-        kernel_dir="${target_dir/i686-unknown-uefi/i686-unknown-tartan}"
         qemu_suffix="i386"
         efi_code="edk2-i386-code.fd"
         efi_vars="edk2-i386-vars.fd"
         qemu_args=()
         ;;
-    x86-64)
+    x86_64)
         boot_filename="BOOTX64.EFI"
-        kernel_dir="${target_dir/x86_64-unknown-uefi/x86_64-unknown-tartan}"
         qemu_suffix="x86_64"
         efi_code="edk2-x86_64-code.fd"
         efi_vars="edk2-i386-vars.fd"  # Shared with 32-bit
@@ -39,7 +38,6 @@ case "$arch" in
         # to override it with a Python script.
         pe_machine_type_override="0x01c2"
         boot_filename="BOOTARM.EFI"
-        kernel_dir="${target_dir/thumbv7a-unknown-uefi/arm-unknown-tartan}"
         qemu_suffix="arm"
         efi_code="edk2-arm-code.fd"
         efi_vars="edk2-arm-vars.fd"
@@ -48,10 +46,9 @@ case "$arch" in
             -cpu cortex-a15
         )
         ;;
-    arm64)
+    aarch64)
         boot_filename="BOOTAA64.EFI"
         qemu_suffix="aarch64"
-        kernel_dir="${target_dir/aarch64-unknown-uefi/aarch64-unknown-tartan}"
         efi_code="edk2-aarch64-code.fd"
         efi_vars="edk2-arm-vars.fd"  # Shared with 32-bit
         qemu_args=(

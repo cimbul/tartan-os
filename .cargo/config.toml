@@ -1,12 +1,12 @@
 [target.x86_64-unknown-uefi]
-runner = ["uefi/script/boot.sh", "x86-64"]
+runner = ["uefi/script/boot.sh", "x86_64"]
 
 [target.i686-unknown-uefi]
-runner = ["uefi/script/boot.sh", "x86"]
+runner = ["uefi/script/boot.sh", "i686"]
 # rustflags = ["-C", "linker-flag="]
 
-[target.thumbv7a-unknown-uefi]
+[target.arm-unknown-uefi]
 runner = ["uefi/script/boot.sh", "arm"]
 
 [target.aarch64-unknown-uefi]
-runner = ["uefi/script/boot.sh", "arm64"]
+runner = ["uefi/script/boot.sh", "aarch64"]

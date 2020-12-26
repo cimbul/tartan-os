@@ -76,19 +76,13 @@ cargo build --package tartan-uefi -Z build-std \
     --target uefi/target-specs/<ARCH>-unknown-uefi.json
 ```
 
-Where `<ARCH>` is one of:
-  * `x86_64`
-  * `i686`
-  * `aarch64`
-  * `thumbv7a`
-
 The UEFI application (a PE image) will be emitted at
 `target/<ARCH>-unknown-uefi/debug/tartan-uefi.efi`.
 
-Note that for the `thumbv7a` target, the PE image does not have the "machine type"
-expected by the UEFI runtime, so it will not boot as-is. This is fixed with a Python
-script when booting via `cargo run` (see below), but you will have to manually fix it if
-you deploy the application yourself. See [`uefi/script/boot.sh`](uefi/script/boot.sh).
+Note that for the `arm` target, the PE image does not have the "machine type" expected by
+the UEFI runtime, so it will not boot as-is. This is fixed with a Python script when
+booting via `cargo run` (see below), but you will have to manually fix it if you deploy
+the application yourself. See [`uefi/script/boot.sh`](uefi/script/boot.sh).
 
 
 ## Run in QEMU
@@ -96,12 +90,6 @@ you deploy the application yourself. See [`uefi/script/boot.sh`](uefi/script/boo
 ```bash
 ./uefi/script/build-and-boot.sh <ARCH>
 ```
-
-Where `<ARCH>` is one of:
-  * `x86_64`
-  * `x86`
-  * `arm64`
-  * `arm`
 
 This builds the kernel and UEFI bootloader and then launches the UEFI application in QEMU
 using [`uefi/script/boot.sh`](uefi/script/boot.sh).

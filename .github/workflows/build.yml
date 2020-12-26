@@ -30,21 +30,21 @@ jobs:
       run: cargo build --verbose --workspace
     - name: Run tests (Linux)
       run: cargo test --verbose --workspace
-    - name: Build (x86)
+    - name: Build (i686)
       run: (cd kernel && cargo build --target target-specs/i686-unknown-tartan.json)
-    - name: Build (x86-64)
+    - name: Build (x86_64)
       run: (cd kernel && cargo build --target target-specs/x86_64-unknown-tartan.json)
     - name: Build (arm)
       run: (cd kernel && cargo build --target target-specs/arm-unknown-tartan.json)
-    - name: Build (arm64)
+    - name: Build (aarch64)
       run: (cd kernel && cargo build --target target-specs/aarch64-unknown-tartan.json)
-    - name: Build (UEFI x86)
+    - name: Build (UEFI i686)
       run: (cd uefi && cargo build --target target-specs/i686-unknown-uefi.json)
-    - name: Build (UEFI x86-64)
+    - name: Build (UEFI x86_64)
       run: (cd uefi && cargo build --target target-specs/x86_64-unknown-uefi.json)
     - name: Build (UEFI arm)
-      run: (cd uefi && cargo build --target target-specs/thumbv7a-unknown-uefi.json)
-    - name: Build (UEFI arm64)
+      run: (cd uefi && cargo build --target target-specs/arm-unknown-uefi.json)
+    - name: Build (UEFI aarch64)
       run: (cd uefi && cargo build --target target-specs/aarch64-unknown-uefi.json)
     - name: GitHub Pages
       uses: peaceiris/actions-gh-pages@v3.6.4

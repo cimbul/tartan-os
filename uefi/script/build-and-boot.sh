@@ -18,30 +18,8 @@ if [ -z "$arch" ]; then
     exit 1
 fi
 
-case "$arch" in
-    x86)
-        kernel_target="target-specs/i686-unknown-tartan.json"
-        uefi_target="target-specs/i686-unknown-uefi.json"
-        ;;
-
-    x86_64)
-        kernel_target="target-specs/x86_64-unknown-tartan.json"
-        uefi_target="target-specs/x86_64-unknown-uefi.json"
-        ;;
-
-    arm)
-        kernel_target="target-specs/arm-unknown-tartan.json"
-        uefi_target="target-specs/thumbv7a-unknown-uefi.json"
-        ;;
-
-    arm64)
-        kernel_target="target-specs/aarch64-unknown-tartan.json"
-        uefi_target="target-specs/aarch64-unknown-uefi.json"
-        ;;
-esac
-
 # Navigate to workspace root
 cd "$this_dir/../.."
 
-(cd kernel && cargo build --target "$kernel_target")
-(cd uefi && cargo run --target "$uefi_target")
+(cd kernel && cargo build --target "target-specs/$arch-unknown-tartan.json")
+(cd uefi && cargo run --target "target-specs/$arch-unknown-uefi.json")
