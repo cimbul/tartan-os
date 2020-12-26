@@ -62,7 +62,8 @@ pub unsafe extern "C" fn __chkstk() {
         b.gt 1b
 
         ret
-        "
+        ",
+        options(noreturn),
     )
 }
 
@@ -90,7 +91,8 @@ pub unsafe extern "C" fn __chkstk() {
         pop  {{r0, r4}}
         lsl  r4,  2     // Convert 4-byte units to single bytes, as expected by caller
         blx  lr
-        "
+        ",
+        options(noreturn),
     )
 }
 
@@ -114,7 +116,7 @@ cfg_if::cfg_if! {
         /// Division with remainder for unsigned 32-bit integers
         #[no_mangle]
         #[naked]
-        pub unsafe fn __rt_udiv() {
+        pub unsafe extern "C" fn __rt_udiv() {
             asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
@@ -124,14 +126,15 @@ cfg_if::cfg_if! {
                 mov  r1,  r12
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_uidivmod
-                "
+                ",
+                options(noreturn),
             );
         }
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
         #[naked]
-        pub unsafe fn __rt_udiv64() {
+        pub unsafe extern "C" fn __rt_udiv64() {
             asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
@@ -145,14 +148,15 @@ cfg_if::cfg_if! {
                 mov  r3,  r12
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_uldivmod
-                "
+                ",
+                options(noreturn),
             );
         }
 
         /// Division with remainder for signed 32-bit integers
         #[no_mangle]
         #[naked]
-        pub unsafe fn __rt_sdiv() {
+        pub unsafe extern "C" fn __rt_sdiv() {
             asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
@@ -162,14 +166,15 @@ cfg_if::cfg_if! {
                 mov  r1,  r12
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_idivmod
-                "
+                ",
+                options(noreturn),
             );
         }
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
         #[naked]
-        pub unsafe fn __rt_sdiv64() {
+        pub unsafe extern "C" fn __rt_sdiv64() {
             asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
@@ -183,7 +188,8 @@ cfg_if::cfg_if! {
                 mov  r3,  r12
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_ldivmod
-                "
+                ",
+                options(noreturn),
             );
         }
 

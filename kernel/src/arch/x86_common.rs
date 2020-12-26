@@ -236,7 +236,7 @@ pub fn initialize_interrupts() {
         [$vector:literal] => {
             paste! {
                 #[naked]
-                unsafe fn [< forward_interrupt_ $vector >]() {
+                unsafe extern "C" fn [< forward_interrupt_ $vector >]() {
                     // TODO: Save register state before calling handler, and support
                     // returning. This isn't critical at the moment since the handler just
                     // panics.
@@ -249,6 +249,7 @@ pub fn initialize_interrupts() {
                         ",
                         const $vector,
                         sym handle_unknown_interrupt,
+                        options(noreturn),
                     );
 
                     #[cfg(target_arch = "x86_64")]
@@ -259,6 +260,7 @@ pub fn initialize_interrupts() {
                         ",
                         const $vector,
                         sym handle_unknown_interrupt,
+                        options(noreturn),
                     );
                 }
 
@@ -315,7 +317,10 @@ pub fn initialize_interrupts() {
     unsafe { InterruptDescriptorTableRegister::set(&idtr) };
 }
 
-fn make_interrupt_gate(code_segment: Selector, handler: unsafe fn()) -> GateDescriptor {
+fn make_interrupt_gate(
+    code_segment: Selector,
+    handler: unsafe extern "C" fn(),
+) -> GateDescriptor {
     #![allow(clippy::field_reassign_with_default)] // Spurious: constructor is private
 
     let mut flags = GateDescriptorFlags::default();

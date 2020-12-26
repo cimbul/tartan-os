@@ -266,7 +266,12 @@ fn align_up(addr: usize, layout: Layout) -> usize {
     let align_mask = align_mask(layout);
     let aligned = layout.align().wrapping_add(addr.wrapping_sub(1) & align_mask);
     // TODO: Return Option<usize> instead?
-    assert!(addr <= aligned, "Aligning {:#x} to {:#x} would overflow");
+    assert!(
+        addr <= aligned,
+        "Aligning {:#x} to {:#x} would overflow",
+        addr,
+        layout.align()
+    );
     aligned
 }
 

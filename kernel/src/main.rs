@@ -1,4 +1,5 @@
 #![no_std]
+#![cfg_attr(target_os = "tartan", no_main)]
 #![feature(alloc_error_handler)]
 #![feature(asm)]
 #![feature(global_asm)]
@@ -47,11 +48,10 @@ fn _start(_: isize, _: *const *const u8) -> isize {
     kernel_main()
 }
 
-#[start]
 #[naked]
 #[no_mangle]
 #[cfg(target_os = "tartan")]
-fn _start(_: isize, _: *const *const u8) -> isize {
+extern "C" fn _start() -> ! {
     unsafe {
         #[cfg(target_arch = "x86")]
         asm!(
@@ -183,12 +183,14 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
         None => writeln!(out, "No additional message"),
     };
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
 #[cfg(not(test))]
 #[lang = "eh_personality"]
 fn eh_personality() -> ! {
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 

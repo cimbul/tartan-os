@@ -125,11 +125,13 @@ fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Resu
 /// return.
 #[allow(dead_code)]
 fn fakepoint() {
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
 #[cfg(not(any(target_arch = "arm", target_arch = "aarch64")))]
 fn print_device_tree(_: &mut OutputStream) -> Result {
+    #![allow(clippy::unnecessary_wraps)]
     // TODO
     Ok(Status::Success)
 }
@@ -329,6 +331,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
         }
     }
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
@@ -346,6 +349,7 @@ fn alloc_error(layout: Layout) -> ! {
 #[cfg(not(test))]
 #[lang = "eh_personality"]
 fn eh_personality() -> ! {
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
