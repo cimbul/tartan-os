@@ -12,14 +12,14 @@ state segment (TSS).</p>
 and this does not store any real task state.</p>
 </div><h2 id="fields" class="fields small-section-header">
                        Fields<a href="#fields" class="anchor"></a></h2><span id="structfield.privileged_stack" class="structfield small-section-header"><a href="#structfield.privileged_stack" class="anchor field"></a><code>privileged_stack: [u64; 3]</code></span><div class="docblock"><p>Stack pointers to use when switching to privilege levels 0–2.</p>
-</div><span id="structfield.interrupt_stack" class="structfield small-section-header"><a href="#structfield.interrupt_stack" class="anchor field"></a><code>interrupt_stack: [u64; 7]</code></span><div class="docblock"><p>Stack pointers available for use when handling interrupts. The specific entry used
-is determined by the
-<a href="../../../tartan_arch/x86_common/protection/struct.GateDescriptorFlags.html#method.interrupt_stack_index"><code>interrupt_stack_index</code></a> field of the
-relevant interrupt gate descriptor.</p>
+</div><span id="structfield.interrupt_stack" class="structfield small-section-header"><a href="#structfield.interrupt_stack" class="anchor field"></a><code>interrupt_stack: [u64; 7]</code></span><div class="docblock"><p>Stack pointers available for use when handling interrupts. The specific entry
+used is determined by the
+<a href="../../../tartan_arch/x86_common/protection/struct.GateDescriptorFlags.html#method.interrupt_stack_index"><code>interrupt_stack_index</code></a> field of
+the relevant interrupt gate descriptor.</p>
 </div><span id="structfield.io_permission_map_offset" class="structfield small-section-header"><a href="#structfield.io_permission_map_offset" class="anchor field"></a><code>io_permission_map_offset: u16</code></span><div class="docblock"><p>Offset from the start of this structure to start of the <a href="../../../tartan_arch/x86_common/protection/struct.IOPermissionBitmap.html" title="IOPermissionBitmap"><code>IOPermissionBitmap</code></a>.</p>
-<p>The I/O permission map ends at the limit of the containing segment, and must be at
-least two bytes. If this offset is equal to or greater than the limit, then the
-permission map is empty and all ports are assumed to be zero.</p>
+<p>The I/O permission map ends at the limit of the containing segment, and must be
+at least two bytes. If this offset is equal to or greater than the limit,
+then the permission map is empty and all ports are assumed to be zero.</p>
 <p>Not modified by the processor on a task switch.</p>
 </div><h2 id="implementations" class="small-section-header">Implementations<a href="#implementations" class="anchor"></a></h2><h3 id="impl" class="impl"><code class="in-band">impl <a class="struct" href="../../../tartan_arch/x86_64/protection/struct.TaskStateSegmentHeader.html" title="struct tartan_arch::x86_64::protection::TaskStateSegmentHeader">TaskStateSegmentHeader</a></code><a href="#impl" class="anchor"></a><a class="srclink" href="../../../src/tartan_arch/x86_64/protection.rs.html#46-63" title="goto source code">[src]</a></h3><div class="impl-items"><h4 id="method.new" class="method"><code>pub const fn <a href="#method.new" class="fnname">new</a>() -&gt; Self</code><a class="srclink" href="../../../src/tartan_arch/x86_64/protection.rs.html#50-62" title="goto source code">[src]</a></h4><div class="docblock"><p>Create a header with zero-initialized stack pointers and an
 <a href="../../../tartan_arch/x86_64/protection/struct.TaskStateSegmentHeader.html#structfield.io_permission_map_offset"><code>io_permission_map_offset</code></a> that points directly

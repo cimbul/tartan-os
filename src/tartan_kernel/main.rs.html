@@ -209,6 +209,8 @@
 <span id="206">206</span>
 <span id="207">207</span>
 <span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>, <span class="ident">no_main</span>)]</span>
@@ -237,6 +239,8 @@
 <span class="kw">mod</span> <span class="ident">pci</span>;
 
 
+<span class="comment">// Reserve space for the initial stack in the BSS section of the executable image, which</span>
+<span class="comment">// will be allocated by the loader.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>)]</span>
 <span class="macro">global_asm</span><span class="macro">!</span>(
     <span class="string">&quot;

@@ -65,9 +65,9 @@ before this task was activated.</p>
 </div><span id="structfield.io_permission_map_offset" class="structfield small-section-header"><a href="#structfield.io_permission_map_offset" class="anchor field"></a><code>io_permission_map_offset: u16</code></span><div class="docblock"><p>Offset from the start of this structure to start of the <a href="../../../tartan_arch/x86_common/protection/struct.IOPermissionBitmap.html" title="IOPermissionBitmap"><code>IOPermissionBitmap</code></a>,
 and to the end of the <a href="../../../tartan_arch/x86/protection/struct.TaskStateSegmentBitmaps.html#structfield.interrupt_redirect"><code>interrupt_redirect</code>
 bitmap</a>.</p>
-<p>The I/O permission map ends at the limit of the containing segment, and must be at
-least two bytes. If this offset is equal to or greater than the limit, then the
-permission map is empty and all ports are assumed to be zero.</p>
+<p>The I/O permission map ends at the limit of the containing segment, and must be
+at least two bytes. If this offset is equal to or greater than the limit,
+then the permission map is empty and all ports are assumed to be zero.</p>
 <p>The interrupt redirect bitmap begins at this offset minus 32.</p>
 <p>Not modified by the processor on a task switch.</p>
 </div><span id="structfield.shadow_stack_pointer" class="structfield small-section-header"><a href="#structfield.shadow_stack_pointer" class="anchor field"></a><code>shadow_stack_pointer: u32</code></span><div class="docblock"><p>Pointer to the shadow stack.</p>

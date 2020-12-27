@@ -97,10 +97,10 @@
 
     <span class="ident">_reserved_b</span>: <span class="ident">u64</span>,
 
-    <span class="doccomment">/// Stack pointers available for use when handling interrupts. The specific entry used</span>
-    <span class="doccomment">/// is determined by the</span>
-    <span class="doccomment">/// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of the</span>
-    <span class="doccomment">/// relevant interrupt gate descriptor.</span>
+    <span class="doccomment">/// Stack pointers available for use when handling interrupts. The specific entry</span>
+    <span class="doccomment">/// used is determined by the</span>
+    <span class="doccomment">/// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of</span>
+    <span class="doccomment">/// the relevant interrupt gate descriptor.</span>
     <span class="kw">pub</span> <span class="ident">interrupt_stack</span>: [<span class="ident">u64</span>; <span class="number">7</span>],
 
     <span class="ident">_reserved_c</span>: <span class="ident">u64</span>,
@@ -108,9 +108,9 @@
 
     <span class="doccomment">/// Offset from the start of this structure to start of the [`IOPermissionBitmap`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The I/O permission map ends at the limit of the containing segment, and must be at</span>
-    <span class="doccomment">/// least two bytes. If this offset is equal to or greater than the limit, then the</span>
-    <span class="doccomment">/// permission map is empty and all ports are assumed to be zero.</span>
+    <span class="doccomment">/// The I/O permission map ends at the limit of the containing segment, and must be</span>
+    <span class="doccomment">/// at least two bytes. If this offset is equal to or greater than the limit,</span>
+    <span class="doccomment">/// then the permission map is empty and all ports are assumed to be zero.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Not modified by the processor on a task switch.</span>
     <span class="kw">pub</span> <span class="ident">io_permission_map_offset</span>: <span class="ident">u16</span>,

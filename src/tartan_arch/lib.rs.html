@@ -57,28 +57,32 @@
 <span id="54">54</span>
 <span id="55">55</span>
 <span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Architecture-specific primitives for Tartan OS</span>
 
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_cfg</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">global_asm</span>)]</span>
 <span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy</span>::<span class="ident">pedantic</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">must_use_candidate</span>)]</span>
 
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">arch_module</span> {
-    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">mod_name</span>:<span class="ident">ident</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">requirements</span>:<span class="ident">tt</span> )<span class="op">+</span> $(,)<span class="question-mark">?</span>] <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">all</span>( $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">requirements</span>)<span class="op">+</span> ), <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">all</span>( $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">requirements</span>)<span class="op">+</span> )))]</span>
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">mod_name</span>;
-    };
-}
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">aarch64</span>;
 
-<span class="macro">arch_module</span><span class="macro">!</span>(<span class="ident">x86</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>);
-<span class="macro">arch_module</span><span class="macro">!</span>(<span class="ident">x86_64</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>);
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">x86_64</span>;
 
-<span class="comment">// We can&#39;t use #[macro_use] from within a macro</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>))]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">x86</span>;
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
 <span class="attribute">#[<span class="ident">macro_use</span>]</span>
