@@ -24,10 +24,10 @@ pub struct TaskStateSegmentHeader {
 
     _reserved_b: u64,
 
-    /// Stack pointers available for use when handling interrupts. The specific entry used
-    /// is determined by the
-    /// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of the
-    /// relevant interrupt gate descriptor.
+    /// Stack pointers available for use when handling interrupts. The specific entry
+    /// used is determined by the
+    /// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of
+    /// the relevant interrupt gate descriptor.
     pub interrupt_stack: [u64; 7],
 
     _reserved_c: u64,
@@ -35,9 +35,9 @@ pub struct TaskStateSegmentHeader {
 
     /// Offset from the start of this structure to start of the [`IOPermissionBitmap`].
     ///
-    /// The I/O permission map ends at the limit of the containing segment, and must be at
-    /// least two bytes. If this offset is equal to or greater than the limit, then the
-    /// permission map is empty and all ports are assumed to be zero.
+    /// The I/O permission map ends at the limit of the containing segment, and must be
+    /// at least two bytes. If this offset is equal to or greater than the limit,
+    /// then the permission map is empty and all ports are assumed to be zero.
     ///
     /// Not modified by the processor on a task switch.
     pub io_permission_map_offset: u16,

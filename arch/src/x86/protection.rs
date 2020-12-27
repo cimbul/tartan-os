@@ -3,15 +3,15 @@
 //! This includes the minimal support for segmented memory and hardware task management
 //! that is required to operate in protected mode with a flat memory model.
 
-use crate::x86_common::protection::{Selector, IOPermissionBitmap};
+use crate::x86_common::protection::{IOPermissionBitmap, Selector};
 use static_assertions::const_assert_eq;
 
 #[cfg(doc)]
-use crate::x86_common::FlagRegister;
-#[cfg(doc)]
 use crate::x86_common::paging::ControlRegister3;
 #[cfg(doc)]
-use crate::x86_common::protection::{LocalDescriptorTableRegister, GateDescriptorFlags};
+use crate::x86_common::protection::{GateDescriptorFlags, LocalDescriptorTableRegister};
+#[cfg(doc)]
+use crate::x86_common::FlagRegister;
 
 
 /// A task state segment (TSS) with fixed redirect and I/O permission maps.
@@ -109,9 +109,9 @@ pub struct TaskStateSegmentHeader {
     /// and to the end of the [`interrupt_redirect`
     /// bitmap](TaskStateSegmentBitmaps::interrupt_redirect).
     ///
-    /// The I/O permission map ends at the limit of the containing segment, and must be at
-    /// least two bytes. If this offset is equal to or greater than the limit, then the
-    /// permission map is empty and all ports are assumed to be zero.
+    /// The I/O permission map ends at the limit of the containing segment, and must be
+    /// at least two bytes. If this offset is equal to or greater than the limit,
+    /// then the permission map is empty and all ports are assumed to be zero.
     ///
     /// The interrupt redirect bitmap begins at this offset minus 32.
     ///
@@ -181,10 +181,7 @@ const_assert_eq!(8, core::mem::size_of::<PrivilegedStack>());
 impl PrivilegedStack {
     /// Create a new zero-initialized stack pointer
     pub const fn new() -> Self {
-        Self {
-            pointer: 0,
-            segment: Selector::null(),
-        }
+        Self { pointer: 0, segment: Selector::null() }
     }
 }
 
@@ -196,7 +193,8 @@ impl PrivilegedStack {
 #[derive(Debug, PartialEq, Eq)]
 pub struct TaskStateSegmentBitmaps<T>
 where
-    T: AsRef<[u8]> + AsMut<[u8]> + Eq + ?Sized {
+    T: AsRef<[u8]> + AsMut<[u8]> + Eq + ?Sized,
+{
     /// Indicates which handler to use for software-triggered interrupts in virtual real
     /// mode.
     ///

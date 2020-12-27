@@ -1,7 +1,7 @@
 //! Architecture-specific primitives for 64-bit x86 processors.
 
-use tartan_bitfield::bitfield;
 use crate::{model_specific_register_access, simple_register_access};
+use tartan_bitfield::bitfield;
 
 pub mod protection;
 
