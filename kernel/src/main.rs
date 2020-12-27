@@ -25,6 +25,8 @@ mod intrinsics;
 mod pci;
 
 
+// Reserve space for the initial stack in the BSS section of the executable image, which
+// will be allocated by the loader.
 #[cfg(target_os = "tartan")]
 global_asm!(
     "

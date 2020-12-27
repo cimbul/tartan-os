@@ -281,11 +281,9 @@ fn load_elf_segment(
     // Clear the BSS portion if present
     if program_header.mem_size > program_header.file_size {
         let zero_start_addr = start_addr + as_usize(program_header.file_size);
+        let zero_length = end_addr - zero_start_addr;
         unsafe {
-            // TODO: Import memset? I assume this will optimize to it anyway.
-            for addr in zero_start_addr..end_addr {
-                *(addr as *mut u8) = 0;
-            }
+            core::ptr::write_bytes(zero_start_addr as *mut u8, 0, zero_length);
         }
     }
 

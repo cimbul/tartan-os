@@ -3,7 +3,6 @@ runner = ["uefi/script/boot.sh", "x86_64"]
 
 [target.i686-unknown-uefi]
 runner = ["uefi/script/boot.sh", "i686"]
-# rustflags = ["-C", "linker-flag="]
 
 [target.arm-unknown-uefi]
 runner = ["uefi/script/boot.sh", "arm"]
