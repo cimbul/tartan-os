@@ -1,4 +1,4 @@
 (function() {var implementors = {};
-implementors["tartan_kernel"] = [{"text":"impl&lt;'a&gt; GlobalAlloc for Allocator&lt;'a&gt;","synthetic":false,"types":[]}];
-implementors["tartan_uefi"] = [{"text":"impl GlobalAlloc for BootAllocator","synthetic":false,"types":[]}];
+implementors["tartan_kernel"] = [{"text":"impl&lt;'a&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/alloc/global/trait.GlobalAlloc.html\" title=\"trait core::alloc::global::GlobalAlloc\">GlobalAlloc</a> for <a class=\"struct\" href=\"tartan_kernel/allocator/struct.Allocator.html\" title=\"struct tartan_kernel::allocator::Allocator\">Allocator</a>&lt;'a&gt;","synthetic":false,"types":["tartan_kernel::allocator::Allocator"]}];
+implementors["tartan_uefi"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/alloc/global/trait.GlobalAlloc.html\" title=\"trait core::alloc::global::GlobalAlloc\">GlobalAlloc</a> for <a class=\"struct\" href=\"tartan_uefi/allocator/struct.BootAllocator.html\" title=\"struct tartan_uefi::allocator::BootAllocator\">BootAllocator</a>","synthetic":false,"types":["tartan_uefi::allocator::BootAllocator"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
