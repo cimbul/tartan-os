@@ -5,7 +5,7 @@
 	"disable-redzone": true,
 	"env": "",
 	"executables": true,
-  "features": "-mmx,-sse,+soft-float",
+	"features": "-mmx,-sse,+soft-float",
 	"has-elf-tls": true,
 	"linker": "rust-lld",
 	"linker-flavor": "ld.lld",
@@ -21,7 +21,9 @@
 			"--Bstatic"
 		]
 	},
-	"stack-probes": true,
+	"stack-probes": {
+		"kind": "call"
+	},
 	"target-c-int-width": "32",
 	"target-endian": "little",
 	"target-pointer-width": "64",

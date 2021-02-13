@@ -5,6 +5,7 @@
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
 use core::fmt;
 

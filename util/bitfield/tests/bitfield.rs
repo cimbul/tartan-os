@@ -486,7 +486,7 @@ fn test_bitfield_conversions() {
         let struct_c: BasicBitfieldTest = (*inner_orig).into();
         let struct_d: BasicBitfieldTest = unsafe { mem::transmute(*inner_orig) };
         let struct_e = unsafe {
-            *(inner_orig as *const u32 as *const BasicBitfieldTest)
+            *(inner_orig as *const u32).cast::<BasicBitfieldTest>()
         };
         assert_eq!(struct_a, struct_b);
         assert_eq!(struct_a, struct_c);
@@ -499,7 +499,7 @@ fn test_bitfield_conversions() {
         let inner_c: u32 = struct_a.into();
         let inner_d: u32 = unsafe { mem::transmute(struct_a) };
         let inner_e = unsafe {
-            *(&struct_a as *const BasicBitfieldTest as *const u32)
+            *(&struct_a as *const BasicBitfieldTest).cast::<u32>()
         };
         assert_eq!(*inner_orig, inner_a);
         assert_eq!(*inner_orig, inner_b);

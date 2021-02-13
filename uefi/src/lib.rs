@@ -7,6 +7,7 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::non_ascii_literal)]
+#![allow(clippy::upper_case_acronyms)]
 
 extern crate alloc;
 
@@ -311,8 +312,8 @@ pub trait Table {
 
         let header = self.header();
         let size = header.header_size as usize;
-        let start_address = self as *const _ as *const u8;
-        let crc_field_address = &header.crc32 as *const _ as *const u8;
+        let start_address = (self as *const Self).cast::<u8>();
+        let crc_field_address = (&header.crc32 as *const u32).cast::<u8>();
 
         let mut crc = CRCu32::crc32();
         unsafe {
@@ -393,6 +394,7 @@ impl SystemTable<'_> {
     /// the caller's responsibility to make sure any dangling references are cleared or
     /// unused.
     pub unsafe fn exit_boot_services(&mut self, image_handle: Handle) -> MemoryMap {
+        #![allow(clippy::missing_panics_doc)]
         let boot_services = self.boot_services.unwrap();
         let memory_map = boot_services.get_memory_map();
         // This shouldn't fail since we just got the memory map
@@ -603,6 +605,9 @@ impl BootServices {
 
 
     /// Get a map representing the status of all available memory.
+    ///
+    /// # Panics
+    /// Panics if the firmware does not behave according to the spec.
     pub fn get_memory_map(&self) -> MemoryMap {
         let mut memory_map_size = 0_usize;
         let mut memory_map = MemoryMap::new();
@@ -648,6 +653,9 @@ impl BootServices {
     ///
     /// # Errors
     /// Fails if `handle` is not valid, or it does not implement the specified protocol.
+    ///
+    /// # Panics
+    /// Panics if the firmware does not behave according to the spec.
     pub fn get_protocol<T: proto::Protocol>(
         &self,
         handle: Handle,
@@ -801,6 +809,7 @@ impl MemoryMap {
         self.verify_map();
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn verify_version(&self) {
         assert!(
             self.descriptor_version >= Self::MIN_VERSION,
@@ -810,6 +819,7 @@ impl MemoryMap {
         );
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn verify_descriptor_size(&self) {
         assert!(
             self.descriptor_size >= size_of::<MemoryDescriptor>(),
@@ -827,6 +837,7 @@ impl MemoryMap {
         );
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn verify_map(&self) {
         assert!(
             self.raw_map.len() % self.descriptor_size == 0,
@@ -1057,6 +1068,9 @@ pub mod proto {
         /// This method can fail for many reasons, including standard I/O issues like
         /// device errors or resource exhaustion. It will also fail if the file system on
         /// the device is not supported by the UEFI implementation.
+        ///
+        /// # Panics
+        /// Panics if the firmware does not behave according to the spec.
         pub fn open_volume(&self) -> core::result::Result<&File, Status> {
             let mut root = core::ptr::null::<File>();
             unsafe {
@@ -1143,6 +1157,9 @@ pub mod proto {
         }
 
         /// Flush and close the file or directory represented by the current instance.
+        ///
+        /// # Panics
+        /// Panics if the firmware does not behave according to the spec.
         pub fn close(&self) {
             unsafe {
                 // The UEFI spec says this cannot fail

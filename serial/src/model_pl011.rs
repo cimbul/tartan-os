@@ -95,13 +95,13 @@ impl RegisterBlock {
     fn read<T: Copy>(&self, offset: usize) -> T {
         let size = core::mem::size_of::<T>();
         let slice = &self.registers[offset..offset + size];
-        unsafe { ptr::read_volatile(slice.as_ptr() as *const T) }
+        unsafe { ptr::read_volatile(slice.as_ptr().cast::<T>()) }
     }
 
     fn write<T: Copy>(&mut self, offset: usize, value: T) {
         let size = core::mem::size_of::<T>();
         let slice = &mut self.registers[offset..offset + size];
-        unsafe { ptr::write_volatile(slice.as_mut_ptr() as *mut T, value) }
+        unsafe { ptr::write_volatile(slice.as_mut_ptr().cast::<T>(), value) }
     }
 
     #[allow(dead_code)]

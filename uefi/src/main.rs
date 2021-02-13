@@ -10,6 +10,7 @@
 #![feature(test)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
 extern crate alloc;
 
@@ -234,8 +235,10 @@ fn load_kernel(
 unsafe fn read_struct<T: Default>(file: &File) -> core::result::Result<T, Status> {
     let mut result = T::default();
     let size = mem::size_of::<T>();
-    let read_count = file
-        .read(core::slice::from_raw_parts_mut(&mut result as *mut T as *mut u8, size))?;
+    let read_count = file.read(core::slice::from_raw_parts_mut(
+        (&mut result as *mut T).cast::<u8>(),
+        size,
+    ))?;
     if read_count == size {
         Ok(result)
     } else {

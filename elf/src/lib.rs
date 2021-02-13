@@ -63,6 +63,9 @@ impl<Addr: Copy> Header<Addr> {
 
     /// Checks that the header represents a valid ELF file for the current platform, and
     /// panics otherwise
+    ///
+    /// # Panics
+    /// Panics when the header is not valid for the current platform.
     pub fn verify_native(&self) {
         self.ident.verify_native();
         assert!(
@@ -129,6 +132,9 @@ impl HeaderIdent {
 
     /// Checks that the header represents a valid ELF file, of any variant, and panics
     /// otherwise.
+    ///
+    /// # Panics
+    /// Panics when the header is not valid.
     pub fn verify_format(&self) {
         assert!(
             self.magic == Self::MAGIC,
@@ -144,6 +150,9 @@ impl HeaderIdent {
 
     /// Checks that the header represents an ELF file in the native endianness and address
     /// size, and panics otherwise.
+    ///
+    /// # Panics
+    /// Panics when the header is not valid for the current platform.
     pub fn verify_native(&self) {
         self.verify_format();
         assert!(

@@ -86,6 +86,7 @@
 #![allow(clippy::inline_always)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::similar_names)]
+#![allow(clippy::upper_case_acronyms)]
 
 use core::convert::From;
 use core::default::Default;

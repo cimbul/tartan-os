@@ -4,6 +4,7 @@
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
 use nom::combinator::cut;
 use nom::error::{ContextError, ParseError};
