@@ -1,7 +1,7 @@
 var N = null;var sourcesIndex = {};
 sourcesIndex["aml_parse"] = {"name":"","files":["aml-parse.rs"]};
 sourcesIndex["tartan_acpi"] = {"name":"","dirs":[{"name":"aml","files":["parse.rs"]}],"files":["aml.rs","lib.rs"]};
-sourcesIndex["tartan_arch"] = {"name":"","dirs":[{"name":"aarch64","files":["float.rs","interrupt.rs"]},{"name":"x86","files":["protection.rs"]},{"name":"x86_64","files":["protection.rs"]},{"name":"x86_common","files":["features.rs","interrupt.rs","io.rs","paging.rs","protection.rs"]}],"files":["aarch64.rs","lib.rs","x86.rs","x86_64.rs","x86_common.rs"]};
+sourcesIndex["tartan_arch"] = {"name":"","dirs":[{"name":"aarch64","files":["float.rs","interrupt.rs"]},{"name":"arm","files":["interrupt.rs"]},{"name":"x86","files":["protection.rs"]},{"name":"x86_64","files":["protection.rs"]},{"name":"x86_common","files":["features.rs","interrupt.rs","io.rs","paging.rs","protection.rs"]}],"files":["aarch64.rs","arm.rs","lib.rs","x86.rs","x86_64.rs","x86_common.rs"]};
 sourcesIndex["tartan_bitfield"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["tartan_c_enum"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["tartan_devicetree"] = {"name":"","files":["blob.rs","lib.rs"]};
