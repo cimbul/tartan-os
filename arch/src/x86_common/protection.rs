@@ -1419,6 +1419,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::bool_assert_comparison)]
     fn test_is_port_checked() {
         let map = IOPermissionBitmap([]);
         assert_eq!(map.is_port_checked(0), true);

@@ -380,13 +380,13 @@ mod test {
             // Then the first header should be placed at the beginning and have all the
             // free space, minus the overhead of the two headers.
             assert_eq!(cursor.0.data_size(), expected_data_size);
-            assert_eq!(cursor.0.free(), true);
+            assert!(cursor.0.free());
             assert_same_address(cursor.0.get_ref(), addrs[0]);
             assert_same_address(cursor.0.data_ptr(), addrs[1]);
 
             // And the next header should be the empty end marker
             cursor.move_next();
-            assert_eq!(cursor.current().is_end(), true);
+            assert!(cursor.current().is_end());
             assert_same_address(cursor.current().get_ref(), addrs[0x1f]);
         }
 
@@ -418,13 +418,13 @@ mod test {
             let mut cursor = blocks.front();
 
             // Then the first header should be free but empty
-            assert_eq!(cursor.current().free(), true);
+            assert!(cursor.current().free());
             assert_eq!(cursor.current().data_size(), 0);
             assert_same_address(cursor.current().get_ref(), addrs[0]);
 
             // And the next header should be the empty end marker
             cursor.move_next();
-            assert_eq!(cursor.current().is_end(), true);
+            assert!(cursor.current().is_end());
             assert_same_address(cursor.current().get_ref(), addrs[1]);
         }
 
@@ -441,7 +441,7 @@ mod test {
             // Then the first header should shrink to the requested data size
             let mut cursor = cursor.into_cursor();
             assert_eq!(cursor.current().data_size(), 0x12 * size_of::<usize>());
-            assert_eq!(cursor.current().free(), true);
+            assert!(cursor.current().free());
             assert_same_address(cursor.current().get_ref(), addrs[0]);
             assert_same_address(cursor.current().data_ptr(), addrs[1]);
 
@@ -449,13 +449,13 @@ mod test {
             // first block, minus the overhead of an additional header
             cursor.move_next();
             assert_eq!(cursor.current().data_size(), 0xb * size_of::<usize>());
-            assert_eq!(cursor.current().free(), true);
+            assert!(cursor.current().free());
             assert_same_address(cursor.current().get_ref(), addrs[0x13]);
             assert_same_address(cursor.current().data_ptr(), addrs[0x14]);
 
             // And the next header should be unmodified
             cursor.move_next();
-            assert_eq!(cursor.current().is_end(), true);
+            assert!(cursor.current().is_end());
             assert_same_address(cursor.current().get_ref(), addrs[0x1f]);
         }
 
@@ -472,19 +472,19 @@ mod test {
 
             // Then the first header should be empty
             let mut cursor = cursor.into_cursor();
-            assert_eq!(cursor.0.free(), true);
+            assert!(cursor.0.free());
             assert_eq!(cursor.0.data_size(), 0);
             assert_same_address(cursor.0.get_ref(), addrs[0]);
 
             // And so should the new header
             cursor.move_next();
-            assert_eq!(cursor.0.free(), true);
+            assert!(cursor.0.free());
             assert_eq!(cursor.0.data_size(), 0);
             assert_same_address(cursor.0.get_ref(), addrs[1]);
 
             // And the next header should be unmodified
             cursor.move_next();
-            assert_eq!(cursor.0.is_end(), true);
+            assert!(cursor.0.is_end());
             assert_same_address(cursor.0.get_ref(), addrs[2]);
         }
 
@@ -501,12 +501,12 @@ mod test {
 
             // Then nothing about this block should change
             assert_eq!(cursor.0.data_size(), original_size);
-            assert_eq!(cursor.0.free(), true);
-            assert_eq!(cursor.0.is_end(), false);
+            assert!(cursor.0.free());
+            assert!(!cursor.0.is_end());
 
             // And no new header should be created, so the next header will be the end
             cursor.move_next();
-            assert_eq!(cursor.current().is_end(), true);
+            assert!(cursor.current().is_end());
         }
 
         #[test]

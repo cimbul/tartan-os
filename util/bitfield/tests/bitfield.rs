@@ -7,6 +7,7 @@ use tartan_bitfield::bitfield;
 use core::mem;
 
 #[test]
+#[allow(clippy::bool_assert_comparison)]
 fn test_get_bit() {
     for i in 0..8 {
         assert_eq!(get_bit(0x00_u8,   i), false);
@@ -430,6 +431,7 @@ bitfield! {
 }
 
 #[test]
+#[allow(clippy::bool_assert_comparison)]
 fn test_bitfield_basic() {
     let mut x = BasicBitfieldTest(0);
     assert_eq!(x.a(), 0);

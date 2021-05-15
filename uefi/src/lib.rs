@@ -195,6 +195,8 @@ mod test_status {
     }
 
     #[test]
+    #[allow(clippy::bool_assert_comparison)]
+    #[allow(clippy::branches_sharing_code)]
     fn test_is_error() {
         assert_eq!(false, Status::Success.is_error());
 
@@ -222,6 +224,8 @@ mod test_status {
     }
 
     #[test]
+    #[allow(clippy::bool_assert_comparison)]
+    #[allow(clippy::branches_sharing_code)]
     fn test_is_warning() {
         assert_eq!(false, Status::Success.is_warning());
 

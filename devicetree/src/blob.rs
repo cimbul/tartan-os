@@ -111,7 +111,7 @@ impl<'a> Tree<'a> {
                         Ok(name) => Some(Ok(StructureData::Property { name, value })),
                     }
                 }
-                Ok(StructureToken::NoOp) | Ok(StructureToken::End) => None,
+                Ok(StructureToken::NoOp | StructureToken::End) => None,
                 Err(e) => Some(Err(e)),
             })
     }
