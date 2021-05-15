@@ -4,7 +4,6 @@
 #![feature(asm)]
 #![feature(global_asm)]
 #![feature(lang_items)]
-#![feature(link_args)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
 #![feature(rustc_private)]
@@ -195,16 +194,3 @@ fn eh_personality() -> ! {
     #[allow(clippy::empty_loop)]
     loop {}
 }
-
-#[allow(unused_attributes)]
-#[cfg_attr(all(not(test), target_os = "linux"), link_args = "-nostartfiles")]
-#[cfg_attr(all(not(test), target_os = "macos"), link_args = "-lSystem")]
-#[cfg_attr(
-    all(target_os = "tartan", target_arch = "x86"),
-    link_args = "--image-base=0x100000"
-)]
-#[cfg_attr(
-    all(target_os = "tartan", any(target_arch = "arm", target_arch = "aarch64")),
-    link_args = "--image-base=0x40000000"
-)]
-extern "C" {}
