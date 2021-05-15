@@ -3,6 +3,7 @@
 #![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
 #![feature(asm)]
+#![feature(bench_black_box)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
 #![feature(rustc_private)]

@@ -9,9 +9,12 @@ pub fn cpuid(leaf_index: u32, subleaf_index: u32) -> [u32; 4] {
     let mut result = [0_u32; 4];
     unsafe {
         asm!(
-            "cpuid",
+            "
+            cpuid
+            mov {0:e}, ebx
+            ",
+            out(reg) result[1],
             inout("eax") leaf_index => result[0],
-            out("ebx") result[1],
             inout("ecx") subleaf_index => result[2],
             out("edx") result[3],
         );
