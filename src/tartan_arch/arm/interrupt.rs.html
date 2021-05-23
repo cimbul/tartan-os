@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `arch/src/arm/interrupt.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>interrupt.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../tartan_arch/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../tartan_arch/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -159,14 +159,14 @@
 <span id="156">156</span>
 <span id="157">157</span>
 <span id="158">158</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Exception and interrupt handling.</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">cp15_register_get</span>, <span class="ident">cp15_register_set</span>};
 
 <span class="comment">// Must be re-exported so that crates that use these macros will be able to resolve it</span>
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">paste</span>::<span class="ident">paste</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">paste::paste</span>;
 
 
 <span class="doccomment">/// Define an exception vector table that forwards all exceptions to the designated</span>
@@ -196,81 +196,81 @@
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">arm_exception_vector_table</span> {
+<span class="macro">macro_rules!</span> <span class="ident">arm_exception_vector_table</span> {
     [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>:<span class="ident">path</span>] <span class="op">=</span><span class="op">&gt;</span> {
         <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">static</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>: <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">VectorTable</span>;
+            <span class="kw">static</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>: <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::VectorTable</span>;
         }
 
-        <span class="macro">global_asm</span><span class="macro">!</span>(<span class="macro">concat</span><span class="macro">!</span>(<span class="string">&quot;
+        <span class="macro">global_asm!</span>(<span class="macro">concat!</span>(<span class="string">&quot;
             .arm  // Exception handlers always use 32-bit (Arm-mode) instructions
             .balign 0x10
-        &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;:
+        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;:
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x00
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x00
             // Reset
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_reset
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_reset
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x04
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x04
             // Undefined instruction
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_undefined
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_undefined
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x08
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x08
             // Software interrupt
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_software
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_software
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x0c
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x0c
             // Prefetch abort
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_prefetch
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_prefetch
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x10
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x10
             // Data abort
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_data
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_data
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x18
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x18
             // Hardware interrupt (IRQ)
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt
 
-        . = &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x1c
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x1c
             // Fast hardware interrupt (FIQ)
-            ldr pc, &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt
         &quot;</span>));
 
-        <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="macro">paste</span><span class="macro">!</span> {
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+        <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro">::arm::interrupt::paste!</span> {
+            <span class="attribute">#[<span class="macro-nonterminal">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_reset</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">Reset</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::Reset</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_undefined</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">UndefinedInstruction</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::UndefinedInstruction</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_software</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">SoftwareInterrupt</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::SoftwareInterrupt</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_prefetch</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">PrefetchAbort</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::PrefetchAbort</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_data</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">DataAbort</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::DataAbort</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">HardwareInterrupt</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::HardwareInterrupt</span>);
             }
 
             <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
             <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt</span> <span class="op">&gt;</span>]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">arm</span>::<span class="ident">interrupt</span>::<span class="ident">Kind</span>::<span class="ident">FastHardwareInterrupt</span>);
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::arm::interrupt::Kind::FastHardwareInterrupt</span>);
             }
         }
     };
@@ -305,7 +305,7 @@
     <span class="doccomment">/// Only defined for exception levels 1–3. The register for a given exception level is</span>
     <span class="doccomment">/// only accessible from that level or higher.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">VectorTable</span> {
-        <span class="kw">let</span> <span class="ident">usize_value</span> <span class="op">=</span> <span class="macro">cp15_register_get</span><span class="macro">!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">usize_value</span> <span class="op">=</span> <span class="macro">cp15_register_get!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>);
         <span class="ident">usize_value</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">VectorTable</span>
     }
 
@@ -314,10 +314,10 @@
     <span class="doccomment">/// Address must be aligned to 11 bits (2048).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">VectorTable</span>) {
         <span class="kw">unsafe</span> {
-            <span class="macro">cp15_register_set</span><span class="macro">!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>, <span class="ident">value</span> <span class="kw">as</span> <span class="ident">usize</span>);
+            <span class="macro">cp15_register_set!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>, <span class="ident">value</span> <span class="kw">as</span> <span class="ident">usize</span>);
         }
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-search-js="../../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

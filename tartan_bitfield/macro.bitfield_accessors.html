@@ -1,8 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Define getters and setters for certain bit ranges. The containing type must implement the [`Bitfield`] trait."><meta name="keywords" content="rust, rustlang, rust-lang, bitfield_accessors"><title>tartan_bitfield::bitfield_accessors - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Define getters and setters for certain bit ranges. The containing type must implement the [`Bitfield`] trait."><meta name="keywords" content="rust, rustlang, rust-lang, bitfield_accessors"><title>bitfield_accessors in tartan_bitfield - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc macro"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../tartan_bitfield/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class="location"><a href="index.html">tartan_bitfield</a></p><div id="sidebar-vars" data-name="bitfield_accessors" data-ty="macro" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Macro <a href="index.html">tartan_bitfield</a>::<wbr><a class="macro" href="">bitfield_accessors</a></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/tartan_bitfield/lib.rs.html#243-367" title="goto source code">[src]</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><div class="example-wrap"><pre class="rust macro">
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">bitfield_accessors</span> {
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../tartan_bitfield/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class="location"><a href="index.html">tartan_bitfield</a></p><div id="sidebar-vars" data-name="bitfield_accessors" data-ty="macro" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Macro <a href="index.html">tartan_bitfield</a>::<wbr><a class="macro" href="">bitfield_accessors</a><button id="copy-path" onclick="copy_path(this)"><img src="../clipboard.svg" width="19" height="18" alt="Copy item import"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/tartan_bitfield/lib.rs.html#243-367" title="goto source code">[src]</a></span></h1><div class="docblock type-decl"><div class="example-wrap"><pre class="rust macro">
+<span class="macro">macro_rules!</span> <span class="ident">bitfield_accessors</span> {
     [
         $(
             $( <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meta</span>:<span class="ident">meta</span>]</span> )<span class="op">*</span>
@@ -46,14 +46,14 @@
         : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">underlying_type</span>:<span class="ident">ty</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">interface_type</span>:<span class="ident">ty</span>
     ] <span class="op">=</span><span class="op">&gt;</span> { ... };
 }</pre></div>
-</div><div class="docblock"><p>Define getters and setters for certain bit ranges. The containing type must
-implement the <a href="../tartan_bitfield/trait.Bitfield.html" title="Bitfield"><code>Bitfield</code></a> trait.</p>
-<p>This is most commonly invoked by the <a href="../tartan_bitfield/macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro, but it can be used on its own
+</div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Define getters and setters for certain bit ranges. The containing type must
+implement the <a href="trait.Bitfield.html" title="Bitfield"><code>Bitfield</code></a> trait.</p>
+<p>This is most commonly invoked by the <a href="macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro, but it can be used on its own
 to define common accessors as part of a trait, as in the example below:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
 <span class="kw">trait</span> <span class="ident">CommonFields</span>: <span class="ident">Bitfield</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-    <span class="macro">bitfield_accessors</span><span class="macro">!</span> {
+    <span class="macro">bitfield_accessors!</span> {
         <span class="comment">// Since these are part of a trait, the `pub` keyword must be omitted.</span>
         [ <span class="number">0</span>.. <span class="number">6</span>] <span class="ident">a</span>: <span class="ident">u8</span>,
         [<span class="number">14</span>]     <span class="ident">b</span>,
@@ -61,14 +61,14 @@ to define common accessors as part of a trait, as in the example below:</p>
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">SomeFields</span>(<span class="ident">u32</span>) {
         [ <span class="number">7</span>] <span class="kw">pub</span> <span class="ident">x</span>,
         [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">y</span>,
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">OtherFields</span>(<span class="ident">u32</span>) {
         [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">z</span>,
         [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">q</span>,
@@ -79,13 +79,13 @@ to define common accessors as part of a trait, as in the example below:</p>
 <span class="kw">impl</span> <span class="ident">CommonFields</span> <span class="kw">for</span> <span class="ident">OtherFields</span> {}
 
 <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">SomeFields</span>(<span class="number">0xabcd_1234</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f</span>.<span class="ident">a</span>(), <span class="number">0x34</span>); <span class="comment">// has accessors from CommonFields</span>
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f</span>.<span class="ident">y</span>(), <span class="bool-val">true</span>); <span class="comment">// has accessors from SomeFields</span>
+<span class="macro">assert_eq!</span>(<span class="ident">f</span>.<span class="ident">a</span>(), <span class="number">0x34</span>); <span class="comment">// has accessors from CommonFields</span>
+<span class="macro">assert_eq!</span>(<span class="ident">f</span>.<span class="ident">y</span>(), <span class="bool-val">true</span>); <span class="comment">// has accessors from SomeFields</span>
 <span class="comment">//assert_eq!(f.z(), false); // COMPILE ERROR: no accessors from OtherFields</span>
 
 <span class="kw">let</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">OtherFields</span>(<span class="number">0xabcd_1234</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">a</span>(), <span class="number">0x34</span>); <span class="comment">// has accessors from CommonFields</span>
+<span class="macro">assert_eq!</span>(<span class="ident">g</span>.<span class="ident">a</span>(), <span class="number">0x34</span>); <span class="comment">// has accessors from CommonFields</span>
 <span class="comment">//assert_eq!(g.y(), true); // COMPILE ERROR: no accessors from SomeFields</span>
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">z</span>(), <span class="bool-val">false</span>); <span class="comment">// has accessors from OtherFields</span></pre></div>
-</div></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="tartan_bitfield" data-search-js="../search-index.js"></div>
+<span class="macro">assert_eq!</span>(<span class="ident">g</span>.<span class="ident">z</span>(), <span class="bool-val">false</span>); <span class="comment">// has accessors from OtherFields</span></pre></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="tartan_bitfield" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
     <script src="../main.js"></script></body></html>

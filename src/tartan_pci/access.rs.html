@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pci/src/access.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>access.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_pci/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_pci/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -247,12 +247,12 @@
 <span id="244">244</span>
 <span id="245">245</span>
 <span id="246">246</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">module_name_repetitions</span>)]</span>
+</pre><pre class="rust">
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">config</span>::<span class="ident">FixedConfigRegister</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::config::FixedConfigRegister</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">MAX_DEVICE</span>, <span class="ident">MAX_FUNCTION</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ops</span>::<span class="ident">RangeInclusive</span>;
+<span class="kw">use</span> <span class="ident">core::ops::RangeInclusive</span>;
 
 
 <span class="doccomment">/// Provides methods to access PCI configuration space.</span>
@@ -269,7 +269,7 @@
     <span class="doccomment">/// Get a register in PCI configuration space with an offset defined by the output</span>
     <span class="doccomment">/// type.</span>
     <span class="kw">fn</span> <span class="ident">get_fixed_register</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">FixedConfigRegister</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
-        <span class="self">self</span>.<span class="ident">get_register</span>(<span class="ident">selector</span>, <span class="ident">T</span>::<span class="ident">REGISTER_NUMBER</span>.<span class="ident">into</span>()).<span class="ident">into</span>()
+        <span class="self">self</span>.<span class="ident">get_register</span>(<span class="ident">selector</span>, <span class="ident">T::REGISTER_NUMBER</span>.<span class="ident">into</span>()).<span class="ident">into</span>()
     }
 
     <span class="doccomment">/// Set a register in PCI configuration space with an offset defined by the input</span>
@@ -279,7 +279,7 @@
         <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>,
         <span class="ident">value</span>: <span class="ident">T</span>,
     ) {
-        <span class="self">self</span>.<span class="ident">set_register</span>(<span class="ident">selector</span>, <span class="ident">T</span>::<span class="ident">REGISTER_NUMBER</span>.<span class="ident">into</span>(), <span class="ident">value</span>.<span class="ident">into</span>())
+        <span class="self">self</span>.<span class="ident">set_register</span>(<span class="ident">selector</span>, <span class="ident">T::REGISTER_NUMBER</span>.<span class="ident">into</span>(), <span class="ident">value</span>.<span class="ident">into</span>())
     }
 }
 
@@ -313,29 +313,29 @@
     <span class="kw">const</span> <span class="ident">MAP_SIZE</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>;
 
     <span class="kw">fn</span> <span class="ident">register_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u32</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">selector</span>.<span class="ident">bus</span>),
             <span class="string">&quot;Cannot access bus {} with this memory map (covers buses {}-{})&quot;</span>,
             <span class="ident">selector</span>.<span class="ident">bus</span>,
             <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">start</span>(),
             <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">end</span>(),
         );
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="ident">selector</span>.<span class="ident">device</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_DEVICE</span>,
             <span class="string">&quot;Device number out of range: {}&quot;</span>,
             <span class="ident">selector</span>.<span class="ident">device</span>,
         );
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="ident">selector</span>.<span class="ident">function</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_FUNCTION</span>,
             <span class="string">&quot;Function number out of range: {}&quot;</span>,
             <span class="ident">selector</span>.<span class="ident">function</span>,
         );
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">register</span> <span class="op">&lt;</span> <span class="self">Self</span>::<span class="ident">MAP_SIZE</span>, <span class="string">&quot;Register number out of range: {}&quot;</span>, <span class="ident">register</span>);
+        <span class="macro">assert!</span>(<span class="ident">register</span> <span class="op">&lt;</span> <span class="self">Self</span><span class="ident">::MAP_SIZE</span>, <span class="string">&quot;Register number out of range: {}&quot;</span>, <span class="ident">register</span>);
 
-        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">selector</span>.<span class="ident">bus</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>
-            <span class="op">|</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">selector</span>.<span class="ident">device</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">15</span>
-            <span class="op">|</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">selector</span>.<span class="ident">function</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">12</span>
-            <span class="op">|</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">register</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
+        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">bus</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>
+            <span class="op">|</span> <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">device</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">15</span>
+            <span class="op">|</span> <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">function</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">12</span>
+            <span class="op">|</span> <span class="ident">usize::from</span>(<span class="ident">register</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">base_address</span> <span class="op">+</span> <span class="ident">offset</span>;
 
         <span class="ident">address</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u32</span>
@@ -345,13 +345,13 @@
 <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">MemMapConfigAccess</span> {
     <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">read_volatile</span>(<span class="ident">address</span>) };
-        <span class="ident">u32</span>::<span class="ident">from_le</span>(<span class="ident">register_data_le</span>)
+        <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">core::ptr::read_volatile</span>(<span class="ident">address</span>) };
+        <span class="ident">u32::from_le</span>(<span class="ident">register_data_le</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
         <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">unsafe</span> { <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">write_volatile</span>(<span class="ident">address</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) };
+        <span class="kw">unsafe</span> { <span class="ident">core::ptr::write_volatile</span>(<span class="ident">address</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) };
     }
 }
 
@@ -362,11 +362,11 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span> {
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">MAX_DEVICE</span>;
-    <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
-    <span class="kw">use</span> <span class="ident">tartan_arch</span>::<span class="ident">x86_common</span>::<span class="ident">io</span>;
-    <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::MAX_DEVICE</span>;
+    <span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
+    <span class="kw">use</span> <span class="ident">tartan_arch::x86_common::io</span>;
+    <span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
 
     <span class="doccomment">/// I/O based configuration access method on x86/x86-64.</span>
     <span class="doccomment">///</span>
@@ -380,38 +380,38 @@
         <span class="kw">const</span> <span class="ident">CONFIG_DATA_PORT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0xcfc</span>;
 
         <span class="kw">fn</span> <span class="ident">write_config_address</span>(<span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) {
-            <span class="macro">assert</span><span class="macro">!</span>(
+            <span class="macro">assert!</span>(
                 <span class="ident">selector</span>.<span class="ident">segment_group</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
                 <span class="string">&quot;IO-based PCI config only supports segment group 0 (requested {})&quot;</span>,
                 <span class="ident">selector</span>.<span class="ident">segment_group</span>,
             );
-            <span class="kw">let</span> <span class="ident">register_offset</span> <span class="op">=</span> <span class="ident">u8</span>::<span class="ident">try_from</span>(<span class="ident">register</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>)
+            <span class="kw">let</span> <span class="ident">register_offset</span> <span class="op">=</span> <span class="ident">u8::try_from</span>(<span class="ident">register</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>)
                 .<span class="ident">expect</span>(<span class="string">&quot;IO-based PCI config only supports register numbers &lt;= 0x3f&quot;</span>);
 
-            <span class="kw">let</span> <span class="ident">config_address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">new</span>(<span class="ident">selector</span>, <span class="ident">register_offset</span>);
+            <span class="kw">let</span> <span class="ident">config_address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::new</span>(<span class="ident">selector</span>, <span class="ident">register_offset</span>);
             <span class="kw">let</span> <span class="ident">config_address_le</span> <span class="op">=</span> <span class="ident">config_address</span>.<span class="number">0</span>.<span class="ident">to_le</span>();
 
             <span class="kw">unsafe</span> {
-                <span class="ident">io</span>::<span class="ident">out_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_ADDRESS_PORT</span>, <span class="ident">config_address_le</span>);
+                <span class="ident">io::out_u32</span>(<span class="self">Self</span><span class="ident">::CONFIG_ADDRESS_PORT</span>, <span class="ident">config_address_le</span>);
             };
         }
     }
 
     <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">IOConfigAccess</span> {
         <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
-            <span class="self">Self</span>::<span class="ident">write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-            <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">in_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_DATA_PORT</span>) };
-            <span class="ident">u32</span>::<span class="ident">from_le</span>(<span class="ident">register_data_le</span>)
+            <span class="self">Self</span><span class="ident">::write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+            <span class="kw">let</span> <span class="ident">register_data_le</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">io::in_u32</span>(<span class="self">Self</span><span class="ident">::CONFIG_DATA_PORT</span>) };
+            <span class="ident">u32::from_le</span>(<span class="ident">register_data_le</span>)
         }
 
         <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
-            <span class="self">Self</span>::<span class="ident">write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-            <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">out_u32</span>(<span class="self">Self</span>::<span class="ident">CONFIG_DATA_PORT</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) }
+            <span class="self">Self</span><span class="ident">::write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
+            <span class="kw">unsafe</span> { <span class="ident">io::out_u32</span>(<span class="self">Self</span><span class="ident">::CONFIG_DATA_PORT</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) }
         }
     }
 
 
-    <span class="macro">bitfield</span><span class="macro">!</span> {
+    <span class="macro">bitfield!</span> {
         <span class="doccomment">/// Index value written to the `CONFIG_ADDRESS` port</span>
         <span class="kw">struct</span> <span class="ident">IOConfigAddress</span>(<span class="ident">u32</span>) {
             [<span class="number">31</span>    ] <span class="kw">pub</span> <span class="ident">enable</span>,
@@ -424,10 +424,10 @@
 
     <span class="kw">impl</span> <span class="ident">IOConfigAddress</span> {
         <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register_offset</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">selector</span>.<span class="ident">device</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_DEVICE</span>);
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">selector</span>.<span class="ident">function</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_DEVICE</span>);
+            <span class="macro">assert!</span>(<span class="ident">selector</span>.<span class="ident">device</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_DEVICE</span>);
+            <span class="macro">assert!</span>(<span class="ident">selector</span>.<span class="ident">function</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_DEVICE</span>);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">default</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::default</span>();
             <span class="ident">address</span>.<span class="ident">set_enable</span>(<span class="bool-val">true</span>);
             <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="ident">selector</span>.<span class="ident">bus</span>);
             <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="ident">selector</span>.<span class="ident">device</span>);
@@ -444,56 +444,56 @@
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_io_config_address</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x00&quot;</span>);
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_enable</span>(<span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x80&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x80&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="number">0xff</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\xff\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\xff\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x01\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x01\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="number">0x1f</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\xf8\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\xf8\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x08\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x08\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_function</span>(<span class="number">0x07</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x07\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x07\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_function</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x01\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x01\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_register_offset</span>(<span class="number">0xfc</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\xfc\x00\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\xfc\x00\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">default</span>();
+            <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::default</span>();
             <span class="ident">address</span>.<span class="ident">set_register_offset</span>(<span class="number">0x04</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x00\x00\x00&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x00\x00\x00&quot;</span>);
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_io_config_address_new</span>() {
-            <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress</span>::<span class="ident">new</span>(
+            <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">IOConfigAddress::new</span>(
                 <span class="ident">ConfigSelector</span> { <span class="ident">segment_group</span>: <span class="number">0</span>, <span class="ident">bus</span>: <span class="number">1</span>, <span class="ident">device</span>: <span class="number">2</span>, <span class="ident">function</span>: <span class="number">3</span> },
                 <span class="number">4</span>,
             );
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x13\x01\x80&quot;</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x13\x01\x80&quot;</span>);
         }
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

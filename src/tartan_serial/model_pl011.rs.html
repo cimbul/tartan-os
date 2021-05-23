@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `serial/src/model_pl011.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>model_pl011.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_serial/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_serial/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -338,13 +338,13 @@
 <span id="335">335</span>
 <span id="336">336</span>
 <span id="337">337</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Driver for Arm&#39;s `PrimeCell` PL011 UART</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">baud_from_divisor</span>, <span class="ident">divisor_from_baud</span>, <span class="ident">LineMode</span>, <span class="ident">Parity</span>, <span class="ident">WordLength</span>, <span class="ident">UART</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ptr</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
+<span class="kw">use</span> <span class="ident">core::ptr</span>;
+<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
 
 
 
@@ -377,15 +377,15 @@
         <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_line_control</span>(<span class="ident">line_control</span>);
 
         <span class="comment">// Now reprogram the control registers</span>
-        <span class="self">self</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode</span>::<span class="ident">default</span>());
+        <span class="self">self</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
         <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_infrared_low_power_divisor</span>(<span class="number">0</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_fifo_control</span>(<span class="ident">FIFOControlRegister</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_dma_control</span>(<span class="ident">DMAControlRegister</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_interrupt_mask</span>(<span class="ident">InterruptFlags</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">clear_interrupt_status</span>(<span class="ident">InterruptFlags</span>::<span class="ident">ALL</span>);
+        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_fifo_control</span>(<span class="ident">FIFOControlRegister::default</span>());
+        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_dma_control</span>(<span class="ident">DMAControlRegister::default</span>());
+        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_interrupt_mask</span>(<span class="ident">InterruptFlags::default</span>());
+        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">clear_interrupt_status</span>(<span class="ident">InterruptFlags::ALL</span>);
 
         <span class="comment">// Re-enable the UART last</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">control</span> <span class="op">=</span> <span class="ident">ControlRegister</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">control</span> <span class="op">=</span> <span class="ident">ControlRegister::default</span>();
         <span class="ident">control</span>.<span class="ident">set_enabled</span>(<span class="bool-val">true</span>);
         <span class="ident">control</span>.<span class="ident">set_tx_enabled</span>(<span class="bool-val">true</span>);
         <span class="ident">control</span>.<span class="ident">set_rx_enabled</span>(<span class="bool-val">true</span>);
@@ -408,7 +408,7 @@
         <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_divisor</span>(<span class="ident">divisor</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line_control</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">line_control</span>();
-        <span class="ident">line_control</span>.<span class="ident">set_word_length</span>(<span class="ident">WordLength</span>::<span class="ident">from_bits</span>(<span class="ident">line_mode</span>.<span class="ident">data_bits</span>).<span class="ident">unwrap</span>());
+        <span class="ident">line_control</span>.<span class="ident">set_word_length</span>(<span class="ident">WordLength::from_bits</span>(<span class="ident">line_mode</span>.<span class="ident">data_bits</span>).<span class="ident">unwrap</span>());
         <span class="ident">line_control</span>.<span class="ident">set_parity</span>(<span class="ident">line_mode</span>.<span class="ident">parity</span>);
         <span class="ident">line_control</span>.<span class="ident">set_extended_stop</span>(<span class="ident">line_mode</span>.<span class="ident">extended_stop</span>);
         <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_line_control</span>(<span class="ident">line_control</span>);
@@ -434,15 +434,15 @@
 
 <span class="kw">impl</span> <span class="ident">RegisterBlock</span> {
     <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">registers</span>[<span class="ident">offset</span>..<span class="ident">offset</span> <span class="op">+</span> <span class="ident">size</span>];
-        <span class="kw">unsafe</span> { <span class="ident">ptr</span>::<span class="ident">read_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()) }
+        <span class="kw">unsafe</span> { <span class="ident">ptr::read_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()) }
     }
 
     <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">registers</span>[<span class="ident">offset</span>..<span class="ident">offset</span> <span class="op">+</span> <span class="ident">size</span>];
-        <span class="kw">unsafe</span> { <span class="ident">ptr</span>::<span class="ident">write_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(), <span class="ident">value</span>) }
+        <span class="kw">unsafe</span> { <span class="ident">ptr::write_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(), <span class="ident">value</span>) }
     }
 
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
@@ -478,8 +478,8 @@
         <span class="comment">//</span>
         <span class="comment">// Instead, we treat it as one integer, split into lower 6 bits and upper 16 bits,</span>
         <span class="comment">// and multiply the nominal base rate by 4.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">divisor</span> <span class="op">=</span> <span class="ident">u32</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(<span class="number">0x28</span>) <span class="op">&amp;</span> <span class="number">0x3f</span>);
-        <span class="ident">divisor</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u32</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span>(<span class="number">0x24</span>)) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">6</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">divisor</span> <span class="op">=</span> <span class="ident">u32::from</span>(<span class="self">self</span>.<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(<span class="number">0x28</span>) <span class="op">&amp;</span> <span class="number">0x3f</span>);
+        <span class="ident">divisor</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u32::from</span>(<span class="self">self</span>.<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span>(<span class="number">0x24</span>)) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">6</span>;
         <span class="ident">divisor</span>
     }
 
@@ -487,7 +487,7 @@
     <span class="comment">// TODO: Should update the IR low power divisor too</span>
     <span class="kw">fn</span> <span class="ident">set_divisor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
         <span class="comment">// See divisor()</span>
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x28</span>, (<span class="ident">value</span> <span class="op">&amp;</span> <span class="number">0x3f</span>) <span class="kw">as</span> <span class="ident">u8</span>);
         <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x24</span>, (<span class="ident">value</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">6</span>) <span class="kw">as</span> <span class="ident">u16</span>);
     }
@@ -553,14 +553,14 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">DataRegister</span>(<span class="ident">u16</span>) {
         [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">data</span>: <span class="ident">u8</span>,
         [ <span class="number">8</span>..<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">status</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">RxStatusRegister</span>,
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">RxStatusRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">framing_error</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">parity_error</span>,
@@ -569,7 +569,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">FlagRegister</span>(<span class="ident">u16</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">clear_to_send</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">data_sent_ready</span>,
@@ -584,7 +584,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">LineControlRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">parity_sticky</span>,
         [<span class="number">5</span>..<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">word_length</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">WordLength</span>,
@@ -598,7 +598,7 @@
 
 <span class="kw">impl</span> <span class="ident">LineControlRegister</span> {
     <span class="kw">fn</span> <span class="ident">parity</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Parity</span> {
-        <span class="ident">Parity</span>::<span class="ident">from_flags</span>(
+        <span class="ident">Parity::from_flags</span>(
             <span class="self">self</span>.<span class="ident">parity_enabled</span>(),
             <span class="self">self</span>.<span class="ident">parity_even</span>(),
             <span class="self">self</span>.<span class="ident">parity_sticky</span>(),
@@ -613,7 +613,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">ControlRegister</span>(<span class="ident">u16</span>) {
         [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">clear_to_send_flow_enabled</span>,
         [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">request_to_send_flow_enabled</span>,
@@ -630,14 +630,14 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">FIFOControlRegister</span>(<span class="ident">u16</span>) {
         [<span class="number">3</span>..<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rx_interrupt_trigger</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">FIFOInterruptTriggerLevel</span>,
         [<span class="number">0</span>..<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">tx_interrupt_trigger</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">FIFOInterruptTriggerLevel</span>,
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">enum</span> <span class="ident">FIFOInterruptTriggerLevel</span>(<span class="ident">u8</span>) {
         <span class="ident">FourBytes</span>,
         <span class="ident">EightBytes</span>,
@@ -648,7 +648,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">InterruptFlags</span>(<span class="ident">u16</span>) {
         [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">overrun_error</span>,
         [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">break_error</span>,
@@ -669,7 +669,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">DMAControlRegister</span>(<span class="ident">u16</span>) {
         [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">enabled_on_error</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">tx_enabled</span>,
@@ -677,5 +677,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

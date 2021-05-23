@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `serial/src/model_16550.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>model_16550.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_serial/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_serial/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -295,7 +295,7 @@
 <span id="292">292</span>
 <span id="293">293</span>
 <span id="294">294</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Driver for the common UART interface provided on PCs that use the National</span>
 <span class="doccomment">//! Semiconductor 16550 chip and derivatives (itself based on the NS 8250).</span>
 
@@ -303,10 +303,10 @@
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">baud_from_divisor</span>, <span class="ident">divisor_from_baud</span>, <span class="ident">LineMode</span>, <span class="ident">Parity</span>, <span class="ident">WordLength</span>, <span class="ident">UART</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryInto</span>;
-<span class="kw">use</span> <span class="ident">tartan_arch</span>::<span class="ident">x86_common</span>::<span class="ident">io</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
+<span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
+<span class="kw">use</span> <span class="ident">tartan_arch::x86_common::io</span>;
+<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
 
 
 <span class="doccomment">/// Strategy that provides access to registers for a 16550 UART.</span>
@@ -324,11 +324,11 @@
 
 <span class="kw">impl</span> <span class="ident">RegisterAccess</span> <span class="kw">for</span> <span class="ident">ActualRegisterAccess</span> {
     <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">port</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
-        <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">in_u8</span>(<span class="ident">port</span>) }
+        <span class="kw">unsafe</span> { <span class="ident">io::in_u8</span>(<span class="ident">port</span>) }
     }
 
     <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">port</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u8</span>) {
-        <span class="kw">unsafe</span> { <span class="ident">io</span>::<span class="ident">out_u8</span>(<span class="ident">port</span>, <span class="ident">data</span>) }
+        <span class="kw">unsafe</span> { <span class="ident">io::out_u8</span>(<span class="ident">port</span>, <span class="ident">data</span>) }
     }
 }
 
@@ -364,13 +364,13 @@
 
     <span class="kw">fn</span> <span class="ident">divisor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
         <span class="self">self</span>.<span class="ident">set_divisor_access</span>(<span class="bool-val">true</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">divisor</span> <span class="op">=</span> <span class="ident">u16</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="ident">base_port</span>));
-        <span class="ident">divisor</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u16</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="ident">base_port</span> <span class="op">+</span> <span class="number">1</span>)) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">divisor</span> <span class="op">=</span> <span class="ident">u16::from</span>(<span class="self">self</span>.<span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="ident">base_port</span>));
+        <span class="ident">divisor</span> <span class="op">|</span><span class="op">=</span> <span class="ident">u16::from</span>(<span class="self">self</span>.<span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="ident">base_port</span> <span class="op">+</span> <span class="number">1</span>)) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span>;
         <span class="ident">divisor</span>
     }
 
     <span class="kw">fn</span> <span class="ident">set_divisor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u16</span>) {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         <span class="self">self</span>.<span class="ident">set_divisor_access</span>(<span class="bool-val">true</span>);
         <span class="self">self</span>.<span class="ident">access</span>.<span class="ident">write</span>(<span class="self">self</span>.<span class="ident">base_port</span>, <span class="ident">value</span> <span class="kw">as</span> <span class="ident">u8</span>);
         <span class="self">self</span>.<span class="ident">access</span>.<span class="ident">write</span>(<span class="self">self</span>.<span class="ident">base_port</span> <span class="op">+</span> <span class="number">1</span>, (<span class="ident">value</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">8</span>) <span class="kw">as</span> <span class="ident">u8</span>);
@@ -420,22 +420,22 @@
 <span class="kw">impl</span> <span class="ident">UART16550</span><span class="op">&lt;</span><span class="ident">ActualRegisterAccess</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Create a driver for the UART with the given base I/O address</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">base_port</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">access</span>: <span class="ident">ActualRegisterAccess</span>::<span class="ident">default</span>(), <span class="ident">base_port</span> }
+        <span class="self">Self</span> { <span class="ident">access</span>: <span class="ident">ActualRegisterAccess::default</span>(), <span class="ident">base_port</span> }
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">RegisterAccess</span><span class="op">&gt;</span> <span class="ident">UART</span> <span class="kw">for</span> <span class="ident">UART16550</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">set_interrupt_enable</span>(<span class="ident">InterruptEnableRegister</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">set_fifo_control</span>(<span class="ident">FIFOControlRegister</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">set_modem_control</span>(<span class="ident">ModemControlRegister</span>::<span class="ident">default</span>());
-        <span class="self">self</span>.<span class="ident">set_line_control</span>(<span class="ident">LineControlRegister</span>::<span class="ident">default</span>());
+        <span class="self">self</span>.<span class="ident">set_interrupt_enable</span>(<span class="ident">InterruptEnableRegister::default</span>());
+        <span class="self">self</span>.<span class="ident">set_fifo_control</span>(<span class="ident">FIFOControlRegister::default</span>());
+        <span class="self">self</span>.<span class="ident">set_modem_control</span>(<span class="ident">ModemControlRegister::default</span>());
+        <span class="self">self</span>.<span class="ident">set_line_control</span>(<span class="ident">LineControlRegister::default</span>());
     }
 
     <span class="kw">fn</span> <span class="ident">line_mode</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LineMode</span> {
         <span class="kw">let</span> <span class="ident">line_control</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">line_control</span>();
         <span class="ident">LineMode</span> {
-            <span class="ident">baud</span>: <span class="ident">baud_from_divisor</span>(<span class="self">Self</span>::<span class="ident">MAX_BAUD</span>, <span class="ident">u32</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">divisor</span>())),
+            <span class="ident">baud</span>: <span class="ident">baud_from_divisor</span>(<span class="self">Self</span><span class="ident">::MAX_BAUD</span>, <span class="ident">u32::from</span>(<span class="self">self</span>.<span class="ident">divisor</span>())),
             <span class="ident">data_bits</span>: <span class="ident">line_control</span>.<span class="ident">word_length</span>().<span class="ident">bits</span>(),
             <span class="ident">parity</span>: <span class="ident">line_control</span>.<span class="ident">parity</span>(),
             <span class="ident">extended_stop</span>: <span class="ident">line_control</span>.<span class="ident">extended_stop</span>(),
@@ -443,12 +443,12 @@
     }
 
     <span class="kw">fn</span> <span class="ident">set_line_mode</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">line_mode</span>: <span class="ident">LineMode</span>) {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
-        <span class="self">self</span>.<span class="ident">set_divisor</span>(<span class="ident">divisor_from_baud</span>(<span class="self">Self</span>::<span class="ident">MAX_BAUD</span>, <span class="ident">line_mode</span>.<span class="ident">baud</span>) <span class="kw">as</span> <span class="ident">u16</span>);
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
+        <span class="self">self</span>.<span class="ident">set_divisor</span>(<span class="ident">divisor_from_baud</span>(<span class="self">Self</span><span class="ident">::MAX_BAUD</span>, <span class="ident">line_mode</span>.<span class="ident">baud</span>) <span class="kw">as</span> <span class="ident">u16</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line_control</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">line_control</span>();
         <span class="ident">line_control</span>.<span class="ident">set_word_length</span>(
-            <span class="ident">WordLength</span>::<span class="ident">from_bits</span>(<span class="ident">line_mode</span>.<span class="ident">data_bits</span>).<span class="ident">expect</span>(<span class="string">&quot;Unsupported word length&quot;</span>),
+            <span class="ident">WordLength::from_bits</span>(<span class="ident">line_mode</span>.<span class="ident">data_bits</span>).<span class="ident">expect</span>(<span class="string">&quot;Unsupported word length&quot;</span>),
         );
         <span class="ident">line_control</span>.<span class="ident">set_parity</span>(<span class="ident">line_mode</span>.<span class="ident">parity</span>);
         <span class="ident">line_control</span>.<span class="ident">set_extended_stop</span>(<span class="ident">line_mode</span>.<span class="ident">extended_stop</span>);
@@ -467,7 +467,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">InterruptEnableRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">rx_data_available</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">tx_empty</span>,
@@ -478,7 +478,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">InterruptID</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>]    <span class="kw">pub</span> <span class="ident">interrupt_pending</span>,
         [<span class="number">1</span>..<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">interrupt_type</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">InterruptType</span>,
@@ -487,7 +487,7 @@
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">enum</span> <span class="ident">InterruptType</span>(<span class="ident">u8</span>) {
         <span class="ident">ModemStatusChange</span>,
         <span class="ident">TxEmpty</span>,
@@ -497,7 +497,7 @@
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">enum</span> <span class="ident">FIFOStatus</span>(<span class="ident">u8</span>) {
         <span class="ident">NotEnabled</span>,
         <span class="ident">Unusable</span> <span class="op">=</span> <span class="number">2</span>,
@@ -505,7 +505,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">FIFOControlRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>]    <span class="kw">pub</span> <span class="ident">enabled</span>,
         [<span class="number">1</span>]    <span class="kw">pub</span> <span class="ident">clear_rx</span>,
@@ -516,7 +516,7 @@
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">enum</span> <span class="ident">FIFOInterruptTrigger</span>(<span class="ident">u8</span>) {
         <span class="ident">OneByte</span>,
         <span class="ident">FourBytes</span>,
@@ -525,7 +525,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">LineControlRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>..<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">word_length</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">WordLength</span>,
         [<span class="number">2</span>]    <span class="kw">pub</span> <span class="ident">extended_stop</span>,
@@ -539,7 +539,7 @@
 
 <span class="kw">impl</span> <span class="ident">LineControlRegister</span> {
     <span class="kw">fn</span> <span class="ident">parity</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Parity</span> {
-        <span class="ident">Parity</span>::<span class="ident">from_flags</span>(
+        <span class="ident">Parity::from_flags</span>(
             <span class="self">self</span>.<span class="ident">parity_enabled</span>(),
             <span class="self">self</span>.<span class="ident">parity_even</span>(),
             <span class="self">self</span>.<span class="ident">parity_sticky</span>(),
@@ -554,7 +554,7 @@
 }
 
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">ModemControlRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">data_terminal_ready</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">request_to_send</span>,
@@ -565,7 +565,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">LineStatusRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">data_available</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">overrun_error</span>,
@@ -578,7 +578,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">struct</span> <span class="ident">ModemStatusRegister</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">clear_to_send_changed</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">data_set_ready_changed</span>,
@@ -591,5 +591,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

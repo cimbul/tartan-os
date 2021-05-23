@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `uefi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_uefi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_uefi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1291,29 +1291,33 @@
 <span id="1288">1288</span>
 <span id="1289">1289</span>
 <span id="1290">1290</span>
-</pre><div class="example-wrap"><pre class="rust ">
+<span id="1291">1291</span>
+<span id="1292">1292</span>
+<span id="1293">1293</span>
+<span id="1294">1294</span>
+</pre><pre class="rust">
 <span class="doccomment">//! Support for Unified Extensible Firmware Interface</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! See EDK `MdePkg/Include/Uefi/UefiSpec.h`</span>
 
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">fn_traits</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy</span>::<span class="ident">pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">non_ascii_literal</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">upper_case_acronyms</span>)]</span>
+<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::non_ascii_literal</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
 
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
 
-<span class="kw">use</span> ::<span class="ident">alloc</span>::<span class="ident">vec</span>::<span class="ident">Vec</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryInto</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ffi</span>::<span class="ident">c_void</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">slice</span>;
-<span class="kw">use</span> <span class="ident">crc_any</span>::<span class="ident">CRCu32</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
+<span class="kw">use</span> <span class="ident">::alloc::vec::Vec</span>;
+<span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
+<span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
+<span class="kw">use</span> <span class="ident">core::fmt</span>;
+<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>};
+<span class="kw">use</span> <span class="ident">core::slice</span>;
+<span class="kw">use</span> <span class="ident">crc_any::CRCu32</span>;
+<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">allocator</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">global</span>;
@@ -1334,7 +1338,7 @@
 }
 
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Revision</span>(<span class="ident">u32</span>) {
         <span class="ident">V2_80</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">80</span>,
         <span class="ident">V2_70</span> <span class="op">=</span> (<span class="number">2</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">16</span>) <span class="op">|</span> <span class="number">70</span>,
@@ -1352,27 +1356,27 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Revision</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_80</span>;
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision::V2_80</span>;
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">major_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">minor_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">/</span> <span class="number">10</span>
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fix_version</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">%</span> <span class="number">10</span>
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Revision</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="macro">write</span><span class="macro">!</span>(
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Revision</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="macro">write!</span>(
             <span class="ident">f</span>,
             <span class="string">&quot;{}.{}.{}&quot;</span>,
             <span class="self">self</span>.<span class="ident">major_version</span>(),
@@ -1388,19 +1392,19 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_components</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V1_02</span>.<span class="ident">major_version</span>(), <span class="number">1</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V1_02</span>.<span class="ident">minor_version</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V1_02</span>.<span class="ident">fix_version</span>(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">major_version</span>(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">minor_version</span>(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">fix_version</span>(), <span class="number">2</span>);
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V2_31</span>.<span class="ident">major_version</span>(), <span class="number">2</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V2_31</span>.<span class="ident">minor_version</span>(), <span class="number">3</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Revision</span>::<span class="ident">V2_31</span>.<span class="ident">fix_version</span>(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">major_version</span>(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">minor_version</span>(), <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">fix_version</span>(), <span class="number">1</span>);
     }
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Status</span>, <span class="ident">Status</span><span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">Status</span>, <span class="ident">Status</span><span class="op">&gt;</span>;
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Status</span>(<span class="ident">usize</span>) {
         <span class="comment">// Appendix D</span>
         <span class="ident">Success</span>             <span class="op">=</span> <span class="number">0</span>,
@@ -1413,38 +1417,38 @@
         <span class="ident">WarnFileSystem</span>      <span class="op">=</span> <span class="number">6</span>,
         <span class="ident">WarnResetRequired</span>   <span class="op">=</span> <span class="number">7</span>,
 
-        <span class="ident">LoadError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>,
-        <span class="ident">InvalidParameter</span>    <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>,
-        <span class="ident">Unsupported</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>,
-        <span class="ident">BadBufferSize</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>,
-        <span class="ident">BufferTooSmall</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>,
-        <span class="ident">NotReady</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>,
-        <span class="ident">DeviceError</span>         <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>,
-        <span class="ident">WriteProtected</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>,
-        <span class="ident">OutOfResources</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>,
-        <span class="ident">VolumeCorrupted</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>,
-        <span class="ident">VolumeFull</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>,
-        <span class="ident">NoMedia</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>,
-        <span class="ident">MediaChanged</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>,
-        <span class="ident">NotFound</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>,
-        <span class="ident">AccessDenied</span>        <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>,
-        <span class="ident">NoResponse</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>,
-        <span class="ident">NoMapping</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>,
-        <span class="ident">Timeout</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>,
-        <span class="ident">NotStarted</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>,
-        <span class="ident">AlreadyStarted</span>      <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>,
-        <span class="ident">Aborted</span>             <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>,
-        <span class="ident">ICMPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>,
-        <span class="ident">TFTPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>,
-        <span class="ident">ProtocolError</span>       <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>,
-        <span class="ident">IncompatibleVersion</span> <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>,
-        <span class="ident">SecurityViolation</span>   <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>,
-        <span class="ident">CRCError</span>            <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>,
-        <span class="ident">EndOfMedia</span>          <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>,
-        <span class="ident">EndOfFile</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>,
-        <span class="ident">InvalidLanguage</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>,
-        <span class="ident">CompromisedData</span>     <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>,
-        <span class="ident">HTTPError</span>           <span class="op">=</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>,
+        <span class="ident">LoadError</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">1</span>,
+        <span class="ident">InvalidParameter</span>    <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">2</span>,
+        <span class="ident">Unsupported</span>         <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">3</span>,
+        <span class="ident">BadBufferSize</span>       <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">4</span>,
+        <span class="ident">BufferTooSmall</span>      <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">5</span>,
+        <span class="ident">NotReady</span>            <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">6</span>,
+        <span class="ident">DeviceError</span>         <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">7</span>,
+        <span class="ident">WriteProtected</span>      <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">8</span>,
+        <span class="ident">OutOfResources</span>      <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">9</span>,
+        <span class="ident">VolumeCorrupted</span>     <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">10</span>,
+        <span class="ident">VolumeFull</span>          <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">11</span>,
+        <span class="ident">NoMedia</span>             <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">12</span>,
+        <span class="ident">MediaChanged</span>        <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">13</span>,
+        <span class="ident">NotFound</span>            <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">14</span>,
+        <span class="ident">AccessDenied</span>        <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">15</span>,
+        <span class="ident">NoResponse</span>          <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">16</span>,
+        <span class="ident">NoMapping</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">17</span>,
+        <span class="ident">Timeout</span>             <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">18</span>,
+        <span class="ident">NotStarted</span>          <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">19</span>,
+        <span class="ident">AlreadyStarted</span>      <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">20</span>,
+        <span class="ident">Aborted</span>             <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">21</span>,
+        <span class="ident">ICMPError</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">22</span>,
+        <span class="ident">TFTPError</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">23</span>,
+        <span class="ident">ProtocolError</span>       <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">24</span>,
+        <span class="ident">IncompatibleVersion</span> <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">25</span>,
+        <span class="ident">SecurityViolation</span>   <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">26</span>,
+        <span class="ident">CRCError</span>            <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">27</span>,
+        <span class="ident">EndOfMedia</span>          <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">28</span>,
+        <span class="ident">EndOfFile</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">31</span>,
+        <span class="ident">InvalidLanguage</span>     <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">32</span>,
+        <span class="ident">CompromisedData</span>     <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">33</span>,
+        <span class="ident">HTTPError</span>           <span class="op">=</span> <span class="ident">Status::ERROR_BIT</span> <span class="op">|</span> <span class="number">35</span>,
     }
 }
 
@@ -1452,15 +1456,15 @@
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ERROR_BIT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0x1_usize</span>.<span class="ident">reverse_bits</span>(); <span class="comment">// high bit</span>
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_error</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&amp;</span> <span class="ident">Status</span>::<span class="ident">ERROR_BIT</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
+        (<span class="self">self</span>.<span class="number">0</span> <span class="op">&amp;</span> <span class="ident">Status::ERROR_BIT</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_warning</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Status</span>::<span class="ident">Success</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
+        <span class="self">self</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Status::Success</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_error</span>()
     }
 
     <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_errors_doc</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_errors_doc</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_result</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_error</span>() {
             <span class="prelude-val">Err</span>(<span class="self">self</span>)
@@ -1483,71 +1487,75 @@
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_equality</span>() {
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">1</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">Success</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">status</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">status</span>, <span class="ident">Status::WarnUnknownGlyph</span>);
+        <span class="macro">assert_ne!</span>(<span class="ident">status</span>, <span class="ident">Status::Success</span>);
+        <span class="macro">assert_ne!</span>(<span class="ident">status</span>, <span class="ident">Status::LoadError</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::bool_assert_comparison</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::branches_sharing_code</span>)]</span>
     <span class="kw">fn</span> <span class="ident">test_is_error</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::Success</span>.<span class="ident">is_error</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">WarnResetRequired</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnUnknownGlyph</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnFileSystem</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnResetRequired</span>.<span class="ident">is_error</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">AccessDenied</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::LoadError</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::AccessDenied</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::HTTPError</span>.<span class="ident">is_error</span>());
 
-        <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
+        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
         } <span class="kw">else</span> {
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
         }
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::bool_assert_comparison</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::branches_sharing_code</span>)]</span>
     <span class="kw">fn</span> <span class="ident">test_is_warning</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::Success</span>.<span class="ident">is_warning</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnUnknownGlyph</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">true</span>, <span class="ident">Status</span>::<span class="ident">WarnResetRequired</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnUnknownGlyph</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnFileSystem</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnResetRequired</span>.<span class="ident">is_warning</span>());
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">AccessDenied</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::LoadError</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::AccessDenied</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::HTTPError</span>.<span class="ident">is_warning</span>());
 
-        <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>) {
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
         } <span class="kw">else</span> {
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
         }
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_into_result</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">Success</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">Success</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status</span>::<span class="ident">WarnFileSystem</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">LoadError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">LoadError</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">HTTPError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">HTTPError</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Status::Success</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status::Success</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Status::WarnFileSystem</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status::WarnFileSystem</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Status::LoadError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status::LoadError</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Status::HTTPError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status::HTTPError</span>));
     }
 }
 
@@ -1570,21 +1578,21 @@
 
     <span class="kw">fn</span> <span class="ident">verify_signature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">actual_signature</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">signature</span>;
-        <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_signature</span> <span class="op">=</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">SIGNATURE</span>,
+        <span class="macro">assert!</span>(
+            <span class="ident">actual_signature</span> <span class="op">=</span><span class="op">=</span> <span class="self">Self</span><span class="ident">::SIGNATURE</span>,
             <span class="string">&quot;Signature mismatch. Expected {:x}, received {:x}&quot;</span>,
             <span class="ident">actual_signature</span>,
-            <span class="self">Self</span>::<span class="ident">SIGNATURE</span>,
+            <span class="self">Self</span><span class="ident">::SIGNATURE</span>,
         )
     }
 
     <span class="kw">fn</span> <span class="ident">verify_revision</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">actual_revision</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">revision</span>;
-        <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">actual_revision</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">MIN_REVISION</span>,
+        <span class="macro">assert!</span>(
+            <span class="ident">actual_revision</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span><span class="ident">::MIN_REVISION</span>,
             <span class="string">&quot;Revision {} older than minimum supported revision {}&quot;</span>,
             <span class="ident">actual_revision</span>,
-            <span class="self">Self</span>::<span class="ident">MIN_REVISION</span>,
+            <span class="self">Self</span><span class="ident">::MIN_REVISION</span>,
         )
     }
 
@@ -1593,7 +1601,7 @@
         <span class="self">Self</span>: <span class="ident">Sized</span>,
     {
         <span class="kw">let</span> <span class="ident">actual_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">header_size</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="ident">actual_size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>(),
             <span class="string">&quot;Header size {} was less than expected {} bytes&quot;</span>,
             <span class="ident">actual_size</span>,
@@ -1609,10 +1617,10 @@
         <span class="kw">let</span> <span class="ident">start_address</span> <span class="op">=</span> (<span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="self">Self</span>).<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">crc_field_address</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="ident">header</span>.<span class="ident">crc32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u32</span>).<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">crc</span> <span class="op">=</span> <span class="ident">CRCu32</span>::<span class="ident">crc32</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">crc</span> <span class="op">=</span> <span class="ident">CRCu32::crc32</span>();
         <span class="kw">unsafe</span> {
             <span class="comment">// Digest start of header until right before CRC value</span>
-            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(
+            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice::from_raw_parts</span>(
                 <span class="ident">start_address</span>,
                 <span class="ident">crc_field_address</span>.<span class="ident">offset_from</span>(<span class="ident">start_address</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
             ));
@@ -1623,7 +1631,7 @@
             <span class="comment">// Digest rest of header starting past end of CRC field</span>
             <span class="kw">let</span> <span class="ident">crc_field_end</span> <span class="op">=</span> <span class="ident">crc_field_address</span>.<span class="ident">add</span>(<span class="ident">CRC_FIELD_LENGTH</span>);
             <span class="kw">let</span> <span class="ident">end_address</span> <span class="op">=</span> <span class="ident">start_address</span>.<span class="ident">add</span>(<span class="ident">size</span>);
-            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(
+            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice::from_raw_parts</span>(
                 <span class="ident">crc_field_end</span>,
                 <span class="ident">end_address</span>.<span class="ident">offset_from</span>(<span class="ident">crc_field_end</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
             ));
@@ -1631,7 +1639,7 @@
 
         <span class="kw">let</span> <span class="ident">orig_remainder</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">crc32</span>;
         <span class="kw">let</span> <span class="ident">actual_remainder</span> <span class="op">=</span> <span class="ident">crc</span>.<span class="ident">get_crc</span>();
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="ident">actual_remainder</span> <span class="op">=</span><span class="op">=</span> <span class="ident">orig_remainder</span>,
             <span class="string">&quot;Calculated CRC {:x} does not match listed value {:x}&quot;</span>,
             <span class="ident">actual_remainder</span>,
@@ -1657,11 +1665,11 @@
     <span class="kw">pub</span> <span class="ident">firmware_vendor</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u16</span>,
     <span class="kw">pub</span> <span class="ident">firmware_revision</span>: <span class="ident">u32</span>,
     <span class="kw">pub</span> <span class="ident">console_in_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">console_in</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto</span>::<span class="ident">SimpleTextInput</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">console_in</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextInput</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">console_out_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">console_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto</span>::<span class="ident">SimpleTextOutput</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">console_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextOutput</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">std_err_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">std_err</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto</span>::<span class="ident">SimpleTextOutput</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">std_err</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextOutput</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">runtime_services</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">RuntimeServices</span>,
     <span class="kw">pub</span> <span class="ident">boot_services</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BootServices</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">config_entry_count</span>: <span class="ident">usize</span>,
@@ -1670,7 +1678,7 @@
 
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">SystemTable</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5453_5953_2049_4249</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
+    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision::V2_00</span>;
     <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
@@ -1688,7 +1696,7 @@
     <span class="doccomment">/// the caller&#39;s responsibility to make sure any dangling references are cleared or</span>
     <span class="doccomment">/// unused.</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">exit_boot_services</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">image_handle</span>: <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MemoryMap</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_panics_doc</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
         <span class="kw">let</span> <span class="ident">boot_services</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">boot_services</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">memory_map</span> <span class="op">=</span> <span class="ident">boot_services</span>.<span class="ident">get_memory_map</span>();
         <span class="comment">// This shouldn&#39;t fail since we just got the memory map</span>
@@ -1696,11 +1704,11 @@
 
         <span class="comment">// Clear pointers to boot services and console streams, which are now invalid</span>
         <span class="self">self</span>.<span class="ident">boot_services</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">console_in_handle</span> <span class="op">=</span> <span class="ident">Handle</span>::<span class="ident">NULL</span>;
+        <span class="self">self</span>.<span class="ident">console_in_handle</span> <span class="op">=</span> <span class="ident">Handle::NULL</span>;
         <span class="self">self</span>.<span class="ident">console_in</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">console_out_handle</span> <span class="op">=</span> <span class="ident">Handle</span>::<span class="ident">NULL</span>;
+        <span class="self">self</span>.<span class="ident">console_out_handle</span> <span class="op">=</span> <span class="ident">Handle::NULL</span>;
         <span class="self">self</span>.<span class="ident">console_out</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">std_err_handle</span> <span class="op">=</span> <span class="ident">Handle</span>::<span class="ident">NULL</span>;
+        <span class="self">self</span>.<span class="ident">std_err_handle</span> <span class="op">=</span> <span class="ident">Handle::NULL</span>;
         <span class="self">self</span>.<span class="ident">std_err</span> <span class="op">=</span> <span class="prelude-val">None</span>;
 
         <span class="ident">memory_map</span>
@@ -1741,7 +1749,7 @@
 
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">RuntimeServices</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5652_4553_544e_5552</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
+    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision::V2_00</span>;
     <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
@@ -1850,7 +1858,7 @@
 
 <span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">BootServices</span> {
     <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x5652_4553_544f_4f42</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision</span>::<span class="ident">V2_00</span>;
+    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> <span class="op">=</span> <span class="ident">Revision::V2_00</span>;
     <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
     }
@@ -1883,7 +1891,7 @@
         <span class="ident">memory_type</span>: <span class="ident">MemoryType</span>,
         <span class="ident">page_count</span>: <span class="ident">usize</span>,
         <span class="ident">reference_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">physical_address</span> <span class="op">=</span> <span class="ident">reference_address</span>.<span class="ident">unwrap_or_default</span>();
         <span class="kw">unsafe</span> {
             (<span class="self">self</span>.<span class="ident">allocate_pages_</span>)(
@@ -1904,7 +1912,7 @@
     <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_memory_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MemoryMap</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory_map_size</span> <span class="op">=</span> <span class="number">0_usize</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory_map</span> <span class="op">=</span> <span class="ident">MemoryMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory_map</span> <span class="op">=</span> <span class="ident">MemoryMap::new</span>();
 
         <span class="kw">loop</span> {
             <span class="ident">memory_map</span>.<span class="ident">raw_map</span>.<span class="ident">resize</span>(<span class="ident">memory_map_size</span>, <span class="number">0</span>);
@@ -1923,12 +1931,12 @@
             };
             <span class="kw">match</span> <span class="ident">result</span> {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">break</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">Status</span>::<span class="ident">BufferTooSmall</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">Status::BufferTooSmall</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// Allow room for another entry since we have to reallocate the buffer</span>
                     <span class="ident">memory_map_size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">memory_map</span>.<span class="ident">descriptor_size</span>
                 }
                 <span class="comment">// We shouldn&#39;t run into any of the other errors listed in the spec.</span>
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Unexpected error from get_memory_map: {:?}&quot;</span>, <span class="ident">e</span>),
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;Unexpected error from get_memory_map: {:?}&quot;</span>, <span class="ident">e</span>),
             }
         }
 
@@ -1950,20 +1958,20 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_protocol</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">proto</span>::<span class="ident">Protocol</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_protocol</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">proto::Protocol</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">handle</span>: <span class="ident">Handle</span>,
         <span class="ident">agent_handle</span>: <span class="ident">Handle</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">null</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol</span> <span class="op">=</span> <span class="ident">core::ptr::null</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
         <span class="kw">unsafe</span> {
             (<span class="self">self</span>.<span class="ident">open_protocol_</span>)(
                 <span class="ident">handle</span>,
-                <span class="kw-2">&amp;</span><span class="ident">T</span>::<span class="ident">PROTOCOL_ID</span>,
+                <span class="kw-2">&amp;</span><span class="ident">T::PROTOCOL_ID</span>,
                 ((<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">protocol</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span>).<span class="ident">cast</span>(),
                 <span class="ident">agent_handle</span>,
-                <span class="ident">Handle</span>::<span class="ident">NULL</span>,
-                <span class="ident">OpenProtocolAttributes</span>::<span class="ident">Get</span>,
+                <span class="ident">Handle::NULL</span>,
+                <span class="ident">OpenProtocolAttributes::Get</span>,
             )
             .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(<span class="ident">protocol</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
@@ -2010,7 +2018,7 @@
 
 <span class="kw">impl</span> <span class="ident">GUID</span> {
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_possible_truncation</span>)]</span>
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
         <span class="ident">GUID</span>(
             (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">96</span>) <span class="kw">as</span> <span class="ident">u32</span>,
             (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">80</span>) <span class="kw">as</span> <span class="ident">u16</span>,
@@ -2022,7 +2030,7 @@
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">GUID</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="ident">n</span>)
+        <span class="ident">GUID::from</span>(<span class="ident">n</span>)
     }
 }
 
@@ -2032,21 +2040,21 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_from_u128</span>() {
-        <span class="kw">let</span> <span class="ident">guid</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0x01020304_0506_0708_0910_111213141516</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">guid</span>.<span class="number">0</span>, <span class="number">0x0102_0304</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">guid</span>.<span class="number">1</span>, <span class="number">0x0506</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">guid</span>.<span class="number">2</span>, <span class="number">0x0708</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">guid</span>.<span class="number">3</span>, <span class="kw-2">*</span><span class="string">b&quot;\x09\x10\x11\x12\x13\x14\x15\x16&quot;</span>);
+        <span class="kw">let</span> <span class="ident">guid</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0x01020304_0506_0708_0910_111213141516</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">0</span>, <span class="number">0x0102_0304</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">1</span>, <span class="number">0x0506</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">2</span>, <span class="number">0x0708</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">3</span>, <span class="kw-2">*</span><span class="string">b&quot;\x09\x10\x11\x12\x13\x14\x15\x16&quot;</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_equality</span>() {
-        <span class="kw">let</span> <span class="ident">guid_a</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
-        <span class="kw">let</span> <span class="ident">guid_b</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
-        <span class="kw">let</span> <span class="ident">guid_c</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0x028c338c_0b14_4687_9ad7_14cba520b645</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_b</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_c</span>);
-        <span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">guid_b</span>, <span class="ident">guid_c</span>);
+        <span class="kw">let</span> <span class="ident">guid_a</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
+        <span class="kw">let</span> <span class="ident">guid_b</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
+        <span class="kw">let</span> <span class="ident">guid_c</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0x028c338c_0b14_4687_9ad7_14cba520b645</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_b</span>);
+        <span class="macro">assert_ne!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_c</span>);
+        <span class="macro">assert_ne!</span>(<span class="ident">guid_b</span>, <span class="ident">guid_c</span>);
     }
 }
 
@@ -2056,14 +2064,14 @@
     <span class="ident">vendor_table</span>: <span class="ident">usize</span>,
 }
 
-<span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
+<span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
 <span class="kw">impl</span> <span class="ident">ConfigurationTable</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_20_GUID</span>:    <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0x8868e871_e4f1_11d3_bc22_0080c73c8881</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_GUID</span>:       <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xeb9d2d30_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SAL_SYSTEM_GUID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xeb9d2d32_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS_GUID</span>:     <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xeb9d2d31_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS3_GUID</span>:    <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xf2fd1544_9794_4a2c_992e_e5bbcf20e394</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MPS_GUID</span>:        <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0xeb9d2d2f_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_20_GUID</span>:    <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0x8868e871_e4f1_11d3_bc22_0080c73c8881</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_GUID</span>:       <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d30_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SAL_SYSTEM_GUID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d32_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS_GUID</span>:     <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d31_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS3_GUID</span>:    <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xf2fd1544_9794_4a2c_992e_e5bbcf20e394</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MPS_GUID</span>:        <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d2f_2d88_11d3_9a16_0090273fc14d</span>);
     <span class="comment">// TODO: ... more defined in sect. 4.6</span>
 }
 
@@ -2090,7 +2098,7 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">MemoryMap</span> {
-            <span class="ident">raw_map</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
+            <span class="ident">raw_map</span>: <span class="ident">Vec::new</span>(),
             <span class="ident">key</span>: <span class="number">0</span>,
             <span class="ident">descriptor_size</span>: <span class="number">0</span>,
             <span class="ident">descriptor_version</span>: <span class="number">0</span>,
@@ -2103,26 +2111,26 @@
         <span class="self">self</span>.<span class="ident">verify_map</span>();
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_panics_doc</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_version</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">MIN_VERSION</span>,
+        <span class="macro">assert!</span>(
+            <span class="self">self</span>.<span class="ident">descriptor_version</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span><span class="ident">::MIN_VERSION</span>,
             <span class="string">&quot;Descriptor version {} less than required version {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">descriptor_version</span>,
-            <span class="self">Self</span>::<span class="ident">MIN_VERSION</span>,
+            <span class="self">Self</span><span class="ident">::MIN_VERSION</span>,
         );
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_panics_doc</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_descriptor_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
             <span class="string">&quot;Descriptor size {} shorter than required {} bytes&quot;</span>,
             <span class="self">self</span>.<span class="ident">descriptor_size</span>,
             <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>(),
         );
 
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">%</span> <span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Descriptor size {} not a multiple of the MemoryDescriptor struct alignment \
              {}&quot;</span>,
@@ -2131,16 +2139,16 @@
         );
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">missing_panics_doc</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="self">self</span>.<span class="ident">descriptor_size</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Memory map total size {} is not a multiple of descriptor size {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>(),
             <span class="self">self</span>.<span class="ident">descriptor_size</span>,
         );
 
-        <span class="macro">assert</span><span class="macro">!</span>(
+        <span class="macro">assert!</span>(
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>().<span class="ident">align_offset</span>(<span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span>()) <span class="op">=</span><span class="op">=</span> <span class="number">0</span>,
             <span class="string">&quot;Memory map at {:p} not aligned properly for dereferencing. Required: {:x}&quot;</span>,
             <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>(),
@@ -2150,7 +2158,7 @@
 
     <span class="doccomment">/// Iterate over memory descriptors contained in the map.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">MemoryDescriptor</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_ptr_alignment</span>)]</span>
+        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_ptr_alignment</span>)]</span>
 
         <span class="comment">// SAFETY: We check the pointer alignment in the verify() call. Since</span>
         <span class="comment">// MemoryDescriptor is only composed of unsigned integer types, it is safe to</span>
@@ -2165,11 +2173,11 @@
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">MemoryMap</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span>::<span class="ident">new</span>()
+        <span class="self">Self</span><span class="ident">::new</span>()
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MemoryType</span>(<span class="ident">u32</span>) {
         <span class="doccomment">/// Memory that is never available for use</span>
         <span class="ident">Reserved</span>            <span class="op">=</span> <span class="number">0</span>,
@@ -2213,7 +2221,7 @@
     }
 }
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AllocateType</span>(<span class="ident">u32</span>) {
         <span class="ident">AnyAddress</span>   <span class="op">=</span> <span class="number">0</span>,
         <span class="ident">MaxAddress</span>   <span class="op">=</span> <span class="number">1</span>,
@@ -2221,7 +2229,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryAttributes</span>(<span class="ident">u64</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">supports_uncacheable</span>,
         [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">supports_write_combining</span>,
@@ -2241,7 +2249,7 @@
 }
 
 
-<span class="macro">c_enum</span><span class="macro">!</span> {
+<span class="macro">c_enum!</span> {
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>) {
         <span class="ident">ByHandle</span>  <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>,
         <span class="ident">Get</span>       <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>,
@@ -2255,9 +2263,9 @@
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">proto</span> {
     <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Handle</span>, <span class="ident">MemoryType</span>, <span class="prelude-ty">Result</span>, <span class="ident">Status</span>, <span class="ident">SystemTable</span>, <span class="ident">GUID</span>};
-    <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ffi</span>::<span class="ident">c_void</span>;
-    <span class="kw">use</span> <span class="ident">tartan_bitfield</span>::<span class="ident">bitfield</span>;
-    <span class="kw">use</span> <span class="ident">tartan_c_enum</span>::<span class="ident">c_enum</span>;
+    <span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
+    <span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+    <span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
 
     <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Protocol</span> {
         <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span>;
@@ -2328,7 +2336,7 @@
     }
 
     <span class="kw">impl</span> <span class="ident">Protocol</span> <span class="kw">for</span> <span class="ident">LoadedImage</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0x5b1b31a1_9562_11d2_8e3f_00a0c969723b</span>);
+        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0x5b1b31a1_9562_11d2_8e3f_00a0c969723b</span>);
     }
 
     <span class="kw">impl</span> <span class="ident">LoadedImage</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
@@ -2348,7 +2356,7 @@
     }
 
     <span class="kw">impl</span> <span class="ident">Protocol</span> <span class="kw">for</span> <span class="ident">SimpleFileSystem</span> {
-        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID</span>::<span class="ident">from</span>(<span class="number">0x964e5b22_6459_11d2_8e39_00a0c969723b</span>);
+        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> <span class="op">=</span> <span class="ident">GUID::from</span>(<span class="number">0x964e5b22_6459_11d2_8e39_00a0c969723b</span>);
     }
 
     <span class="kw">impl</span> <span class="ident">SimpleFileSystem</span> {
@@ -2365,8 +2373,8 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// # Panics</span>
         <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open_volume</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">root</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">null</span>::<span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span>();
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open_volume</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">root</span> <span class="op">=</span> <span class="ident">core::ptr::null</span>::<span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span>();
             <span class="kw">unsafe</span> {
                 (<span class="self">self</span>.<span class="ident">open_volume_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">root</span>).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="ident">root</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
@@ -2438,11 +2446,11 @@
             <span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">u16</span>],
             <span class="ident">mode</span>: <span class="ident">FileMode</span>,
             <span class="ident">attributes</span>: <span class="ident">FileAttributes</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">path</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;Path cannot be empty&quot;</span>);
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">path</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span>, <span class="string">&quot;Path must be null-terminated&quot;</span>);
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">path</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;Path cannot be empty&quot;</span>);
+            <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">path</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span>, <span class="string">&quot;Path must be null-terminated&quot;</span>);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">null</span>::<span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">core::ptr::null</span>::<span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span>();
             <span class="kw">unsafe</span> {
                 (<span class="self">self</span>.<span class="ident">open_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">file</span>, <span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">mode</span>, <span class="ident">attributes</span>)
                     .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
@@ -2457,7 +2465,7 @@
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
             <span class="kw">unsafe</span> {
                 <span class="comment">// The UEFI spec says this cannot fail</span>
-                <span class="macro">assert</span><span class="macro">!</span>((<span class="self">self</span>.<span class="ident">close_</span>)(<span class="self">self</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">Status</span>::<span class="ident">Success</span>);
+                <span class="macro">assert!</span>((<span class="self">self</span>.<span class="ident">close_</span>)(<span class="self">self</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">Status::Success</span>);
             }
         }
 
@@ -2484,7 +2492,7 @@
         <span class="doccomment">///   * [`Status::BufferTooSmall`] if this is a directory and the next entry could</span>
         <span class="doccomment">///     not fit into the buffer.</span>
         <span class="doccomment">///   * [`Status::DeviceError`] if the current position was already EOF.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">len</span>();
             <span class="kw">unsafe</span> {
                 (<span class="self">self</span>.<span class="ident">read_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">count</span>, <span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>())
@@ -2503,7 +2511,7 @@
         <span class="doccomment">/// device errors or resource exhaustion. It addition, it will return:</span>
         <span class="doccomment">///    * `Status::Unsupported` if this is a directory.</span>
         <span class="doccomment">///    * `Status::AccessDenied` if the file is in read-only mode.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">len</span>();
             <span class="kw">unsafe</span> {
                 (<span class="self">self</span>.<span class="ident">write_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">count</span>, <span class="ident">buffer</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>()).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
@@ -2517,7 +2525,7 @@
         <span class="doccomment">/// This function will fail with:</span>
         <span class="doccomment">///    * [`Status::DeviceError`] if the file has been deleted.</span>
         <span class="doccomment">///    * [`Status::Unsupported`] if this is a directory.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">result</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Status</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">position</span> <span class="op">=</span> <span class="number">0_u64</span>;
             <span class="kw">unsafe</span> {
                 (<span class="self">self</span>.<span class="ident">get_position_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">position</span>).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
@@ -2551,7 +2559,7 @@
     }
 
 
-    <span class="macro">c_enum</span><span class="macro">!</span> {
+    <span class="macro">c_enum!</span> {
         <span class="doccomment">/// Controls how a file is opened.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// The UEFI spec defines separate read/write/create flags, but they are only</span>
@@ -2566,7 +2574,7 @@
         }
     }
 
-    <span class="macro">bitfield</span><span class="macro">!</span> {
+    <span class="macro">bitfield!</span> {
         <span class="doccomment">/// Basic properties of a file or directory as defined by the FAT format.</span>
         <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FileAttributes</span>(<span class="ident">u64</span>) {
             <span class="doccomment">/// Indicates the file should not be written.</span>
@@ -2583,5 +2591,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

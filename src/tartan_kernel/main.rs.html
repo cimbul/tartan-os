@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/main.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>main.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_kernel/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_kernel/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -197,28 +197,13 @@
 <span id="194">194</span>
 <span id="195">195</span>
 <span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>, <span class="ident">no_main</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_error_handler</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">global_asm</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">lang_items</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">link_args</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">naked_functions</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">panic_info_message</span>)]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">rustc_private</span>)]</span>
@@ -226,9 +211,9 @@
 
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
 
-<span class="kw">use</span> <span class="ident">alloc</span>::<span class="ident">string</span>::<span class="ident">String</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">Write</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">MaybeUninit</span>;
+<span class="kw">use</span> <span class="ident">alloc::string::String</span>;
+<span class="kw">use</span> <span class="ident">core::fmt::Write</span>;
+<span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
 <span class="kw">use</span> <span class="ident">tartan_serial</span>::{<span class="ident">LineMode</span>, <span class="ident">UARTWriteAdapter</span>, <span class="ident">UART</span>};
 
 
@@ -242,7 +227,7 @@
 <span class="comment">// Reserve space for the initial stack in the BSS section of the executable image, which</span>
 <span class="comment">// will be allocated by the loader.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>)]</span>
-<span class="macro">global_asm</span><span class="macro">!</span>(
+<span class="macro">global_asm!</span>(
     <span class="string">&quot;
     .section .bss
     .balign 16
@@ -270,7 +255,7 @@ stack_top:
 <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">_start</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
     <span class="kw">unsafe</span> {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
-        <span class="macro">asm</span><span class="macro">!</span>(
+        <span class="macro">asm!</span>(
             <span class="string">&quot;
             mov esp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -282,7 +267,7 @@ stack_top:
         );
 
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
-        <span class="macro">asm</span><span class="macro">!</span>(
+        <span class="macro">asm!</span>(
             <span class="string">&quot;
             mov rsp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -294,7 +279,7 @@ stack_top:
         );
 
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
-        <span class="macro">asm</span><span class="macro">!</span>(
+        <span class="macro">asm!</span>(
             <span class="string">&quot;
             ldr sp, =stack_top  // Set up initial stack
             blx {}              // Call real main function
@@ -305,7 +290,7 @@ stack_top:
         );
 
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>)]</span>
-        <span class="macro">asm</span><span class="macro">!</span>(
+        <span class="macro">asm!</span>(
             <span class="string">&quot;
             ldr x0, =stack_top  // Set up initial stack
             mov sp, x0
@@ -320,27 +305,27 @@ stack_top:
 }
 
 <span class="kw">fn</span> <span class="ident">kernel_main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
-    <span class="ident">arch</span>::<span class="ident">initialize</span>();
+    <span class="ident">arch::initialize</span>();
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial</span> <span class="op">=</span> <span class="ident">find_uart</span>();
     <span class="ident">serial</span>.<span class="ident">reset</span>();
-    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode</span>::<span class="ident">default</span>());
+    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">UARTWriteAdapter</span>(<span class="ident">serial</span>);
 
-    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;Hello, world!&quot;</span>).<span class="ident">unwrap</span>();
+    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Hello, world!&quot;</span>).<span class="ident">unwrap</span>();
 
     <span class="kw">unsafe</span> {
-        <span class="ident">ALLOCATOR</span>.<span class="ident">init</span>(<span class="ident">allocator</span>::<span class="ident">BlockList</span>::<span class="ident">from_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HEAP</span>));
+        <span class="ident">ALLOCATOR</span>.<span class="ident">init</span>(<span class="ident">allocator::BlockList::from_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HEAP</span>));
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap_message</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="string">&quot;This came from...&quot;</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap_message</span> <span class="op">=</span> <span class="ident">String::from</span>(<span class="string">&quot;This came from...&quot;</span>);
     <span class="ident">heap_message</span>.<span class="ident">push_str</span>(<span class="string">&quot;the heap!&quot;</span>);
-    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">heap_message</span>).<span class="ident">unwrap</span>();
+    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">heap_message</span>).<span class="ident">unwrap</span>();
 
-    <span class="ident">cpu</span>::<span class="ident">print_state</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
-    <span class="ident">pci</span>::<span class="ident">print_devices</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
+    <span class="ident">cpu::print_state</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
+    <span class="ident">pci::print_devices</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
 
-    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;Done doing anything useful.&quot;</span>).<span class="ident">unwrap</span>();
+    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Done doing anything useful.&quot;</span>).<span class="ident">unwrap</span>();
 
     <span class="kw">loop</span> {
         <span class="kw">unsafe</span> {
@@ -352,12 +337,12 @@ stack_top:
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span>
 <span class="kw">fn</span> <span class="ident">find_uart</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">UART</span> {
-    <span class="ident">tartan_serial</span>::<span class="ident">model_16550</span>::<span class="ident">UART16550</span>::<span class="ident">new</span>(<span class="number">0x3f8</span>)
+    <span class="ident">tartan_serial::model_16550::UART16550::new</span>(<span class="number">0x3f8</span>)
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>))]</span>
 <span class="kw">fn</span> <span class="ident">find_uart</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">UART</span> {
-    <span class="kw">use</span> <span class="ident">tartan_serial</span>::<span class="ident">model_pl011</span>::{<span class="ident">RegisterBlock</span>, <span class="ident">UARTPL011</span>};
+    <span class="kw">use</span> <span class="ident">tartan_serial::model_pl011</span>::{<span class="ident">RegisterBlock</span>, <span class="ident">UARTPL011</span>};
 
     <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
     <span class="ident">UARTPL011</span> {
@@ -368,60 +353,47 @@ stack_top:
 
 
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">global_allocator</span>)]</span>
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">ALLOCATOR</span>: <span class="ident">allocator</span>::<span class="ident">Allocator</span> <span class="op">=</span> <span class="ident">allocator</span>::<span class="ident">Allocator</span>::<span class="ident">uninitialized</span>();
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">ALLOCATOR</span>: <span class="ident">allocator::Allocator</span> <span class="op">=</span> <span class="ident">allocator::Allocator::uninitialized</span>();
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">HEAP</span>: [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>; <span class="number">0x8000</span>] <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="ident">uninit</span>(); <span class="number">0x8000</span>];
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">HEAP</span>: [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>; <span class="number">0x8000</span>] <span class="op">=</span> [<span class="ident">MaybeUninit::uninit</span>(); <span class="number">0x8000</span>];
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
 <span class="attribute">#[<span class="ident">alloc_error_handler</span>]</span>
-<span class="kw">fn</span> <span class="ident">alloc_error</span>(<span class="ident">layout</span>: <span class="ident">core</span>::<span class="ident">alloc</span>::<span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
-    <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Allocating {} bytes failed&quot;</span>, <span class="ident">layout</span>.<span class="ident">size</span>());
+<span class="kw">fn</span> <span class="ident">alloc_error</span>(<span class="ident">layout</span>: <span class="ident">core::alloc::Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
+    <span class="macro">panic!</span>(<span class="string">&quot;Allocating {} bytes failed&quot;</span>, <span class="ident">layout</span>.<span class="ident">size</span>());
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
 <span class="attribute">#[<span class="ident">panic_handler</span>]</span>
-<span class="kw">fn</span> <span class="ident">panic_handler</span>(<span class="ident">info</span>: <span class="kw-2">&amp;</span><span class="ident">core</span>::<span class="ident">panic</span>::<span class="ident">PanicInfo</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
+<span class="kw">fn</span> <span class="ident">panic_handler</span>(<span class="ident">info</span>: <span class="kw-2">&amp;</span><span class="ident">core::panic::PanicInfo</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
     <span class="comment">// Not much we can do with Err results in a panic handler</span>
     <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_must_use</span>)]</span>
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial</span> <span class="op">=</span> <span class="ident">find_uart</span>();
     <span class="ident">serial</span>.<span class="ident">reset</span>();
-    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode</span>::<span class="ident">default</span>());
+    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">UARTWriteAdapter</span>(<span class="ident">serial</span>);
 
-    <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;!!! Panic !!!&quot;</span>);
+    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;!!! Panic !!!&quot;</span>);
     <span class="kw">match</span> <span class="ident">info</span>.<span class="ident">location</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">location</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;Location: {}&quot;</span>, <span class="ident">location</span>),
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;No location information&quot;</span>),
+        <span class="prelude-val">Some</span>(<span class="ident">location</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Location: {}&quot;</span>, <span class="ident">location</span>),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;No location information&quot;</span>),
     };
     <span class="kw">match</span> <span class="ident">info</span>.<span class="ident">message</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">arguments</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>, <span class="kw-2">*</span><span class="ident">arguments</span>),
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;No additional message&quot;</span>),
+        <span class="prelude-val">Some</span>(<span class="ident">arguments</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">core::fmt::write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>, <span class="kw-2">*</span><span class="ident">arguments</span>),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;No additional message&quot;</span>),
     };
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">empty_loop</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::empty_loop</span>)]</span>
     <span class="kw">loop</span> {}
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
 <span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;eh_personality&quot;</span>]</span>
 <span class="kw">fn</span> <span class="ident">eh_personality</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">empty_loop</span>)]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::empty_loop</span>)]</span>
     <span class="kw">loop</span> {}
 }
-
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_attributes</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">all</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>), <span class="ident">link_args</span> <span class="op">=</span> <span class="string">&quot;-nostartfiles&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">all</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>), <span class="ident">link_args</span> <span class="op">=</span> <span class="string">&quot;-lSystem&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(
-    <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>),
-    <span class="ident">link_args</span> <span class="op">=</span> <span class="string">&quot;--image-base=0x100000&quot;</span>
-)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(
-    <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;tartan&quot;</span>, <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>)),
-    <span class="ident">link_args</span> <span class="op">=</span> <span class="string">&quot;--image-base=0x40000000&quot;</span>
-)]</span>
-<span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {}
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

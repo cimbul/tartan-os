@@ -1,10 +1,10 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Define structures that wrap a number with accessors for certain bit ranges."><meta name="keywords" content="rust, rustlang, rust-lang, tartan_bitfield"><title>tartan_bitfield - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../tartan_bitfield/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate tartan_bitfield</p><div class="block version"><p>Version 0.1.0</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all tartan_bitfield's items</p></a><div class="block items"><ul><li><a href="#macros">Macros</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class="location"></p><div id="sidebar-vars" data-name="tartan_bitfield" data-ty="mod" data-relpath="../"></div></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="">tartan_bitfield</a></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/tartan_bitfield/lib.rs.html#1-618" title="goto source code">[src]</a></span></h1><div class="docblock"><p>Define structures that wrap a number with accessors for certain bit ranges.</p>
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../tartan_bitfield/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate tartan_bitfield</p><div class="block version"><p>Version 0.1.0</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all tartan_bitfield's items</p></a><div class="block items"><ul><li><a href="#macros">Macros</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><p class="location"></p><div id="sidebar-vars" data-name="tartan_bitfield" data-ty="mod" data-relpath="../"></div><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="">tartan_bitfield</a><button id="copy-path" onclick="copy_path(this)"><img src="../clipboard.svg" width="19" height="18" alt="Copy item import"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/tartan_bitfield/lib.rs.html#1-618" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Define structures that wrap a number with accessors for certain bit ranges.</p>
 <h1 id="example" class="section-header"><a href="#example">Example</a></h1>
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="comment">// The structure will be a wrapper for a u32 value</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Example</span>(<span class="ident">u32</span>) {
         <span class="comment">// Accessors for field `a` will refer to the first four least significant</span>
@@ -37,7 +37,7 @@
     }
 }
 
-<span class="macro">bitfield</span><span class="macro">!</span> {
+<span class="macro">bitfield!</span> {
     <span class="comment">// All accessors on this field use booleans and refer to single bits</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SubFields</span>(<span class="ident">u8</span>) {
         [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">zero</span>,
@@ -52,38 +52,38 @@
 
 <span class="comment">// The struct can be initialized with a u32 value</span>
 <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">Example</span>(<span class="number">0xfa84_9e1b</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">a</span>(), <span class="number">0xb_u8</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">b</span>(), <span class="number">0x278_u16</span>);  <span class="comment">// Private, but still can be used within the module</span>
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">c</span>(), <span class="number">0x4_u8</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">d</span>(), <span class="bool-val">true</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">e</span>(), <span class="ident">SubFields</span>(<span class="number">0x3e_u8</span>));
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">e</span>().<span class="ident">zero</span>(), <span class="bool-val">false</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>.<span class="ident">e</span>().<span class="ident">five</span>(), <span class="bool-val">true</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">a</span>(), <span class="number">0xb_u8</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">b</span>(), <span class="number">0x278_u16</span>);  <span class="comment">// Private, but still can be used within the module</span>
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">c</span>(), <span class="number">0x4_u8</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">d</span>(), <span class="bool-val">true</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">e</span>(), <span class="ident">SubFields</span>(<span class="number">0x3e_u8</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">e</span>().<span class="ident">zero</span>(), <span class="bool-val">false</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>.<span class="ident">e</span>().<span class="ident">five</span>(), <span class="bool-val">true</span>);
 
 <span class="comment">// It can also be converted Into and From its underlying representation</span>
 <span class="kw">let</span> <span class="ident">n</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">into</span>();
 <span class="kw">let</span> <span class="ident">y</span>: <span class="ident">Example</span> <span class="op">=</span> <span class="ident">n</span>.<span class="ident">into</span>();
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">n</span>, <span class="number">0xfa84_9e1b</span>);
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">x</span>, <span class="ident">y</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">n</span>, <span class="number">0xfa84_9e1b</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">x</span>, <span class="ident">y</span>);
 
 <span class="comment">// Setters are all prefixed with `set_`. They have the same visibility as the getters.</span>
-<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">z</span> <span class="op">=</span> <span class="ident">Example</span>::<span class="ident">default</span>();
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">z</span> <span class="op">=</span> <span class="ident">Example::default</span>();
 <span class="ident">z</span>.<span class="ident">set_a</span>(<span class="number">0xb</span>);
 <span class="ident">z</span>.<span class="ident">set_b</span>(<span class="number">0x278</span>);
 <span class="ident">z</span>.<span class="ident">set_c</span>(<span class="number">0x4</span>);
 <span class="ident">z</span>.<span class="ident">set_d</span>(<span class="bool-val">true</span>);
 <span class="ident">z</span>.<span class="ident">set_e</span>(<span class="ident">SubFields</span>(<span class="number">0x3e</span>));
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">z</span>, <span class="ident">Example</span>(<span class="number">0xfa04_9e0b</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">z</span>, <span class="ident">Example</span>(<span class="number">0xfa04_9e0b</span>));
 
 <span class="comment">// Reserved ranges influence equality, and they are all zero on `z`.</span>
-<span class="macro">assert_ne</span><span class="macro">!</span>(<span class="ident">z</span>, <span class="ident">x</span>);</pre></div>
-</div><h2 id="macros" class="section-header"><a href="#macros">Macros</a></h2>
+<span class="macro">assert_ne!</span>(<span class="ident">z</span>, <span class="ident">x</span>);</pre></div>
+</div></details><h2 id="macros" class="section-header"><a href="#macros">Macros</a></h2>
 <table><tr class="module-item"><td><a class="macro" href="macro.bitfield.html" title="tartan_bitfield::bitfield macro">bitfield</a></td><td class="docblock-short"><p>Define a structure that wraps a number with accessors for certain bit ranges.</p>
 </td></tr><tr class="module-item"><td><a class="macro" href="macro.bitfield_accessors.html" title="tartan_bitfield::bitfield_accessors macro">bitfield_accessors</a></td><td class="docblock-short"><p>Define getters and setters for certain bit ranges. The containing type must
-implement the <a href="../tartan_bitfield/trait.Bitfield.html" title="Bitfield"><code>Bitfield</code></a> trait.</p>
-</td></tr><tr class="module-item"><td><a class="macro" href="macro.bitfield_without_debug.html" title="tartan_bitfield::bitfield_without_debug macro">bitfield_without_debug</a></td><td class="docblock-short"><p>Same as the <a href="../tartan_bitfield/macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro without a <a href="https://doc.rust-lang.org/nightly/core/fmt/macros/derive.Debug.html" title="Debug"><code>Debug</code></a> implementation provided.</p>
+implement the <a href="trait.Bitfield.html" title="Bitfield"><code>Bitfield</code></a> trait.</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.bitfield_without_debug.html" title="tartan_bitfield::bitfield_without_debug macro">bitfield_without_debug</a></td><td class="docblock-short"><p>Same as the <a href="macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro without a <a href="https://doc.rust-lang.org/nightly/core/fmt/macros/derive.Debug.html" title="Debug"><code>Debug</code></a> implementation provided.</p>
 </td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
-<table><tr class="module-item"><td><a class="trait" href="trait.Bitfield.html" title="tartan_bitfield::Bitfield trait">Bitfield</a></td><td class="docblock-short"><p>Marker trait implemented by types defined with the <a href="../tartan_bitfield/macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro.</p>
+<table><tr class="module-item"><td><a class="trait" href="trait.Bitfield.html" title="tartan_bitfield::Bitfield trait">Bitfield</a></td><td class="docblock-short"><p>Marker trait implemented by types defined with the <a href="macro.bitfield.html" title="bitfield"><code>bitfield</code></a> macro.</p>
 </td></tr><tr class="module-item"><td><a class="trait" href="trait.OverflowingShl.html" title="tartan_bitfield::OverflowingShl trait">OverflowingShl</a></td><td class="docblock-short"><p>A type with an overflowing left shift operation. Also adds a saturating version.</p>
 </td></tr><tr class="module-item"><td><a class="trait" href="trait.OverflowingShr.html" title="tartan_bitfield::OverflowingShr trait">OverflowingShr</a></td><td class="docblock-short"><p>A type with an overflowing right shift operation. Also adds a saturating version.</p>
 </td></tr><tr class="module-item"><td><a class="trait" href="trait.TruncateInto.html" title="tartan_bitfield::TruncateInto trait">TruncateInto</a></td><td class="docblock-short"><p>A type whose values can be truncated into another type. This is more explicit than
@@ -94,5 +94,5 @@ implement the <a href="../tartan_bitfield/trait.Bitfield.html" title="Bitfield">
 least significant bit of the result.</p>
 </td></tr><tr class="module-item"><td><a class="fn" href="fn.set_bit.html" title="tartan_bitfield::set_bit fn">set_bit</a></td><td class="docblock-short"><p>Create a copy of the value with a single bit modified.</p>
 </td></tr><tr class="module-item"><td><a class="fn" href="fn.set_bits.html" title="tartan_bitfield::set_bits fn">set_bits</a></td><td class="docblock-short"><p>Create a copy of the value with a subset of bits updated based on the passed value.</p>
-</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="tartan_bitfield" data-search-js="../search-index.js"></div>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="tartan_bitfield" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
     <script src="../main.js"></script></body></html>
