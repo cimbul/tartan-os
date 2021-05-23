@@ -1,0 +1,8 @@
+# docker compose build --no-cache
+# docker compose run --rm dev
+version: "3"
+services:
+  dev:
+    build: .
+    volumes:
+      - .:/work
