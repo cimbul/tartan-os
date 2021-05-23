@@ -26,8 +26,6 @@ jobs:
       run: |
         cargo doc --workspace --no-deps
         cp doc/crate-redirect.html target/doc/index.html
-    - name: Build (Linux)
-      run: cargo build --verbose --workspace
     - name: Run tests (Linux)
       run: cargo test --verbose --workspace
     - name: Build (i686)

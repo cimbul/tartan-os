@@ -10,7 +10,6 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo doc --document-private-items
 
-cargo build --workspace
 cargo test --workspace
 
 # Cross-compiling can take a while, especially if it has to build the standard library.
