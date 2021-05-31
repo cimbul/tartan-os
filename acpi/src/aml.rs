@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 
 
 pub mod parse;
+pub mod interpreter;
 
 
 /// An ACPI table that contains AML, such as the DSDT or an SSDT.
@@ -56,7 +57,7 @@ pub mod name {
     /// (except at the beginning).
     ///
     /// The ASL compiler uses underscores to pad the end of names shorter than 4 chars.
-    #[derive(Clone, Copy, PartialEq, Eq)]
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub struct NameSeg(pub [u8; 4]);
 
     impl fmt::Display for NameSeg {
@@ -319,7 +320,7 @@ pub mod data {
         pub initializer: &'a [u8],
     }
 
-    /// Group of related data elements, optionally inititalized in whole or in part.
+    /// Group of related data elements, optionally initialized in whole or in part.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Package<'a> {
         pub count: u8,
