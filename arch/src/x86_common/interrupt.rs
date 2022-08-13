@@ -1,6 +1,7 @@
 //! Support for managing interrupts.
 
 use crate::model_specific_register_access;
+use core::arch::asm;
 use tartan_bitfield::bitfield;
 use tartan_c_enum::c_enum;
 

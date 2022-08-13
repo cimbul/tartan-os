@@ -1,5 +1,6 @@
 //! Processor feature detection with CPUID.
 
+use core::arch::asm;
 use tartan_bitfield::bitfield;
 
 

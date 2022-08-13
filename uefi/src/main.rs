@@ -2,7 +2,6 @@
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
-#![feature(asm)]
 #![feature(bench_black_box)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
@@ -46,7 +45,7 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
     unsafe {
         SYSTEM_TABLE = Some(system_table);
 
-        LOGGER.0 = Some(OutputStream::new(&*system_table.console_out.unwrap()));
+        LOGGER.0 = Some(OutputStream::new(system_table.console_out.unwrap()));
         log::set_logger(&LOGGER).unwrap();
         log::set_max_level(log::LevelFilter::max());
     }
@@ -60,7 +59,7 @@ fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Sta
 }
 
 fn efi_main_result(image_handle: Handle, system_table: &mut SystemTable) -> Result {
-    let mut out = OutputStream::new(&*system_table.console_out.unwrap());
+    let mut out = OutputStream::new(system_table.console_out.unwrap());
     writeln_result!(out, "Hello, world!\nWhat's up?")?;
 
     info!("Logging initialized");
@@ -236,7 +235,7 @@ unsafe fn read_struct<T: Default>(file: &File) -> core::result::Result<T, Status
     let mut result = T::default();
     let size = mem::size_of::<T>();
     let read_count = file.read(core::slice::from_raw_parts_mut(
-        (&mut result as *mut T).cast::<u8>(),
+        core::ptr::addr_of_mut!(result).cast::<u8>(),
         size,
     ))?;
     if read_count == size {

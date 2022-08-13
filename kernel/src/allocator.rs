@@ -295,7 +295,10 @@ mod test {
 
     #[test]
     fn test_align_up() {
-        let max_align = 1_usize.reverse_bits();
+        // Alignment must be a power of 2 while <= isize::MAX. This should be reasonable
+        // on all practical targets.
+        let max_align = 2_usize.reverse_bits();
+
         for &a in &[1, 2, 4, 8, 16, 32, 64, max_align] {
             assert_aligns_up(a, 0, 0);
         }

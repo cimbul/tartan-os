@@ -285,7 +285,7 @@ pub trait Table {
             "Signature mismatch. Expected {:x}, received {:x}",
             actual_signature,
             Self::SIGNATURE,
-        )
+        );
     }
 
     fn verify_revision(&self) {
@@ -295,7 +295,7 @@ pub trait Table {
             "Revision {} older than minimum supported revision {}",
             actual_revision,
             Self::MIN_REVISION,
-        )
+        );
     }
 
     fn verify_size(&self)
@@ -308,7 +308,7 @@ pub trait Table {
             "Header size {} was less than expected {} bytes",
             actual_size,
             size_of::<Self>(),
-        )
+        );
     }
 
     fn verify_crc32(&self) {
@@ -317,7 +317,7 @@ pub trait Table {
         let header = self.header();
         let size = header.header_size as usize;
         let start_address = (self as *const Self).cast::<u8>();
-        let crc_field_address = (&header.crc32 as *const u32).cast::<u8>();
+        let crc_field_address = core::ptr::addr_of!(header.crc32).cast::<u8>();
 
         let mut crc = CRCu32::crc32();
         unsafe {
@@ -346,7 +346,7 @@ pub trait Table {
             "Calculated CRC {:x} does not match listed value {:x}",
             actual_remainder,
             orig_remainder,
-        )
+        );
     }
 }
 
@@ -635,7 +635,7 @@ impl BootServices {
                 Ok(_) => break,
                 Err(Status::BufferTooSmall) => {
                     // Allow room for another entry since we have to reallocate the buffer
-                    memory_map_size += memory_map.descriptor_size
+                    memory_map_size += memory_map.descriptor_size;
                 }
                 // We shouldn't run into any of the other errors listed in the spec.
                 Err(e) => panic!("Unexpected error from get_memory_map: {:?}", e),
@@ -670,7 +670,7 @@ impl BootServices {
             (self.open_protocol_)(
                 handle,
                 &T::PROTOCOL_ID,
-                ((&mut protocol) as *mut *const T).cast(),
+                core::ptr::addr_of_mut!(protocol).cast(),
                 agent_handle,
                 Handle::NULL,
                 OpenProtocolAttributes::Get,
@@ -859,7 +859,7 @@ impl MemoryMap {
     }
 
     /// Iterate over memory descriptors contained in the map.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &MemoryDescriptor> + 'a {
+    pub fn iter(&self) -> impl Iterator<Item = &MemoryDescriptor> {
         #![allow(clippy::cast_ptr_alignment)]
 
         // SAFETY: We check the pointer alignment in the verify() call. Since

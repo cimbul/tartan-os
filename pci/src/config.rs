@@ -309,7 +309,7 @@ impl BaseAddressRegister {
     pub fn address_u64(self, next_register: u32) -> u64 {
         let mut address = u64::from(self.address_u32());
         if self.address_width() == AddressWidth::U64 {
-            address &= u64::from(next_register) << 32
+            address &= u64::from(next_register) << 32;
         }
         address
     }

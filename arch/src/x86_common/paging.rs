@@ -64,9 +64,11 @@ impl ControlRegister3 {
     /// # Panics
     /// Panics if the new address is not 4K-aligned.
     pub fn set_address(&mut self, value: usize) {
-        if value & !Self::ADDRESS_MASK != 0 {
-            panic!("Invalid page table address {:#x}. Must be 4K aligned.", value);
-        }
+        assert!(
+            value & Self::ADDRESS_MASK == 0,
+            "Invalid page table address {:#x}. Must be 4K aligned.",
+            value
+        );
         self.0 &= !Self::ADDRESS_MASK;
         self.0 |= value;
     }

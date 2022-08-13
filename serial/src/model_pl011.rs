@@ -110,11 +110,11 @@ impl RegisterBlock {
     }
 
     fn push_tx_queue(&mut self, value: u8) {
-        self.write(0, value)
+        self.write(0, value);
     }
 
     fn clear_rx_status(&mut self) {
-        self.write(0x4, 0_u8)
+        self.write(0x4, 0_u8);
     }
 
     fn flags(&self) -> FlagRegister {
@@ -127,7 +127,7 @@ impl RegisterBlock {
     }
 
     fn set_infrared_low_power_divisor(&mut self, value: u8) {
-        self.write(0x20, value)
+        self.write(0x20, value);
     }
 
     fn divisor(&self) -> u32 {
@@ -157,7 +157,7 @@ impl RegisterBlock {
 
     // NOTE: Requires disabling the UART
     fn set_line_control(&mut self, value: LineControlRegister) {
-        self.write(0x2c, value)
+        self.write(0x2c, value);
     }
 
     fn control(&self) -> ControlRegister {
@@ -166,7 +166,7 @@ impl RegisterBlock {
 
     // NOTE: Requires disabling AND flushing the UART
     fn set_control(&mut self, value: ControlRegister) {
-        self.write(0x30, value)
+        self.write(0x30, value);
     }
 
     #[allow(dead_code)]
@@ -175,7 +175,7 @@ impl RegisterBlock {
     }
 
     fn set_fifo_control(&mut self, value: FIFOControlRegister) {
-        self.write(0x34, value)
+        self.write(0x34, value);
     }
 
     #[allow(dead_code)]
@@ -184,7 +184,7 @@ impl RegisterBlock {
     }
 
     fn set_interrupt_mask(&mut self, value: InterruptFlags) {
-        self.write(0x38, value)
+        self.write(0x38, value);
     }
 
     #[allow(dead_code)]
@@ -198,7 +198,7 @@ impl RegisterBlock {
     }
 
     fn clear_interrupt_status(&mut self, value: InterruptFlags) {
-        self.write(0x44, value)
+        self.write(0x44, value);
     }
 
     #[allow(dead_code)]
@@ -207,7 +207,7 @@ impl RegisterBlock {
     }
 
     fn set_dma_control(&mut self, value: DMAControlRegister) {
-        self.write(0x48, value)
+        self.write(0x48, value);
     }
 }
 

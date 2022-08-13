@@ -1,5 +1,6 @@
 //! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors
 
+use core::arch::asm;
 use core::convert::TryInto;
 use core::mem::size_of;
 use memoffset::offset_of;

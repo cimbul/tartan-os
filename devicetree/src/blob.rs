@@ -67,10 +67,9 @@ impl<'a> Tree<'a> {
     fn from_buffer_and_header(data: &'a [u8], header: Header) -> Self {
         let mut start: usize;
         let mut len: usize;
-        let end: usize;
 
         start = header.memory_reservation_block_offset.try_into().unwrap();
-        end = header.structure_block_offset.try_into().unwrap();
+        let end = header.structure_block_offset.try_into().unwrap();
         let memory_reservation_block = &data[start..end];
 
         start = header.structure_block_offset.try_into().unwrap();

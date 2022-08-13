@@ -544,6 +544,7 @@ where
     /// Shift the value left by `n` bits. If `n` is greater than or equal to the number
     /// of bits in this type, the result will be zero.
     #[inline(always)]
+    #[must_use]
     fn saturating_shl(self, n: u32) -> Self {
         match self.overflowing_shl(n) {
             (_, true) => Self::default(),
@@ -591,6 +592,7 @@ where
     /// Shift the value right by `n` bits. If `n` is greater than or equal to the number
     /// of bits in this type, the result will be zero.
     #[inline(always)]
+    #[must_use]
     fn saturating_shr(self, n: u32) -> Self {
         match self.overflowing_shr(n) {
             (_, true) => Self::default(),

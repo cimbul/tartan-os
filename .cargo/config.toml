@@ -1,6 +1,3 @@
-[unstable]
-extra-link-arg = true
-
 [target.x86_64-unknown-uefi]
 runner = ["uefi/script/boot.sh", "x86_64"]
 

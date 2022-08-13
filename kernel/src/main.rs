@@ -1,8 +1,8 @@
 #![no_std]
 #![cfg_attr(target_os = "tartan", no_main)]
 #![feature(alloc_error_handler)]
-#![feature(asm)]
-#![feature(global_asm)]
+#![feature(asm_const)]
+#![feature(asm_sym)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
@@ -27,7 +27,7 @@ mod pci;
 // Reserve space for the initial stack in the BSS section of the executable image, which
 // will be allocated by the loader.
 #[cfg(target_os = "tartan")]
-global_asm!(
+core::arch::global_asm!(
     "
     .section .bss
     .balign 16
@@ -55,7 +55,7 @@ fn _start(_: isize, _: *const *const u8) -> isize {
 extern "C" fn _start() -> ! {
     unsafe {
         #[cfg(target_arch = "x86")]
-        asm!(
+        core::arch::asm!(
             "
             mov esp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -67,7 +67,7 @@ extern "C" fn _start() -> ! {
         );
 
         #[cfg(target_arch = "x86_64")]
-        asm!(
+        core::arch::asm!(
             "
             mov rsp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -79,7 +79,7 @@ extern "C" fn _start() -> ! {
         );
 
         #[cfg(target_arch = "arm")]
-        asm!(
+        core::arch::asm!(
             "
             ldr sp, =stack_top  // Set up initial stack
             blx {}              // Call real main function
@@ -90,7 +90,7 @@ extern "C" fn _start() -> ! {
         );
 
         #[cfg(target_arch = "aarch64")]
-        asm!(
+        core::arch::asm!(
             "
             ldr x0, =stack_top  // Set up initial stack
             mov sp, x0

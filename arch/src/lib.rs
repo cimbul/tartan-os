@@ -1,13 +1,13 @@
 //! Architecture-specific primitives for Tartan OS
 
 #![no_std]
-#![feature(asm)]
 #![feature(doc_cfg)]
-#![feature(global_asm)]
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::upper_case_acronyms)]
+
+use core::arch::asm;
 
 #[cfg(any(target_arch = "aarch64", doc))]
 #[doc(cfg(target_arch = "aarch64"))]

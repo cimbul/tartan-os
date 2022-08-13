@@ -41,7 +41,7 @@ macro_rules! arm_exception_vector_table {
             static $table: $crate::arm::interrupt::VectorTable;
         }
 
-        global_asm!(concat!("
+        core::arch::global_asm!(concat!("
             .arm  // Exception handlers always use 32-bit (Arm-mode) instructions
             .balign 0x10
         ", stringify!($table), ":

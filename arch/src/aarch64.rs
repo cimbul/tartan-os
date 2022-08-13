@@ -1,5 +1,7 @@
 //! Architecture-specific primitives for 64-bit Arm.
 
+use core::arch::asm;
+
 pub mod float;
 pub mod interrupt;
 
@@ -13,7 +15,7 @@ macro_rules! system_register_access {
             pub fn get() -> Self {
                 let mut value = Self(0);
                 unsafe {
-                    asm!(
+                    core::arch::asm!(
                         concat!("mrs {}, ", $register),
                         out(reg) value.0,
                     );
@@ -31,7 +33,7 @@ macro_rules! system_register_access {
         /// Update the register to the given value.
         pub fn set(value: Self) {
             unsafe {
-                asm!(
+                core::arch::asm!(
                     concat!("msr ", $register, ", {}"),
                     in(reg) value.0,
                 );
@@ -46,7 +48,7 @@ macro_rules! system_register_access {
         /// Altering certain system flags can have dramatic effects on the execution
         /// of this and other programs, including memory safety.
         pub unsafe fn set(value: Self) {
-            asm!(
+            core::arch::asm!(
                 concat!("msr ", $register, ", {}"),
                 in(reg) value.0,
             );

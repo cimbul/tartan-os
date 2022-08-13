@@ -54,7 +54,7 @@ impl<'a> fmt::Debug for Value<'a> {
         if self.is_string_like() {
             let init = &self.data[..self.data.len() - 1];
             for segment in init.split(|&c| c == 0) {
-                let string_segment = core::str::from_utf8(&segment).unwrap();
+                let string_segment = core::str::from_utf8(segment).unwrap();
                 write!(f, " \"{}\"", string_segment)?;
             }
         }

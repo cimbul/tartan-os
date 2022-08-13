@@ -50,7 +50,7 @@ pub unsafe extern "C" fn __chkstk() {
     // Input:    x15 = number of 16-byte units in stack
     // Output:   x15 = same as input
     // Clobbers: x16, x17
-    asm!(
+    core::arch::asm!(
         "
         mov  x16, 0    // Stack offset
         mov  x17, x15  // Remaining 16-byte units
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn __chkstk() {
     // Input:    r4 = number of 4-byte units in stack
     // Output:   r4 = number of *individual* bytes in stack
     // Clobbers: r12
-    asm!(
+    core::arch::asm!(
         "
         push {{r0, r4}} // r0 be used as scratch register for throw-away loads
         mov  r12, #-8   // Stack offset; initial value accounts for saved registers
@@ -117,7 +117,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_udiv() {
-            asm!(
+            core::arch::asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r1
@@ -135,7 +135,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_udiv64() {
-            asm!(
+            core::arch::asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r2 (lower 32b)
@@ -157,7 +157,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_sdiv() {
-            asm!(
+            core::arch::asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r1
@@ -175,7 +175,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_sdiv64() {
-            asm!(
+            core::arch::asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r2 (lower 32b)

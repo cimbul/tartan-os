@@ -501,7 +501,7 @@ fn test_bitfield_conversions() {
         let inner_c: u32 = struct_a.into();
         let inner_d: u32 = unsafe { mem::transmute(struct_a) };
         let inner_e = unsafe {
-            *(&struct_a as *const BasicBitfieldTest).cast::<u32>()
+            *core::ptr::addr_of!(struct_a).cast::<u32>()
         };
         assert_eq!(*inner_orig, inner_a);
         assert_eq!(*inner_orig, inner_b);

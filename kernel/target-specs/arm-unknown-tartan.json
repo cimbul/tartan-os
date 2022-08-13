@@ -5,7 +5,6 @@
   "env": "",
   "executables": true,
   "features": "+strict-align,+v6",
-  "has-elf-tls": true,
   "linker": "rust-lld",
   "linker-flavor": "ld.lld",
   "linker-is-gnu": true,
@@ -16,13 +15,5 @@
   "target-c-int-width": "32",
   "target-endian": "little",
   "target-pointer-width": "32",
-  "unsupported-abis": [
-    "stdcall",
-    "fastcall",
-    "vectorcall",
-    "thiscall",
-    "win64",
-    "sysv64"
-  ],
   "vendor": "unknown"
 }

@@ -29,7 +29,7 @@ pub trait ConfigAccess {
         selector: ConfigSelector,
         value: T,
     ) {
-        self.set_register(selector, T::REGISTER_NUMBER.into(), value.into())
+        self.set_register(selector, T::REGISTER_NUMBER.into(), value.into());
     }
 }
 

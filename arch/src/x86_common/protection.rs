@@ -3,6 +3,7 @@
 //! This includes the minimal support for segmented memory and hardware task management
 //! that is required to operate in protected mode with a flat memory model.
 
+use core::arch::asm;
 use core::fmt;
 use core::num::NonZeroU16;
 use static_assertions::const_assert_eq;
@@ -59,6 +60,7 @@ impl GlobalDescriptorTableRegister {
     /// # Safety
     /// This register fundamentally affects memory accesses and can have an impact on
     /// memory safety.
+    #[allow(named_asm_labels)]
     pub unsafe fn set_with_segments(
         gdt_pointer: &Self,
         code_selector: Selector,
@@ -571,7 +573,7 @@ impl fmt::Debug for GenericDescriptorFlags {
         let mut struct_fmt = f.debug_struct("GenericDescriptorFlags");
         struct_fmt.field("<value>", &self.0);
         self.fmt_fields(&mut struct_fmt);
-        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(self, &mut struct_fmt);
         struct_fmt.finish()
     }
 }
@@ -740,7 +742,7 @@ impl fmt::Debug for SegmentDescriptorFlags {
         let mut struct_fmt = f.debug_struct("SegmentDescriptorFlags");
         struct_fmt.field("<value>", &self.0);
         self.fmt_fields(&mut struct_fmt);
-        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(self, &mut struct_fmt);
         struct_fmt.finish()
     }
 }
@@ -891,7 +893,7 @@ impl fmt::Debug for GateDescriptorFlags {
         let mut struct_fmt = f.debug_struct("GateDescriptorFlags");
         struct_fmt.field("<value>", &self.0);
         self.fmt_fields(&mut struct_fmt);
-        <Self as DescriptorFlags>::fmt_fields(&self, &mut struct_fmt);
+        <Self as DescriptorFlags>::fmt_fields(self, &mut struct_fmt);
         struct_fmt.finish()
     }
 }

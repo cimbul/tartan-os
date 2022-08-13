@@ -1,5 +1,7 @@
 //! Access to I/O space
 
+use core::arch::asm;
+
 /// Read an 8-bit value from the port at the given address in I/O space.
 ///
 /// # Safety

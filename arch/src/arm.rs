@@ -10,7 +10,7 @@ macro_rules! cp15_register_get {
         {
             let mut value: usize;
             unsafe {
-                asm!(
+                core::arch::asm!(
                     concat!(
                         "mrc p15, ",
                         $op_1,
@@ -35,7 +35,7 @@ macro_rules! cp15_register_set {
     [$op_1:literal, $cr_n:literal, $cr_m:literal, $op_2:literal, $value:expr] => {
         {
             let value: usize = $value;
-            asm!(
+            core::arch::asm!(
                 concat!(
                     "mcr p15, ",
                     $op_1,

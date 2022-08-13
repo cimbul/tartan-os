@@ -1,5 +1,6 @@
 //! Architecture-specific primitives common to 32-bit and 64-bit x86 processors.
 
+use core::arch::asm;
 use tartan_bitfield::bitfield;
 
 #[cfg(doc)]
@@ -151,7 +152,7 @@ macro_rules! simple_register_access {
             pub fn get() -> Self {
                 let mut value = Self(0);
                 unsafe {
-                    asm!(
+                    core::arch::asm!(
                         concat!("mov {0}, ", $register),
                         out(reg) value.0,
                     );
@@ -165,7 +166,7 @@ macro_rules! simple_register_access {
             /// Altering certain system flags can have dramatic effects on the execution
             /// of this and other programs, including memory safety.
             pub unsafe fn set(value: Self) {
-                asm!(
+                core::arch::asm!(
                     concat!("mov ", $register, ", {0}"),
                     in(reg) value.0,
                 );
@@ -184,7 +185,7 @@ macro_rules! indexed_register_access {
                 let lower: u32;
                 let upper: u32;
                 unsafe {
-                    asm!(
+                    core::arch::asm!(
                         $read_instr,
                         in("ecx") $index,
                         out("eax") lower,
@@ -206,7 +207,7 @@ macro_rules! indexed_register_access {
                 #![allow(clippy::cast_possible_truncation)]
                 let lower = value.0 as u32;
                 let upper = (value.0 >> 32) as u32;
-                asm!(
+                core::arch::asm!(
                     $write_instr,
                     in("ecx") $index,
                     in("eax") lower,

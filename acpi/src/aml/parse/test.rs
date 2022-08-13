@@ -185,7 +185,7 @@ mod name {
         assert_errors!(NameSeg::parse, b"@123");
         assert_errors!(NameSeg::parse, b"[123");
         assert_errors!(NameSeg::parse, b" 123");
-        assert_errors!(NameSeg::parse, b"\0123");
+        assert_errors!(NameSeg::parse, b"\x00123");
         assert_errors!(NameSeg::parse, b"\x1e123");
         assert_errors!(NameSeg::parse, b"\x7f123");
         assert_errors!(NameSeg::parse, b"\xff123");

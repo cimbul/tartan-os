@@ -2,6 +2,7 @@
 
 use super::ExceptionLevel;
 use crate::system_register_access;
+use core::arch::asm;
 use tartan_bitfield::bitfield;
 use tartan_c_enum::c_enum;
 
@@ -47,7 +48,7 @@ macro_rules! aarch64_exception_vector_table {
             static $table: $crate::aarch64::interrupt::VectorTable;
         }
 
-        global_asm!(concat!(
+        core::arch::global_asm!(concat!(
             "
             //
             // Exceptions from current level using SP_EL0 (thread mode)
