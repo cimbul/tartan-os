@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["interrupt","Exception and interrupt handling."]]});
+window.SIDEBAR_ITEMS = {"mod":[["interrupt","Exception and interrupt handling."]]};

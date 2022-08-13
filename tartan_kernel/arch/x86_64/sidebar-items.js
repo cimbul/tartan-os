@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["initialize","Perform early architecture-specific setup"]]});
+window.SIDEBAR_ITEMS = {"fn":[["initialize","Perform early architecture-specific setup"]]};

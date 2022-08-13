@@ -1,105 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>aml.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
-<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../tartan_acpi/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>aml.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tartan_acpi/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tartan_acpi/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tartan_acpi/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -998,13 +995,12 @@
 <span id="995">995</span>
 <span id="996">996</span>
 <span id="997">997</span>
-</pre><pre class="rust">
-<span class="doccomment">//! Abstract syntax tree for ACPI Machine Language</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Abstract syntax tree for ACPI Machine Language</span>
 
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
 
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::DescriptionHeader</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DescriptionHeader</span>;
 <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
 
 
@@ -1013,18 +1009,18 @@
 
 <span class="doccomment">/// An ACPI table that contains AML, such as the DSDT or an SSDT.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AMLTable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AMLTable</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="doccomment">/// Common ACPI table header</span>
     <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">DescriptionHeader</span>,
     <span class="doccomment">/// Top-level AML objects defined in the table</span>
-    <span class="kw">pub</span> <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">term::TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">term::TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
 }
 
 
 <span class="macro">macro_rules!</span> <span class="ident">from_impl</span> {
-    [$( <span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">lifetime</span><span class="op">&gt;</span> )<span class="question-mark">?</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>:<span class="ident">ty</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span>:<span class="ident">ty</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span>:<span class="ident">expr</span>] <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="kw">impl</span>$(<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span><span class="op">&gt;</span>)<span class="question-mark">?</span> <span class="ident">From</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span> {
-            <span class="kw">fn</span> <span class="ident">from</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span> }
+    [$( &lt;<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">lifetime</span>&gt; )<span class="question-mark">?</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>:<span class="ident">ty</span>) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span>:<span class="ident">ty</span> = <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span>:<span class="ident">expr</span>] =&gt; {
+        <span class="kw">impl</span>$(&lt;<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>&gt;)<span class="question-mark">?</span> <span class="ident">From</span>&lt;<span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>&gt; <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span> {
+            <span class="kw">fn</span> <span class="ident">from</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">to</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">imp</span> }
         }
     };
 }
@@ -1032,8 +1028,8 @@
 
 <span class="doccomment">/// Names of objects, arguments, and references</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">name</span> {
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::misc</span>::{<span class="ident">ArgObject</span>, <span class="ident">LocalObject</span>};
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::term::ReferenceExpressionOpcode</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::misc</span>::{<span class="ident">ArgObject</span>, <span class="ident">LocalObject</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::term::ReferenceExpressionOpcode</span>;
     <span class="kw">use</span> <span class="ident">alloc::boxed::Box</span>;
     <span class="kw">use</span> <span class="ident">alloc::string::ToString</span>;
     <span class="kw">use</span> <span class="ident">alloc::vec</span>;
@@ -1048,8 +1044,8 @@
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// assert_eq!(to_path(&amp;[b&quot;ABCD&quot;, b&quot;EFGH&quot;]), vec![NameSeg(*b&quot;ABCD&quot;), NameSeg(*b&quot;EFGH&quot;)]);</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_path</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span> {
-        <span class="ident">path</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> (<span class="kw-2">*</span><span class="ident">s</span>).<span class="ident">into</span>()).<span class="ident">collect</span>()
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_path</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span> + <span class="ident">Into</span>&lt;<span class="ident">NameSeg</span>&gt;&gt;(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) -&gt; <span class="ident">Vec</span>&lt;<span class="ident">NameSeg</span>&gt; {
+        <span class="ident">path</span>.<span class="ident">iter</span>().<span class="ident">map</span>(|<span class="ident">s</span>| (<span class="kw-2">*</span><span class="ident">s</span>).<span class="ident">into</span>()).<span class="ident">collect</span>()
     }
 
 
@@ -1061,19 +1057,19 @@
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NameSeg</span>(<span class="kw">pub</span> [<span class="ident">u8</span>; <span class="number">4</span>]);
 
     <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">NameSeg</span> {
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">fmt::Error</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">str_name</span> <span class="op">=</span> <span class="ident">core::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).<span class="ident">unwrap_or</span>(<span class="string">&quot;&lt;invalid&gt;&quot;</span>);
+        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
+            <span class="kw">let</span> <span class="ident">str_name</span> = <span class="ident">core::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).<span class="ident">unwrap_or</span>(<span class="string">&quot;&lt;invalid&gt;&quot;</span>);
             <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="ident">str_name</span>)
         }
     }
 
     <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">NameSeg</span> {
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">fmt::Error</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
             <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;NameSeg[{:?}]&quot;</span>, <span class="self">self</span>.<span class="ident">to_string</span>())
         }
     }
 
-    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">4</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NameSeg</span> <span class="op">=</span> <span class="ident">NameSeg</span>(<span class="kw-2">*</span><span class="ident">n</span>));
+    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">4</span>]) -&gt; <span class="ident">NameSeg</span> = <span class="ident">NameSeg</span>(<span class="kw-2">*</span><span class="ident">n</span>));
 
 
     <span class="doccomment">/// Fully qualified object path, either absolute or relative.</span>
@@ -1082,23 +1078,23 @@
         <span class="doccomment">/// Specifies how to resolve this path as absolute or relative.</span>
         <span class="kw">pub</span> <span class="ident">anchor</span>: <span class="ident">PathAnchor</span>,
         <span class="doccomment">/// Segments of the path</span>
-        <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span>,
+        <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">Vec</span>&lt;<span class="ident">NameSeg</span>&gt;,
     }
 
     <span class="kw">impl</span> <span class="ident">NameString</span> {
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">empty</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-            <span class="ident">NameString::new</span>::<span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[])
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="self">Self</span> {
+            <span class="ident">NameString::new</span>::&lt;<span class="ident">NameSeg</span>&gt;(<span class="kw-2">&amp;</span>[])
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span> + <span class="ident">Into</span>&lt;<span class="ident">NameSeg</span>&gt;&gt;(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
             <span class="ident">NameString::new_parent</span>(<span class="number">0</span>, <span class="ident">path</span>)
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_root</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_root</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span> + <span class="ident">Into</span>&lt;<span class="ident">NameSeg</span>&gt;&gt;(<span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
             <span class="ident">NameString</span> { <span class="ident">path</span>: <span class="ident">to_path</span>(<span class="ident">path</span>), <span class="ident">anchor</span>: <span class="ident">PathAnchor::Root</span> }
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_parent</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">usize</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_parent</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span> + <span class="ident">Into</span>&lt;<span class="ident">NameSeg</span>&gt;&gt;(<span class="ident">n</span>: <span class="ident">usize</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
             <span class="ident">NameString</span> { <span class="ident">path</span>: <span class="ident">to_path</span>(<span class="ident">path</span>), <span class="ident">anchor</span>: <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) }
         }
 
@@ -1130,7 +1126,7 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// Returns `None` if this `NameString` is anchored to a parent scope and the</span>
         <span class="doccomment">/// result would be outside the namespace root.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_as_decl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scope</span>: <span class="kw-2">&amp;</span>[<span class="ident">NameSeg</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_as_decl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scope</span>: <span class="kw-2">&amp;</span>[<span class="ident">NameSeg</span>]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="ident">Vec</span>&lt;<span class="ident">NameSeg</span>&gt;&gt; {
             <span class="self">self</span>.<span class="ident">resolve_as_ref</span>(<span class="ident">scope</span>).<span class="ident">into_iter</span>().<span class="ident">next</span>()
         }
 
@@ -1176,20 +1172,20 @@
         <span class="doccomment">///</span>
         <span class="doccomment">/// Will return an empty vector if this `NameString` is anchored to a parent scope</span>
         <span class="doccomment">/// and the result would be outside the namespace root.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scope</span>: <span class="kw-2">&amp;</span>[<span class="ident">NameSeg</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NameSeg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scope</span>: <span class="kw-2">&amp;</span>[<span class="ident">NameSeg</span>]) -&gt; <span class="ident">Vec</span>&lt;<span class="ident">Vec</span>&lt;<span class="ident">NameSeg</span>&gt;&gt; {
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">anchor</span> {
-                <span class="ident">PathAnchor::Root</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">clone</span>()],
-                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) <span class="kw">if</span> <span class="ident">n</span> <span class="op">=</span><span class="op">=</span> <span class="ident">scope</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">&gt;</span> <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">clone</span>()],
-                <span class="ident">PathAnchor::Parent</span>(<span class="number">0</span>) <span class="kw">if</span> <span class="self">self</span>.<span class="ident">path</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">let</span> <span class="ident">ends</span> <span class="op">=</span> (<span class="number">0</span>..<span class="op">=</span><span class="ident">scope</span>.<span class="ident">len</span>()).<span class="ident">rev</span>();
-                    <span class="ident">ends</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">end</span><span class="op">|</span> [<span class="kw-2">&amp;</span><span class="ident">scope</span>[..<span class="ident">end</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>].<span class="ident">concat</span>()).<span class="ident">collect</span>()
+                <span class="ident">PathAnchor::Root</span> =&gt; <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">clone</span>()],
+                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) <span class="kw">if</span> <span class="ident">n</span> == <span class="ident">scope</span>.<span class="ident">len</span>() =&gt; <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">clone</span>()],
+                <span class="ident">PathAnchor::Parent</span>(<span class="number">0</span>) <span class="kw">if</span> <span class="self">self</span>.<span class="ident">path</span>.<span class="ident">len</span>() == <span class="number">1</span> =&gt; {
+                    <span class="kw">let</span> <span class="ident">ends</span> = (<span class="number">0</span>..=<span class="ident">scope</span>.<span class="ident">len</span>()).<span class="ident">rev</span>();
+                    <span class="ident">ends</span>.<span class="ident">map</span>(|<span class="ident">end</span>| [<span class="kw-2">&amp;</span><span class="ident">scope</span>[..<span class="ident">end</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>].<span class="ident">concat</span>()).<span class="ident">collect</span>()
                 }
-                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) <span class="kw">if</span> <span class="ident">n</span> <span class="op">&lt;</span> <span class="ident">scope</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">scope</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">n</span>;
+                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) <span class="kw">if</span> <span class="ident">n</span> &lt; <span class="ident">scope</span>.<span class="ident">len</span>() =&gt; {
+                    <span class="kw">let</span> <span class="ident">end</span> = <span class="ident">scope</span>.<span class="ident">len</span>() - <span class="ident">n</span>;
                     <span class="macro">vec!</span>[[<span class="kw-2">&amp;</span><span class="ident">scope</span>[..<span class="ident">end</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>].<span class="ident">concat</span>()]
                 }
                 <span class="comment">// n &gt; scope.len(), so this falls out of the namespace root</span>
-                <span class="ident">PathAnchor::Parent</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">vec!</span>[],
+                <span class="ident">PathAnchor::Parent</span>(<span class="kw">_</span>) =&gt; <span class="macro">vec!</span>[],
             }
         }
     }
@@ -1212,9 +1208,9 @@
         <span class="doccomment">/// let d = NameString::new_root(&amp;[b&quot;X___&quot;]);</span>
         <span class="doccomment">/// assert_eq!(format!(&quot;{}&quot;, d), &quot;\\X___&quot;);</span>
         <span class="doccomment">/// ```</span>
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">fmt::Error</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
             <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">anchor</span>)<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">path</span>.<span class="ident">is_empty</span>() {
+            <span class="kw">if</span> !<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">is_empty</span>() {
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">path</span>[<span class="number">0</span>])<span class="question-mark">?</span>;
                 <span class="kw">for</span> <span class="ident">n</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">path</span>.<span class="ident">iter</span>().<span class="ident">skip</span>(<span class="number">1</span>) {
                     <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;.{}&quot;</span>, <span class="ident">n</span>)<span class="question-mark">?</span>;
@@ -1225,13 +1221,13 @@
     }
 
     <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">NameString</span> {
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">fmt::Error</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
             <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;NameString[{:?}]&quot;</span>, <span class="self">self</span>.<span class="ident">to_string</span>())
         }
     }
 
-    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">4</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NameString</span> <span class="op">=</span> <span class="ident">NameString::new</span>(<span class="kw-2">&amp;</span>[<span class="ident">n</span>]));
-    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="ident">NameSeg</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NameString</span> <span class="op">=</span> <span class="ident">NameString::new</span>(<span class="kw-2">&amp;</span>[<span class="ident">n</span>]));
+    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">4</span>]) -&gt; <span class="ident">NameString</span> = <span class="ident">NameString::new</span>(<span class="kw-2">&amp;</span>[<span class="ident">n</span>]));
+    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="ident">NameSeg</span>) -&gt; <span class="ident">NameString</span> = <span class="ident">NameString::new</span>(<span class="kw-2">&amp;</span>[<span class="ident">n</span>]));
 
 
     <span class="doccomment">/// Indicates whether a name is absolute or relative to the current or parent scope.</span>
@@ -1242,10 +1238,10 @@
     }
 
     <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">PathAnchor</span> {
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">fmt::Error</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
             <span class="kw">match</span> <span class="self">self</span> {
-                <span class="ident">PathAnchor::Root</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;\\&quot;</span>),
-                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">PathAnchor::Root</span> =&gt; <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;\\&quot;</span>),
+                <span class="ident">PathAnchor::Parent</span>(<span class="ident">n</span>) =&gt; {
                     <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="kw-2">*</span><span class="ident">n</span>) {
                         <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;^&quot;</span>)<span class="question-mark">?</span>;
                     }
@@ -1264,43 +1260,43 @@
         <span class="ident">Local</span>(<span class="ident">LocalObject</span>),
     }
 
-    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="ident">NameString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SimpleName</span> <span class="op">=</span> <span class="ident">SimpleName::Name</span>(<span class="ident">n</span>));
-    <span class="macro">from_impl!</span>((<span class="ident">a</span>: <span class="ident">ArgObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SimpleName</span> <span class="op">=</span> <span class="ident">SimpleName::Arg</span>(<span class="ident">a</span>));
-    <span class="macro">from_impl!</span>((<span class="ident">l</span>: <span class="ident">LocalObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SimpleName</span> <span class="op">=</span> <span class="ident">SimpleName::Local</span>(<span class="ident">l</span>));
+    <span class="macro">from_impl!</span>((<span class="ident">n</span>: <span class="ident">NameString</span>) -&gt; <span class="ident">SimpleName</span> = <span class="ident">SimpleName::Name</span>(<span class="ident">n</span>));
+    <span class="macro">from_impl!</span>((<span class="ident">a</span>: <span class="ident">ArgObject</span>) -&gt; <span class="ident">SimpleName</span> = <span class="ident">SimpleName::Arg</span>(<span class="ident">a</span>));
+    <span class="macro">from_impl!</span>((<span class="ident">l</span>: <span class="ident">LocalObject</span>) -&gt; <span class="ident">SimpleName</span> = <span class="ident">SimpleName::Local</span>(<span class="ident">l</span>));
 
 
     <span class="doccomment">/// A named object, variable, reference expression, or debug object.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="ident">Name</span>(<span class="ident">SimpleName</span>),
         <span class="ident">Debug</span>,
-        <span class="ident">Reference</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+        <span class="ident">Reference</span>(<span class="ident">Box</span>&lt;<span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">SimpleName</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SuperName::Name</span>(<span class="ident">n</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">NameString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SimpleName::from</span>(<span class="ident">n</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">ArgObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SimpleName::from</span>(<span class="ident">a</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">l</span>: <span class="ident">LocalObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SimpleName::from</span>(<span class="ident">l</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">n</span>: <span class="ident">SimpleName</span>) -&gt; <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">SuperName::Name</span>(<span class="ident">n</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">n</span>: <span class="ident">NameString</span>) -&gt; <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">SimpleName::from</span>(<span class="ident">n</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">a</span>: <span class="ident">ArgObject</span>) -&gt; <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">SimpleName::from</span>(<span class="ident">a</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">l</span>: <span class="ident">LocalObject</span>) -&gt; <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">SimpleName::from</span>(<span class="ident">l</span>).<span class="ident">into</span>());
     <span class="macro">from_impl!</span>(
-        <span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span>
+        &lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; =
             <span class="ident">SuperName::Reference</span>(<span class="ident">Box::new</span>(<span class="ident">r</span>)));
 
 
     <span class="doccomment">/// Location to store the result of an operation</span>
-    <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="prelude-ty">Option</span>&lt;<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;;
 }
 
 
 
 <span class="doccomment">/// Data resources</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">data</span> {
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::name::NameString</span>;
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::term::TermArg</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::name::NameString</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::term::TermArg</span>;
     <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
 
     <span class="doccomment">/// Single value resolved at compile time.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ComputationalData</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ComputationalData</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="ident">Byte</span>(<span class="ident">u8</span>),
         <span class="ident">Word</span>(<span class="ident">u16</span>),
         <span class="ident">DWord</span>(<span class="ident">u32</span>),
@@ -1310,202 +1306,202 @@
         <span class="ident">One</span>,
         <span class="ident">Ones</span>,
         <span class="ident">Revision</span>,
-        <span class="ident">Buffer</span>(<span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Buffer</span>(<span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
     }
 
     <span class="doccomment">/// Block of raw bytes, optionally initialized in whole or in part.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         <span class="kw">pub</span> <span class="ident">initializer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
     }
 
     <span class="doccomment">/// Group of related data elements, optionally inititalized in whole or in part.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="kw">pub</span> <span class="ident">count</span>: <span class="ident">u8</span>,
-        <span class="kw">pub</span> <span class="ident">initializers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PackageElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="kw">pub</span> <span class="ident">initializers</span>: <span class="ident">Vec</span>&lt;<span class="ident">PackageElement</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
     }
 
     <span class="doccomment">/// Group of related data elements, with a number of elements only known at runtime.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="kw">pub</span> <span class="ident">count</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-        <span class="kw">pub</span> <span class="ident">initializers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PackageElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">pub</span> <span class="ident">count</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+        <span class="kw">pub</span> <span class="ident">initializers</span>: <span class="ident">Vec</span>&lt;<span class="ident">PackageElement</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
     }
 
 
     <span class="doccomment">/// A name or reference that constitutes part of a [`Package`] (or [`VarPackage`]).</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PackageElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">Ref</span>(<span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PackageElement</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">Ref</span>(<span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
         <span class="ident">Name</span>(<span class="ident">NameString</span>),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">PackageElement::Ref</span>(<span class="ident">r</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">NameString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">PackageElement::Name</span>(<span class="ident">n</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">r</span>: <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">PackageElement</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">PackageElement::Ref</span>(<span class="ident">r</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">n</span>: <span class="ident">NameString</span>) -&gt; <span class="ident">PackageElement</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">PackageElement::Name</span>(<span class="ident">n</span>));
 
 
     <span class="doccomment">/// Data resolved at compile time, possibly grouped in a package.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">Data</span>(<span class="ident">ComputationalData</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-        <span class="ident">Package</span>(<span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-        <span class="ident">VarPackage</span>(<span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">Data</span>(<span class="ident">ComputationalData</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+        <span class="ident">Package</span>(<span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+        <span class="ident">VarPackage</span>(<span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">ComputationalData</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::Data</span>(<span class="ident">d</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::Package</span>(<span class="ident">p</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::VarPackage</span>(<span class="ident">p</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">d</span>: <span class="ident">ComputationalData</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::Data</span>(<span class="ident">d</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::Package</span>(<span class="ident">p</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::VarPackage</span>(<span class="ident">p</span>));
 
 
     <span class="comment">// TODO: Description</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">Data</span>(<span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">Data</span>(<span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
         <span class="ident">ObjectReference</span>(<span class="ident">u64</span>),
         <span class="ident">DefinitionBlockHandle</span>(<span class="ident">u64</span>),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataRefObject::Data</span>(<span class="ident">d</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">ComputationalData</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::from</span>(<span class="ident">d</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">d</span>: <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataRefObject::Data</span>(<span class="ident">d</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">d</span>: <span class="ident">ComputationalData</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::from</span>(<span class="ident">d</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
 }
 
 
 
 <span class="doccomment">/// Top-level terms and opcodes.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">term</span> {
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::data</span>::{
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::data</span>::{
         <span class="ident">Buffer</span>, <span class="ident">ComputationalData</span>, <span class="ident">DataObject</span>, <span class="ident">DataRefObject</span>, <span class="ident">Package</span>, <span class="ident">VarPackage</span>,
     };
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::misc</span>::{<span class="ident">ArgObject</span>, <span class="ident">LocalObject</span>};
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::name</span>::{<span class="ident">NameSeg</span>, <span class="ident">NameString</span>, <span class="ident">SimpleName</span>, <span class="ident">SuperName</span>, <span class="ident">Target</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::misc</span>::{<span class="ident">ArgObject</span>, <span class="ident">LocalObject</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::name</span>::{<span class="ident">NameSeg</span>, <span class="ident">NameString</span>, <span class="ident">SimpleName</span>, <span class="ident">SuperName</span>, <span class="ident">Target</span>};
     <span class="kw">use</span> <span class="ident">alloc::boxed::Box</span>;
     <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
 
     <span class="doccomment">/// Top-level, most general term type where the value (if any) is discarded.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">Modifier</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">NameSpaceModifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-        <span class="ident">Named</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">NamedObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-        <span class="ident">Statement</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">StatementOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-        <span class="ident">Expression</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">Modifier</span>(<span class="ident">Box</span>&lt;<span class="ident">NameSpaceModifier</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        <span class="ident">Named</span>(<span class="ident">Box</span>&lt;<span class="ident">NamedObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        <span class="ident">Statement</span>(<span class="ident">Box</span>&lt;<span class="ident">StatementOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        <span class="ident">Expression</span>(<span class="ident">Box</span>&lt;<span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">m</span>: <span class="ident">NameSpaceModifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermObject::Modifier</span>(<span class="ident">Box::new</span>(<span class="ident">m</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">NamedObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermObject::Named</span>(<span class="ident">Box::new</span>(<span class="ident">n</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">s</span>: <span class="ident">StatementOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermObject::Statement</span>(<span class="ident">Box::new</span>(<span class="ident">s</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">e</span>: <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermObject::Expression</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">r</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">b</span>: <span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">b</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">m</span>: <span class="ident">NameSpaceModifier</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermObject::Modifier</span>(<span class="ident">Box::new</span>(<span class="ident">m</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">n</span>: <span class="ident">NamedObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermObject::Named</span>(<span class="ident">Box::new</span>(<span class="ident">n</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">s</span>: <span class="ident">StatementOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermObject::Statement</span>(<span class="ident">Box::new</span>(<span class="ident">s</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">e</span>: <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermObject::Expression</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">r</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">b</span>: <span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">b</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
 
 
     <span class="doccomment">/// Term that resolves to a value.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">Expression</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-        <span class="ident">Data</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">Expression</span>(<span class="ident">Box</span>&lt;<span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        <span class="ident">Data</span>(<span class="ident">Box</span>&lt;<span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
         <span class="ident">Arg</span>(<span class="ident">ArgObject</span>),
         <span class="ident">Local</span>(<span class="ident">LocalObject</span>),
         <span class="ident">Name</span>(<span class="ident">NameString</span>),
     }
 
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">e</span>: <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermArg::Expression</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">r</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">b</span>: <span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">b</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">e</span>: <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermArg::Expression</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">r</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">b</span>: <span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">b</span>).<span class="ident">into</span>());
     <span class="comment">// NOTE: Package and VarPackage could be converted through DataObject instead</span>
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">DataObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermArg::Data</span>(<span class="ident">Box::new</span>(<span class="ident">d</span>)));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">ComputationalData</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DataObject::from</span>(<span class="ident">d</span>).<span class="ident">into</span>());
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">ArgObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermArg::Arg</span>(<span class="ident">a</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">l</span>: <span class="ident">LocalObject</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermArg::Local</span>(<span class="ident">l</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">n</span>: <span class="ident">NameString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TermArg::Name</span>(<span class="ident">n</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::from</span>(<span class="ident">p</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">d</span>: <span class="ident">DataObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermArg::Data</span>(<span class="ident">Box::new</span>(<span class="ident">d</span>)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">d</span>: <span class="ident">ComputationalData</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">DataObject::from</span>(<span class="ident">d</span>).<span class="ident">into</span>());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">a</span>: <span class="ident">ArgObject</span>) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermArg::Arg</span>(<span class="ident">a</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">l</span>: <span class="ident">LocalObject</span>) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermArg::Local</span>(<span class="ident">l</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">n</span>: <span class="ident">NameString</span>) -&gt; <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">TermArg::Name</span>(<span class="ident">n</span>));
 
 
     <span class="doccomment">/// Term that attaches a name to its argument.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">NameSpaceModifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">NameSpaceModifier</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="doccomment">/// Create a new `alias` for existing named `source` object.</span>
         <span class="ident">Alias</span> { <span class="ident">source</span>: <span class="ident">NameString</span>, <span class="ident">alias</span>: <span class="ident">NameString</span> },
 
         <span class="doccomment">/// Attach a name to an anonymous data or reference.</span>
-        <span class="ident">Name</span>(<span class="ident">NameString</span>, <span class="ident">DataRefObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Name</span>(<span class="ident">NameString</span>, <span class="ident">DataRefObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate the contained terms within a new scope.</span>
-        <span class="ident">Scope</span>(<span class="ident">NameString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+        <span class="ident">Scope</span>(<span class="ident">NameString</span>, <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
     }
 
 
     <span class="doccomment">/// Term that defines an object with a name.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">NamedObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">NamedObject</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="doccomment">/// Declare fields that can only be accessed after writing to a bank selector</span>
         <span class="ident">BankField</span> {
             <span class="ident">region_name</span>: <span class="ident">NameString</span>,
             <span class="ident">bank_name</span>: <span class="ident">NameString</span>,
-            <span class="ident">bank_value</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">bank_value</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">flags</span>: <span class="ident">FieldFlags</span>,
-            <span class="ident">elements</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FieldElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">elements</span>: <span class="ident">Vec</span>&lt;<span class="ident">FieldElement</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a single-bit field within a buffer</span>
         <span class="ident">CreateBitField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">bit_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">bit_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Create a one-byte-wide field within a buffer</span>
         <span class="ident">CreateByteField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">byte_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">byte_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Declare a four-byte-wide field within a buffer</span>
         <span class="ident">CreateDWordField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">byte_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">byte_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Declare an arbitrary-width field within a buffer</span>
         <span class="ident">CreateField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">bit_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">num_bits</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">bit_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">num_bits</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Declare an eight-byte-wide field within a buffer</span>
         <span class="ident">CreateQWordField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">byte_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">byte_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Declare a two-byte-wide field within a buffer</span>
         <span class="ident">CreateWordField</span> {
-            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">byte_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source_buffer</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">byte_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">name</span>: <span class="ident">NameString</span>,
         },
 
         <span class="doccomment">/// Allow an ACPI table indexed in the XSDT to be used as a set of fields</span>
         <span class="ident">DataTableRegion</span> {
             <span class="ident">name</span>: <span class="ident">NameString</span>,
-            <span class="ident">signature</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">oem_id</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">oem_table_id</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">signature</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">oem_id</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">oem_table_id</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Declare a device and its associated fields, methods, and sub-devices</span>
-        <span class="ident">Device</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> },
+        <span class="ident">Device</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
 
         <span class="doccomment">/// Declare a waitable synchronization object</span>
         <span class="ident">Event</span>(<span class="ident">NameString</span>),
@@ -1517,7 +1513,7 @@
         <span class="ident">Field</span> {
             <span class="ident">region_name</span>: <span class="ident">NameString</span>,
             <span class="ident">flags</span>: <span class="ident">FieldFlags</span>,
-            <span class="ident">elements</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FieldElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">elements</span>: <span class="ident">Vec</span>&lt;<span class="ident">FieldElement</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a group of field that must be accessed by writing to an index</span>
@@ -1526,11 +1522,11 @@
             <span class="ident">index_name</span>: <span class="ident">NameString</span>,
             <span class="ident">data_name</span>: <span class="ident">NameString</span>,
             <span class="ident">flags</span>: <span class="ident">FieldFlags</span>,
-            <span class="ident">elements</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FieldElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">elements</span>: <span class="ident">Vec</span>&lt;<span class="ident">FieldElement</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a control method</span>
-        <span class="ident">Method</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">flags</span>: <span class="ident">MethodFlags</span>, <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> },
+        <span class="ident">Method</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">flags</span>: <span class="ident">MethodFlags</span>, <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
 
         <span class="doccomment">/// Declare an acquirable mutex</span>
         <span class="ident">Mutex</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">sync_level</span>: <span class="ident">u8</span> },
@@ -1539,8 +1535,8 @@
         <span class="ident">OperationRegion</span> {
             <span class="ident">name</span>: <span class="ident">NameString</span>,
             <span class="ident">region_space</span>: <span class="ident">RegionSpace</span>,
-            <span class="ident">offset</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">length</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">offset</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">length</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Declare a power resource object</span>
@@ -1548,7 +1544,7 @@
             <span class="ident">name</span>: <span class="ident">NameString</span>,
             <span class="ident">system_level</span>: <span class="ident">u8</span>,
             <span class="ident">resource_order</span>: <span class="ident">u16</span>,
-            <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a processor and associated register block</span>
@@ -1557,11 +1553,11 @@
             <span class="ident">id</span>: <span class="ident">u8</span>,
             <span class="ident">register_block_addr</span>: <span class="ident">u32</span>,
             <span class="ident">register_block_length</span>: <span class="ident">u8</span>,
-            <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a thermal zone namespace</span>
-        <span class="ident">ThermalZone</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> },
+        <span class="ident">ThermalZone</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
     }
 
 
@@ -1594,7 +1590,7 @@
 
     <span class="doccomment">/// A substructure of a field.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FieldElement</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FieldElement</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="doccomment">/// A named bitfield.</span>
         <span class="ident">Named</span> { <span class="ident">name</span>: <span class="ident">NameSeg</span>, <span class="ident">bit_length</span>: <span class="ident">u32</span> },
 
@@ -1611,7 +1607,7 @@
 
         <span class="doccomment">/// Indicates that **following** fields should be accessed with the GPIO/Serial</span>
         <span class="doccomment">/// descriptor contained in the given buffer.</span>
-        <span class="ident">ConnectBuffer</span>(<span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ConnectBuffer</span>(<span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
     }
 
     <span class="doccomment">/// Additional information about how a field is accessed.</span>
@@ -1640,7 +1636,7 @@
     }
 
     <span class="kw">impl</span> <span class="ident">MethodFlags</span> {
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unsynced</span>(<span class="ident">arg_count</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unsynced</span>(<span class="ident">arg_count</span>: <span class="ident">u8</span>) -&gt; <span class="self">Self</span> {
             <span class="self">Self</span> { <span class="ident">arg_count</span>, <span class="ident">serialized</span>: <span class="bool-val">false</span>, <span class="ident">sync_level</span>: <span class="number">0</span> }
         }
     }
@@ -1666,7 +1662,7 @@
 
     <span class="doccomment">/// Terminal operation that does not evaluate to a value, a.k.a. &quot;Type 1 Opcode.&quot;</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StatementOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StatementOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="doccomment">/// Break from a loop</span>
         <span class="ident">Break</span>,
 
@@ -1677,255 +1673,255 @@
         <span class="ident">Continue</span>,
 
         <span class="doccomment">/// Signal an error that requires a system shutdown</span>
-        <span class="ident">Fatal</span> { <span class="ident">fatal_type</span>: <span class="ident">u8</span>, <span class="ident">code</span>: <span class="ident">u32</span>, <span class="ident">arg</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Fatal</span> { <span class="ident">fatal_type</span>: <span class="ident">u8</span>, <span class="ident">code</span>: <span class="ident">u32</span>, <span class="ident">arg</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Branch on a predicate</span>
         <span class="ident">If</span> {
-            <span class="ident">predicate</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">if_true</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-            <span class="ident">if_false</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="ident">predicate</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">if_true</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            <span class="ident">if_false</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Load a dynamically-generated SSDT from a field, region, or buffer</span>
-        <span class="ident">Load</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">definition_block_handle</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Load</span> { <span class="ident">name</span>: <span class="ident">NameString</span>, <span class="ident">definition_block_handle</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Do nothing</span>
         <span class="ident">NoOp</span>,
 
         <span class="doccomment">/// Send a signal value to a device/processor/zone</span>
-        <span class="ident">Notify</span> { <span class="ident">device_or_zone</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">value</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Notify</span> { <span class="ident">device_or_zone</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">value</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Release a held mutex</span>
-        <span class="ident">Release</span> { <span class="ident">mutex</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Release</span> { <span class="ident">mutex</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Clear the signalled state of an event object</span>
-        <span class="ident">Reset</span> { <span class="ident">event</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Reset</span> { <span class="ident">event</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Exit the current method and yield the given value to the caller</span>
-        <span class="ident">Return</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Return</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Signal to one thread waiting on the event</span>
-        <span class="ident">Signal</span> { <span class="ident">event</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Signal</span> { <span class="ident">event</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Delay for at least the given milliseconds, releasing the processor</span>
-        <span class="ident">Sleep</span> { <span class="ident">milliseconds</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Sleep</span> { <span class="ident">milliseconds</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Delay for at least the given microseconds, but do *not* release the processor</span>
-        <span class="ident">Stall</span> { <span class="ident">microseconds</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Stall</span> { <span class="ident">microseconds</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Execute a series of statements as long as the predicate is true</span>
-        <span class="ident">While</span> { <span class="ident">predicate</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">body</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> },
+        <span class="ident">While</span> { <span class="ident">predicate</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">body</span>: <span class="ident">Vec</span>&lt;<span class="ident">TermObject</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
     }
 
 
     <span class="doccomment">/// Terminal operation that evaluates to a reference.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="doccomment">/// Create a reference to the given name</span>
-        <span class="ident">RefOf</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">RefOf</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Get the target of a reference</span>
-        <span class="ident">Deref</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Deref</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Create a reference to an index within a buffer</span>
-        <span class="ident">Index</span> { <span class="ident">source</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">result</span>: <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> },
+        <span class="ident">Index</span> { <span class="ident">source</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">result</span>: <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt; },
 
         <span class="doccomment">/// Execute a control method</span>
-        <span class="ident">Invoke</span>(<span class="ident">NameString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+        <span class="ident">Invoke</span>(<span class="ident">NameString</span>, <span class="ident">Vec</span>&lt;<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
     }
 
 
     <span class="doccomment">/// Terminal operation that evaluates to a value or reference.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">RefExpression</span>(<span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-        <span class="ident">Buffer</span>(<span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-        <span class="ident">Package</span>(<span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-        <span class="ident">VarPackage</span>(<span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="ident">RefExpression</span>(<span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+        <span class="ident">Buffer</span>(<span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+        <span class="ident">Package</span>(<span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+        <span class="ident">VarPackage</span>(<span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Try to acquire a mutex, returning *true* if the attempt times out</span>
         <span class="ident">Acquire</span> {
-            <span class="ident">mutex</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">mutex</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
             <span class="ident">timeout</span>: <span class="ident">u16</span>,
         },
 
         <span class="doccomment">/// Add two integers</span>
-        <span class="ident">Add</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Add</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Compute a bitwise AND of two integers</span>
-        <span class="ident">BitwiseAnd</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">BitwiseAnd</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Concatenate two strings or buffers</span>
-        <span class="ident">Concat</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Concat</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Concatenate two buffers containing resource templates</span>
-        <span class="ident">ConcatRes</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ConcatRes</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Try to create a reference, returning false if it is not possible</span>
-        <span class="ident">CondRefOf</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">CondRefOf</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Update the destination with a copy of the given value, *without* converting</span>
         <span class="doccomment">/// its type. Compare with [`ExpressionOpcode::Store`].</span>
-        <span class="ident">CopyObject</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">SimpleName</span>),
+        <span class="ident">CopyObject</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">SimpleName</span>),
 
         <span class="doccomment">/// Decrement an integer variable</span>
-        <span class="ident">Decrement</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Decrement</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Perform integer (quotient-remainder) division</span>
         <span class="ident">Divide</span> {
-            <span class="ident">dividend</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">divisor</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">remainder</span>: <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">quotient</span>: <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">dividend</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">divisor</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">remainder</span>: <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">quotient</span>: <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Get the index of the most-significant set bit in a value</span>
-        <span class="ident">FindSetLeftBit</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">FindSetLeftBit</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Get the index of the least-significant set bit in a value</span>
-        <span class="ident">FindSetRightBit</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">FindSetRightBit</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Decode a series of binary-coded decimal nibbles into an integer</span>
-        <span class="ident">FromBCD</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">FromBCD</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Increment an integer variable</span>
-        <span class="ident">Increment</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Increment</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if both arguments are non-zero integers</span>
-        <span class="ident">LogicalAnd</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">LogicalAnd</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if both values are equal</span>
-        <span class="ident">Equal</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Equal</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is greater than the right value</span>
-        <span class="ident">Greater</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Greater</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is greater than or equal to the right</span>
         <span class="doccomment">/// value</span>
-        <span class="ident">GreaterEqual</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">GreaterEqual</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is less than the right value</span>
-        <span class="ident">Less</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Less</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is less than or equal to the right value</span>
-        <span class="ident">LessEqual</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">LessEqual</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the value is zero</span>
-        <span class="ident">LogicalNot</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">LogicalNot</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is not equal to the right value</span>
-        <span class="ident">NotEqual</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">NotEqual</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Find an ACPI table indexed by the XSDT</span>
         <span class="ident">LoadTable</span> {
-            <span class="ident">signature</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">oem_id</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">oem_table_id</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">root_path</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">parameter_path</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">parameter_data</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">signature</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">oem_id</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">oem_table_id</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">root_path</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">parameter_path</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">parameter_data</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Evaluate to true if either of the values is a non-zero integer</span>
-        <span class="ident">LogicalOr</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">LogicalOr</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Search a package and return the index of the first contained value that</span>
         <span class="doccomment">/// matches both specified conditions</span>
         <span class="ident">Match</span> {
-            <span class="ident">search_package</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">a</span>: (<span class="ident">MatchOpcode</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-            <span class="ident">b</span>: (<span class="ident">MatchOpcode</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
-            <span class="ident">start_index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">search_package</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">a</span>: (<span class="ident">MatchOpcode</span>, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+            <span class="ident">b</span>: (<span class="ident">MatchOpcode</span>, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
+            <span class="ident">start_index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Copy a slice of a string or buffer.</span>
         <span class="ident">Mid</span> {
-            <span class="ident">source</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">index</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">length</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">result</span>: <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">index</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">length</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">result</span>: <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Compute the remainder of dividing the first integer by the second</span>
-        <span class="ident">Mod</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Mod</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Multiply two integers</span>
-        <span class="ident">Multiply</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Multiply</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise NAND of two integers</span>
-        <span class="ident">Nand</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Nand</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise NOR of two integers</span>
-        <span class="ident">Nor</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Nor</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Invert the bits of an integer</span>
-        <span class="ident">BitwiseNot</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">BitwiseNot</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Get an integer representing the type of the given value. See [`ObjectType`].</span>
-        <span class="ident">ObjectType</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ObjectType</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise OR of the two integers</span>
-        <span class="ident">BitwiseOr</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">BitwiseOr</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Multiply an integer by the specified power of two</span>
-        <span class="ident">ShiftLeft</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ShiftLeft</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Divide an integer by the specified power of two</span>
-        <span class="ident">ShiftRight</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ShiftRight</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Get the length of a string, buffer, or package</span>
-        <span class="ident">SizeOf</span>(<span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">SizeOf</span>(<span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Update the destination with the given value, converting it to the type of the</span>
         <span class="doccomment">/// previous value. Compare with [`ExpressionOpcode::CopyObject`].</span>
-        <span class="ident">Store</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Store</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Subtract an integer from another, ignoring underflow</span>
-        <span class="ident">Subtract</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">Subtract</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Get the current value of the system timer in 100ns</span>
         <span class="ident">Timer</span>,
 
         <span class="doccomment">/// Encode an integer into a sequence of binary-coded decimal nibbles</span>
-        <span class="ident">ToBCD</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ToBCD</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Convert a value to a buffer</span>
-        <span class="ident">ToBuffer</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ToBuffer</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Encode a value as an ASCII decimal number</span>
-        <span class="ident">ToDecimalString</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ToDecimalString</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Encode a value as an ASCII hexadecimal number</span>
-        <span class="ident">ToHexString</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ToHexString</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Convert a value to an integer, either by parsing a string or taking the first</span>
         <span class="doccomment">/// bytes of a buffer.</span>
-        <span class="ident">ToInteger</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">ToInteger</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
 
         <span class="doccomment">/// Copy an ASCII string from a buffer into a string value</span>
         <span class="ident">ToString</span> {
-            <span class="ident">source</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">length</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">result</span>: <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">source</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">length</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">result</span>: <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Try to wait for another thread to signal an event object, returning true if</span>
         <span class="doccomment">/// the attempt times out</span>
         <span class="ident">Wait</span> {
-            <span class="ident">event</span>: <span class="ident">SuperName</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-            <span class="ident">timeout</span>: <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+            <span class="ident">event</span>: <span class="ident">SuperName</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
+            <span class="ident">timeout</span>: <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
         },
 
         <span class="doccomment">/// Compute the bitwise XOR of two integers</span>
-        <span class="ident">BitwiseXor</span>(<span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">TermArg</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+        <span class="ident">BitwiseXor</span>(<span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">TermArg</span>&lt;<span class="lifetime">&#39;a</span>&gt;, <span class="ident">Target</span>&lt;<span class="lifetime">&#39;a</span>&gt;),
     }
 
     <span class="macro">from_impl!</span>(
-        <span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span>
+        &lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">r</span>: <span class="ident">ReferenceExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; =
             <span class="ident">ExpressionOpcode::RefExpression</span>(<span class="ident">r</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">b</span>: <span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::Buffer</span>(<span class="ident">b</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">Package</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::Package</span>(<span class="ident">p</span>));
-    <span class="macro">from_impl!</span>(<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">p</span>: <span class="ident">VarPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ExpressionOpcode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ExpressionOpcode::VarPackage</span>(<span class="ident">p</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">b</span>: <span class="ident">Buffer</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::Buffer</span>(<span class="ident">b</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">Package</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::Package</span>(<span class="ident">p</span>));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">p</span>: <span class="ident">VarPackage</span>&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="ident">ExpressionOpcode</span>&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="ident">ExpressionOpcode::VarPackage</span>(<span class="ident">p</span>));
 
 
 
@@ -1996,6 +1992,5 @@
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DebugObject</span>;
 }
-</pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_acpi" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_acpi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (f22819bcc 2022-08-12)" ></div></body></html>

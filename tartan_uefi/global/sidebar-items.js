@@ -1,1 +1,1 @@
-initSidebarItems({"static":[["SYSTEM_TABLE",""]]});
+window.SIDEBAR_ITEMS = {"static":[["SYSTEM_TABLE",""]]};

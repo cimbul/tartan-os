@@ -1,105 +1,102 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/arch/x86_common.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>x86_common.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
-<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../tartan_kernel/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
-<span id="2">  2</span>
-<span id="3">  3</span>
-<span id="4">  4</span>
-<span id="5">  5</span>
-<span id="6">  6</span>
-<span id="7">  7</span>
-<span id="8">  8</span>
-<span id="9">  9</span>
-<span id="10"> 10</span>
-<span id="11"> 11</span>
-<span id="12"> 12</span>
-<span id="13"> 13</span>
-<span id="14"> 14</span>
-<span id="15"> 15</span>
-<span id="16"> 16</span>
-<span id="17"> 17</span>
-<span id="18"> 18</span>
-<span id="19"> 19</span>
-<span id="20"> 20</span>
-<span id="21"> 21</span>
-<span id="22"> 22</span>
-<span id="23"> 23</span>
-<span id="24"> 24</span>
-<span id="25"> 25</span>
-<span id="26"> 26</span>
-<span id="27"> 27</span>
-<span id="28"> 28</span>
-<span id="29"> 29</span>
-<span id="30"> 30</span>
-<span id="31"> 31</span>
-<span id="32"> 32</span>
-<span id="33"> 33</span>
-<span id="34"> 34</span>
-<span id="35"> 35</span>
-<span id="36"> 36</span>
-<span id="37"> 37</span>
-<span id="38"> 38</span>
-<span id="39"> 39</span>
-<span id="40"> 40</span>
-<span id="41"> 41</span>
-<span id="42"> 42</span>
-<span id="43"> 43</span>
-<span id="44"> 44</span>
-<span id="45"> 45</span>
-<span id="46"> 46</span>
-<span id="47"> 47</span>
-<span id="48"> 48</span>
-<span id="49"> 49</span>
-<span id="50"> 50</span>
-<span id="51"> 51</span>
-<span id="52"> 52</span>
-<span id="53"> 53</span>
-<span id="54"> 54</span>
-<span id="55"> 55</span>
-<span id="56"> 56</span>
-<span id="57"> 57</span>
-<span id="58"> 58</span>
-<span id="59"> 59</span>
-<span id="60"> 60</span>
-<span id="61"> 61</span>
-<span id="62"> 62</span>
-<span id="63"> 63</span>
-<span id="64"> 64</span>
-<span id="65"> 65</span>
-<span id="66"> 66</span>
-<span id="67"> 67</span>
-<span id="68"> 68</span>
-<span id="69"> 69</span>
-<span id="70"> 70</span>
-<span id="71"> 71</span>
-<span id="72"> 72</span>
-<span id="73"> 73</span>
-<span id="74"> 74</span>
-<span id="75"> 75</span>
-<span id="76"> 76</span>
-<span id="77"> 77</span>
-<span id="78"> 78</span>
-<span id="79"> 79</span>
-<span id="80"> 80</span>
-<span id="81"> 81</span>
-<span id="82"> 82</span>
-<span id="83"> 83</span>
-<span id="84"> 84</span>
-<span id="85"> 85</span>
-<span id="86"> 86</span>
-<span id="87"> 87</span>
-<span id="88"> 88</span>
-<span id="89"> 89</span>
-<span id="90"> 90</span>
-<span id="91"> 91</span>
-<span id="92"> 92</span>
-<span id="93"> 93</span>
-<span id="94"> 94</span>
-<span id="95"> 95</span>
-<span id="96"> 96</span>
-<span id="97"> 97</span>
-<span id="98"> 98</span>
-<span id="99"> 99</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/arch/x86_common.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>x86_common.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../tartan_kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
@@ -341,9 +338,10 @@
 <span id="338">338</span>
 <span id="339">339</span>
 <span id="340">340</span>
-</pre><pre class="rust">
-<span class="doccomment">//! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors</span>
+<span id="341">341</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors</span>
 
+<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
 <span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
 <span class="kw">use</span> <span class="ident">memoffset::offset_of</span>;
@@ -358,24 +356,24 @@
 };
 <span class="kw">use</span> <span class="ident">tartan_arch::x86_common</span>::{<span class="ident">ControlRegister0</span>, <span class="ident">ControlRegister4</span>, <span class="ident">FlagRegister</span>};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">tartan_arch::x86::protection::TaskStateSegmentHeader</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">tartan_arch::x86_64::protection::TaskStateSegmentHeader</span>;
 
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>: <span class="ident">GlobalDescriptorTable</span> <span class="op">=</span> <span class="ident">GlobalDescriptorTable</span> {
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>: <span class="ident">GlobalDescriptorTable</span> = <span class="ident">GlobalDescriptorTable</span> {
     <span class="ident">null_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
     <span class="ident">code_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
     <span class="ident">data_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
     <span class="ident">task_state_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
 };
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>: <span class="ident">InterruptDescriptorTable</span> <span class="op">=</span>
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>: <span class="ident">InterruptDescriptorTable</span> =
     <span class="ident">InterruptDescriptorTable</span> { <span class="ident">descriptors</span>: [<span class="ident">GateDescriptor::new</span>(); <span class="number">0xff</span>] };
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">TASK_STATE_SEGMENT</span>: <span class="ident">TaskStateSegmentHeader</span> <span class="op">=</span> <span class="ident">TaskStateSegmentHeader::new</span>();
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">TASK_STATE_SEGMENT</span>: <span class="ident">TaskStateSegmentHeader</span> = <span class="ident">TaskStateSegmentHeader::new</span>();
 
 
 <span class="doccomment">/// Global descriptor table structure specific to Tartan OS.</span>
@@ -394,9 +392,9 @@
 <span class="doccomment">/// Create a segment selector that points to the given descriptor field in the</span>
 <span class="doccomment">/// [`GlobalDescriptorTable`].</span>
 <span class="macro">macro_rules!</span> <span class="ident">global_selector</span> {
-    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>:<span class="ident">ident</span>] <span class="op">=</span><span class="op">&gt;</span> {
+    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>:<span class="ident">ident</span>] =&gt; {
         {
-            <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="macro">offset_of!</span>(<span class="ident">GlobalDescriptorTable</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>);
+            <span class="kw">let</span> <span class="ident">offset</span> = <span class="macro">offset_of!</span>(<span class="ident">GlobalDescriptorTable</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>);
             <span class="ident">Selector::new</span>(<span class="ident">offset</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>(), <span class="number">0</span>, <span class="bool-val">false</span>)
         }
     }
@@ -410,8 +408,8 @@
 
 <span class="doccomment">/// Set flags in general control registers to a known state</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize_control_registers</span>() {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">FlagRegister::get</span>();
-    <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">flags</span>.<span class="ident">virtual_8086_mode</span>()); <span class="comment">// Firmware/loader should have disabled</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">FlagRegister::get</span>();
+    <span class="macro">assert!</span>(!<span class="ident">flags</span>.<span class="ident">virtual_8086_mode</span>()); <span class="comment">// Firmware/loader should have disabled</span>
     <span class="ident">flags</span>.<span class="ident">set_interrupt_enabled</span>(<span class="bool-val">true</span>); <span class="comment">// Should be harmless... maybe</span>
     <span class="ident">flags</span>.<span class="ident">set_io_privilege_level</span>(<span class="number">0</span>); <span class="comment">// Basic security</span>
     <span class="ident">flags</span>.<span class="ident">set_alignment_check_or_access_control</span>(<span class="bool-val">true</span>); <span class="comment">// Check for Rust UB/extra security</span>
@@ -419,7 +417,7 @@
         <span class="ident">FlagRegister::set</span>(<span class="ident">flags</span>);
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr0</span> <span class="op">=</span> <span class="ident">ControlRegister0::get</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr0</span> = <span class="ident">ControlRegister0::get</span>();
     <span class="macro">assert!</span>(<span class="ident">cr0</span>.<span class="ident">protected_mode</span>()); <span class="comment">// Firmware/loader should have enabled</span>
     <span class="ident">cr0</span>.<span class="ident">set_cache_disabled</span>(<span class="bool-val">false</span>); <span class="comment">// Should be harmless</span>
     <span class="ident">cr0</span>.<span class="ident">set_cache_not_write_through</span>(<span class="bool-val">false</span>); <span class="comment">// Should be harmless</span>
@@ -427,7 +425,7 @@
     <span class="ident">cr0</span>.<span class="ident">set_write_protect</span>(<span class="bool-val">true</span>); <span class="comment">// Basic security</span>
     <span class="ident">cr0</span>.<span class="ident">set_native_fpu_error</span>(<span class="bool-val">true</span>); <span class="comment">// Don&#39;t use MS-DOS compatibility mode</span>
     <span class="ident">cr0</span>.<span class="ident">set_fpu_emulation</span>(<span class="bool-val">true</span>);
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
     {
         <span class="macro">assert!</span>(<span class="ident">cr0</span>.<span class="ident">paging</span>()); <span class="comment">// Required in 64-bit mode</span>
     }
@@ -435,7 +433,7 @@
         <span class="ident">ControlRegister0::set</span>(<span class="ident">cr0</span>);
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr4</span> <span class="op">=</span> <span class="ident">ControlRegister4::get</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr4</span> = <span class="ident">ControlRegister4::get</span>();
     <span class="ident">cr4</span>.<span class="ident">set_virtual_8086_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// No reason to support this</span>
     <span class="ident">cr4</span>.<span class="ident">set_protected_virtual_interrupts</span>(<span class="bool-val">false</span>); <span class="comment">// No reason to support this</span>
     <span class="ident">cr4</span>.<span class="ident">set_timestamp_disabled</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security, no use case yet</span>
@@ -453,7 +451,7 @@
     <span class="ident">cr4</span>.<span class="ident">set_supervisor_execution_prevention</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
     <span class="ident">cr4</span>.<span class="ident">set_supervisor_access_prevention</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
     <span class="ident">cr4</span>.<span class="ident">set_control_flow_enforcement</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
     {
         <span class="macro">assert!</span>(<span class="ident">cr4</span>.<span class="ident">physical_address_extension</span>()); <span class="comment">// Required in 64-bit mode</span>
         <span class="ident">cr4</span>.<span class="ident">set_five_level_paging</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
@@ -466,11 +464,11 @@
         <span class="ident">ControlRegister4::set</span>(<span class="ident">cr4</span>);
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
     {
         <span class="kw">use</span> <span class="ident">tartan_arch::x86_64::ExtendedFeatureEnableRegister</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">efer</span> <span class="op">=</span> <span class="ident">ExtendedFeatureEnableRegister::get</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">efer</span> = <span class="ident">ExtendedFeatureEnableRegister::get</span>();
         <span class="macro">assert!</span>(<span class="ident">efer</span>.<span class="ident">long_mode_active</span>()); <span class="comment">// How else are we here?</span>
         <span class="ident">efer</span>.<span class="ident">set_syscall</span>(<span class="bool-val">true</span>); <span class="comment">// Most efficient method for syscalls</span>
         <span class="ident">efer</span>.<span class="ident">set_no_execute</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
@@ -486,16 +484,16 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize_segments</span>() {
     <span class="comment">// Initialize the segment descriptors in our global descriptor table</span>
     <span class="kw">unsafe</span> {
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">code_segment</span> <span class="op">=</span> <span class="ident">make_code_descriptor</span>();
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">data_segment</span> <span class="op">=</span> <span class="ident">make_data_descriptor</span>();
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">task_state_segment</span> <span class="op">=</span> <span class="ident">make_task_state_descriptor</span>();
+        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">code_segment</span> = <span class="ident">make_code_descriptor</span>();
+        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">data_segment</span> = <span class="ident">make_data_descriptor</span>();
+        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">task_state_segment</span> = <span class="ident">make_task_state_descriptor</span>();
     }
 
     <span class="comment">// Set the GDTR to use our global descriptor table, and point the segment selectors</span>
     <span class="comment">// (CS, DS, SS, etc.) to the new descriptors.</span>
-    <span class="kw">let</span> <span class="ident">gdtr</span> <span class="op">=</span> <span class="ident">GlobalDescriptorTableRegister</span> {
-        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">GLOBAL_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
-        <span class="ident">limit</span>: (<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">GlobalDescriptorTable</span><span class="op">&gt;</span>() <span class="op">-</span> <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+    <span class="kw">let</span> <span class="ident">gdtr</span> = <span class="ident">GlobalDescriptorTableRegister</span> {
+        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">GLOBAL_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
+        <span class="ident">limit</span>: (<span class="ident">size_of</span>::&lt;<span class="ident">GlobalDescriptorTable</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">GlobalDescriptorTableRegister::set_with_segments</span>(
@@ -516,59 +514,59 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">make_code_descriptor</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SegmentDescriptor</span> {
+<span class="kw">fn</span> <span class="ident">make_code_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
     <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">SegmentDescriptorFlags::default</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
     <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_granularity</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_code</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_code_readable</span>(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
     <span class="ident">flags</span>.<span class="ident">set_application_mode_32</span>(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
     <span class="ident">flags</span>.<span class="ident">set_code_mode_64</span>(<span class="bool-val">true</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> <span class="op">=</span> <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> <span class="op">=</span> <span class="ident">flags</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
+    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
     <span class="ident">descriptor</span>.<span class="ident">set_limit</span>(<span class="ident">SegmentDescriptor::LIMIT_MAX</span>);
     <span class="ident">descriptor</span>
 }
 
-<span class="kw">fn</span> <span class="ident">make_data_descriptor</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SegmentDescriptor</span> {
+<span class="kw">fn</span> <span class="ident">make_data_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
     <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">SegmentDescriptorFlags::default</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
     <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_granularity</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_code</span>(<span class="bool-val">false</span>);
     <span class="ident">flags</span>.<span class="ident">set_data_writable</span>(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
     <span class="ident">flags</span>.<span class="ident">set_application_mode_32</span>(<span class="bool-val">true</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> <span class="op">=</span> <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> <span class="op">=</span> <span class="ident">flags</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
+    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
     <span class="ident">descriptor</span>.<span class="ident">set_limit</span>(<span class="ident">SegmentDescriptor::LIMIT_MAX</span>);
     <span class="ident">descriptor</span>
 }
 
-<span class="kw">fn</span> <span class="ident">make_task_state_descriptor</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SegmentDescriptor</span> {
+<span class="kw">fn</span> <span class="ident">make_task_state_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
     <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">SegmentDescriptorFlags::default</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
     <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">false</span>);
     <span class="ident">flags</span>.<span class="ident">set_system_type</span>(<span class="ident">SystemDescriptorType::TaskStateAvailable</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> <span class="op">=</span> <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> <span class="op">=</span> <span class="ident">flags</span>;
-    <span class="ident">descriptor</span>.<span class="ident">set_address</span>(<span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">TASK_STATE_SEGMENT</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> });
-    <span class="ident">descriptor</span>.<span class="ident">set_limit</span>((<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">TaskStateSegmentHeader</span><span class="op">&gt;</span>() <span class="op">-</span> <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>());
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
+    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
+    <span class="ident">descriptor</span>.<span class="ident">set_address</span>(<span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">TASK_STATE_SEGMENT</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> });
+    <span class="ident">descriptor</span>.<span class="ident">set_limit</span>((<span class="ident">size_of</span>::&lt;<span class="ident">TaskStateSegmentHeader</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>());
     <span class="ident">descriptor</span>
 }
 
@@ -577,15 +575,15 @@
     <span class="doccomment">/// Create a function that forwards the given interrupt number to the</span>
     <span class="doccomment">/// [`handle_unknown_interrupt`] function, and point the appropriate IDT entry to it.</span>
     <span class="macro">macro_rules!</span> <span class="ident">forward_interrupt</span> {
-        [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>:<span class="ident">literal</span>] <span class="op">=</span><span class="op">&gt;</span> {
+        [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>:<span class="ident">literal</span>] =&gt; {
             <span class="macro">paste!</span> {
                 <span class="attribute">#[<span class="ident">naked</span>]</span>
-                <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> [<span class="op">&lt;</span> <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> <span class="op">&gt;</span>]() {
+                <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> [&lt; <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> &gt;]() {
                     <span class="comment">// TODO: Save register state before calling handler, and support</span>
                     <span class="comment">// returning. This isn&#39;t critical at the moment since the handler just</span>
                     <span class="comment">// panics.</span>
 
-                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
                     <span class="macro">asm!</span>(
                         <span class="string">&quot;
                         push {}
@@ -596,7 +594,7 @@
                         <span class="ident">options</span>(<span class="ident">noreturn</span>),
                     );
 
-                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
                     <span class="macro">asm!</span>(
                         <span class="string">&quot;
                         mov rdi, {}
@@ -609,10 +607,10 @@
                 }
 
                 <span class="kw">unsafe</span> {
-                    <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>.<span class="ident">descriptors</span>[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>] <span class="op">=</span>
+                    <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>.<span class="ident">descriptors</span>[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>] =
                         <span class="ident">make_interrupt_gate</span>(
                             <span class="macro">global_selector!</span>(<span class="ident">code_segment</span>),
-                            [<span class="op">&lt;</span> <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> <span class="op">&gt;</span>],
+                            [&lt; <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> &gt;],
                         );
                 }
             }
@@ -654,9 +652,9 @@
     <span class="macro">forward_interrupt!</span>(<span class="number">31</span>);
 
     <span class="comment">// Point the IDTR to our IDT</span>
-    <span class="kw">let</span> <span class="ident">idtr</span> <span class="op">=</span> <span class="ident">InterruptDescriptorTableRegister</span> {
-        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
-        <span class="ident">limit</span>: (<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">InterruptDescriptorTable</span><span class="op">&gt;</span>() <span class="op">-</span> <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+    <span class="kw">let</span> <span class="ident">idtr</span> = <span class="ident">InterruptDescriptorTableRegister</span> {
+        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
+        <span class="ident">limit</span>: (<span class="ident">size_of</span>::&lt;<span class="ident">InterruptDescriptorTable</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
     };
     <span class="kw">unsafe</span> { <span class="ident">InterruptDescriptorTableRegister::set</span>(<span class="kw-2">&amp;</span><span class="ident">idtr</span>) };
 }
@@ -664,16 +662,16 @@
 <span class="kw">fn</span> <span class="ident">make_interrupt_gate</span>(
     <span class="ident">code_segment</span>: <span class="ident">Selector</span>,
     <span class="ident">handler</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(),
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">GateDescriptor</span> {
+) -&gt; <span class="ident">GateDescriptor</span> {
     <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">GateDescriptorFlags::default</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">GateDescriptorFlags::default</span>();
     <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
     <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">false</span>);
     <span class="ident">flags</span>.<span class="ident">set_system_type</span>(<span class="ident">SystemDescriptorType::InterruptGate</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> <span class="op">=</span> <span class="ident">GateDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> <span class="op">=</span> <span class="ident">flags</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">GateDescriptor::default</span>();
+    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
     <span class="ident">descriptor</span>.<span class="ident">set_selector</span>(<span class="ident">code_segment</span>);
     <span class="ident">descriptor</span>.<span class="ident">set_entry_point_offset</span>(<span class="ident">handler</span> <span class="kw">as</span> <span class="ident">usize</span>);
     <span class="ident">descriptor</span>
@@ -682,6 +680,5 @@
 <span class="kw">fn</span> <span class="ident">handle_unknown_interrupt</span>(<span class="ident">vector</span>: <span class="ident">InterruptVector</span>) {
     <span class="macro">panic!</span>(<span class="string">&quot;Interrupt {:?}&quot;</span>, <span class="ident">vector</span>);
 }
-</pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (f22819bcc 2022-08-12)" ></div></body></html>

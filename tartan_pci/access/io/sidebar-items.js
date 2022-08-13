@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["IOConfigAccess","I/O based configuration access method on x86/x86-64."]]});
+window.SIDEBAR_ITEMS = {"struct":[["IOConfigAccess","I/O based configuration access method on x86/x86-64."]]};

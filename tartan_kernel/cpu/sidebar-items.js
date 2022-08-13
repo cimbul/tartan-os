@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["describe_segment_register",""],["print_state",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["describe_segment_register",""],["print_state",""]]};
