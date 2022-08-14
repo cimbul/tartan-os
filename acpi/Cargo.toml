@@ -2,7 +2,7 @@
 name = "tartan-acpi"
 version = "0.1.0"
 authors = ["Tim Yates <cimbul@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0-or-later"
 readme = "README.md"
 homepage = "https://github.com/cimbul/tartan-os"
