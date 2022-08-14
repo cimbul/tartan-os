@@ -103,12 +103,12 @@ pub fn initialize_control_registers() {
     cr4.set_performance_counter(false); // Extra security, no use case yet
     cr4.set_sse_and_fpu_save(false); // Need to write support
     cr4.set_simd_exceptions(false); // Need to write support
-    cr4.set_restrict_user_mode_instructions(true); // Extra security, no use case yet
+    cr4.set_restrict_user_mode_instructions(false); // TODO: Enable for extra security
     cr4.set_virtual_machine_extensions(false); // Intel-only, not used yet
     cr4.set_safer_mode_extensions(false); // Intel-only, poor implementation
     cr4.set_extended_state_save(false); // Need to write support
-    cr4.set_supervisor_execution_prevention(true); // Extra security
-    cr4.set_supervisor_access_prevention(true); // Extra security
+    cr4.set_supervisor_execution_prevention(false); // TODO: Enable for extra security
+    cr4.set_supervisor_access_prevention(false); // TODO: Enable for extra security
     cr4.set_control_flow_enforcement(false); // Intel-only, not used yet
     #[cfg(target_arch = "x86_64")]
     {
