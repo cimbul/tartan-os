@@ -2,7 +2,6 @@ var sourcesIndex = JSON.parse('{\
 "aml_parse":["",[],["aml-parse.rs"]],\
 "tartan_acpi":["",[["aml",[],["parse.rs"]]],["aml.rs","lib.rs"]],\
 "tartan_arch":["",[["aarch64",[],["float.rs","interrupt.rs"]],["arm",[],["interrupt.rs"]],["x86",[],["protection.rs"]],["x86_64",[],["protection.rs"]],["x86_common",[],["features.rs","interrupt.rs","io.rs","paging.rs","protection.rs"]]],["aarch64.rs","arm.rs","lib.rs","x86.rs","x86_64.rs","x86_common.rs"]],\
-"tartan_bitfield":["",[],["lib.rs"]],\
 "tartan_c_enum":["",[],["lib.rs"]],\
 "tartan_devicetree":["",[],["blob.rs","lib.rs"]],\
 "tartan_elf":["",[],["lib.rs"]],\
