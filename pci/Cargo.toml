@@ -11,6 +11,6 @@ publish = false
 [dependencies]
 # Internal
 tartan-arch = {path = "../arch"}
-tartan-bitfield = {path = "../util/bitfield"}
 # External
 log = "0.4.11"
+tartan-bitfield = "1.0.0"
