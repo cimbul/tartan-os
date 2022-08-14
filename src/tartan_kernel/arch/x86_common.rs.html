@@ -444,12 +444,12 @@
     <span class="ident">cr4</span>.<span class="ident">set_performance_counter</span>(<span class="bool-val">false</span>); <span class="comment">// Extra security, no use case yet</span>
     <span class="ident">cr4</span>.<span class="ident">set_sse_and_fpu_save</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
     <span class="ident">cr4</span>.<span class="ident">set_simd_exceptions</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
-    <span class="ident">cr4</span>.<span class="ident">set_restrict_user_mode_instructions</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security, no use case yet</span>
+    <span class="ident">cr4</span>.<span class="ident">set_restrict_user_mode_instructions</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
     <span class="ident">cr4</span>.<span class="ident">set_virtual_machine_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
     <span class="ident">cr4</span>.<span class="ident">set_safer_mode_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, poor implementation</span>
     <span class="ident">cr4</span>.<span class="ident">set_extended_state_save</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
-    <span class="ident">cr4</span>.<span class="ident">set_supervisor_execution_prevention</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
-    <span class="ident">cr4</span>.<span class="ident">set_supervisor_access_prevention</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
+    <span class="ident">cr4</span>.<span class="ident">set_supervisor_execution_prevention</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
+    <span class="ident">cr4</span>.<span class="ident">set_supervisor_access_prevention</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
     <span class="ident">cr4</span>.<span class="ident">set_control_flow_enforcement</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
     {
@@ -681,4 +681,4 @@
     <span class="macro">panic!</span>(<span class="string">&quot;Interrupt {:?}&quot;</span>, <span class="ident">vector</span>);
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (f22819bcc 2022-08-12)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
