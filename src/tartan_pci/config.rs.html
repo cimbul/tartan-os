@@ -345,352 +345,352 @@
 <span id="345">345</span>
 <span id="346">346</span>
 <span id="347">347</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::INVALID_VENDOR</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::INVALID_VENDOR;
+<span class="kw">use </span>tartan_bitfield::bitfield;
 
 
-<span class="doccomment">/// A register type that is always located at a specific offset</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FixedConfigRegister</span>: <span class="ident">From</span>&lt;<span class="ident">u32</span>&gt; + <span class="ident">Into</span>&lt;<span class="ident">u32</span>&gt; {
-    <span class="doccomment">/// Fixed offset for this register type</span>
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span>;
+<span class="doccomment">/// A register type that is always located at a specific offset
+</span><span class="kw">pub trait </span>FixedConfigRegister: From&lt;u32&gt; + Into&lt;u32&gt; {
+    <span class="doccomment">/// Fixed offset for this register type
+    </span><span class="kw">const </span>REGISTER_NUMBER: u8;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// The first register of the standard configuration header for all PCI devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HeaderRegister0</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Vendor-defined device ID</span>
-        [<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">device</span>: <span class="ident">u16</span>,
-        <span class="doccomment">/// ID of the chipset manufacturer for this function, assigned by PCI-SIG</span>
-        [ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">vendor</span>: <span class="ident">u16</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// The first register of the standard configuration header for all PCI devices.
+    </span><span class="kw">pub struct </span>HeaderRegister0(u32) {
+        <span class="doccomment">/// Vendor-defined device ID
+        </span>[<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub </span>device: u16,
+        <span class="doccomment">/// ID of the chipset manufacturer for this function, assigned by PCI-SIG
+        </span>[ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub </span>vendor: u16,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">HeaderRegister0</span> {
-    <span class="doccomment">/// Return false if the function is not present, as indicated by an invalid vendor ID.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">valid</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">vendor</span>() != <span class="ident">INVALID_VENDOR</span>
+<span class="kw">impl </span>HeaderRegister0 {
+    <span class="doccomment">/// Return false if the function is not present, as indicated by an invalid vendor ID.
+    </span><span class="kw">pub fn </span>valid(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.vendor() != INVALID_VENDOR
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">HeaderRegister0</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">0</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>HeaderRegister0 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">0</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// The second register of the standard configuration header for all PCI devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HeaderRegister1</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Status bits indicated by the function</span>
-        [<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">status</span>:  <span class="ident">u16</span> <span class="kw">as</span> <span class="ident">StatusRegister</span>,
-        <span class="doccomment">/// Control bits set by the host</span>
-        [ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">command</span>: <span class="ident">u16</span> <span class="kw">as</span> <span class="ident">CommandRegister</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// The second register of the standard configuration header for all PCI devices.
+    </span><span class="kw">pub struct </span>HeaderRegister1(u32) {
+        <span class="doccomment">/// Status bits indicated by the function
+        </span>[<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub </span>status:  u16 <span class="kw">as </span>StatusRegister,
+        <span class="doccomment">/// Control bits set by the host
+        </span>[ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub </span>command: u16 <span class="kw">as </span>CommandRegister,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">HeaderRegister1</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">1</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>HeaderRegister1 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">1</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// The third register of the standard configuration header for all PCI devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HeaderRegister2</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Indicates the general purpose of the function, from a list of IDs defined by</span>
-        <span class="doccomment">/// PCI-SIG.</span>
-        [<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">class</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates the purpose of the function more specifically, from a list of IDs</span>
-        <span class="doccomment">/// defined by PCI-SIG for the corresponding [`class`]. Some classes do not have</span>
-        <span class="doccomment">/// any meaningful subclasses defined.</span>
-        [<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">subclass</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates a standard programming interface that can be used by a generic</span>
-        <span class="doccomment">/// driver. The possible IDs are defined by PCI-SIG for the corresponding</span>
-        <span class="doccomment">/// [`class`] and [`subclass`]. Some subclasses do not have any meaningful</span>
-        <span class="doccomment">/// interfaces defined.</span>
-        [ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">interface</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Vendor-defined revision of the hardware</span>
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// The third register of the standard configuration header for all PCI devices.
+    </span><span class="kw">pub struct </span>HeaderRegister2(u32) {
+        <span class="doccomment">/// Indicates the general purpose of the function, from a list of IDs defined by
+        /// PCI-SIG.
+        </span>[<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub </span>class: u8,
+        <span class="doccomment">/// Indicates the purpose of the function more specifically, from a list of IDs
+        /// defined by PCI-SIG for the corresponding [`class`]. Some classes do not have
+        /// any meaningful subclasses defined.
+        </span>[<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub </span>subclass: u8,
+        <span class="doccomment">/// Indicates a standard programming interface that can be used by a generic
+        /// driver. The possible IDs are defined by PCI-SIG for the corresponding
+        /// [`class`] and [`subclass`]. Some subclasses do not have any meaningful
+        /// interfaces defined.
+        </span>[ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub </span>interface: u8,
+        <span class="doccomment">/// Vendor-defined revision of the hardware
+        </span>[ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>revision: u8,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">HeaderRegister2</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">2</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>HeaderRegister2 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">2</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// The fourth register of the standard configuration header for all PCI devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HeaderRegister3</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Control and status flags for a function&#39;s self test capability, if present.</span>
-        [<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">self_test</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">SelfTest</span>,
-        <span class="doccomment">/// If true, then this device responds to at least some function numbers &gt;= 1.</span>
-        <span class="doccomment">/// The flag is only meaningful on function zero.</span>
-        [<span class="number">23</span>    ] <span class="kw">pub</span> <span class="ident">multi_function</span>,
-        <span class="doccomment">/// Indicates which of the standard PCI configuration header formats that this</span>
-        <span class="doccomment">/// function supports, and indirectly, whether this function is a PCI or CardBus</span>
-        <span class="doccomment">/// bridge.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Currently, the defined values are:</span>
-        <span class="doccomment">///   * `0x00` - general purpose</span>
-        <span class="doccomment">///   * `0x01` - PCI bridge</span>
-        <span class="doccomment">///   * `0x02` - PCI-to-CardBus bridge</span>
-        [<span class="number">16</span>..<span class="number">23</span>] <span class="kw">pub</span> <span class="ident">header_type</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// The value of the bus master&#39;s latency timer in PCI clock cycles</span>
-        [ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">latency_timer</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Informs the device of the size of the system&#39;s cache lines, in 32-bit units.</span>
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">cache_line_size</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// The fourth register of the standard configuration header for all PCI devices.
+    </span><span class="kw">pub struct </span>HeaderRegister3(u32) {
+        <span class="doccomment">/// Control and status flags for a function&#39;s self test capability, if present.
+        </span>[<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub </span>self_test: u8 <span class="kw">as </span>SelfTest,
+        <span class="doccomment">/// If true, then this device responds to at least some function numbers &gt;= 1.
+        /// The flag is only meaningful on function zero.
+        </span>[<span class="number">23    </span>] <span class="kw">pub </span>multi_function,
+        <span class="doccomment">/// Indicates which of the standard PCI configuration header formats that this
+        /// function supports, and indirectly, whether this function is a PCI or CardBus
+        /// bridge.
+        ///
+        /// Currently, the defined values are:
+        ///   * `0x00` - general purpose
+        ///   * `0x01` - PCI bridge
+        ///   * `0x02` - PCI-to-CardBus bridge
+        </span>[<span class="number">16</span>..<span class="number">23</span>] <span class="kw">pub </span>header_type: u8,
+        <span class="doccomment">/// The value of the bus master&#39;s latency timer in PCI clock cycles
+        </span>[ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub </span>latency_timer: u8,
+        <span class="doccomment">/// Informs the device of the size of the system&#39;s cache lines, in 32-bit units.
+        </span>[ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>cache_line_size: u8,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">HeaderRegister3</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">3</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>HeaderRegister3 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">3</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Twelfth register of the standard configuration header for general-purpose devices</span>
-    <span class="doccomment">/// (header type `0x00`).</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister11</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// ID of the device as defined by the card manufacturer.</span>
-        [<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">subsystem</span>: <span class="ident">u16</span>,
-        <span class="doccomment">/// ID of the card manufacturer, which may be different than the chipset</span>
-        <span class="doccomment">/// manufacturer. Uses the same values defined by PCI-SIG for the vendor ID.</span>
-        [ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">subsystem_vendor</span>: <span class="ident">u16</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Twelfth register of the standard configuration header for general-purpose devices
+    /// (header type `0x00`).
+    </span><span class="kw">pub struct </span>Type0HeaderRegister11(u32) {
+        <span class="doccomment">/// ID of the device as defined by the card manufacturer.
+        </span>[<span class="number">16</span>..<span class="number">32</span>] <span class="kw">pub </span>subsystem: u16,
+        <span class="doccomment">/// ID of the card manufacturer, which may be different than the chipset
+        /// manufacturer. Uses the same values defined by PCI-SIG for the vendor ID.
+        </span>[ <span class="number">0</span>..<span class="number">16</span>] <span class="kw">pub </span>subsystem_vendor: u16,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister11</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">11</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>Type0HeaderRegister11 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">11</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Fourtheenth register of the standard configuration header for general-purpose</span>
-    <span class="doccomment">/// devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister13</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Offset within this function&#39;s configuration space that points to the first</span>
-        <span class="doccomment">/// of a linked list of &quot;capabilities&quot; supported by the device. Only valid if the</span>
-        <span class="doccomment">/// appropriate bit is set in the [`StatusRegister`].</span>
-        [<span class="number">0</span>..<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">capabilities_offset</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Fourtheenth register of the standard configuration header for general-purpose
+    /// devices.
+    </span><span class="kw">pub struct </span>Type0HeaderRegister13(u32) {
+        <span class="doccomment">/// Offset within this function&#39;s configuration space that points to the first
+        /// of a linked list of &quot;capabilities&quot; supported by the device. Only valid if the
+        /// appropriate bit is set in the [`StatusRegister`].
+        </span>[<span class="number">0</span>..<span class="number">8</span>] <span class="kw">pub </span>capabilities_offset: u8,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister13</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">13</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>Type0HeaderRegister13 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">13</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Sixteenth register of the standard configuration header for general-purpose</span>
-    <span class="doccomment">/// devices.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Type0HeaderRegister15</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Indicates the longest period the device can wait to access the PCI bus, in</span>
-        <span class="doccomment">/// units of 0.25 µs.</span>
-        [<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">max_latency</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates the desired length of bursts in units of 0.25 µs.</span>
-        [<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">min_grant</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates which of the four interrupt pins on the PCI bus that the device uses</span>
-        <span class="doccomment">/// (0 for `INTA#` through 3 for `INTC#`). Single-function devices always use</span>
-        <span class="doccomment">/// `INTA#`.</span>
-        [ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">interrupt_pin</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates which system interrupt number the function uses, as defined by the</span>
-        <span class="doccomment">/// system&#39;s interrupt controller.</span>
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">interrupt_line</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Sixteenth register of the standard configuration header for general-purpose
+    /// devices.
+    </span><span class="kw">pub struct </span>Type0HeaderRegister15(u32) {
+        <span class="doccomment">/// Indicates the longest period the device can wait to access the PCI bus, in
+        /// units of 0.25 µs.
+        </span>[<span class="number">24</span>..<span class="number">32</span>] <span class="kw">pub </span>max_latency: u8,
+        <span class="doccomment">/// Indicates the desired length of bursts in units of 0.25 µs.
+        </span>[<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub </span>min_grant: u8,
+        <span class="doccomment">/// Indicates which of the four interrupt pins on the PCI bus that the device uses
+        /// (0 for `INTA#` through 3 for `INTC#`). Single-function devices always use
+        /// `INTA#`.
+        </span>[ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub </span>interrupt_pin: u8,
+        <span class="doccomment">/// Indicates which system interrupt number the function uses, as defined by the
+        /// system&#39;s interrupt controller.
+        </span>[ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>interrupt_line: u8,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FixedConfigRegister</span> <span class="kw">for</span> <span class="ident">Type0HeaderRegister15</span> {
-    <span class="kw">const</span> <span class="ident">REGISTER_NUMBER</span>: <span class="ident">u8</span> = <span class="number">15</span>;
+<span class="kw">impl </span>FixedConfigRegister <span class="kw">for </span>Type0HeaderRegister15 {
+    <span class="kw">const </span>REGISTER_NUMBER: u8 = <span class="number">15</span>;
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Control bits set by the host</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CommandRegister</span>(<span class="ident">u16</span>) {
-        <span class="doccomment">/// Controls whether the device is prohibited from asserting its interrupt pin.</span>
-        <span class="doccomment">/// Does not apply to MSI interrupts.</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">interrupt_disabled</span>,
-        <span class="doccomment">/// Controls whether the device may use fast back-to-back transactions to multiple</span>
-        <span class="doccomment">/// devices when acting as a bus master.</span>
-        [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">fast_back_to_back_enabled</span>,
-        <span class="doccomment">/// Controls whether the device may signal critical errors in addresses or</span>
-        <span class="doccomment">/// special cycle operations.</span>
-        [ <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">system_error_enabled</span>,
-        <span class="doccomment">/// Controls whether the device responds normally to parity errors (`true`) or</span>
-        <span class="doccomment">/// whether it must simply set the parity error bit in the status register and</span>
-        <span class="doccomment">/// ignore it (`false`).</span>
-        [ <span class="number">6</span>] <span class="kw">pub</span> <span class="ident">parity_error_response</span>,
-        <span class="doccomment">/// Controls whether a VGA or graphics card device may &quot;snoop&quot; on VGA palette</span>
-        <span class="doccomment">/// buffer writes sent to a different device.</span>
-        [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">vga_palette_snoop</span>,
-        <span class="doccomment">/// Controls whether the device may send a &quot;Memory Write and Invalidate&quot; command</span>
-        <span class="doccomment">/// when acting as a bus master.</span>
-        [ <span class="number">4</span>] <span class="kw">pub</span> <span class="ident">write_and_invalidate_enable</span>,
-        <span class="doccomment">/// Controls whether the device may respond to &quot;special cycle&quot; messages, used to</span>
-        <span class="doccomment">/// communicate system state to the device (e.g., shutting down, halted)</span>
-        [ <span class="number">3</span>] <span class="kw">pub</span> <span class="ident">special_cycle</span>,
-        <span class="doccomment">/// Controls whether the device may act as a master of the PCI bus</span>
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">bus_master</span>,
-        <span class="doccomment">/// Controls whether the device may respond to accesses through memory space</span>
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">memory_space</span>,
-        <span class="doccomment">/// Controls whether the device may respond to accesses through I/O space</span>
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">io_space</span>,
-    }
-}
-
-
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Status bits indicated by the function</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StatusRegister</span>(<span class="ident">u16</span>) {
-        <span class="doccomment">/// Indicates taht the device has detected a parity error, even if it is ignored.</span>
-        [<span class="number">15</span>    ] <span class="kw">pub</span> <span class="ident">parity_error_detected</span>,
-        <span class="doccomment">/// Indicates that the device has detected a critical error in an address or</span>
-        <span class="doccomment">/// special cycle operation.</span>
-        [<span class="number">14</span>    ] <span class="kw">pub</span> <span class="ident">system_error_signaled</span>,
-        <span class="doccomment">/// Indicates whether the transaction was aborted with a Target-Abort while this</span>
-        <span class="doccomment">/// device was acting as the bus master.</span>
-        [<span class="number">13</span>    ] <span class="kw">pub</span> <span class="ident">master_abort_received</span>,
-        <span class="doccomment">/// Indicates whether the transaction was aborted with a Target-Abort.</span>
-        [<span class="number">12</span>    ] <span class="kw">pub</span> <span class="ident">target_abort_received</span>,
-        <span class="doccomment">/// Indicates that this function generated an abort on the transaction (as opposed</span>
-        <span class="doccomment">/// to a master abort).</span>
-        [<span class="number">11</span>    ] <span class="kw">pub</span> <span class="ident">target_abort_signaled</span>,
-        <span class="doccomment">/// Indicates how quickly the device can assert the `DEVSEL#` pin.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Valid values are:</span>
-        <span class="doccomment">///   * `0x0` - fast</span>
-        <span class="doccomment">///   * `0x1` - medium</span>
-        <span class="doccomment">///   * `0x2` - slow</span>
-        [ <span class="number">9</span>..<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">device_select_timing</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Indicates whether a partity error was detected while this device was acting as</span>
-        <span class="doccomment">/// the bus master.</span>
-        [ <span class="number">8</span>    ] <span class="kw">pub</span> <span class="ident">master_parity_error</span>,
-        <span class="doccomment">/// Indicates whether the device supports receiving back-to-back transactions that</span>
-        <span class="doccomment">/// are targeted at multiple devices.</span>
-        [ <span class="number">7</span>    ] <span class="kw">pub</span> <span class="ident">fast_back_to_back_capable</span>,
-        <span class="doccomment">/// Indicates whether the device can run at 66 MHz (true).</span>
-        [ <span class="number">5</span>    ] <span class="kw">pub</span> <span class="ident">double_clock_capable</span>,
-        <span class="doccomment">/// Indicates whether the configuration space contains a linked list of</span>
-        <span class="doccomment">/// capabilities, beginning at the offset listed in [`Type0HeaderRegister13`].</span>
-        [ <span class="number">4</span>    ] <span class="kw">pub</span> <span class="ident">capabilities_list_available</span>,
-        <span class="doccomment">/// Indicates whether the device wants to signal an interrupt, even if it is</span>
-        <span class="doccomment">/// prohibited from asserting its interrupt pin.</span>
-        [ <span class="number">3</span>    ] <span class="kw">pub</span> <span class="ident">interrupt_status</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Control bits set by the host
+    </span><span class="kw">pub struct </span>CommandRegister(u16) {
+        <span class="doccomment">/// Controls whether the device is prohibited from asserting its interrupt pin.
+        /// Does not apply to MSI interrupts.
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>interrupt_disabled,
+        <span class="doccomment">/// Controls whether the device may use fast back-to-back transactions to multiple
+        /// devices when acting as a bus master.
+        </span>[ <span class="number">9</span>] <span class="kw">pub </span>fast_back_to_back_enabled,
+        <span class="doccomment">/// Controls whether the device may signal critical errors in addresses or
+        /// special cycle operations.
+        </span>[ <span class="number">8</span>] <span class="kw">pub </span>system_error_enabled,
+        <span class="doccomment">/// Controls whether the device responds normally to parity errors (`true`) or
+        /// whether it must simply set the parity error bit in the status register and
+        /// ignore it (`false`).
+        </span>[ <span class="number">6</span>] <span class="kw">pub </span>parity_error_response,
+        <span class="doccomment">/// Controls whether a VGA or graphics card device may &quot;snoop&quot; on VGA palette
+        /// buffer writes sent to a different device.
+        </span>[ <span class="number">5</span>] <span class="kw">pub </span>vga_palette_snoop,
+        <span class="doccomment">/// Controls whether the device may send a &quot;Memory Write and Invalidate&quot; command
+        /// when acting as a bus master.
+        </span>[ <span class="number">4</span>] <span class="kw">pub </span>write_and_invalidate_enable,
+        <span class="doccomment">/// Controls whether the device may respond to &quot;special cycle&quot; messages, used to
+        /// communicate system state to the device (e.g., shutting down, halted)
+        </span>[ <span class="number">3</span>] <span class="kw">pub </span>special_cycle,
+        <span class="doccomment">/// Controls whether the device may act as a master of the PCI bus
+        </span>[ <span class="number">2</span>] <span class="kw">pub </span>bus_master,
+        <span class="doccomment">/// Controls whether the device may respond to accesses through memory space
+        </span>[ <span class="number">1</span>] <span class="kw">pub </span>memory_space,
+        <span class="doccomment">/// Controls whether the device may respond to accesses through I/O space
+        </span>[ <span class="number">0</span>] <span class="kw">pub </span>io_space,
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Control and status flags for a function&#39;s self test capability, if present.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SelfTest</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// Indicates whether the function has a self-test capability.</span>
-        [<span class="number">7</span>   ] <span class="kw">pub</span> <span class="ident">capable</span>,
-        <span class="doccomment">/// Setting this bit triggers the device to start its self test. Once the test is</span>
-        <span class="doccomment">/// finished (successful or not), this is reset by the device.</span>
-        [<span class="number">6</span>   ] <span class="kw">pub</span> <span class="ident">start</span>,
-        <span class="doccomment">/// If a self-test is complete, then any non-zero value in this field indicates</span>
-        <span class="doccomment">/// that the test failed.</span>
-        [<span class="number">0</span>..<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">completion_code</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Status bits indicated by the function
+    </span><span class="kw">pub struct </span>StatusRegister(u16) {
+        <span class="doccomment">/// Indicates taht the device has detected a parity error, even if it is ignored.
+        </span>[<span class="number">15    </span>] <span class="kw">pub </span>parity_error_detected,
+        <span class="doccomment">/// Indicates that the device has detected a critical error in an address or
+        /// special cycle operation.
+        </span>[<span class="number">14    </span>] <span class="kw">pub </span>system_error_signaled,
+        <span class="doccomment">/// Indicates whether the transaction was aborted with a Target-Abort while this
+        /// device was acting as the bus master.
+        </span>[<span class="number">13    </span>] <span class="kw">pub </span>master_abort_received,
+        <span class="doccomment">/// Indicates whether the transaction was aborted with a Target-Abort.
+        </span>[<span class="number">12    </span>] <span class="kw">pub </span>target_abort_received,
+        <span class="doccomment">/// Indicates that this function generated an abort on the transaction (as opposed
+        /// to a master abort).
+        </span>[<span class="number">11    </span>] <span class="kw">pub </span>target_abort_signaled,
+        <span class="doccomment">/// Indicates how quickly the device can assert the `DEVSEL#` pin.
+        ///
+        /// Valid values are:
+        ///   * `0x0` - fast
+        ///   * `0x1` - medium
+        ///   * `0x2` - slow
+        </span>[ <span class="number">9</span>..<span class="number">11</span>] <span class="kw">pub </span>device_select_timing: u8,
+        <span class="doccomment">/// Indicates whether a partity error was detected while this device was acting as
+        /// the bus master.
+        </span>[ <span class="number">8    </span>] <span class="kw">pub </span>master_parity_error,
+        <span class="doccomment">/// Indicates whether the device supports receiving back-to-back transactions that
+        /// are targeted at multiple devices.
+        </span>[ <span class="number">7    </span>] <span class="kw">pub </span>fast_back_to_back_capable,
+        <span class="doccomment">/// Indicates whether the device can run at 66 MHz (true).
+        </span>[ <span class="number">5    </span>] <span class="kw">pub </span>double_clock_capable,
+        <span class="doccomment">/// Indicates whether the configuration space contains a linked list of
+        /// capabilities, beginning at the offset listed in [`Type0HeaderRegister13`].
+        </span>[ <span class="number">4    </span>] <span class="kw">pub </span>capabilities_list_available,
+        <span class="doccomment">/// Indicates whether the device wants to signal an interrupt, even if it is
+        /// prohibited from asserting its interrupt pin.
+        </span>[ <span class="number">3    </span>] <span class="kw">pub </span>interrupt_status,
     }
 }
 
 
-<span class="doccomment">/// A pointer to a memory or I/O space that is used to interact with the function.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The meaning of the addressed space is defined by the specific function&#39;s interface.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BaseAddressRegister</span>(<span class="ident">u32</span>);
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Control and status flags for a function&#39;s self test capability, if present.
+    </span><span class="kw">pub struct </span>SelfTest(u8) {
+        <span class="doccomment">/// Indicates whether the function has a self-test capability.
+        </span>[<span class="number">7   </span>] <span class="kw">pub </span>capable,
+        <span class="doccomment">/// Setting this bit triggers the device to start its self test. Once the test is
+        /// finished (successful or not), this is reset by the device.
+        </span>[<span class="number">6   </span>] <span class="kw">pub </span>start,
+        <span class="doccomment">/// If a self-test is complete, then any non-zero value in this field indicates
+        /// that the test failed.
+        </span>[<span class="number">0</span>..<span class="number">4</span>] <span class="kw">pub </span>completion_code: u8,
+    }
+}
 
-<span class="kw">impl</span> <span class="ident">BaseAddressRegister</span> {
-    <span class="doccomment">/// Indicates whether this BAR points to memory or I/O space</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address_space</span>(<span class="self">self</span>) -&gt; <span class="ident">AddressSpace</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="number">0</span> &amp; <span class="number">1</span> == <span class="number">0</span> {
-            <span class="ident">AddressSpace::Memory</span>
-        } <span class="kw">else</span> {
-            <span class="ident">AddressSpace::IO</span>
+
+<span class="doccomment">/// A pointer to a memory or I/O space that is used to interact with the function.
+///
+/// The meaning of the addressed space is defined by the specific function&#39;s interface.
+</span><span class="attribute">#[repr(transparent)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>BaseAddressRegister(u32);
+
+<span class="kw">impl </span>BaseAddressRegister {
+    <span class="doccomment">/// Indicates whether this BAR points to memory or I/O space
+    </span><span class="kw">pub fn </span>address_space(<span class="self">self</span>) -&gt; AddressSpace {
+        <span class="kw">if </span><span class="self">self</span>.<span class="number">0 </span>&amp; <span class="number">1 </span>== <span class="number">0 </span>{
+            AddressSpace::Memory
+        } <span class="kw">else </span>{
+            AddressSpace::IO
         }
     }
 
-    <span class="doccomment">/// Indicates whether the host can safely cache the memory addressed by this BAR</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prefetchable</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address_space</span>() == <span class="ident">AddressSpace::Memory</span> {
-            <span class="self">self</span>.<span class="number">0</span> &amp; <span class="number">0b1000</span> != <span class="number">0</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
+    <span class="doccomment">/// Indicates whether the host can safely cache the memory addressed by this BAR
+    </span><span class="kw">pub fn </span>prefetchable(<span class="self">self</span>) -&gt; bool {
+        <span class="kw">if </span><span class="self">self</span>.address_space() == AddressSpace::Memory {
+            <span class="self">self</span>.<span class="number">0 </span>&amp; <span class="number">0b1000 </span>!= <span class="number">0
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
-    <span class="doccomment">/// Size of address bus supported by this PCI function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Addresses in I/O space are always 32-bits wide.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address_width</span>(<span class="self">self</span>) -&gt; <span class="ident">AddressWidth</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address_space</span>() == <span class="ident">AddressSpace::IO</span> {
-            <span class="ident">AddressWidth::U32</span>
-        } <span class="kw">else</span> {
-            <span class="kw">match</span> (<span class="self">self</span>.<span class="number">0</span> &amp; <span class="number">0b0110</span>) &gt;&gt; <span class="number">1</span> {
-                <span class="number">0</span> =&gt; <span class="ident">AddressWidth::U32</span>,
-                <span class="number">2</span> =&gt; <span class="ident">AddressWidth::U64</span>,
-                <span class="kw">_</span> =&gt; <span class="ident">AddressWidth::Invalid</span>,
+    <span class="doccomment">/// Size of address bus supported by this PCI function.
+    ///
+    /// Addresses in I/O space are always 32-bits wide.
+    </span><span class="kw">pub fn </span>address_width(<span class="self">self</span>) -&gt; AddressWidth {
+        <span class="kw">if </span><span class="self">self</span>.address_space() == AddressSpace::IO {
+            AddressWidth::U32
+        } <span class="kw">else </span>{
+            <span class="kw">match </span>(<span class="self">self</span>.<span class="number">0 </span>&amp; <span class="number">0b0110</span>) &gt;&gt; <span class="number">1 </span>{
+                <span class="number">0 </span>=&gt; AddressWidth::U32,
+                <span class="number">2 </span>=&gt; AddressWidth::U64,
+                <span class="kw">_ </span>=&gt; AddressWidth::Invalid,
             }
         }
     }
 
-    <span class="doccomment">/// The address as a 32-bit number.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the [`address_width`](Self::address_width) for this BAR is 64 bits, then this</span>
-    <span class="doccomment">/// will only return the lower half of the address.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address_u32</span>(<span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address_space</span>() == <span class="ident">AddressSpace::IO</span> {
-            <span class="self">self</span>.<span class="number">0</span> &amp; <span class="number">0xffff_fffc</span>
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="number">0</span> &amp; <span class="number">0xffff_fff0</span>
-        }
+    <span class="doccomment">/// The address as a 32-bit number.
+    ///
+    /// If the [`address_width`](Self::address_width) for this BAR is 64 bits, then this
+    /// will only return the lower half of the address.
+    </span><span class="kw">pub fn </span>address_u32(<span class="self">self</span>) -&gt; u32 {
+        <span class="kw">if </span><span class="self">self</span>.address_space() == AddressSpace::IO {
+            <span class="self">self</span>.<span class="number">0 </span>&amp; <span class="number">0xffff_fffc
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.<span class="number">0 </span>&amp; <span class="number">0xffff_fff0
+        </span>}
     }
 
-    <span class="doccomment">/// The address as a 64-bit number, when combined with the value of the following</span>
-    <span class="doccomment">/// register.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the `address_width` of this BAR is 32 bits, then the value of the next register</span>
-    <span class="doccomment">/// will be ignored. Thus, this is safe to use with any address width.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address_u64</span>(<span class="self">self</span>, <span class="ident">next_register</span>: <span class="ident">u32</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> = <span class="ident">u64::from</span>(<span class="self">self</span>.<span class="ident">address_u32</span>());
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">address_width</span>() == <span class="ident">AddressWidth::U64</span> {
-            <span class="ident">address</span> &amp;= <span class="ident">u64::from</span>(<span class="ident">next_register</span>) &lt;&lt; <span class="number">32</span>;
+    <span class="doccomment">/// The address as a 64-bit number, when combined with the value of the following
+    /// register.
+    ///
+    /// If the `address_width` of this BAR is 32 bits, then the value of the next register
+    /// will be ignored. Thus, this is safe to use with any address width.
+    </span><span class="kw">pub fn </span>address_u64(<span class="self">self</span>, next_register: u32) -&gt; u64 {
+        <span class="kw">let </span><span class="kw-2">mut </span>address = u64::from(<span class="self">self</span>.address_u32());
+        <span class="kw">if </span><span class="self">self</span>.address_width() == AddressWidth::U64 {
+            address &amp;= u64::from(next_register) &lt;&lt; <span class="number">32</span>;
         }
-        <span class="ident">address</span>
+        address
     }
 }
 
-<span class="doccomment">/// Differentiates between memory and I/O addresses</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AddressSpace</span> {
-    <span class="doccomment">/// This address is in the normal memory address space</span>
-    <span class="ident">Memory</span>,
-    <span class="doccomment">/// This address is in I/O space (supported on x86/x86-64 only)</span>
-    <span class="ident">IO</span>,
+<span class="doccomment">/// Differentiates between memory and I/O addresses
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>AddressSpace {
+    <span class="doccomment">/// This address is in the normal memory address space
+    </span>Memory,
+    <span class="doccomment">/// This address is in I/O space (supported on x86/x86-64 only)
+    </span>IO,
 }
 
-<span class="doccomment">/// Size of address bus supported by a PCI function</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AddressWidth</span> {
-    <span class="doccomment">/// 32-bit address bus</span>
-    <span class="ident">U32</span>,
-    <span class="doccomment">/// 64-bit address bus</span>
-    <span class="ident">U64</span>,
-    <span class="doccomment">/// Unknown address bus width</span>
-    <span class="ident">Invalid</span>,
+<span class="doccomment">/// Size of address bus supported by a PCI function
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>AddressWidth {
+    <span class="doccomment">/// 32-bit address bus
+    </span>U32,
+    <span class="doccomment">/// 64-bit address bus
+    </span>U64,
+    <span class="doccomment">/// Unknown address bus width
+    </span>Invalid,
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Structure shared by all capability registers</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GenericCapabilityRegister</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Capability ID defined by PCI-SIG</span>
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Byte offset within capability space of next capability register, or 0 if none.</span>
-        [ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">next_offset</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Structure shared by all capability registers
+    </span><span class="kw">pub struct </span>GenericCapabilityRegister(u32) {
+        <span class="doccomment">/// Capability ID defined by PCI-SIG
+        </span>[ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>id: u8,
+        <span class="doccomment">/// Byte offset within capability space of next capability register, or 0 if none.
+        </span>[ <span class="number">8</span>..<span class="number">16</span>] <span class="kw">pub </span>next_offset: u8,
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

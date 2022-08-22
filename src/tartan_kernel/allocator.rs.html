@@ -540,547 +540,547 @@
 <span id="540">540</span>
 <span id="541">541</span>
 <span id="542">542</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::alloc</span>::{<span class="ident">GlobalAlloc</span>, <span class="ident">Layout</span>};
-<span class="kw">use</span> <span class="ident">core::cell::RefCell</span>;
-<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>, <span class="ident">transmute</span>, <span class="ident">MaybeUninit</span>};
-<span class="kw">use</span> <span class="ident">core::pin::Pin</span>;
-<span class="kw">use</span> <span class="ident">static_assertions::const_assert</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>core::alloc::{GlobalAlloc, Layout};
+<span class="kw">use </span>core::cell::RefCell;
+<span class="kw">use </span>core::mem::{align_of, size_of, transmute, MaybeUninit};
+<span class="kw">use </span>core::pin::Pin;
+<span class="kw">use </span>static_assertions::const_assert;
+<span class="kw">use </span>tartan_bitfield::bitfield;
 
 
-<span class="doccomment">/// Simple kernel allocator that keeps a singly-linked list of blocks and finds the first</span>
-<span class="doccomment">/// fit.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Allocator</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="ident">block_list</span>: <span class="prelude-ty">Option</span>&lt;<span class="ident">RefCell</span>&lt;<span class="ident">BlockList</span>&lt;<span class="lifetime">&#39;a</span>&gt;&gt;&gt;,
+<span class="doccomment">/// Simple kernel allocator that keeps a singly-linked list of blocks and finds the first
+/// fit.
+</span><span class="kw">pub struct </span>Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    block_list: <span class="prelude-ty">Option</span>&lt;RefCell&lt;BlockList&lt;<span class="lifetime">&#39;a</span>&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">Allocator</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">uninitialized</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">block_list</span>: <span class="prelude-val">None</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub const fn </span>uninitialized() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ block_list: <span class="prelude-val">None </span>}
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">block_list</span>: <span class="ident">BlockList</span>&lt;<span class="lifetime">&#39;a</span>&gt;) {
-        <span class="self">self</span>.<span class="ident">block_list</span> = <span class="prelude-val">Some</span>(<span class="ident">RefCell::new</span>(<span class="ident">block_list</span>));
+    <span class="kw">pub fn </span>init(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_list: BlockList&lt;<span class="lifetime">&#39;a</span>&gt;) {
+        <span class="self">self</span>.block_list = <span class="prelude-val">Some</span>(RefCell::new(block_list));
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">GlobalAlloc</span> <span class="kw">for</span> <span class="ident">Allocator</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">layout</span> = <span class="ident">layout</span>.<span class="ident">align_to</span>(<span class="ident">align_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;()).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="self">self</span>.<span class="ident">block_list</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">borrow_mut</span>().<span class="ident">front_mut</span>();
-        <span class="kw">while</span> !<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>() {
-            <span class="kw">if</span> <span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">as_ref</span>().<span class="ident">can_fit</span>(<span class="ident">layout</span>) {
-                <span class="ident">cursor</span>.<span class="ident">split_to_align</span>(<span class="ident">layout</span>);
-                <span class="ident">cursor</span>.<span class="ident">split_to_minimum</span>(<span class="ident">layout</span>.<span class="ident">size</span>());
-                <span class="kw">return</span> <span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">as_ref</span>().<span class="ident">data_ptr</span>();
+<span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; GlobalAlloc <span class="kw">for </span>Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">unsafe fn </span>alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, layout: Layout) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="kw">let </span>layout = layout.align_to(align_of::&lt;BlockHeader&gt;()).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>cursor = <span class="self">self</span>.block_list.as_ref().unwrap().borrow_mut().front_mut();
+        <span class="kw">while </span>!cursor.current().is_end() {
+            <span class="kw">if </span>cursor.current().as_ref().can_fit(layout) {
+                cursor.split_to_align(layout);
+                cursor.split_to_minimum(layout.size());
+                <span class="kw">return </span>cursor.current().as_ref().data_ptr();
             }
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
+            cursor.move_next();
         }
-        <span class="ident">core::ptr::null_mut</span>()
+        core::ptr::null_mut()
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dealloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="kw">_</span>: <span class="ident">Layout</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block_list</span> = <span class="self">self</span>.<span class="ident">block_list</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">borrow_mut</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">block_list</span>.<span class="ident">cursor_from_data_ptr</span>(<span class="ident">ptr</span>);
-        <span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">set_free</span>(<span class="bool-val">true</span>);
+    <span class="kw">unsafe fn </span>dealloc(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: <span class="kw-2">*mut </span>u8, <span class="kw">_</span>: Layout) {
+        <span class="kw">let </span><span class="kw-2">mut </span>block_list = <span class="self">self</span>.block_list.as_ref().unwrap().borrow_mut();
+        <span class="kw">let </span><span class="kw-2">mut </span>cursor = block_list.cursor_from_data_ptr(ptr);
+        cursor.current().set_free(<span class="bool-val">true</span>);
 
-        <span class="comment">// TODO: This would be much faster with a doubly-linked list</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">block_list</span>.<span class="ident">front_mut</span>();
-        <span class="kw">while</span> !<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>() {
-            <span class="ident">cursor</span>.<span class="ident">merge_next_if_free</span>();
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
+        <span class="comment">// TODO: This would be much faster with a doubly-linked list
+        </span><span class="kw">let </span><span class="kw-2">mut </span>cursor = block_list.front_mut();
+        <span class="kw">while </span>!cursor.current().is_end() {
+            cursor.merge_next_if_free();
+            cursor.move_next();
         }
     }
 
-    <span class="comment">// TODO: Implement realloc</span>
+    <span class="comment">// TODO: Implement realloc
+</span>}
+
+
+<span class="kw">pub struct </span>BlockList&lt;<span class="lifetime">&#39;a</span>&gt; {
+    data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;],
 }
 
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; BlockList&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub fn </span>from_block(data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;]) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>start_header = BlockHeader::default();
+        start_header.set_data_size((data.len() - <span class="number">2</span>) * size_of::&lt;BlockHeader&gt;());
+        start_header.set_free(<span class="bool-val">true</span>);
+        data[<span class="number">0</span>] = MaybeUninit::new(start_header.into());
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlockList</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span>&lt;<span class="ident">usize</span>&gt;],
-}
+        <span class="kw">let </span><span class="kw-2">mut </span>end_header = BlockHeader::default();
+        end_header.set_free(<span class="bool-val">false</span>);
+        data[data.len() - <span class="number">1</span>] = MaybeUninit::new(end_header.into());
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">BlockList</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_block</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span>&lt;<span class="ident">usize</span>&gt;]) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">start_header</span> = <span class="ident">BlockHeader::default</span>();
-        <span class="ident">start_header</span>.<span class="ident">set_data_size</span>((<span class="ident">data</span>.<span class="ident">len</span>() - <span class="number">2</span>) * <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;());
-        <span class="ident">start_header</span>.<span class="ident">set_free</span>(<span class="bool-val">true</span>);
-        <span class="ident">data</span>[<span class="number">0</span>] = <span class="ident">MaybeUninit::new</span>(<span class="ident">start_header</span>.<span class="ident">into</span>());
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">end_header</span> = <span class="ident">BlockHeader::default</span>();
-        <span class="ident">end_header</span>.<span class="ident">set_free</span>(<span class="bool-val">false</span>);
-        <span class="ident">data</span>[<span class="ident">data</span>.<span class="ident">len</span>() - <span class="number">1</span>] = <span class="ident">MaybeUninit::new</span>(<span class="ident">end_header</span>.<span class="ident">into</span>());
-
-        <span class="self">Self</span> { <span class="ident">data</span> }
+        <span class="self">Self </span>{ data }
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">cursor_from_data_ptr</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">data_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>) -&gt; <span class="ident">CursorMut</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">let</span> <span class="ident">header_addr</span> = <span class="ident">data_ptr</span> <span class="kw">as</span> <span class="ident">usize</span> - <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;();
-        <span class="macro">debug_assert!</span>(<span class="ident">header_addr</span> % <span class="ident">align_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;() == <span class="number">0</span>);
+    <span class="kw">unsafe fn </span>cursor_from_data_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_ptr: <span class="kw-2">*mut </span>u8) -&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">let </span>header_addr = data_ptr <span class="kw">as </span>usize - size_of::&lt;BlockHeader&gt;();
+        <span class="macro">debug_assert!</span>(header_addr % align_of::&lt;BlockHeader&gt;() == <span class="number">0</span>);
 
-        <span class="kw">let</span> <span class="ident">header_ptr</span> = <span class="ident">header_addr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">BlockHeader</span>;
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_ptr_range</span>().<span class="ident">contains</span>(<span class="kw-2">&amp;</span>(<span class="ident">header_addr</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>)));
+        <span class="kw">let </span>header_ptr = header_addr <span class="kw">as </span><span class="kw-2">*mut </span>BlockHeader;
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.data.as_ptr_range().contains(<span class="kw-2">&amp;</span>(header_addr <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>)));
 
-        <span class="ident">CursorMut</span>(<span class="ident">Pin::new_unchecked</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">header_ptr</span>))
+        CursorMut(Pin::new_unchecked(<span class="kw-2">&amp;mut *</span>header_ptr))
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">front</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Cursor</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::transmute_ptr_to_ptr</span>)]</span>
-        <span class="ident">Cursor</span>(<span class="kw">unsafe</span> { <span class="ident">Pin::new_unchecked</span>(<span class="ident">transmute</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>[<span class="number">0</span>])) })
+    <span class="attribute">#[cfg(test)]
+    </span><span class="kw">fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="attribute">#![allow(clippy::transmute_ptr_to_ptr)]
+        </span>Cursor(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;</span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
 
-    <span class="kw">fn</span> <span class="ident">front_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">CursorMut</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::transmute_ptr_to_ptr</span>)]</span>
-        <span class="ident">CursorMut</span>(<span class="kw">unsafe</span> { <span class="ident">Pin::new_unchecked</span>(<span class="ident">transmute</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">data</span>[<span class="number">0</span>])) })
-    }
-}
-
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Cursor</span>&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BlockHeader</span>&gt;);
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">Cursor</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">current</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BlockHeader</span>&gt; {
-        <span class="self">self</span>.<span class="number">0</span>
-    }
-
-    <span class="kw">fn</span> <span class="ident">move_next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> !<span class="self">self</span>.<span class="number">0</span>.<span class="ident">is_end</span>() {
-            <span class="self">self</span>.<span class="number">0</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>().<span class="ident">unwrap</span>();
-        }
+    <span class="kw">fn </span>front_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="attribute">#![allow(clippy::transmute_ptr_to_ptr)]
+        </span>CursorMut(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;mut </span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
 }
 
 
-<span class="kw">struct</span> <span class="ident">CursorMut</span>&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">BlockHeader</span>&gt;);
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">struct </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">CursorMut</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">current</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">BlockHeader</span>&gt; {
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="number">0</span>
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt; {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+
+    <span class="kw">fn </span>move_next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.is_end() {
+            <span class="self">self</span>.<span class="number">0 </span>= <span class="self">self</span>.<span class="number">0</span>.next().unwrap();
+        }
     }
+}
 
-    <span class="kw">fn</span> <span class="ident">move_next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> !<span class="self">self</span>.<span class="number">0</span>.<span class="ident">is_end</span>() {
-            <span class="self">self</span>.<span class="number">0</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next_mut</span>().<span class="ident">unwrap</span>();
+
+<span class="kw">struct </span>CursorMut&lt;<span class="lifetime">&#39;a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>BlockHeader&gt;);
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>current(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>BlockHeader&gt; {
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0
+    </span>}
+
+    <span class="kw">fn </span>move_next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.is_end() {
+            <span class="self">self</span>.<span class="number">0 </span>= <span class="self">self</span>.<span class="number">0</span>.next_mut().unwrap();
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">into_cursor</span>(<span class="self">self</span>) -&gt; <span class="ident">Cursor</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="ident">Cursor</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">into_ref</span>())
+    <span class="attribute">#[cfg(test)]
+    </span><span class="kw">fn </span>into_cursor(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+        Cursor(<span class="self">self</span>.<span class="number">0</span>.into_ref())
     }
 
-    <span class="kw">fn</span> <span class="ident">split_exact</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">new_data_size</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert!</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">free</span>());
-        <span class="macro">assert!</span>(<span class="ident">new_data_size</span> % <span class="ident">align_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;() == <span class="number">0</span>);
+    <span class="kw">fn </span>split_exact(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_data_size: usize) {
+        <span class="macro">assert!</span>(<span class="self">self</span>.<span class="number">0</span>.free());
+        <span class="macro">assert!</span>(new_data_size % align_of::&lt;BlockHeader&gt;() == <span class="number">0</span>);
 
-        <span class="macro">assert!</span>(<span class="ident">new_data_size</span> &lt;= <span class="self">self</span>.<span class="number">0</span>.<span class="ident">data_size</span>());
-        <span class="kw">let</span> <span class="ident">spare_space</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">data_size</span>() - <span class="ident">new_data_size</span>;
-        <span class="kw">if</span> <span class="ident">spare_space</span> == <span class="number">0</span> {
-            <span class="comment">// Nothing to do</span>
-            <span class="kw">return</span>;
+        <span class="macro">assert!</span>(new_data_size &lt;= <span class="self">self</span>.<span class="number">0</span>.data_size());
+        <span class="kw">let </span>spare_space = <span class="self">self</span>.<span class="number">0</span>.data_size() - new_data_size;
+        <span class="kw">if </span>spare_space == <span class="number">0 </span>{
+            <span class="comment">// Nothing to do
+            </span><span class="kw">return</span>;
         }
 
-        <span class="macro">assert!</span>(<span class="ident">spare_space</span> &gt;= <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;());
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">spare_header</span> = <span class="ident">BlockHeader::default</span>();
-        <span class="ident">spare_header</span>.<span class="ident">set_free</span>(<span class="bool-val">true</span>);
-        <span class="ident">spare_header</span>.<span class="ident">set_data_size</span>(<span class="ident">spare_space</span> - <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;());
-        <span class="kw">let</span> <span class="ident">spare_header_addr</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>().<span class="ident">data_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> + <span class="ident">new_data_size</span>;
-        <span class="kw">let</span> <span class="ident">spare_header_ptr</span> = <span class="ident">spare_header_addr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">MaybeUninit</span>&lt;<span class="ident">BlockHeader</span>&gt;;
-        <span class="kw">unsafe</span> {
-            <span class="kw-2">*</span><span class="ident">spare_header_ptr</span> = <span class="ident">MaybeUninit::new</span>(<span class="ident">spare_header</span>);
+        <span class="macro">assert!</span>(spare_space &gt;= size_of::&lt;BlockHeader&gt;());
+        <span class="kw">let </span><span class="kw-2">mut </span>spare_header = BlockHeader::default();
+        spare_header.set_free(<span class="bool-val">true</span>);
+        spare_header.set_data_size(spare_space - size_of::&lt;BlockHeader&gt;());
+        <span class="kw">let </span>spare_header_addr = <span class="self">self</span>.<span class="number">0</span>.as_ref().data_ptr() <span class="kw">as </span>usize + new_data_size;
+        <span class="kw">let </span>spare_header_ptr = spare_header_addr <span class="kw">as </span><span class="kw-2">*mut </span>MaybeUninit&lt;BlockHeader&gt;;
+        <span class="kw">unsafe </span>{
+            <span class="kw-2">*</span>spare_header_ptr = MaybeUninit::new(spare_header);
         }
 
-        <span class="comment">// Update our own size last so that this is still in a safe state if anything</span>
-        <span class="comment">// panics above.</span>
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_mut</span>().<span class="ident">set_data_size</span>(<span class="ident">new_data_size</span>);
+        <span class="comment">// Update our own size last so that this is still in a safe state if anything
+        // panics above.
+        </span><span class="self">self</span>.<span class="number">0</span>.as_mut().set_data_size(new_data_size);
     }
 
-    <span class="kw">fn</span> <span class="ident">split_to_minimum</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">min_data_size</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="ident">split_exact</span>(<span class="ident">align_up</span>(<span class="ident">min_data_size</span>, <span class="ident">Layout::new</span>::&lt;<span class="ident">BlockHeader</span>&gt;()));
+    <span class="kw">fn </span>split_to_minimum(<span class="kw-2">&amp;mut </span><span class="self">self</span>, min_data_size: usize) {
+        <span class="self">self</span>.split_exact(align_up(min_data_size, Layout::new::&lt;BlockHeader&gt;()));
     }
 
-    <span class="kw">fn</span> <span class="ident">split_to_align</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) {
-        <span class="macro">assert!</span>(<span class="ident">layout</span>.<span class="ident">align</span>() &gt;= <span class="ident">align_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;());
-        <span class="kw">let</span> <span class="ident">start</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>().<span class="ident">data_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">aligned_start</span> = <span class="ident">align_up</span>(<span class="ident">start</span>, <span class="ident">layout</span>);
-        <span class="kw">if</span> <span class="ident">start</span> != <span class="ident">aligned_start</span> {
-            <span class="kw">let</span> <span class="ident">shift</span> = <span class="ident">aligned_start</span> - <span class="ident">start</span>;
-            <span class="macro">assert!</span>(<span class="ident">shift</span> &gt;= <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;());
-            <span class="kw">let</span> <span class="ident">new_data_size</span> = <span class="ident">shift</span> - <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;();
-            <span class="self">self</span>.<span class="ident">split_exact</span>(<span class="ident">new_data_size</span>);
-            <span class="self">self</span>.<span class="ident">move_next</span>();
+    <span class="kw">fn </span>split_to_align(<span class="kw-2">&amp;mut </span><span class="self">self</span>, layout: Layout) {
+        <span class="macro">assert!</span>(layout.align() &gt;= align_of::&lt;BlockHeader&gt;());
+        <span class="kw">let </span>start = <span class="self">self</span>.<span class="number">0</span>.as_ref().data_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>aligned_start = align_up(start, layout);
+        <span class="kw">if </span>start != aligned_start {
+            <span class="kw">let </span>shift = aligned_start - start;
+            <span class="macro">assert!</span>(shift &gt;= size_of::&lt;BlockHeader&gt;());
+            <span class="kw">let </span>new_data_size = shift - size_of::&lt;BlockHeader&gt;();
+            <span class="self">self</span>.split_exact(new_data_size);
+            <span class="self">self</span>.move_next();
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">merge_next_if_free</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>().<span class="ident">next</span>() {
-            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">free</span>() =&gt; {
-                <span class="kw">let</span> <span class="ident">additional_space</span> = <span class="ident">next</span>.<span class="ident">data_size</span>() + <span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;();
-                <span class="kw">let</span> <span class="ident">new_size</span> = <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>().<span class="ident">data_size</span>() + <span class="ident">additional_space</span>;
-                <span class="self">self</span>.<span class="number">0</span>.<span class="ident">set_data_size</span>(<span class="ident">new_size</span>);
+    <span class="kw">fn </span>merge_next_if_free(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">match </span><span class="self">self</span>.<span class="number">0</span>.as_ref().next() {
+            <span class="prelude-val">Some</span>(next) <span class="kw">if </span>next.free() =&gt; {
+                <span class="kw">let </span>additional_space = next.data_size() + size_of::&lt;BlockHeader&gt;();
+                <span class="kw">let </span>new_size = <span class="self">self</span>.<span class="number">0</span>.as_ref().data_size() + additional_space;
+                <span class="self">self</span>.<span class="number">0</span>.set_data_size(new_size);
             }
-            <span class="kw">_</span> =&gt; {}
+            <span class="kw">_ </span>=&gt; {}
         };
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">BlockHeader</span>(<span class="ident">usize</span>) {
-        [<span class="number">0</span>] <span class="ident">free</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>BlockHeader(usize) {
+        [<span class="number">0</span>] free,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">BlockHeader</span> {
-    <span class="kw">const</span> <span class="ident">SIZE_MASK</span>: <span class="ident">usize</span> = !<span class="number">0b1</span>;
+<span class="kw">impl </span>BlockHeader {
+    <span class="kw">const </span>SIZE_MASK: usize = !<span class="number">0b1</span>;
 
-    <span class="kw">fn</span> <span class="ident">data_size</span>(<span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="number">0</span> &amp; <span class="ident"><span class="self">Self</span>::SIZE_MASK</span>
+    <span class="kw">fn </span>data_size(<span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.<span class="number">0 </span>&amp; <span class="self">Self</span>::SIZE_MASK
     }
 
-    <span class="kw">fn</span> <span class="ident">set_data_size</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert!</span>(<span class="ident">value</span> &amp; !<span class="ident"><span class="self">Self</span>::SIZE_MASK</span> == <span class="number">0</span>, <span class="string">&quot;Size is not 2-byte aligned&quot;</span>);
-        <span class="self">self</span>.<span class="number">0</span> &amp;= !<span class="ident"><span class="self">Self</span>::SIZE_MASK</span>;
-        <span class="self">self</span>.<span class="number">0</span> |= <span class="ident">value</span>;
+    <span class="kw">fn </span>set_data_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: usize) {
+        <span class="macro">assert!</span>(value &amp; !<span class="self">Self</span>::SIZE_MASK == <span class="number">0</span>, <span class="string">&quot;Size is not 2-byte aligned&quot;</span>);
+        <span class="self">self</span>.<span class="number">0 </span>&amp;= !<span class="self">Self</span>::SIZE_MASK;
+        <span class="self">self</span>.<span class="number">0 </span>|= value;
     }
 
-    <span class="kw">fn</span> <span class="ident">data_ptr</span>(<span class="self">self</span>: <span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">self_addr</span> = <span class="kw">unsafe</span> { <span class="ident">Pin::into_inner_unchecked</span>(<span class="self">self</span>) <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> };
-        <span class="kw">let</span> <span class="ident">data_addr</span> = <span class="ident">self_addr</span> + <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;();
-        <span class="ident">data_addr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>
+    <span class="kw">fn </span>data_ptr(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="kw">let </span>self_addr = <span class="kw">unsafe </span>{ Pin::into_inner_unchecked(<span class="self">self</span>) <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize };
+        <span class="kw">let </span>data_addr = self_addr + size_of::&lt;<span class="self">Self</span>&gt;();
+        data_addr <span class="kw">as </span><span class="kw-2">*mut </span>u8
     }
 
-    <span class="kw">fn</span> <span class="ident">is_end</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">data_size</span>() == <span class="number">0</span> &amp;&amp; !<span class="self">self</span>.<span class="ident">free</span>()
+    <span class="kw">fn </span>is_end(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.data_size() == <span class="number">0 </span>&amp;&amp; !<span class="self">self</span>.free()
     }
 
-    <span class="kw">fn</span> <span class="ident">next_ptr</span>(<span class="self">self</span>: <span class="kw-2">&amp;</span><span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut</span> <span class="self">Self</span>&gt; {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_end</span>() {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">next_addr</span> = <span class="self">self</span>.<span class="ident">data_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> + <span class="self">self</span>.<span class="ident">data_size</span>();
-            <span class="prelude-val">Some</span>(<span class="ident">next_addr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="self">Self</span>)
+    <span class="kw">fn </span>next_ptr(<span class="self">self</span>: <span class="kw-2">&amp;</span>Pin&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut </span><span class="self">Self</span>&gt; {
+        <span class="kw">if </span><span class="self">self</span>.is_end() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">let </span>next_addr = <span class="self">self</span>.data_ptr() <span class="kw">as </span>usize + <span class="self">self</span>.data_size();
+            <span class="prelude-val">Some</span>(next_addr <span class="kw">as </span><span class="kw-2">*mut </span><span class="self">Self</span>)
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="self">self</span>: <span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;&gt; {
-        <span class="self">self</span>.<span class="ident">next_ptr</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="kw">unsafe</span> { <span class="ident">Pin::new_unchecked</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">p</span>) })
+    <span class="kw">fn </span>next(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Pin&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;&gt; {
+        <span class="self">self</span>.next_ptr().map(|p| <span class="kw">unsafe </span>{ Pin::new_unchecked(<span class="kw-2">&amp;*</span>p) })
     }
 
-    <span class="kw">fn</span> <span class="ident">next_mut</span>(<span class="self">self</span>: <span class="kw-2">&amp;</span><span class="ident">Pin</span>&lt;<span class="kw-2">&amp;mut</span> <span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="ident">Pin</span>&lt;<span class="kw-2">&amp;mut</span> <span class="self">Self</span>&gt;&gt; {
-        <span class="self">self</span>.<span class="ident">as_ref</span>().<span class="ident">next_ptr</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="kw">unsafe</span> { <span class="ident">Pin::new_unchecked</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">p</span>) })
+    <span class="kw">fn </span>next_mut(<span class="self">self</span>: <span class="kw-2">&amp;</span>Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;&gt; {
+        <span class="self">self</span>.as_ref().next_ptr().map(|p| <span class="kw">unsafe </span>{ Pin::new_unchecked(<span class="kw-2">&amp;mut *</span>p) })
     }
 
-    <span class="kw">fn</span> <span class="ident">can_fit</span>(<span class="self">self</span>: <span class="ident">Pin</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;, <span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> !<span class="self">self</span>.<span class="ident">free</span>() {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+    <span class="kw">fn </span>can_fit(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt;, layout: Layout) -&gt; bool {
+        <span class="kw">if </span>!<span class="self">self</span>.free() {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
 
-        <span class="comment">// Check space without factoring in alignment</span>
-        <span class="kw">let</span> <span class="ident">self_size</span> = <span class="self">self</span>.<span class="ident">data_size</span>();
-        <span class="kw">let</span> <span class="ident">requested_size</span> = <span class="ident">layout</span>.<span class="ident">size</span>();
-        <span class="kw">if</span> <span class="ident">requested_size</span> &gt; <span class="ident">self_size</span> {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+        <span class="comment">// Check space without factoring in alignment
+        </span><span class="kw">let </span>self_size = <span class="self">self</span>.data_size();
+        <span class="kw">let </span>requested_size = layout.size();
+        <span class="kw">if </span>requested_size &gt; self_size {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
 
-        <span class="comment">// Check whether alignment is required</span>
-        <span class="macro">assert!</span>(<span class="ident">layout</span>.<span class="ident">align</span>() &gt;= <span class="ident">align_of</span>::&lt;<span class="self">Self</span>&gt;());
-        <span class="kw">let</span> <span class="ident">start</span> = <span class="self">self</span>.<span class="ident">data_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">aligned_start</span> = <span class="ident">align_up</span>(<span class="ident">start</span>, <span class="ident">layout</span>);
-        <span class="kw">if</span> <span class="ident">aligned_start</span> == <span class="ident">start</span> {
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="comment">// Check whether alignment is required
+        </span><span class="macro">assert!</span>(layout.align() &gt;= align_of::&lt;<span class="self">Self</span>&gt;());
+        <span class="kw">let </span>start = <span class="self">self</span>.data_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>aligned_start = align_up(start, layout);
+        <span class="kw">if </span>aligned_start == start {
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
 
-        <span class="comment">// If alignment is needed, check that the split block will still be large enough</span>
-        <span class="kw">let</span> <span class="ident">shift</span> = <span class="ident">aligned_start</span> - <span class="ident">start</span>;
-        <span class="ident">shift</span> &lt;= <span class="ident">self_size</span> &amp;&amp; <span class="ident">requested_size</span> &lt;= <span class="ident">self_size</span> - <span class="ident">shift</span>
+        <span class="comment">// If alignment is needed, check that the split block will still be large enough
+        </span><span class="kw">let </span>shift = aligned_start - start;
+        shift &lt;= self_size &amp;&amp; requested_size &lt;= self_size - shift
     }
 }
 
-<span class="comment">// Several calculations in BlockHeader&#39;s methods assume this</span>
-<span class="macro">const_assert!</span>(<span class="ident">size_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;() % <span class="ident">align_of</span>::&lt;<span class="ident">BlockHeader</span>&gt;() == <span class="number">0</span>);
+<span class="comment">// Several calculations in BlockHeader&#39;s methods assume this
+</span><span class="macro">const_assert!</span>(size_of::&lt;BlockHeader&gt;() % align_of::&lt;BlockHeader&gt;() == <span class="number">0</span>);
 
 
-<span class="kw">fn</span> <span class="ident">align_up</span>(<span class="ident">addr</span>: <span class="ident">usize</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="ident">usize</span> {
-    <span class="kw">let</span> <span class="ident">align_mask</span> = <span class="ident">align_mask</span>(<span class="ident">layout</span>);
-    <span class="kw">let</span> <span class="ident">aligned</span> = <span class="ident">layout</span>.<span class="ident">align</span>().<span class="ident">wrapping_add</span>(<span class="ident">addr</span>.<span class="ident">wrapping_sub</span>(<span class="number">1</span>) &amp; <span class="ident">align_mask</span>);
-    <span class="comment">// TODO: Return Option&lt;usize&gt; instead?</span>
-    <span class="macro">assert!</span>(
-        <span class="ident">addr</span> &lt;= <span class="ident">aligned</span>,
+<span class="kw">fn </span>align_up(addr: usize, layout: Layout) -&gt; usize {
+    <span class="kw">let </span>align_mask = align_mask(layout);
+    <span class="kw">let </span>aligned = layout.align().wrapping_add(addr.wrapping_sub(<span class="number">1</span>) &amp; align_mask);
+    <span class="comment">// TODO: Return Option&lt;usize&gt; instead?
+    </span><span class="macro">assert!</span>(
+        addr &lt;= aligned,
         <span class="string">&quot;Aligning {:#x} to {:#x} would overflow&quot;</span>,
-        <span class="ident">addr</span>,
-        <span class="ident">layout</span>.<span class="ident">align</span>()
+        addr,
+        layout.align()
     );
-    <span class="ident">aligned</span>
+    aligned
 }
 
-<span class="kw">fn</span> <span class="ident">align_mask</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="ident">usize</span> {
-    <span class="comment">// align is always a power of 2</span>
-    !(<span class="ident">layout</span>.<span class="ident">align</span>() - <span class="number">1</span>)
+<span class="kw">fn </span>align_mask(layout: Layout) -&gt; usize {
+    <span class="comment">// align is always a power of 2
+    </span>!(layout.align() - <span class="number">1</span>)
 }
 
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">extern crate </span>alloc;
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">track_caller</span>]</span>
-    <span class="kw">fn</span> <span class="ident">assert_aligns_up</span>(<span class="ident">alignment</span>: <span class="ident">usize</span>, <span class="ident">input</span>: <span class="ident">usize</span>, <span class="ident">expected_output</span>: <span class="ident">usize</span>) {
-        <span class="kw">let</span> <span class="ident">layout</span> = <span class="ident">Layout::from_size_align</span>(<span class="number">1</span>, <span class="ident">alignment</span>).<span class="ident">unwrap</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">align_up</span>(<span class="ident">input</span>, <span class="ident">layout</span>), <span class="ident">expected_output</span>);
+    <span class="attribute">#[track_caller]
+    </span><span class="kw">fn </span>assert_aligns_up(alignment: usize, input: usize, expected_output: usize) {
+        <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, alignment).unwrap();
+        <span class="macro">assert_eq!</span>(align_up(input, layout), expected_output);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_align_up</span>() {
-        <span class="comment">// Alignment must be a power of 2 while &lt;= isize::MAX. This should be reasonable</span>
-        <span class="comment">// on all practical targets.</span>
-        <span class="kw">let</span> <span class="ident">max_align</span> = <span class="number">2_usize</span>.<span class="ident">reverse_bits</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_align_up() {
+        <span class="comment">// Alignment must be a power of 2 while &lt;= isize::MAX. This should be reasonable
+        // on all practical targets.
+        </span><span class="kw">let </span>max_align = <span class="number">2_usize</span>.reverse_bits();
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">a</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">8</span>, <span class="number">16</span>, <span class="number">32</span>, <span class="number">64</span>, <span class="ident">max_align</span>] {
-            <span class="ident">assert_aligns_up</span>(<span class="ident">a</span>, <span class="number">0</span>, <span class="number">0</span>);
+        <span class="kw">for </span><span class="kw-2">&amp;</span>a <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">8</span>, <span class="number">16</span>, <span class="number">32</span>, <span class="number">64</span>, max_align] {
+            assert_aligns_up(a, <span class="number">0</span>, <span class="number">0</span>);
         }
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">0x100_usize</span> {
-            <span class="ident">assert_aligns_up</span>(<span class="number">1</span>, <span class="ident">i</span>, <span class="ident">i</span>);
-            <span class="ident">assert_aligns_up</span>(<span class="number">1</span>, <span class="ident">usize::MAX</span> - <span class="ident">i</span>, <span class="ident">usize::MAX</span> - <span class="ident">i</span>);
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">0x100_usize </span>{
+            assert_aligns_up(<span class="number">1</span>, i, i);
+            assert_aligns_up(<span class="number">1</span>, usize::MAX - i, usize::MAX - i);
         }
-        <span class="ident">assert_aligns_up</span>(<span class="number">1</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c46d</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">1</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ccc2</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">1</span>, <span class="ident">usize::MAX</span>, <span class="ident">usize::MAX</span>);
+        assert_aligns_up(<span class="number">1</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c46d</span>);
+        assert_aligns_up(<span class="number">1</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ccc2</span>);
+        assert_aligns_up(<span class="number">1</span>, usize::MAX, usize::MAX);
 
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">1</span>, <span class="number">2</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">4</span>, <span class="number">4</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c46e</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ccc2</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="ident">usize::MAX</span> - <span class="number">2</span>, <span class="ident">usize::MAX</span> - <span class="number">1</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">2</span>, <span class="ident">usize::MAX</span> - <span class="number">1</span>, <span class="ident">usize::MAX</span> - <span class="number">1</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">1</span>, <span class="number">2</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">4</span>, <span class="number">4</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c46e</span>);
+        assert_aligns_up(<span class="number">2</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ccc2</span>);
+        assert_aligns_up(<span class="number">2</span>, usize::MAX - <span class="number">2</span>, usize::MAX - <span class="number">1</span>);
+        assert_aligns_up(<span class="number">2</span>, usize::MAX - <span class="number">1</span>, usize::MAX - <span class="number">1</span>);
 
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">1</span>, <span class="number">0x200</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">2</span>, <span class="number">0x200</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">0x1ff</span>, <span class="number">0x200</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">0x200</span>, <span class="number">0x200</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">0x201</span>, <span class="number">0x400</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c600</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ce00</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="ident">usize::MAX</span> - <span class="number">0x200</span>, <span class="ident">usize::MAX</span> - <span class="number">0x1ff</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="number">0x200</span>, <span class="ident">usize::MAX</span> - <span class="number">0x1ff</span>, <span class="ident">usize::MAX</span> - <span class="number">0x1ff</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">1</span>, <span class="number">0x200</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">2</span>, <span class="number">0x200</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">0x1ff</span>, <span class="number">0x200</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">0x200</span>, <span class="number">0x200</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">0x201</span>, <span class="number">0x400</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">0x8080_c46d</span>, <span class="number">0x8080_c600</span>);
+        assert_aligns_up(<span class="number">0x200</span>, <span class="number">0xc3e4_ccc2</span>, <span class="number">0xc3e4_ce00</span>);
+        assert_aligns_up(<span class="number">0x200</span>, usize::MAX - <span class="number">0x200</span>, usize::MAX - <span class="number">0x1ff</span>);
+        assert_aligns_up(<span class="number">0x200</span>, usize::MAX - <span class="number">0x1ff</span>, usize::MAX - <span class="number">0x1ff</span>);
 
-        <span class="ident">assert_aligns_up</span>(<span class="ident">max_align</span>, <span class="number">1</span>, <span class="ident">max_align</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="ident">max_align</span>, <span class="ident">max_align</span> - <span class="number">1</span>, <span class="ident">max_align</span>);
-        <span class="ident">assert_aligns_up</span>(<span class="ident">max_align</span>, <span class="ident">max_align</span>, <span class="ident">max_align</span>);
+        assert_aligns_up(max_align, <span class="number">1</span>, max_align);
+        assert_aligns_up(max_align, max_align - <span class="number">1</span>, max_align);
+        assert_aligns_up(max_align, max_align, max_align);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_align_up_overflow_2</span>() {
-        <span class="kw">let</span> <span class="ident">layout</span> = <span class="ident">Layout::from_size_align</span>(<span class="number">1</span>, <span class="number">2</span>).<span class="ident">unwrap</span>();
-        <span class="ident">align_up</span>(<span class="ident">usize::MAX</span>, <span class="ident">layout</span>);
+    <span class="attribute">#[test]
+    #[should_panic]
+    </span><span class="kw">fn </span>test_align_up_overflow_2() {
+        <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, <span class="number">2</span>).unwrap();
+        align_up(usize::MAX, layout);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_align_up_overflow_512</span>() {
-        <span class="kw">let</span> <span class="ident">layout</span> = <span class="ident">Layout::from_size_align</span>(<span class="number">1</span>, <span class="number">0x200</span>).<span class="ident">unwrap</span>();
-        <span class="ident">align_up</span>(<span class="ident">usize::MAX</span> - <span class="number">0x1fe</span>, <span class="ident">layout</span>);
+    <span class="attribute">#[test]
+    #[should_panic]
+    </span><span class="kw">fn </span>test_align_up_overflow_512() {
+        <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, <span class="number">0x200</span>).unwrap();
+        align_up(usize::MAX - <span class="number">0x1fe</span>, layout);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_align_up_overflow_max</span>() {
-        <span class="kw">let</span> <span class="ident">max_align</span> = <span class="number">1_usize</span>.<span class="ident">reverse_bits</span>();
-        <span class="kw">let</span> <span class="ident">layout</span> = <span class="ident">Layout::from_size_align</span>(<span class="number">1</span>, <span class="ident">max_align</span>).<span class="ident">unwrap</span>();
-        <span class="ident">align_up</span>(<span class="ident">max_align</span> + <span class="number">1</span>, <span class="ident">layout</span>);
+    <span class="attribute">#[test]
+    #[should_panic]
+    </span><span class="kw">fn </span>test_align_up_overflow_max() {
+        <span class="kw">let </span>max_align = <span class="number">1_usize</span>.reverse_bits();
+        <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, max_align).unwrap();
+        align_up(max_align + <span class="number">1</span>, layout);
     }
 
-    <span class="kw">mod</span> <span class="ident">block_list</span> {
-        <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-        <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
+    <span class="kw">mod </span>block_list {
+        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+        <span class="kw">use </span>alloc::vec::Vec;
 
-        <span class="attribute">#[<span class="ident">track_caller</span>]</span>
-        <span class="kw">fn</span> <span class="ident">assert_same_address</span>&lt;<span class="ident">A</span>&gt;(<span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">A</span>, <span class="ident">b</span>: <span class="ident">usize</span>) {
-            <span class="macro">assert_eq!</span>(<span class="ident">a</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">b</span>);
+        <span class="attribute">#[track_caller]
+        </span><span class="kw">fn </span>assert_same_address&lt;A&gt;(a: <span class="kw-2">*const </span>A, b: usize) {
+            <span class="macro">assert_eq!</span>(a <span class="kw">as </span>usize, b);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_from_block</span>() {
-            <span class="comment">// When creating a block from a slice</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit</span>::&lt;<span class="ident">usize</span>&gt;<span class="ident">::zeroed</span>(); <span class="number">0x20</span>];
-            <span class="kw">let</span> <span class="ident">addrs</span>: <span class="ident">Vec</span>&lt;<span class="kw">_</span>&gt; = <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front</span>();
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_from_block() {
+            <span class="comment">// When creating a block from a slice
+            </span><span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::&lt;usize&gt;::zeroed(); <span class="number">0x20</span>];
+            <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
+            <span class="kw">let </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front();
 
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>)]</span>
-            <span class="kw">let</span> <span class="ident">expected_data_size</span> = <span class="number">120</span>; <span class="comment">// (0x20 - 2) * 4</span>
+            <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+            </span><span class="kw">let </span>expected_data_size = <span class="number">120</span>; <span class="comment">// (0x20 - 2) * 4
 
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;64&quot;</span>)]</span>
-            <span class="kw">let</span> <span class="ident">expected_data_size</span> = <span class="number">240</span>; <span class="comment">// (0x20 - 2) * 8</span>
+            </span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+            </span><span class="kw">let </span>expected_data_size = <span class="number">240</span>; <span class="comment">// (0x20 - 2) * 8
 
-            <span class="comment">// Then the first header should be placed at the beginning and have all the</span>
-            <span class="comment">// free space, minus the overhead of the two headers.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_size</span>(), <span class="ident">expected_data_size</span>);
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">free</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0</span>]);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_ptr</span>(), <span class="ident">addrs</span>[<span class="number">1</span>]);
+            // Then the first header should be placed at the beginning and have all the
+            // free space, minus the overhead of the two headers.
+            </span><span class="macro">assert_eq!</span>(cursor.<span class="number">0</span>.data_size(), expected_data_size);
+            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.free());
+            assert_same_address(cursor.<span class="number">0</span>.get_ref(), addrs[<span class="number">0</span>]);
+            assert_same_address(cursor.<span class="number">0</span>.data_ptr(), addrs[<span class="number">1</span>]);
 
-            <span class="comment">// And the next header should be the empty end marker</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0x1f</span>]);
+            <span class="comment">// And the next header should be the empty end marker
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.current().is_end());
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0x1f</span>]);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_from_block_empty</span>() {
-            <span class="comment">// When creating from a slice without enough space for either header</span>
-            <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">0</span>]);
+        <span class="attribute">#[test]
+        #[should_panic]
+        </span><span class="kw">fn </span>test_from_block_empty() {
+            <span class="comment">// When creating from a slice without enough space for either header
+            </span>BlockList::from_block(<span class="kw-2">&amp;mut </span>[MaybeUninit::zeroed(); <span class="number">0</span>]);
 
-            <span class="comment">// Then the call should panic</span>
+            <span class="comment">// Then the call should panic
+        </span>}
+
+        <span class="attribute">#[test]
+        #[should_panic]
+        </span><span class="kw">fn </span>test_from_block_size_1() {
+            <span class="comment">// When creating from a slice without enough space for the end header
+            </span>BlockList::from_block(<span class="kw-2">&amp;mut </span>[MaybeUninit::zeroed(); <span class="number">1</span>]);
+
+            <span class="comment">// Then the call should panic
+        </span>}
+
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_from_block_size_2() {
+            <span class="comment">// When creating from a slice with exactly enough space for the start and
+            // end headers
+            </span><span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">2</span>];
+            <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
+            <span class="kw">let </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front();
+
+            <span class="comment">// Then the first header should be free but empty
+            </span><span class="macro">assert!</span>(cursor.current().free());
+            <span class="macro">assert_eq!</span>(cursor.current().data_size(), <span class="number">0</span>);
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0</span>]);
+
+            <span class="comment">// And the next header should be the empty end marker
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.current().is_end());
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">1</span>]);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_from_block_size_1</span>() {
-            <span class="comment">// When creating from a slice without enough space for the end header</span>
-            <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">1</span>]);
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_split() {
+            <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
+            <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
+            <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front_mut();
 
-            <span class="comment">// Then the call should panic</span>
+            <span class="comment">// When splitting a sufficiently-sized free block
+            </span>cursor.split_exact(<span class="number">0x12 </span>* size_of::&lt;usize&gt;());
+
+            <span class="comment">// Then the first header should shrink to the requested data size
+            </span><span class="kw">let </span><span class="kw-2">mut </span>cursor = cursor.into_cursor();
+            <span class="macro">assert_eq!</span>(cursor.current().data_size(), <span class="number">0x12 </span>* size_of::&lt;usize&gt;());
+            <span class="macro">assert!</span>(cursor.current().free());
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0</span>]);
+            assert_same_address(cursor.current().data_ptr(), addrs[<span class="number">1</span>]);
+
+            <span class="comment">// And a new header should be added after it with the remaining space from the
+            // first block, minus the overhead of an additional header
+            </span>cursor.move_next();
+            <span class="macro">assert_eq!</span>(cursor.current().data_size(), <span class="number">0xb </span>* size_of::&lt;usize&gt;());
+            <span class="macro">assert!</span>(cursor.current().free());
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0x13</span>]);
+            assert_same_address(cursor.current().data_ptr(), addrs[<span class="number">0x14</span>]);
+
+            <span class="comment">// And the next header should be unmodified
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.current().is_end());
+            assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0x1f</span>]);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_from_block_size_2</span>() {
-            <span class="comment">// When creating from a slice with exactly enough space for the start and</span>
-            <span class="comment">// end headers</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">2</span>];
-            <span class="kw">let</span> <span class="ident">addrs</span>: <span class="ident">Vec</span>&lt;<span class="kw">_</span>&gt; = <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front</span>();
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_split_minimal() {
+            <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">3</span>];
+            <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
+            <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front_mut();
 
-            <span class="comment">// Then the first header should be free but empty</span>
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">free</span>());
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">data_size</span>(), <span class="number">0</span>);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0</span>]);
+            <span class="comment">// When splitting a block that has exactly enough space for an additional
+            // header
+            </span>cursor.split_exact(<span class="number">0</span>);
 
-            <span class="comment">// And the next header should be the empty end marker</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">1</span>]);
+            <span class="comment">// Then the first header should be empty
+            </span><span class="kw">let </span><span class="kw-2">mut </span>cursor = cursor.into_cursor();
+            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.free());
+            <span class="macro">assert_eq!</span>(cursor.<span class="number">0</span>.data_size(), <span class="number">0</span>);
+            assert_same_address(cursor.<span class="number">0</span>.get_ref(), addrs[<span class="number">0</span>]);
+
+            <span class="comment">// And so should the new header
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.free());
+            <span class="macro">assert_eq!</span>(cursor.<span class="number">0</span>.data_size(), <span class="number">0</span>);
+            assert_same_address(cursor.<span class="number">0</span>.get_ref(), addrs[<span class="number">1</span>]);
+
+            <span class="comment">// And the next header should be unmodified
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.is_end());
+            assert_same_address(cursor.<span class="number">0</span>.get_ref(), addrs[<span class="number">2</span>]);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_split</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">0x20</span>];
-            <span class="kw">let</span> <span class="ident">addrs</span>: <span class="ident">Vec</span>&lt;<span class="kw">_</span>&gt; = <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front_mut</span>();
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_split_no_op() {
+            <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
+            <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front_mut();
+            <span class="kw">let </span>original_size = <span class="number">0x1e </span>* size_of::&lt;usize&gt;();
+            <span class="macro">assert_eq!</span>(cursor.<span class="number">0</span>.data_size(), original_size);
 
-            <span class="comment">// When splitting a sufficiently-sized free block</span>
-            <span class="ident">cursor</span>.<span class="ident">split_exact</span>(<span class="number">0x12</span> * <span class="ident">size_of</span>::&lt;<span class="ident">usize</span>&gt;());
+            <span class="comment">// When calling split with the current size
+            </span>cursor.split_exact(original_size);
 
-            <span class="comment">// Then the first header should shrink to the requested data size</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">cursor</span>.<span class="ident">into_cursor</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">data_size</span>(), <span class="number">0x12</span> * <span class="ident">size_of</span>::&lt;<span class="ident">usize</span>&gt;());
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">free</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0</span>]);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">data_ptr</span>(), <span class="ident">addrs</span>[<span class="number">1</span>]);
+            <span class="comment">// Then nothing about this block should change
+            </span><span class="macro">assert_eq!</span>(cursor.<span class="number">0</span>.data_size(), original_size);
+            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.free());
+            <span class="macro">assert!</span>(!cursor.<span class="number">0</span>.is_end());
 
-            <span class="comment">// And a new header should be added after it with the remaining space from the</span>
-            <span class="comment">// first block, minus the overhead of an additional header</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">data_size</span>(), <span class="number">0xb</span> * <span class="ident">size_of</span>::&lt;<span class="ident">usize</span>&gt;());
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">free</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0x13</span>]);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">data_ptr</span>(), <span class="ident">addrs</span>[<span class="number">0x14</span>]);
-
-            <span class="comment">// And the next header should be unmodified</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0x1f</span>]);
+            <span class="comment">// And no new header should be created, so the next header will be the end
+            </span>cursor.move_next();
+            <span class="macro">assert!</span>(cursor.current().is_end());
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_split_minimal</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">3</span>];
-            <span class="kw">let</span> <span class="ident">addrs</span>: <span class="ident">Vec</span>&lt;<span class="kw">_</span>&gt; = <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">map</span>(|<span class="ident">p</span>| <span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front_mut</span>();
+        <span class="attribute">#[test]
+        #[should_panic]
+        </span><span class="kw">fn </span>test_split_unaligned() {
+            <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
+            <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front_mut();
 
-            <span class="comment">// When splitting a block that has exactly enough space for an additional</span>
-            <span class="comment">// header</span>
-            <span class="ident">cursor</span>.<span class="ident">split_exact</span>(<span class="number">0</span>);
+            <span class="comment">// When calling split with a size that is not a multiple of the required
+            // alignment
+            </span>cursor.split_exact(<span class="number">9</span>);
 
-            <span class="comment">// Then the first header should be empty</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">cursor</span>.<span class="ident">into_cursor</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">free</span>());
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_size</span>(), <span class="number">0</span>);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">0</span>]);
+            <span class="comment">// Then the call should panic
+        </span>}
 
-            <span class="comment">// And so should the new header</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">free</span>());
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_size</span>(), <span class="number">0</span>);
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">1</span>]);
+        <span class="attribute">#[test]
+        #[should_panic]
+        </span><span class="kw">fn </span>test_split_too_large() {
+            <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
+            <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front_mut();
 
-            <span class="comment">// And the next header should be unmodified</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">is_end</span>());
-            <span class="ident">assert_same_address</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">get_ref</span>(), <span class="ident">addrs</span>[<span class="number">2</span>]);
-        }
+            <span class="comment">// When calling split with a size that is larger than the current size
+            </span>cursor.split_exact(<span class="number">0x1f </span>* size_of::&lt;usize&gt;());
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_split_no_op</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">0x20</span>];
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front_mut</span>();
-            <span class="kw">let</span> <span class="ident">original_size</span> = <span class="number">0x1e</span> * <span class="ident">size_of</span>::&lt;<span class="ident">usize</span>&gt;();
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_size</span>(), <span class="ident">original_size</span>);
-
-            <span class="comment">// When calling split with the current size</span>
-            <span class="ident">cursor</span>.<span class="ident">split_exact</span>(<span class="ident">original_size</span>);
-
-            <span class="comment">// Then nothing about this block should change</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">data_size</span>(), <span class="ident">original_size</span>);
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">free</span>());
-            <span class="macro">assert!</span>(!<span class="ident">cursor</span>.<span class="number">0</span>.<span class="ident">is_end</span>());
-
-            <span class="comment">// And no new header should be created, so the next header will be the end</span>
-            <span class="ident">cursor</span>.<span class="ident">move_next</span>();
-            <span class="macro">assert!</span>(<span class="ident">cursor</span>.<span class="ident">current</span>().<span class="ident">is_end</span>());
-        }
-
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_split_unaligned</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">0x20</span>];
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front_mut</span>();
-
-            <span class="comment">// When calling split with a size that is not a multiple of the required</span>
-            <span class="comment">// alignment</span>
-            <span class="ident">cursor</span>.<span class="ident">split_exact</span>(<span class="number">9</span>);
-
-            <span class="comment">// Then the call should panic</span>
-        }
-
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="attribute">#[<span class="ident">should_panic</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_split_too_large</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> = [<span class="ident">MaybeUninit::zeroed</span>(); <span class="number">0x20</span>];
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> = <span class="ident">BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> = <span class="ident">blocks</span>.<span class="ident">front_mut</span>();
-
-            <span class="comment">// When calling split with a size that is larger than the current size</span>
-            <span class="ident">cursor</span>.<span class="ident">split_exact</span>(<span class="number">0x1f</span> * <span class="ident">size_of</span>::&lt;<span class="ident">usize</span>&gt;());
-
-            <span class="comment">// Then the call should panic</span>
-        }
+            <span class="comment">// Then the call should panic
+        </span>}
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

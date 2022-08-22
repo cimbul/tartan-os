@@ -91,98 +91,98 @@
 <span id="91">91</span>
 <span id="92">92</span>
 <span id="93">93</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Access to I/O space</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Access to I/O space
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
+</span><span class="kw">use </span>core::arch::asm;
 
-<span class="doccomment">/// Read an 8-bit value from the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u8</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u8</span> {
-    <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u8</span>;
+<span class="doccomment">/// Read an 8-bit value from the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>in_u8(addr: u16) -&gt; u8 {
+    <span class="kw">let </span>data: u8;
     <span class="macro">asm!</span>(
         <span class="string">&quot;in al, dx&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;al&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        out(<span class="string">&quot;al&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
-    <span class="ident">data</span>
+    data
 }
 
-<span class="doccomment">/// Read a 16-bit value from the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u16</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u16</span> {
-    <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u16</span>;
+<span class="doccomment">/// Read a 16-bit value from the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>in_u16(addr: u16) -&gt; u16 {
+    <span class="kw">let </span>data: u16;
     <span class="macro">asm!</span>(
         <span class="string">&quot;in ax, dx&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;ax&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        out(<span class="string">&quot;ax&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
-    <span class="ident">data</span>
+    data
 }
 
-<span class="doccomment">/// Read a 32-bit value from the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">in_u32</span>(<span class="ident">addr</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u32</span> {
-    <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">u32</span>;
+<span class="doccomment">/// Read a 32-bit value from the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>in_u32(addr: u16) -&gt; u32 {
+    <span class="kw">let </span>data: u32;
     <span class="macro">asm!</span>(
         <span class="string">&quot;in eax, dx&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        out(<span class="string">&quot;eax&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
-    <span class="ident">data</span>
+    data
 }
 
-<span class="doccomment">/// Write an 8-bit value to the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u8</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u8</span>) {
+<span class="doccomment">/// Write an 8-bit value to the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>out_u8(addr: u16, data: u8) {
     <span class="macro">asm!</span>(
         <span class="string">&quot;out dx, al&quot;</span>,
-        <span class="kw">in</span>(<span class="string">&quot;al&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        <span class="kw">in</span>(<span class="string">&quot;al&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
 }
 
-<span class="doccomment">/// Write a 16-bit value to the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u16</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u16</span>) {
+<span class="doccomment">/// Write a 16-bit value to the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>out_u16(addr: u16, data: u16) {
     <span class="macro">asm!</span>(
         <span class="string">&quot;out dx, ax&quot;</span>,
-        <span class="kw">in</span>(<span class="string">&quot;ax&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        <span class="kw">in</span>(<span class="string">&quot;ax&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
 }
 
-<span class="doccomment">/// Write a 16-bit value to the port at the given address in I/O space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// This is an extremely low-level operation that can do anything: trigger an interrupt,</span>
-<span class="doccomment">/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with</span>
-<span class="doccomment">/// caution.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">out_u32</span>(<span class="ident">addr</span>: <span class="ident">u16</span>, <span class="ident">data</span>: <span class="ident">u32</span>) {
+<span class="doccomment">/// Write a 16-bit value to the port at the given address in I/O space.
+///
+/// # Safety
+/// This is an extremely low-level operation that can do anything: trigger an interrupt,
+/// overwrite arbitrary memory with DMA, shut down the system, launch a missile. Use with
+/// caution.
+</span><span class="kw">pub unsafe fn </span>out_u32(addr: u16, data: u32) {
     <span class="macro">asm!</span>(
         <span class="string">&quot;out dx, eax&quot;</span>,
-        <span class="kw">in</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">data</span>,
-        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) <span class="ident">addr</span>,
+        <span class="kw">in</span>(<span class="string">&quot;eax&quot;</span>) data,
+        <span class="kw">in</span>(<span class="string">&quot;dx&quot;</span>) addr,
     );
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

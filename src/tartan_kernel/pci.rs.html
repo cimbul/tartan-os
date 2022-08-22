@@ -80,82 +80,82 @@
 <span id="80">80</span>
 <span id="81">81</span>
 <span id="82">82</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">tartan_pci</span> <span class="kw">as</span> <span class="ident">pci</span>;
-<span class="kw">use</span> <span class="ident">tartan_pci::access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>core::fmt;
+<span class="kw">use </span>tartan_pci <span class="kw">as </span>pci;
+<span class="kw">use </span>tartan_pci::access::{ConfigAccess, ConfigSelector};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() -&gt; <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
-    <span class="ident">tartan_pci::access::io::IOConfigAccess</span>
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">pub fn </span>find_pci_access() -&gt; <span class="kw">impl </span>ConfigAccess {
+    tartan_pci::access::io::IOConfigAccess
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() -&gt; <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
-    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
-    <span class="ident">tartan_pci::access::MemMapConfigAccess</span> {
-        <span class="ident">base_address</span>: <span class="number">0x3f00_0000</span>,
-        <span class="ident">bus_range</span>: <span class="number">0x00</span>..=<span class="number">0x0f</span>,
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">pub fn </span>find_pci_access() -&gt; <span class="kw">impl </span>ConfigAccess {
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree
+    </span>tartan_pci::access::MemMapConfigAccess {
+        base_address: <span class="number">0x3f00_0000</span>,
+        bus_range: <span class="number">0x00</span>..=<span class="number">0x0f</span>,
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_pci_access</span>() -&gt; <span class="kw">impl</span> <span class="ident">ConfigAccess</span> {
-    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
-    <span class="ident">tartan_pci::access::MemMapConfigAccess</span> {
-        <span class="ident">base_address</span>: <span class="number">0x0000_0040_1000_0000</span>,
-        <span class="ident">bus_range</span>: <span class="number">0x00</span>..=<span class="number">0xff</span>,
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+</span><span class="kw">pub fn </span>find_pci_access() -&gt; <span class="kw">impl </span>ConfigAccess {
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree
+    </span>tartan_pci::access::MemMapConfigAccess {
+        base_address: <span class="number">0x0000_0040_1000_0000</span>,
+        bus_range: <span class="number">0x00</span>..=<span class="number">0xff</span>,
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_devices</span>(<span class="ident">out</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">fmt::Write</span>) -&gt; <span class="ident">fmt::Result</span> {
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Enumerating PCI devices on bus 0&quot;</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">access</span> = <span class="ident">find_pci_access</span>();
-    <span class="kw">for</span> <span class="ident">selector</span> <span class="kw">in</span> <span class="ident">pci::enumerate_bus</span>(<span class="kw-2">&amp;</span><span class="ident">access</span>, <span class="ident">ConfigSelector::default</span>()) {
-        <span class="kw">let</span> <span class="ident">id_register</span>: <span class="ident">pci::config::HeaderRegister0</span> =
-            <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);
+<span class="kw">pub fn </span>print_devices(out: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write) -&gt; fmt::Result {
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;Enumerating PCI devices on bus 0&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>access = find_pci_access();
+    <span class="kw">for </span>selector <span class="kw">in </span>pci::enumerate_bus(<span class="kw-2">&amp;</span>access, ConfigSelector::default()) {
+        <span class="kw">let </span>id_register: pci::config::HeaderRegister0 =
+            access.get_fixed_register(selector);
 
         <span class="macro">writeln!</span>(
-            <span class="ident">out</span>,
+            out,
             <span class="string">&quot; {:2x}:{:x}: vendor {:04x} device {:04x}&quot;</span>,
-            <span class="ident">selector</span>.<span class="ident">device</span>,
-            <span class="ident">selector</span>.<span class="ident">function</span>,
-            <span class="ident">id_register</span>.<span class="ident">vendor</span>(),
-            <span class="ident">id_register</span>.<span class="ident">device</span>(),
+            selector.device,
+            selector.function,
+            id_register.vendor(),
+            id_register.device(),
         )<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">register_3</span>: <span class="ident">pci::config::HeaderRegister3</span> =
-            <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);
-        <span class="kw">let</span> <span class="ident">function_count_note</span> = <span class="kw">if</span> <span class="ident">selector</span>.<span class="ident">function</span> != <span class="number">0</span> {
-            <span class="string">&quot;&quot;</span> <span class="comment">// Does not apply when this is not the first function</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">register_3</span>.<span class="ident">multi_function</span>() {
-            <span class="string">&quot; (multi-function)&quot;</span>
-        } <span class="kw">else</span> {
-            <span class="string">&quot; (single-function)&quot;</span>
-        };
+        <span class="kw">let </span>register_3: pci::config::HeaderRegister3 =
+            access.get_fixed_register(selector);
+        <span class="kw">let </span>function_count_note = <span class="kw">if </span>selector.function != <span class="number">0 </span>{
+            <span class="string">&quot;&quot; </span><span class="comment">// Does not apply when this is not the first function
+        </span>} <span class="kw">else if </span>register_3.multi_function() {
+            <span class="string">&quot; (multi-function)&quot;
+        </span>} <span class="kw">else </span>{
+            <span class="string">&quot; (single-function)&quot;
+        </span>};
         <span class="macro">writeln!</span>(
-            <span class="ident">out</span>,
+            out,
             <span class="string">&quot;       header type {:02x}{}&quot;</span>,
-            <span class="ident">register_3</span>.<span class="ident">header_type</span>(),
-            <span class="ident">function_count_note</span>,
+            register_3.header_type(),
+            function_count_note,
         )<span class="question-mark">?</span>;
 
 
-        <span class="kw">let</span> <span class="ident">class_register</span>: <span class="ident">pci::config::HeaderRegister2</span> =
-            <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);
+        <span class="kw">let </span>class_register: pci::config::HeaderRegister2 =
+            access.get_fixed_register(selector);
         <span class="macro">writeln!</span>(
-            <span class="ident">out</span>,
+            out,
             <span class="string">&quot;       class {:02x} subclass {:02x} interface {:02x} revision {:02x}&quot;</span>,
-            <span class="ident">class_register</span>.<span class="ident">class</span>(),
-            <span class="ident">class_register</span>.<span class="ident">subclass</span>(),
-            <span class="ident">class_register</span>.<span class="ident">interface</span>(),
-            <span class="ident">class_register</span>.<span class="ident">revision</span>(),
+            class_register.class(),
+            class_register.subclass(),
+            class_register.interface(),
+            class_register.revision(),
         )<span class="question-mark">?</span>;
 
-        <span class="kw">for</span> <span class="ident">capability</span> <span class="kw">in</span> <span class="ident">pci::iter_capabilities</span>(<span class="kw-2">&amp;</span><span class="ident">access</span>, <span class="ident">selector</span>) {
+        <span class="kw">for </span>capability <span class="kw">in </span>pci::iter_capabilities(<span class="kw-2">&amp;</span>access, selector) {
             <span class="macro">writeln!</span>(
-                <span class="ident">out</span>,
+                out,
                 <span class="string">&quot;       capability {:02x} (register {:04x})&quot;</span>,
-                <span class="ident">capability</span>.<span class="ident">id</span>, <span class="ident">capability</span>.<span class="ident">register</span>,
+                capability.id, capability.register,
             )<span class="question-mark">?</span>;
         }
     }
@@ -163,4 +163,4 @@
     <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

@@ -206,213 +206,213 @@
 <span id="206">206</span>
 <span id="207">207</span>
 <span id="208">208</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for protected mode operation.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This includes the minimal support for segmented memory and hardware task management</span>
-<span class="doccomment">//! that is required to operate in protected mode with a flat memory model.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for protected mode operation.
+//!
+//! This includes the minimal support for segmented memory and hardware task management
+//! that is required to operate in protected mode with a flat memory model.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_common::protection</span>::{<span class="ident">IOPermissionBitmap</span>, <span class="ident">Selector</span>};
-<span class="kw">use</span> <span class="ident">static_assertions::const_assert_eq</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_common::protection::{IOPermissionBitmap, Selector};
+<span class="kw">use </span>static_assertions::const_assert_eq;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_common::paging::ControlRegister3</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_common::protection</span>::{<span class="ident">GateDescriptorFlags</span>, <span class="ident">LocalDescriptorTableRegister</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_common::FlagRegister</span>;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_common::paging::ControlRegister3;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_common::protection::{GateDescriptorFlags, LocalDescriptorTableRegister};
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_common::FlagRegister;
 
 
-<span class="doccomment">/// A task state segment (TSS) with fixed redirect and I/O permission maps.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// From the processor&#39;s perspective, the layout of the TSS is flexible after the end of</span>
-<span class="doccomment">/// the [`TaskStateSegmentHeader`]. The permission map may be at any offset or missing</span>
-<span class="doccomment">/// from the segment completely. For that reason, this struct is only suitable for use in</span>
-<span class="doccomment">/// setting up a TSS that the caller owns. For reading a TSS created by another system</span>
-<span class="doccomment">/// (e.g., the bootloader), use the [`TaskStateSegmentHeader`] struct on its own.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BasicTaskStateSegment</span> {
-    <span class="doccomment">/// Saved task data and pointer to bitmaps</span>
-    <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">TaskStateSegmentHeader</span>,
-    <span class="doccomment">/// I/O permission map and interrupt redirect map</span>
-    <span class="kw">pub</span> <span class="ident">bitmaps</span>: <span class="ident">TaskStateSegmentBitmaps</span>&lt;[<span class="ident">u8</span>; <span class="ident">IOPermissionBitmap::MAX_SIZE</span>]&gt;,
+<span class="doccomment">/// A task state segment (TSS) with fixed redirect and I/O permission maps.
+///
+/// From the processor&#39;s perspective, the layout of the TSS is flexible after the end of
+/// the [`TaskStateSegmentHeader`]. The permission map may be at any offset or missing
+/// from the segment completely. For that reason, this struct is only suitable for use in
+/// setting up a TSS that the caller owns. For reading a TSS created by another system
+/// (e.g., the bootloader), use the [`TaskStateSegmentHeader`] struct on its own.
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>BasicTaskStateSegment {
+    <span class="doccomment">/// Saved task data and pointer to bitmaps
+    </span><span class="kw">pub </span>header: TaskStateSegmentHeader,
+    <span class="doccomment">/// I/O permission map and interrupt redirect map
+    </span><span class="kw">pub </span>bitmaps: TaskStateSegmentBitmaps&lt;[u8; IOPermissionBitmap::MAX_SIZE]&gt;,
 }
 
 
-<span class="doccomment">/// Saved task state that makes up the most significant part of a task state segment</span>
-<span class="doccomment">/// (TSS).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Some of the fields of this header are automatically saved by the processor when</span>
-<span class="doccomment">/// switching tasks. Refer to each field&#39;s documentation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This header can be followed by OS-specific data and/or the</span>
-<span class="doccomment">/// [`TaskStateSegmentBitmaps`]. The location of the latter is determined by</span>
-<span class="doccomment">/// [`io_permission_map_offset`](Self::io_permission_map_offset).</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaskStateSegmentHeader</span> {
-    <span class="doccomment">/// Segment selector saved by the processor referencing the task that was running</span>
-    <span class="doccomment">/// before this task was activated.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If [`FlagRegister::nested_task`] is set, then this task will be resumed by the</span>
-    <span class="doccomment">/// `IRET` instruction.</span>
-    <span class="kw">pub</span> <span class="ident">previous_task</span>: <span class="ident">u16</span>,
-    <span class="ident">_reserved_a</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Stack pointer and segment for privilege levels 0–2.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">privileged_stack</span>: [<span class="ident">PrivilegedStack</span>; <span class="number">3</span>],
-    <span class="doccomment">/// Page table pointer from [`ControlRegister3`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">control_register_3</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EIP` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">instruction_pointer</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EFLAGS` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EAX` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_a</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `ECX` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_c</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EDX` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_d</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EBX` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_b</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `SP` value saved by the processor for privilege level 3.</span>
-    <span class="kw">pub</span> <span class="ident">stack_pointer</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EBP` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">base_pointer</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `ESI` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">source_index</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `EDI` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">destination_index</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// `ES` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_segment_e</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_b</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// `CS` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">code_segment</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_c</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// `SS` value saved by the processor for privilege level 3.</span>
-    <span class="kw">pub</span> <span class="ident">stack_segment</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_d</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// `DS` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">data_segment</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_e</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// `FS` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_segment_f</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_f</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// `GS` value saved by the processor.</span>
-    <span class="kw">pub</span> <span class="ident">general_segment_g</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_g</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// [`LocalDescriptorTableRegister`] value to load when executing this task.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">local_descriptor_table</span>: <span class="ident">Selector</span>,
-    <span class="ident">_reserved_h</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Indicates that a debug exception should be raised when this task is activated.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">debug_trap</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// Offset from the start of this structure to start of the [`IOPermissionBitmap`],</span>
-    <span class="doccomment">/// and to the end of the [`interrupt_redirect`</span>
-    <span class="doccomment">/// bitmap](TaskStateSegmentBitmaps::interrupt_redirect).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The I/O permission map ends at the limit of the containing segment, and must be</span>
-    <span class="doccomment">/// at least two bytes. If this offset is equal to or greater than the limit,</span>
-    <span class="doccomment">/// then the permission map is empty and all ports are assumed to be zero.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The interrupt redirect bitmap begins at this offset minus 32.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">io_permission_map_offset</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Pointer to the shadow stack.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">shadow_stack_pointer</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Saved task state that makes up the most significant part of a task state segment
+/// (TSS).
+///
+/// Some of the fields of this header are automatically saved by the processor when
+/// switching tasks. Refer to each field&#39;s documentation.
+///
+/// This header can be followed by OS-specific data and/or the
+/// [`TaskStateSegmentBitmaps`]. The location of the latter is determined by
+/// [`io_permission_map_offset`](Self::io_permission_map_offset).
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>TaskStateSegmentHeader {
+    <span class="doccomment">/// Segment selector saved by the processor referencing the task that was running
+    /// before this task was activated.
+    ///
+    /// If [`FlagRegister::nested_task`] is set, then this task will be resumed by the
+    /// `IRET` instruction.
+    </span><span class="kw">pub </span>previous_task: u16,
+    _reserved_a: u16,
+    <span class="doccomment">/// Stack pointer and segment for privilege levels 0–2.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>privileged_stack: [PrivilegedStack; <span class="number">3</span>],
+    <span class="doccomment">/// Page table pointer from [`ControlRegister3`].
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>control_register_3: u32,
+    <span class="doccomment">/// `EIP` value saved by the processor.
+    </span><span class="kw">pub </span>instruction_pointer: u32,
+    <span class="doccomment">/// `EFLAGS` value saved by the processor.
+    </span><span class="kw">pub </span>flags: u32,
+    <span class="doccomment">/// `EAX` value saved by the processor.
+    </span><span class="kw">pub </span>general_a: u32,
+    <span class="doccomment">/// `ECX` value saved by the processor.
+    </span><span class="kw">pub </span>general_c: u32,
+    <span class="doccomment">/// `EDX` value saved by the processor.
+    </span><span class="kw">pub </span>general_d: u32,
+    <span class="doccomment">/// `EBX` value saved by the processor.
+    </span><span class="kw">pub </span>general_b: u32,
+    <span class="doccomment">/// `SP` value saved by the processor for privilege level 3.
+    </span><span class="kw">pub </span>stack_pointer: u32,
+    <span class="doccomment">/// `EBP` value saved by the processor.
+    </span><span class="kw">pub </span>base_pointer: u32,
+    <span class="doccomment">/// `ESI` value saved by the processor.
+    </span><span class="kw">pub </span>source_index: u32,
+    <span class="doccomment">/// `EDI` value saved by the processor.
+    </span><span class="kw">pub </span>destination_index: u32,
+    <span class="doccomment">/// `ES` value saved by the processor.
+    </span><span class="kw">pub </span>general_segment_e: Selector,
+    _reserved_b: u16,
+    <span class="doccomment">/// `CS` value saved by the processor.
+    </span><span class="kw">pub </span>code_segment: Selector,
+    _reserved_c: u16,
+    <span class="doccomment">/// `SS` value saved by the processor for privilege level 3.
+    </span><span class="kw">pub </span>stack_segment: Selector,
+    _reserved_d: u16,
+    <span class="doccomment">/// `DS` value saved by the processor.
+    </span><span class="kw">pub </span>data_segment: Selector,
+    _reserved_e: u16,
+    <span class="doccomment">/// `FS` value saved by the processor.
+    </span><span class="kw">pub </span>general_segment_f: Selector,
+    _reserved_f: u16,
+    <span class="doccomment">/// `GS` value saved by the processor.
+    </span><span class="kw">pub </span>general_segment_g: Selector,
+    _reserved_g: u16,
+    <span class="doccomment">/// [`LocalDescriptorTableRegister`] value to load when executing this task.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>local_descriptor_table: Selector,
+    _reserved_h: u16,
+    <span class="doccomment">/// Indicates that a debug exception should be raised when this task is activated.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>debug_trap: bool,
+    <span class="doccomment">/// Offset from the start of this structure to start of the [`IOPermissionBitmap`],
+    /// and to the end of the [`interrupt_redirect`
+    /// bitmap](TaskStateSegmentBitmaps::interrupt_redirect).
+    ///
+    /// The I/O permission map ends at the limit of the containing segment, and must be
+    /// at least two bytes. If this offset is equal to or greater than the limit,
+    /// then the permission map is empty and all ports are assumed to be zero.
+    ///
+    /// The interrupt redirect bitmap begins at this offset minus 32.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>io_permission_map_offset: u16,
+    <span class="doccomment">/// Pointer to the shadow stack.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>shadow_stack_pointer: u32,
 }
 
-<span class="macro">const_assert_eq!</span>(<span class="number">108</span>, <span class="ident">core::mem::size_of</span>::&lt;<span class="ident">TaskStateSegmentHeader</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">108</span>, core::mem::size_of::&lt;TaskStateSegmentHeader&gt;());
 
-<span class="kw">impl</span> <span class="ident">TaskStateSegmentHeader</span> {
-    <span class="doccomment">/// Create a new zero-initialized header</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">previous_task</span>: <span class="number">0</span>,
-            <span class="ident">privileged_stack</span>: [<span class="ident">PrivilegedStack::new</span>(); <span class="number">3</span>],
-            <span class="ident">control_register_3</span>: <span class="number">0</span>,
-            <span class="ident">instruction_pointer</span>: <span class="number">0</span>,
-            <span class="ident">flags</span>: <span class="number">0</span>,
-            <span class="ident">general_a</span>: <span class="number">0</span>,
-            <span class="ident">general_c</span>: <span class="number">0</span>,
-            <span class="ident">general_d</span>: <span class="number">0</span>,
-            <span class="ident">general_b</span>: <span class="number">0</span>,
-            <span class="ident">stack_pointer</span>: <span class="number">0</span>,
-            <span class="ident">base_pointer</span>: <span class="number">0</span>,
-            <span class="ident">source_index</span>: <span class="number">0</span>,
-            <span class="ident">destination_index</span>: <span class="number">0</span>,
-            <span class="ident">general_segment_e</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">code_segment</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">stack_segment</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">data_segment</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">general_segment_f</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">general_segment_g</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">local_descriptor_table</span>: <span class="ident">Selector::null</span>(),
-            <span class="ident">debug_trap</span>: <span class="bool-val">false</span>,
-            <span class="ident">io_permission_map_offset</span>: <span class="number">0</span>,
-            <span class="ident">shadow_stack_pointer</span>: <span class="number">0</span>,
+<span class="kw">impl </span>TaskStateSegmentHeader {
+    <span class="doccomment">/// Create a new zero-initialized header
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            previous_task: <span class="number">0</span>,
+            privileged_stack: [PrivilegedStack::new(); <span class="number">3</span>],
+            control_register_3: <span class="number">0</span>,
+            instruction_pointer: <span class="number">0</span>,
+            flags: <span class="number">0</span>,
+            general_a: <span class="number">0</span>,
+            general_c: <span class="number">0</span>,
+            general_d: <span class="number">0</span>,
+            general_b: <span class="number">0</span>,
+            stack_pointer: <span class="number">0</span>,
+            base_pointer: <span class="number">0</span>,
+            source_index: <span class="number">0</span>,
+            destination_index: <span class="number">0</span>,
+            general_segment_e: Selector::null(),
+            code_segment: Selector::null(),
+            stack_segment: Selector::null(),
+            data_segment: Selector::null(),
+            general_segment_f: Selector::null(),
+            general_segment_g: Selector::null(),
+            local_descriptor_table: Selector::null(),
+            debug_trap: <span class="bool-val">false</span>,
+            io_permission_map_offset: <span class="number">0</span>,
+            shadow_stack_pointer: <span class="number">0</span>,
 
-            <span class="ident">_reserved_a</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_b</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_c</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_d</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_e</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_f</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_g</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_h</span>: <span class="number">0</span>,
+            _reserved_a: <span class="number">0</span>,
+            _reserved_b: <span class="number">0</span>,
+            _reserved_c: <span class="number">0</span>,
+            _reserved_d: <span class="number">0</span>,
+            _reserved_e: <span class="number">0</span>,
+            _reserved_f: <span class="number">0</span>,
+            _reserved_g: <span class="number">0</span>,
+            _reserved_h: <span class="number">0</span>,
         }
     }
 }
 
 
-<span class="doccomment">/// Stack pointer and segment for a given privilege level</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PrivilegedStack</span> {
-    <span class="doccomment">/// Stack pointer (`SP`) value for this privilege level.</span>
-    <span class="kw">pub</span> <span class="ident">pointer</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Stack segment (`SS`) value for this privilege level.</span>
-    <span class="kw">pub</span> <span class="ident">segment</span>: <span class="ident">Selector</span>,
+<span class="doccomment">/// Stack pointer and segment for a given privilege level
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>PrivilegedStack {
+    <span class="doccomment">/// Stack pointer (`SP`) value for this privilege level.
+    </span><span class="kw">pub </span>pointer: u32,
+    <span class="doccomment">/// Stack segment (`SS`) value for this privilege level.
+    </span><span class="kw">pub </span>segment: Selector,
 }
 
-<span class="macro">const_assert_eq!</span>(<span class="number">8</span>, <span class="ident">core::mem::size_of</span>::&lt;<span class="ident">PrivilegedStack</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">8</span>, core::mem::size_of::&lt;PrivilegedStack&gt;());
 
-<span class="kw">impl</span> <span class="ident">PrivilegedStack</span> {
-    <span class="doccomment">/// Create a new zero-initialized stack pointer</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">pointer</span>: <span class="number">0</span>, <span class="ident">segment</span>: <span class="ident">Selector::null</span>() }
+<span class="kw">impl </span>PrivilegedStack {
+    <span class="doccomment">/// Create a new zero-initialized stack pointer
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ pointer: <span class="number">0</span>, segment: Selector::null() }
     }
 }
 
 
 
-<span class="doccomment">/// I/O permission map and interrupt redirect map, which are always located together in</span>
-<span class="doccomment">/// a task state segment (TSS).</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaskStateSegmentBitmaps</span>&lt;<span class="ident">T</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">AsRef</span>&lt;[<span class="ident">u8</span>]&gt; + <span class="ident">AsMut</span>&lt;[<span class="ident">u8</span>]&gt; + <span class="ident">Eq</span> + <span class="question-mark">?</span><span class="ident">Sized</span>,
+<span class="doccomment">/// I/O permission map and interrupt redirect map, which are always located together in
+/// a task state segment (TSS).
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>TaskStateSegmentBitmaps&lt;T&gt;
+<span class="kw">where
+    </span>T: AsRef&lt;[u8]&gt; + AsMut&lt;[u8]&gt; + Eq + <span class="question-mark">?</span>Sized,
 {
-    <span class="doccomment">/// Indicates which handler to use for software-triggered interrupts in virtual real</span>
-    <span class="doccomment">/// mode.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If bit `N` (bit `N mod 8` of byte `floor(N / 8)`) is set, it indicates that an</span>
-    <span class="doccomment">/// `INT N` in virtual real mode should be handled using the protected-mode mechanism</span>
-    <span class="doccomment">/// rather than the process&#39;s own interrupt table.</span>
-    <span class="kw">pub</span> <span class="ident">interrupt_redirect</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+    <span class="doccomment">/// Indicates which handler to use for software-triggered interrupts in virtual real
+    /// mode.
+    ///
+    /// If bit `N` (bit `N mod 8` of byte `floor(N / 8)`) is set, it indicates that an
+    /// `INT N` in virtual real mode should be handled using the protected-mode mechanism
+    /// rather than the process&#39;s own interrupt table.
+    </span><span class="kw">pub </span>interrupt_redirect: [u8; <span class="number">32</span>],
 
-    <span class="doccomment">/// The [`IOPermissionBitmap`] for this task.</span>
-    <span class="kw">pub</span> <span class="ident">io_permission</span>: <span class="ident">IOPermissionBitmap</span>&lt;<span class="ident">T</span>&gt;,
+    <span class="doccomment">/// The [`IOPermissionBitmap`] for this task.
+    </span><span class="kw">pub </span>io_permission: IOPermissionBitmap&lt;T&gt;,
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

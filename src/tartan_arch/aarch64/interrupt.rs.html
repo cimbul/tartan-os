@@ -567,54 +567,54 @@
 <span id="567">567</span>
 <span id="568">568</span>
 <span id="569">569</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Exception and interrupt handling.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Exception and interrupt handling.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::ExceptionLevel</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::system_register_access</span>;
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::ExceptionLevel;
+<span class="kw">use </span><span class="kw">crate</span>::system_register_access;
+<span class="kw">use </span>core::arch::asm;
+<span class="kw">use </span>tartan_bitfield::bitfield;
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
-<span class="comment">// Must be re-exported so that crates that use these macros will be able to resolve it</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">paste::paste</span>;
+<span class="comment">// Must be re-exported so that crates that use these macros will be able to resolve it
+</span><span class="attribute">#[doc(hidden)]
+</span><span class="kw">pub use </span>paste::paste;
 
 
-<span class="doccomment">/// Define an exception vector table that forwards all exceptions to the designated</span>
-<span class="doccomment">/// handler.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The first argument is the name of the vector table, which will be exported as an</span>
-<span class="doccomment">/// unmangled symbol and exposed to Rust code as an immutable static of type</span>
-<span class="doccomment">/// [`VectorTable`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The second argument is the name of the handler function, which should have</span>
-<span class="doccomment">/// signature `func(Kind, Source)`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">/// ```ignore</span>
-<span class="doccomment">/// # use tartan_arch::aarch64_exception_vector_table;</span>
-<span class="doccomment">/// # use tartan_arch::aarch64::ExceptionLevel;</span>
-<span class="doccomment">/// # use tartan_arch::aarch64::interrupt::{Kind, Source, VectorBaseAddressRegister};</span>
-<span class="doccomment">/// #</span>
-<span class="doccomment">/// aarch64_exception_vector_table!(exception_table_el1, handle_exception);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn handle_exception(kind: Kind, source: Source) {</span>
-<span class="doccomment">///     panic!(&quot;Exception {:?} from {:?}&quot;, kind, source);</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn main() {</span>
-<span class="doccomment">///     VectorBaseAddressRegister::set(</span>
-<span class="doccomment">///         ExceptionLevel::One,</span>
-<span class="doccomment">///         unsafe { &amp;exception_table_el1 }</span>
-<span class="doccomment">///     );</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules!</span> <span class="ident">aarch64_exception_vector_table</span> {
-    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>:<span class="ident">path</span>] =&gt; {
-        <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">static</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::VectorTable</span>;
+<span class="doccomment">/// Define an exception vector table that forwards all exceptions to the designated
+/// handler.
+///
+/// The first argument is the name of the vector table, which will be exported as an
+/// unmangled symbol and exposed to Rust code as an immutable static of type
+/// [`VectorTable`].
+///
+/// The second argument is the name of the handler function, which should have
+/// signature `func(Kind, Source)`.
+///
+/// # Example
+/// ```ignore
+/// # use tartan_arch::aarch64_exception_vector_table;
+/// # use tartan_arch::aarch64::ExceptionLevel;
+/// # use tartan_arch::aarch64::interrupt::{Kind, Source, VectorBaseAddressRegister};
+/// #
+/// aarch64_exception_vector_table!(exception_table_el1, handle_exception);
+///
+/// fn handle_exception(kind: Kind, source: Source) {
+///     panic!(&quot;Exception {:?} from {:?}&quot;, kind, source);
+/// }
+///
+/// fn main() {
+///     VectorBaseAddressRegister::set(
+///         ExceptionLevel::One,
+///         unsafe { &amp;exception_table_el1 }
+///     );
+/// }
+/// ```
+</span><span class="attribute">#[macro_export]
+</span><span class="macro">macro_rules! </span>aarch64_exception_vector_table {
+    [<span class="macro-nonterminal">$table</span>:ident, <span class="macro-nonterminal">$handler</span>:path] =&gt; {
+        <span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">static </span><span class="macro-nonterminal">$table</span>: <span class="macro-nonterminal">$crate::aarch64::interrupt::VectorTable</span>;
         }
 
         <span class="macro">core::arch::global_asm!</span>(<span class="macro">concat!</span>(
@@ -623,39 +623,39 @@
             // Exceptions from current level using SP_EL0 (thread mode)
 
             .balign 0x800
-        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;:
+        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;:
             // Synchronous exception
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_sync_exception_from_thread
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_sync_exception_from_thread
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt_from_thread
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_interrupt_from_thread
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Fast interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt_from_thread
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_fast_interrupt_from_thread
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // System error
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_system_error_from_thread
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_system_error_from_thread
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
@@ -665,36 +665,36 @@
             .balign 0x80
             // Synchronous exception
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_sync_exception_from_handler
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_sync_exception_from_handler
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt_from_handler
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_interrupt_from_handler
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Fast interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt_from_handler
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_fast_interrupt_from_handler
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // System error
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_system_error_from_handler
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_system_error_from_handler
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
@@ -704,36 +704,36 @@
             .balign 0x80
             // Synchronous exception
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_sync_exception_from_lower
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_sync_exception_from_lower
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt_from_lower
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_interrupt_from_lower
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Fast interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt_from_lower
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_fast_interrupt_from_lower
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // System error
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_system_error_from_lower
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_system_error_from_lower
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
@@ -743,41 +743,41 @@
             .balign 0x80
             // Synchronous exception
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_sync_exception_from_lower_32bit
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_sync_exception_from_lower_32bit
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt_from_lower_32bit
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_interrupt_from_lower_32bit
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // Fast interrupt
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt_from_lower_32bit
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_fast_interrupt_from_lower_32bit
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
             .balign 0x80
             // System error
             stp lr, fp, [sp, #-16]!
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_system_error_from_lower_32bit
-            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_system_error_from_lower_32bit
+            bl &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore
             ldp lr, fp, [sp], #16
             eret
 
 
-        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_save:
+        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_save:
             stp x0, x1, [sp, #-16]!
             stp x2, x3, [sp, #-16]!
             stp x4, x5, [sp, #-16]!
@@ -787,7 +787,7 @@
             stp x12, x13, [sp, #-16]!
             stp x14, x15, [sp, #-16]!
 
-        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_restore:
+        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_restore:
             ldp x14, x15, [sp], #16
             ldp x12, x13, [sp], #16
             ldp x10, x11, [sp], #16
@@ -796,345 +796,345 @@
             ldp x4, x5, [sp], #16
             ldp x2, x3, [sp], #16
             ldp x0, x1, [sp], #16
-            &quot;</span>
-        ));
+            &quot;
+        </span>));
 
-        <span class="macro-nonterminal">$</span><span class="macro">crate::aarch64::interrupt::paste!</span> {
-            <span class="attribute">#[<span class="macro-nonterminal">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_sync_exception_from_thread</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Synchronous</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
+        <span class="macro-nonterminal">$</span><span class="macro">crate::aarch64::interrupt::paste! </span>{
+            <span class="attribute">#[<span class="macro-nonterminal">no_mangle</span>]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_sync_exception_from_thread &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Synchronous</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt_from_thread</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Interrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_interrupt_from_thread &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Interrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt_from_thread</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::FastInterrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_fast_interrupt_from_thread &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::FastInterrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_system_error_from_thread</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::SystemError</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_system_error_from_thread &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::SystemError</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelThread</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_sync_exception_from_handler</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Synchronous</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_sync_exception_from_handler &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Synchronous</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt_from_handler</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Interrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_interrupt_from_handler &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Interrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt_from_handler</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::FastInterrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_fast_interrupt_from_handler &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::FastInterrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_system_error_from_handler</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::SystemError</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_system_error_from_handler &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::SystemError</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::CurrentLevelHandler</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_sync_exception_from_lower</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Synchronous</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_sync_exception_from_lower &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Synchronous</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt_from_lower</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Interrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_interrupt_from_lower &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Interrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt_from_lower</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::FastInterrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_fast_interrupt_from_lower &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::FastInterrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_system_error_from_lower</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::SystemError</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_system_error_from_lower &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::SystemError</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_sync_exception_from_lower_32bit</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Synchronous</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_sync_exception_from_lower_32bit &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Synchronous</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt_from_lower_32bit</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::Interrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_interrupt_from_lower_32bit &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::Interrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt_from_lower_32bit</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::FastInterrupt</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_fast_interrupt_from_lower_32bit &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::FastInterrupt</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
                 )
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_system_error_from_lower_32bit</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Kind::SystemError</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_system_error_from_lower_32bit &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Kind::SystemError</span>,
+                    <span class="macro-nonterminal">$crate::aarch64::interrupt::Source::LowerLevel32Bit</span>,
                 )
             }
         }
     };
 }
 
-<span class="doccomment">/// The kind of exception being handled: sync, IRQ, FIQ, SError.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Kind</span> {
-    <span class="doccomment">/// A standard exception traceable to a specific instruction.</span>
-    <span class="ident">Synchronous</span>,
-    <span class="doccomment">/// An external interrupt (IRQ).</span>
-    <span class="ident">Interrupt</span>,
-    <span class="doccomment">/// An external interrupt through the higher-priority fast interrupt (FIQ) mechanism.</span>
-    <span class="ident">FastInterrupt</span>,
-    <span class="doccomment">/// An internal error with the processor (SError).</span>
-    <span class="ident">SystemError</span>,
+<span class="doccomment">/// The kind of exception being handled: sync, IRQ, FIQ, SError.
+</span><span class="attribute">#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Kind {
+    <span class="doccomment">/// A standard exception traceable to a specific instruction.
+    </span>Synchronous,
+    <span class="doccomment">/// An external interrupt (IRQ).
+    </span>Interrupt,
+    <span class="doccomment">/// An external interrupt through the higher-priority fast interrupt (FIQ) mechanism.
+    </span>FastInterrupt,
+    <span class="doccomment">/// An internal error with the processor (SError).
+    </span>SystemError,
 }
 
-<span class="doccomment">/// The exception level that generated an exception.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Source</span> {
-    <span class="doccomment">/// Exception from current level using SP_EL0 (thread mode)</span>
-    <span class="ident">CurrentLevelThread</span>,
-    <span class="doccomment">/// Exception from current level using current-level SP (handler mode)</span>
-    <span class="ident">CurrentLevelHandler</span>,
-    <span class="doccomment">/// Exception from lower level (e.g., EL0) in 64-bit mode</span>
-    <span class="ident">LowerLevel</span>,
-    <span class="doccomment">/// Exception from lower level (e.g., EL0) in 32-bit mode</span>
-    <span class="ident">LowerLevel32Bit</span>,
+<span class="doccomment">/// The exception level that generated an exception.
+</span><span class="attribute">#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Source {
+    <span class="doccomment">/// Exception from current level using SP_EL0 (thread mode)
+    </span>CurrentLevelThread,
+    <span class="doccomment">/// Exception from current level using current-level SP (handler mode)
+    </span>CurrentLevelHandler,
+    <span class="doccomment">/// Exception from lower level (e.g., EL0) in 64-bit mode
+    </span>LowerLevel,
+    <span class="doccomment">/// Exception from lower level (e.g., EL0) in 32-bit mode
+    </span>LowerLevel32Bit,
 }
 
 
-<span class="doccomment">/// A single entry in the exception [`VectorTable`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The bytes of the entry are interpreted as instructions and executed when an exception</span>
-<span class="doccomment">/// of the corresponding [`Kind`] + [`Source`] is encountered. Consequently, it isn&#39;t</span>
-<span class="doccomment">/// useful to instantiate this type directly. Use [`aarch64_exception_vector_table`]</span>
-<span class="doccomment">/// instead.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">0x80</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VectorEntry</span>([<span class="ident">u8</span>; <span class="number">0x80</span>]);
+<span class="doccomment">/// A single entry in the exception [`VectorTable`].
+///
+/// The bytes of the entry are interpreted as instructions and executed when an exception
+/// of the corresponding [`Kind`] + [`Source`] is encountered. Consequently, it isn&#39;t
+/// useful to instantiate this type directly. Use [`aarch64_exception_vector_table`]
+/// instead.
+</span><span class="attribute">#[repr(align(<span class="number">0x80</span>))]
+</span><span class="kw">pub struct </span>VectorEntry([u8; <span class="number">0x80</span>]);
 
 
-<span class="doccomment">/// Exception vector table that contains code to handle exceptions from each combination</span>
-<span class="doccomment">/// of [`Kind`] and [`Source`].</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">0x800</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VectorTable</span>([<span class="ident">VectorEntry</span>; <span class="number">16</span>]);
+<span class="doccomment">/// Exception vector table that contains code to handle exceptions from each combination
+/// of [`Kind`] and [`Source`].
+</span><span class="attribute">#[repr(align(<span class="number">0x800</span>))]
+</span><span class="kw">pub struct </span>VectorTable([VectorEntry; <span class="number">16</span>]);
 
 
-<span class="doccomment">/// `VBAR_ELx`: Contains the address of the [`VectorTable`] that the processor should use</span>
-<span class="doccomment">/// at a given exception level.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">VectorBaseAddressRegister</span> {}
+<span class="doccomment">/// `VBAR_ELx`: Contains the address of the [`VectorTable`] that the processor should use
+/// at a given exception level.
+</span><span class="kw">pub enum </span>VectorBaseAddressRegister {}
 
-<span class="kw">impl</span> <span class="ident">VectorBaseAddressRegister</span> {
-    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Only defined for exception levels 1–3. The register for a given exception level is</span>
-    <span class="doccomment">/// only accessible from that level or higher.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="ident">level</span>: <span class="ident">ExceptionLevel</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">VectorTable</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span>: <span class="kw-2">*const</span> <span class="ident">VectorTable</span>;
-        <span class="kw">unsafe</span> {
-            <span class="kw">match</span> <span class="ident">level</span> {
-                <span class="ident">ExceptionLevel::Zero</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
-                <span class="ident">ExceptionLevel::One</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el1&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
-                <span class="ident">ExceptionLevel::Two</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el2&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
-                <span class="ident">ExceptionLevel::Three</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el3&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
+<span class="kw">impl </span>VectorBaseAddressRegister {
+    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.
+    ///
+    /// Only defined for exception levels 1–3. The register for a given exception level is
+    /// only accessible from that level or higher.
+    </span><span class="kw">pub fn </span>get(level: ExceptionLevel) -&gt; <span class="kw-2">*const </span>VectorTable {
+        <span class="kw">let </span><span class="kw-2">mut </span>value: <span class="kw-2">*const </span>VectorTable;
+        <span class="kw">unsafe </span>{
+            <span class="kw">match </span>level {
+                ExceptionLevel::Zero =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
+                ExceptionLevel::One =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el1&quot;</span>, out(reg) value),
+                ExceptionLevel::Two =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el2&quot;</span>, out(reg) value),
+                ExceptionLevel::Three =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, vbar_el3&quot;</span>, out(reg) value),
             }
         }
-        <span class="ident">value</span>
+        value
     }
 
-    <span class="doccomment">/// Update the register for the specified exception level with the given value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Address must be aligned to 11 bits (2048).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">level</span>: <span class="ident">ExceptionLevel</span>, <span class="ident">value</span>: <span class="kw-2">*const</span> <span class="ident">VectorTable</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="kw">match</span> <span class="ident">level</span> {
-                <span class="ident">ExceptionLevel::Zero</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
-                <span class="ident">ExceptionLevel::One</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el1, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
-                <span class="ident">ExceptionLevel::Two</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el2, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
-                <span class="ident">ExceptionLevel::Three</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el3, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>),
-            }
-        }
-    }
-}
-
-
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `DAIF`: Controls masking of different kinds of exceptions.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MaskRegister</span>(<span class="ident">u64</span>) {
-        <span class="doccomment">/// `F`: Mask fast (FIQ) interrupts.</span>
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">fast_interrupts_masked</span>,
-        <span class="doccomment">/// `I`: Mask regular (IRQ) interrupts.</span>
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">interrupts_masked</span>,
-        <span class="doccomment">/// `A`: Mask system error (SError) exceptions.</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">system_error_masked</span>,
-        <span class="doccomment">/// `D`: Mask debugging-related exceptions (breakpoints, watchpoints, stepping)</span>
-        <span class="doccomment">/// for the current exception level.</span>
-        [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">debug_masked</span>,
-    }
-}
-
-<span class="macro">system_register_access!</span>(<span class="ident">MaskRegister</span>, <span class="string">&quot;DAIF&quot;</span>);
-
-
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `ESR_ELx`: Holds information about the cause of the exception currently being</span>
-    <span class="doccomment">/// handled.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SyndromeRegister</span>(<span class="ident">u64</span>) {
-        <span class="doccomment">/// `EC`: The class of exception that was triggered.</span>
-        [<span class="number">26</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">class</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">Class</span>,
-        <span class="doccomment">/// `IL`: When set, indicates that the instruction that triggered this exception</span>
-        <span class="doccomment">/// was a 32-bit opcode (A64 or classic Arm). Otherwise, the opcode was 16 bits</span>
-        <span class="doccomment">/// (Thumb).</span>
-        [<span class="number">25</span>] <span class="kw">pub</span> <span class="ident">length_32bit</span>,
-        <span class="doccomment">/// `ISS`: Additional data about the exception in a format that is specific to</span>
-        <span class="doccomment">/// the [`class`](Self::class) value.</span>
-        [ <span class="number">0</span>..<span class="number">25</span>] <span class="kw">pub</span> <span class="ident">class_data</span>: <span class="ident">u32</span>,
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">SyndromeRegister</span> {
-    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Only defined for exception levels 1–3. The register for a given exception level is</span>
-    <span class="doccomment">/// only accessible from that level or higher.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="ident">level</span>: <span class="ident">ExceptionLevel</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="kw">unsafe</span> {
-            <span class="kw">match</span> <span class="ident">level</span> {
-                <span class="ident">ExceptionLevel::Zero</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
-                <span class="ident">ExceptionLevel::One</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el1&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
-                <span class="ident">ExceptionLevel::Two</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el2&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
-                <span class="ident">ExceptionLevel::Three</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el3&quot;</span>, <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
-            }
-        }
-        <span class="ident">value</span>
-    }
-
-    <span class="doccomment">/// Update the register for the specified exception level with the given value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">level</span>: <span class="ident">ExceptionLevel</span>, <span class="ident">value</span>: <span class="self">Self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="kw">match</span> <span class="ident">level</span> {
-                <span class="ident">ExceptionLevel::Zero</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
-                <span class="ident">ExceptionLevel::One</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el1, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
-                <span class="ident">ExceptionLevel::Two</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el2, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
-                <span class="ident">ExceptionLevel::Three</span> =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el3, {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>),
+    <span class="doccomment">/// Update the register for the specified exception level with the given value.
+    ///
+    /// Address must be aligned to 11 bits (2048).
+    </span><span class="kw">pub fn </span>set(level: ExceptionLevel, value: <span class="kw-2">*const </span>VectorTable) {
+        <span class="kw">unsafe </span>{
+            <span class="kw">match </span>level {
+                ExceptionLevel::Zero =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
+                ExceptionLevel::One =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el1, {}&quot;</span>, <span class="kw">in</span>(reg) value),
+                ExceptionLevel::Two =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el2, {}&quot;</span>, <span class="kw">in</span>(reg) value),
+                ExceptionLevel::Three =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr vbar_el3, {}&quot;</span>, <span class="kw">in</span>(reg) value),
             }
         }
     }
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Classifies different exception causes.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that the Arm documentation defines more variants than are defined in this</span>
-    <span class="doccomment">/// type. This only includes exception classes that can be triggered from Aarch64</span>
-    <span class="doccomment">/// state and taken to EL1.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Class</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// Tried to execute an undefined/unsupported opcode, or for any other reason that</span>
-        <span class="doccomment">/// does not fall under another exception class.</span>
-        <span class="ident">Unknown</span>                     = <span class="number">0b00_0000</span>,
-        <span class="doccomment">/// Trapped execution of a wait instruction (`WFE`/`WFI`).</span>
-        <span class="ident">Wait</span>                        = <span class="number">0b00_0001</span>,
-        <span class="doccomment">/// Trapped access to a FPU/vector register or instruction.</span>
-        <span class="ident">FPUAccess</span>                   = <span class="number">0b00_0111</span>,
-        <span class="doccomment">/// Tried to execute instructions after an illegal return.</span>
-        <span class="ident">IllegalState</span>                = <span class="number">0b00_1110</span>,
-        <span class="doccomment">/// Triggered a system call via the `SVC` instruction.</span>
-        <span class="ident">SupervisorCall</span>              = <span class="number">0b01_0101</span>,
-        <span class="doccomment">/// Trapped access to a system register or instruction.</span>
-        <span class="ident">SystemInstruction</span>           = <span class="number">0b01_1000</span>,
-        <span class="doccomment">/// Trapped access to a vector register or instruction.</span>
-        <span class="ident">VectorAccess</span>                = <span class="number">0b01_1001</span>,
-        <span class="doccomment">/// Improperly authenticated pointer detected. Requires `FEAT_FPAC`.</span>
-        <span class="ident">PointerAuthFailure</span>          = <span class="number">0b01_1100</span>,
-        <span class="doccomment">/// Instruction abort triggered at lower exception level.</span>
-        <span class="ident">InstructionAbortFromLower</span>   = <span class="number">0b10_0000</span>,
-        <span class="doccomment">/// Instruction abort triggered at current exception level.</span>
-        <span class="ident">InstructionAbortFromCurrent</span> = <span class="number">0b10_0001</span>,
-        <span class="doccomment">/// Program counter not properly aligned.</span>
-        <span class="ident">PCAlignment</span>                 = <span class="number">0b10_0010</span>,
-        <span class="doccomment">/// Data abort triggered at lower exception level.</span>
-        <span class="ident">DataAbortFromLower</span>          = <span class="number">0b10_0100</span>,
-        <span class="doccomment">/// Data abort triggered at current exception level.</span>
-        <span class="ident">DataAbortFromCurrent</span>        = <span class="number">0b10_0101</span>,
-        <span class="doccomment">/// Stack pointer not properly aligned.</span>
-        <span class="ident">SPAlignment</span>                 = <span class="number">0b10_0110</span>,
-        <span class="doccomment">/// Trapped floating point exception.</span>
-        <span class="ident">FloatException</span>              = <span class="number">0b10_1100</span>,
-        <span class="doccomment">/// System error (SError).</span>
-        <span class="ident">SystemError</span>                 = <span class="number">0b10_1111</span>,
-        <span class="doccomment">/// Breakpoint triggered at lower exception level.</span>
-        <span class="ident">BreakpointFromLower</span>         = <span class="number">0b11_0000</span>,
-        <span class="doccomment">/// Breakpoint triggered at current exception level.</span>
-        <span class="ident">BreakpointFromCurrent</span>       = <span class="number">0b11_0001</span>,
-        <span class="doccomment">/// Software step at lower exception level.</span>
-        <span class="ident">StepFromLower</span>               = <span class="number">0b11_0010</span>,
-        <span class="doccomment">/// Software step at current exception level.</span>
-        <span class="ident">StepFromCurrent</span>             = <span class="number">0b11_0011</span>,
-        <span class="doccomment">/// Watchpoint triggered at lower exception level.</span>
-        <span class="ident">WatchpointFromLower</span>         = <span class="number">0b11_0100</span>,
-        <span class="doccomment">/// Watchpoint triggered at current exception level.</span>
-        <span class="ident">WatchpointFromCurrent</span>       = <span class="number">0b11_0101</span>,
-        <span class="doccomment">/// Executed a `BRK` breakpoint instruction.</span>
-        <span class="ident">BreakpointInstruction</span>       = <span class="number">0b11_1100</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `DAIF`: Controls masking of different kinds of exceptions.
+    </span><span class="kw">pub struct </span>MaskRegister(u64) {
+        <span class="doccomment">/// `F`: Mask fast (FIQ) interrupts.
+        </span>[<span class="number">6</span>] <span class="kw">pub </span>fast_interrupts_masked,
+        <span class="doccomment">/// `I`: Mask regular (IRQ) interrupts.
+        </span>[<span class="number">7</span>] <span class="kw">pub </span>interrupts_masked,
+        <span class="doccomment">/// `A`: Mask system error (SError) exceptions.
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>system_error_masked,
+        <span class="doccomment">/// `D`: Mask debugging-related exceptions (breakpoints, watchpoints, stepping)
+        /// for the current exception level.
+        </span>[<span class="number">9</span>] <span class="kw">pub </span>debug_masked,
+    }
+}
+
+<span class="macro">system_register_access!</span>(MaskRegister, <span class="string">&quot;DAIF&quot;</span>);
+
+
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `ESR_ELx`: Holds information about the cause of the exception currently being
+    /// handled.
+    </span><span class="kw">pub struct </span>SyndromeRegister(u64) {
+        <span class="doccomment">/// `EC`: The class of exception that was triggered.
+        </span>[<span class="number">26</span>..<span class="number">32</span>] <span class="kw">pub </span>class: u8 <span class="kw">as </span>Class,
+        <span class="doccomment">/// `IL`: When set, indicates that the instruction that triggered this exception
+        /// was a 32-bit opcode (A64 or classic Arm). Otherwise, the opcode was 16 bits
+        /// (Thumb).
+        </span>[<span class="number">25</span>] <span class="kw">pub </span>length_32bit,
+        <span class="doccomment">/// `ISS`: Additional data about the exception in a format that is specific to
+        /// the [`class`](Self::class) value.
+        </span>[ <span class="number">0</span>..<span class="number">25</span>] <span class="kw">pub </span>class_data: u32,
+    }
+}
+
+<span class="kw">impl </span>SyndromeRegister {
+    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.
+    ///
+    /// Only defined for exception levels 1–3. The register for a given exception level is
+    /// only accessible from that level or higher.
+    </span><span class="kw">pub fn </span>get(level: ExceptionLevel) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>(<span class="number">0</span>);
+        <span class="kw">unsafe </span>{
+            <span class="kw">match </span>level {
+                ExceptionLevel::Zero =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
+                ExceptionLevel::One =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el1&quot;</span>, out(reg) value.<span class="number">0</span>),
+                ExceptionLevel::Two =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el2&quot;</span>, out(reg) value.<span class="number">0</span>),
+                ExceptionLevel::Three =&gt; <span class="macro">asm!</span>(<span class="string">&quot;mrs {}, esr_el3&quot;</span>, out(reg) value.<span class="number">0</span>),
+            }
+        }
+        value
+    }
+
+    <span class="doccomment">/// Update the register for the specified exception level with the given value.
+    </span><span class="kw">pub fn </span>set(level: ExceptionLevel, value: <span class="self">Self</span>) {
+        <span class="kw">unsafe </span>{
+            <span class="kw">match </span>level {
+                ExceptionLevel::Zero =&gt; <span class="macro">panic!</span>(<span class="string">&quot;This register does not exist for EL0&quot;</span>),
+                ExceptionLevel::One =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el1, {}&quot;</span>, <span class="kw">in</span>(reg) value.<span class="number">0</span>),
+                ExceptionLevel::Two =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el2, {}&quot;</span>, <span class="kw">in</span>(reg) value.<span class="number">0</span>),
+                ExceptionLevel::Three =&gt; <span class="macro">asm!</span>(<span class="string">&quot;msr esr_el3, {}&quot;</span>, <span class="kw">in</span>(reg) value.<span class="number">0</span>),
+            }
+        }
+    }
+}
+
+
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Classifies different exception causes.
+    ///
+    /// Note that the Arm documentation defines more variants than are defined in this
+    /// type. This only includes exception classes that can be triggered from Aarch64
+    /// state and taken to EL1.
+    </span><span class="kw">pub enum </span>Class(u8) {
+        <span class="doccomment">/// Tried to execute an undefined/unsupported opcode, or for any other reason that
+        /// does not fall under another exception class.
+        </span>Unknown                     = <span class="number">0b00_0000</span>,
+        <span class="doccomment">/// Trapped execution of a wait instruction (`WFE`/`WFI`).
+        </span>Wait                        = <span class="number">0b00_0001</span>,
+        <span class="doccomment">/// Trapped access to a FPU/vector register or instruction.
+        </span>FPUAccess                   = <span class="number">0b00_0111</span>,
+        <span class="doccomment">/// Tried to execute instructions after an illegal return.
+        </span>IllegalState                = <span class="number">0b00_1110</span>,
+        <span class="doccomment">/// Triggered a system call via the `SVC` instruction.
+        </span>SupervisorCall              = <span class="number">0b01_0101</span>,
+        <span class="doccomment">/// Trapped access to a system register or instruction.
+        </span>SystemInstruction           = <span class="number">0b01_1000</span>,
+        <span class="doccomment">/// Trapped access to a vector register or instruction.
+        </span>VectorAccess                = <span class="number">0b01_1001</span>,
+        <span class="doccomment">/// Improperly authenticated pointer detected. Requires `FEAT_FPAC`.
+        </span>PointerAuthFailure          = <span class="number">0b01_1100</span>,
+        <span class="doccomment">/// Instruction abort triggered at lower exception level.
+        </span>InstructionAbortFromLower   = <span class="number">0b10_0000</span>,
+        <span class="doccomment">/// Instruction abort triggered at current exception level.
+        </span>InstructionAbortFromCurrent = <span class="number">0b10_0001</span>,
+        <span class="doccomment">/// Program counter not properly aligned.
+        </span>PCAlignment                 = <span class="number">0b10_0010</span>,
+        <span class="doccomment">/// Data abort triggered at lower exception level.
+        </span>DataAbortFromLower          = <span class="number">0b10_0100</span>,
+        <span class="doccomment">/// Data abort triggered at current exception level.
+        </span>DataAbortFromCurrent        = <span class="number">0b10_0101</span>,
+        <span class="doccomment">/// Stack pointer not properly aligned.
+        </span>SPAlignment                 = <span class="number">0b10_0110</span>,
+        <span class="doccomment">/// Trapped floating point exception.
+        </span>FloatException              = <span class="number">0b10_1100</span>,
+        <span class="doccomment">/// System error (SError).
+        </span>SystemError                 = <span class="number">0b10_1111</span>,
+        <span class="doccomment">/// Breakpoint triggered at lower exception level.
+        </span>BreakpointFromLower         = <span class="number">0b11_0000</span>,
+        <span class="doccomment">/// Breakpoint triggered at current exception level.
+        </span>BreakpointFromCurrent       = <span class="number">0b11_0001</span>,
+        <span class="doccomment">/// Software step at lower exception level.
+        </span>StepFromLower               = <span class="number">0b11_0010</span>,
+        <span class="doccomment">/// Software step at current exception level.
+        </span>StepFromCurrent             = <span class="number">0b11_0011</span>,
+        <span class="doccomment">/// Watchpoint triggered at lower exception level.
+        </span>WatchpointFromLower         = <span class="number">0b11_0100</span>,
+        <span class="doccomment">/// Watchpoint triggered at current exception level.
+        </span>WatchpointFromCurrent       = <span class="number">0b11_0101</span>,
+        <span class="doccomment">/// Executed a `BRK` breakpoint instruction.
+        </span>BreakpointInstruction       = <span class="number">0b11_1100</span>,
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

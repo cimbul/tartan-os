@@ -4,11 +4,11 @@
 <span id="4">4</span>
 <span id="5">5</span>
 <span id="6">6</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Static pointer to the [`SystemTable`], used by features where we can&#39;t pass it</span>
-<span class="doccomment">//! directly.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Static pointer to the [`SystemTable`], used by features where we can&#39;t pass it
+//! directly.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SystemTable</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::SystemTable;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">SYSTEM_TABLE</span>: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut</span> <span class="ident">SystemTable</span>&gt; = <span class="prelude-val">None</span>;
+<span class="kw">pub static </span><span class="kw-2">mut </span>SYSTEM_TABLE: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut </span>SystemTable&gt; = <span class="prelude-val">None</span>;
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

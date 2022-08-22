@@ -339,286 +339,286 @@
 <span id="339">339</span>
 <span id="340">340</span>
 <span id="341">341</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
-<span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">memoffset::offset_of</span>;
-<span class="kw">use</span> <span class="ident">paste::paste</span>;
-<span class="kw">use</span> <span class="ident">tartan_arch::x86_common::interrupt</span>::{
-    <span class="ident">InterruptDescriptorTableRegister</span>, <span class="ident">InterruptVector</span>,
+</span><span class="kw">use </span>core::arch::asm;
+<span class="kw">use </span>core::convert::TryInto;
+<span class="kw">use </span>core::mem::size_of;
+<span class="kw">use </span>memoffset::offset_of;
+<span class="kw">use </span>paste::paste;
+<span class="kw">use </span>tartan_arch::x86_common::interrupt::{
+    InterruptDescriptorTableRegister, InterruptVector,
 };
-<span class="kw">use</span> <span class="ident">tartan_arch::x86_common::protection</span>::{
-    <span class="ident">DescriptorFlags</span>, <span class="ident">GateDescriptor</span>, <span class="ident">GateDescriptorFlags</span>, <span class="ident">GlobalDescriptorTableRegister</span>,
-    <span class="ident">LocalDescriptorTableRegister</span>, <span class="ident">SegmentDescriptor</span>, <span class="ident">SegmentDescriptorFlags</span>, <span class="ident">Selector</span>,
-    <span class="ident">SystemDescriptorType</span>, <span class="ident">TaskRegister</span>,
+<span class="kw">use </span>tartan_arch::x86_common::protection::{
+    DescriptorFlags, GateDescriptor, GateDescriptorFlags, GlobalDescriptorTableRegister,
+    LocalDescriptorTableRegister, SegmentDescriptor, SegmentDescriptorFlags, Selector,
+    SystemDescriptorType, TaskRegister,
 };
-<span class="kw">use</span> <span class="ident">tartan_arch::x86_common</span>::{<span class="ident">ControlRegister0</span>, <span class="ident">ControlRegister4</span>, <span class="ident">FlagRegister</span>};
+<span class="kw">use </span>tartan_arch::x86_common::{ControlRegister0, ControlRegister4, FlagRegister};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">tartan_arch::x86::protection::TaskStateSegmentHeader</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+</span><span class="kw">use </span>tartan_arch::x86::protection::TaskStateSegmentHeader;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">tartan_arch::x86_64::protection::TaskStateSegmentHeader</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+</span><span class="kw">use </span>tartan_arch::x86_64::protection::TaskStateSegmentHeader;
 
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>: <span class="ident">GlobalDescriptorTable</span> = <span class="ident">GlobalDescriptorTable</span> {
-    <span class="ident">null_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
-    <span class="ident">code_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
-    <span class="ident">data_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
-    <span class="ident">task_state_segment</span>: <span class="ident">SegmentDescriptor::new</span>(),
+<span class="kw">static </span><span class="kw-2">mut </span>GLOBAL_DESCRIPTOR_TABLE: GlobalDescriptorTable = GlobalDescriptorTable {
+    null_segment: SegmentDescriptor::new(),
+    code_segment: SegmentDescriptor::new(),
+    data_segment: SegmentDescriptor::new(),
+    task_state_segment: SegmentDescriptor::new(),
 };
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>: <span class="ident">InterruptDescriptorTable</span> =
-    <span class="ident">InterruptDescriptorTable</span> { <span class="ident">descriptors</span>: [<span class="ident">GateDescriptor::new</span>(); <span class="number">0xff</span>] };
+<span class="kw">static </span><span class="kw-2">mut </span>INTERRUPT_DESCRIPTOR_TABLE: InterruptDescriptorTable =
+    InterruptDescriptorTable { descriptors: [GateDescriptor::new(); <span class="number">0xff</span>] };
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">TASK_STATE_SEGMENT</span>: <span class="ident">TaskStateSegmentHeader</span> = <span class="ident">TaskStateSegmentHeader::new</span>();
+<span class="kw">static </span><span class="kw-2">mut </span>TASK_STATE_SEGMENT: TaskStateSegmentHeader = TaskStateSegmentHeader::new();
 
 
-<span class="doccomment">/// Global descriptor table structure specific to Tartan OS.</span>
-<span class="kw">struct</span> <span class="ident">GlobalDescriptorTable</span> {
-    <span class="doccomment">/// Dummy descriptor for segment index 0. The processor always treats index 0 as a</span>
-    <span class="doccomment">/// null value, so this descriptor is ignored.</span>
-    <span class="kw">pub</span> <span class="ident">null_segment</span>: <span class="ident">SegmentDescriptor</span>,
-    <span class="doccomment">/// Main code segment that covers all memory, used by CS.</span>
-    <span class="kw">pub</span> <span class="ident">code_segment</span>: <span class="ident">SegmentDescriptor</span>,
-    <span class="doccomment">/// Main data that covers all memory, used by everything but CS.</span>
-    <span class="kw">pub</span> <span class="ident">data_segment</span>: <span class="ident">SegmentDescriptor</span>,
-    <span class="doccomment">/// Sole task state segment required by task register.</span>
-    <span class="kw">pub</span> <span class="ident">task_state_segment</span>: <span class="ident">SegmentDescriptor</span>,
+<span class="doccomment">/// Global descriptor table structure specific to Tartan OS.
+</span><span class="kw">struct </span>GlobalDescriptorTable {
+    <span class="doccomment">/// Dummy descriptor for segment index 0. The processor always treats index 0 as a
+    /// null value, so this descriptor is ignored.
+    </span><span class="kw">pub </span>null_segment: SegmentDescriptor,
+    <span class="doccomment">/// Main code segment that covers all memory, used by CS.
+    </span><span class="kw">pub </span>code_segment: SegmentDescriptor,
+    <span class="doccomment">/// Main data that covers all memory, used by everything but CS.
+    </span><span class="kw">pub </span>data_segment: SegmentDescriptor,
+    <span class="doccomment">/// Sole task state segment required by task register.
+    </span><span class="kw">pub </span>task_state_segment: SegmentDescriptor,
 }
 
-<span class="doccomment">/// Create a segment selector that points to the given descriptor field in the</span>
-<span class="doccomment">/// [`GlobalDescriptorTable`].</span>
-<span class="macro">macro_rules!</span> <span class="ident">global_selector</span> {
-    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>:<span class="ident">ident</span>] =&gt; {
+<span class="doccomment">/// Create a segment selector that points to the given descriptor field in the
+/// [`GlobalDescriptorTable`].
+</span><span class="macro">macro_rules! </span>global_selector {
+    [<span class="macro-nonterminal">$segment</span>:ident] =&gt; {
         {
-            <span class="kw">let</span> <span class="ident">offset</span> = <span class="macro">offset_of!</span>(<span class="ident">GlobalDescriptorTable</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">segment</span>);
-            <span class="ident">Selector::new</span>(<span class="ident">offset</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>(), <span class="number">0</span>, <span class="bool-val">false</span>)
+            <span class="kw">let </span>offset = <span class="macro">offset_of!</span>(GlobalDescriptorTable, <span class="macro-nonterminal">$segment</span>);
+            Selector::new(offset.try_into().unwrap(), <span class="number">0</span>, <span class="bool-val">false</span>)
         }
     }
 }
 
 
-<span class="kw">struct</span> <span class="ident">InterruptDescriptorTable</span> {
-    <span class="kw">pub</span> <span class="ident">descriptors</span>: [<span class="ident">GateDescriptor</span>; <span class="number">0xff</span>],
+<span class="kw">struct </span>InterruptDescriptorTable {
+    <span class="kw">pub </span>descriptors: [GateDescriptor; <span class="number">0xff</span>],
 }
 
 
-<span class="doccomment">/// Set flags in general control registers to a known state</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize_control_registers</span>() {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">FlagRegister::get</span>();
-    <span class="macro">assert!</span>(!<span class="ident">flags</span>.<span class="ident">virtual_8086_mode</span>()); <span class="comment">// Firmware/loader should have disabled</span>
-    <span class="ident">flags</span>.<span class="ident">set_interrupt_enabled</span>(<span class="bool-val">true</span>); <span class="comment">// Should be harmless... maybe</span>
-    <span class="ident">flags</span>.<span class="ident">set_io_privilege_level</span>(<span class="number">0</span>); <span class="comment">// Basic security</span>
-    <span class="ident">flags</span>.<span class="ident">set_alignment_check_or_access_control</span>(<span class="bool-val">true</span>); <span class="comment">// Check for Rust UB/extra security</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">FlagRegister::set</span>(<span class="ident">flags</span>);
+<span class="doccomment">/// Set flags in general control registers to a known state
+</span><span class="kw">pub fn </span>initialize_control_registers() {
+    <span class="kw">let </span><span class="kw-2">mut </span>flags = FlagRegister::get();
+    <span class="macro">assert!</span>(!flags.virtual_8086_mode()); <span class="comment">// Firmware/loader should have disabled
+    </span>flags.set_interrupt_enabled(<span class="bool-val">true</span>); <span class="comment">// Should be harmless... maybe
+    </span>flags.set_io_privilege_level(<span class="number">0</span>); <span class="comment">// Basic security
+    </span>flags.set_alignment_check_or_access_control(<span class="bool-val">true</span>); <span class="comment">// Check for Rust UB/extra security
+    </span><span class="kw">unsafe </span>{
+        FlagRegister::set(flags);
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr0</span> = <span class="ident">ControlRegister0::get</span>();
-    <span class="macro">assert!</span>(<span class="ident">cr0</span>.<span class="ident">protected_mode</span>()); <span class="comment">// Firmware/loader should have enabled</span>
-    <span class="ident">cr0</span>.<span class="ident">set_cache_disabled</span>(<span class="bool-val">false</span>); <span class="comment">// Should be harmless</span>
-    <span class="ident">cr0</span>.<span class="ident">set_cache_not_write_through</span>(<span class="bool-val">false</span>); <span class="comment">// Should be harmless</span>
-    <span class="ident">cr0</span>.<span class="ident">set_alignment_check_mask</span>(<span class="bool-val">true</span>); <span class="comment">// Check for Rust UB</span>
-    <span class="ident">cr0</span>.<span class="ident">set_write_protect</span>(<span class="bool-val">true</span>); <span class="comment">// Basic security</span>
-    <span class="ident">cr0</span>.<span class="ident">set_native_fpu_error</span>(<span class="bool-val">true</span>); <span class="comment">// Don&#39;t use MS-DOS compatibility mode</span>
-    <span class="ident">cr0</span>.<span class="ident">set_fpu_emulation</span>(<span class="bool-val">true</span>);
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    {
-        <span class="macro">assert!</span>(<span class="ident">cr0</span>.<span class="ident">paging</span>()); <span class="comment">// Required in 64-bit mode</span>
-    }
-    <span class="kw">unsafe</span> {
-        <span class="ident">ControlRegister0::set</span>(<span class="ident">cr0</span>);
-    }
-
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cr4</span> = <span class="ident">ControlRegister4::get</span>();
-    <span class="ident">cr4</span>.<span class="ident">set_virtual_8086_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// No reason to support this</span>
-    <span class="ident">cr4</span>.<span class="ident">set_protected_virtual_interrupts</span>(<span class="bool-val">false</span>); <span class="comment">// No reason to support this</span>
-    <span class="ident">cr4</span>.<span class="ident">set_timestamp_disabled</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security, no use case yet</span>
-    <span class="ident">cr4</span>.<span class="ident">set_debugging_extensions</span>(<span class="bool-val">true</span>); <span class="comment">// More modern, should be harmless</span>
-    <span class="ident">cr4</span>.<span class="ident">set_page_size_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-    <span class="ident">cr4</span>.<span class="ident">set_machine_check_exception</span>(<span class="bool-val">true</span>); <span class="comment">// Should be harmless</span>
-    <span class="ident">cr4</span>.<span class="ident">set_global_pages</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-    <span class="ident">cr4</span>.<span class="ident">set_performance_counter</span>(<span class="bool-val">false</span>); <span class="comment">// Extra security, no use case yet</span>
-    <span class="ident">cr4</span>.<span class="ident">set_sse_and_fpu_save</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
-    <span class="ident">cr4</span>.<span class="ident">set_simd_exceptions</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
-    <span class="ident">cr4</span>.<span class="ident">set_restrict_user_mode_instructions</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
-    <span class="ident">cr4</span>.<span class="ident">set_virtual_machine_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
-    <span class="ident">cr4</span>.<span class="ident">set_safer_mode_extensions</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, poor implementation</span>
-    <span class="ident">cr4</span>.<span class="ident">set_extended_state_save</span>(<span class="bool-val">false</span>); <span class="comment">// Need to write support</span>
-    <span class="ident">cr4</span>.<span class="ident">set_supervisor_execution_prevention</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
-    <span class="ident">cr4</span>.<span class="ident">set_supervisor_access_prevention</span>(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security</span>
-    <span class="ident">cr4</span>.<span class="ident">set_control_flow_enforcement</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    {
-        <span class="macro">assert!</span>(<span class="ident">cr4</span>.<span class="ident">physical_address_extension</span>()); <span class="comment">// Required in 64-bit mode</span>
-        <span class="ident">cr4</span>.<span class="ident">set_five_level_paging</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-        <span class="ident">cr4</span>.<span class="ident">set_extended_base_registers</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-        <span class="ident">cr4</span>.<span class="ident">set_process_context_ids</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-        <span class="ident">cr4</span>.<span class="ident">set_user_protection_keys</span>(<span class="bool-val">false</span>); <span class="comment">// Not used yet</span>
-        <span class="ident">cr4</span>.<span class="ident">set_supervisor_protection_keys</span>(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet</span>
-    }
-    <span class="kw">unsafe</span> {
-        <span class="ident">ControlRegister4::set</span>(<span class="ident">cr4</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>cr0 = ControlRegister0::get();
+    <span class="macro">assert!</span>(cr0.protected_mode()); <span class="comment">// Firmware/loader should have enabled
+    </span>cr0.set_cache_disabled(<span class="bool-val">false</span>); <span class="comment">// Should be harmless
+    </span>cr0.set_cache_not_write_through(<span class="bool-val">false</span>); <span class="comment">// Should be harmless
+    </span>cr0.set_alignment_check_mask(<span class="bool-val">true</span>); <span class="comment">// Check for Rust UB
+    </span>cr0.set_write_protect(<span class="bool-val">true</span>); <span class="comment">// Basic security
+    </span>cr0.set_native_fpu_error(<span class="bool-val">true</span>); <span class="comment">// Don&#39;t use MS-DOS compatibility mode
+    </span>cr0.set_fpu_emulation(<span class="bool-val">true</span>);
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span>{
+        <span class="macro">assert!</span>(cr0.paging()); <span class="comment">// Required in 64-bit mode
+    </span>}
+    <span class="kw">unsafe </span>{
+        ControlRegister0::set(cr0);
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    {
-        <span class="kw">use</span> <span class="ident">tartan_arch::x86_64::ExtendedFeatureEnableRegister</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>cr4 = ControlRegister4::get();
+    cr4.set_virtual_8086_extensions(<span class="bool-val">false</span>); <span class="comment">// No reason to support this
+    </span>cr4.set_protected_virtual_interrupts(<span class="bool-val">false</span>); <span class="comment">// No reason to support this
+    </span>cr4.set_timestamp_disabled(<span class="bool-val">true</span>); <span class="comment">// Extra security, no use case yet
+    </span>cr4.set_debugging_extensions(<span class="bool-val">true</span>); <span class="comment">// More modern, should be harmless
+    </span>cr4.set_page_size_extensions(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+    </span>cr4.set_machine_check_exception(<span class="bool-val">true</span>); <span class="comment">// Should be harmless
+    </span>cr4.set_global_pages(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+    </span>cr4.set_performance_counter(<span class="bool-val">false</span>); <span class="comment">// Extra security, no use case yet
+    </span>cr4.set_sse_and_fpu_save(<span class="bool-val">false</span>); <span class="comment">// Need to write support
+    </span>cr4.set_simd_exceptions(<span class="bool-val">false</span>); <span class="comment">// Need to write support
+    </span>cr4.set_restrict_user_mode_instructions(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security
+    </span>cr4.set_virtual_machine_extensions(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet
+    </span>cr4.set_safer_mode_extensions(<span class="bool-val">false</span>); <span class="comment">// Intel-only, poor implementation
+    </span>cr4.set_extended_state_save(<span class="bool-val">false</span>); <span class="comment">// Need to write support
+    </span>cr4.set_supervisor_execution_prevention(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security
+    </span>cr4.set_supervisor_access_prevention(<span class="bool-val">false</span>); <span class="comment">// TODO: Enable for extra security
+    </span>cr4.set_control_flow_enforcement(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet
+    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span>{
+        <span class="macro">assert!</span>(cr4.physical_address_extension()); <span class="comment">// Required in 64-bit mode
+        </span>cr4.set_five_level_paging(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+        </span>cr4.set_extended_base_registers(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+        </span>cr4.set_process_context_ids(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+        </span>cr4.set_user_protection_keys(<span class="bool-val">false</span>); <span class="comment">// Not used yet
+        </span>cr4.set_supervisor_protection_keys(<span class="bool-val">false</span>); <span class="comment">// Intel-only, not used yet
+    </span>}
+    <span class="kw">unsafe </span>{
+        ControlRegister4::set(cr4);
+    }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">efer</span> = <span class="ident">ExtendedFeatureEnableRegister::get</span>();
-        <span class="macro">assert!</span>(<span class="ident">efer</span>.<span class="ident">long_mode_active</span>()); <span class="comment">// How else are we here?</span>
-        <span class="ident">efer</span>.<span class="ident">set_syscall</span>(<span class="bool-val">true</span>); <span class="comment">// Most efficient method for syscalls</span>
-        <span class="ident">efer</span>.<span class="ident">set_no_execute</span>(<span class="bool-val">true</span>); <span class="comment">// Extra security</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">ExtendedFeatureEnableRegister::set</span>(<span class="ident">efer</span>);
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span>{
+        <span class="kw">use </span>tartan_arch::x86_64::ExtendedFeatureEnableRegister;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>efer = ExtendedFeatureEnableRegister::get();
+        <span class="macro">assert!</span>(efer.long_mode_active()); <span class="comment">// How else are we here?
+        </span>efer.set_syscall(<span class="bool-val">true</span>); <span class="comment">// Most efficient method for syscalls
+        </span>efer.set_no_execute(<span class="bool-val">true</span>); <span class="comment">// Extra security
+        </span><span class="kw">unsafe </span>{
+            ExtendedFeatureEnableRegister::set(efer);
         }
     }
 }
 
 
-<span class="doccomment">/// Initialize the segmentation system to use a flat memory model pointing to our</span>
-<span class="doccomment">/// [`GlobalDescriptorTable`].</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize_segments</span>() {
-    <span class="comment">// Initialize the segment descriptors in our global descriptor table</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">code_segment</span> = <span class="ident">make_code_descriptor</span>();
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">data_segment</span> = <span class="ident">make_data_descriptor</span>();
-        <span class="ident">GLOBAL_DESCRIPTOR_TABLE</span>.<span class="ident">task_state_segment</span> = <span class="ident">make_task_state_descriptor</span>();
+<span class="doccomment">/// Initialize the segmentation system to use a flat memory model pointing to our
+/// [`GlobalDescriptorTable`].
+</span><span class="kw">pub fn </span>initialize_segments() {
+    <span class="comment">// Initialize the segment descriptors in our global descriptor table
+    </span><span class="kw">unsafe </span>{
+        GLOBAL_DESCRIPTOR_TABLE.code_segment = make_code_descriptor();
+        GLOBAL_DESCRIPTOR_TABLE.data_segment = make_data_descriptor();
+        GLOBAL_DESCRIPTOR_TABLE.task_state_segment = make_task_state_descriptor();
     }
 
-    <span class="comment">// Set the GDTR to use our global descriptor table, and point the segment selectors</span>
-    <span class="comment">// (CS, DS, SS, etc.) to the new descriptors.</span>
-    <span class="kw">let</span> <span class="ident">gdtr</span> = <span class="ident">GlobalDescriptorTableRegister</span> {
-        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">GLOBAL_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
-        <span class="ident">limit</span>: (<span class="ident">size_of</span>::&lt;<span class="ident">GlobalDescriptorTable</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+    <span class="comment">// Set the GDTR to use our global descriptor table, and point the segment selectors
+    // (CS, DS, SS, etc.) to the new descriptors.
+    </span><span class="kw">let </span>gdtr = GlobalDescriptorTableRegister {
+        address: <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>GLOBAL_DESCRIPTOR_TABLE <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize },
+        limit: (size_of::&lt;GlobalDescriptorTable&gt;() - <span class="number">1</span>).try_into().unwrap(),
     };
-    <span class="kw">unsafe</span> {
-        <span class="ident">GlobalDescriptorTableRegister::set_with_segments</span>(
-            <span class="kw-2">&amp;</span><span class="ident">gdtr</span>,
-            <span class="macro">global_selector!</span>(<span class="ident">code_segment</span>),
-            <span class="macro">global_selector!</span>(<span class="ident">data_segment</span>),
+    <span class="kw">unsafe </span>{
+        GlobalDescriptorTableRegister::set_with_segments(
+            <span class="kw-2">&amp;</span>gdtr,
+            <span class="macro">global_selector!</span>(code_segment),
+            <span class="macro">global_selector!</span>(data_segment),
         )
     }
 
-    <span class="comment">// Point the task register to our task state segment</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">TaskRegister::set</span>(<span class="macro">global_selector!</span>(<span class="ident">task_state_segment</span>));
+    <span class="comment">// Point the task register to our task state segment
+    </span><span class="kw">unsafe </span>{
+        TaskRegister::set(<span class="macro">global_selector!</span>(task_state_segment));
     }
 
-    <span class="comment">// We don&#39;t use local descriptors, so point the LDTR to the null descriptor</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">LocalDescriptorTableRegister::set</span>(<span class="macro">global_selector!</span>(<span class="ident">null_segment</span>));
+    <span class="comment">// We don&#39;t use local descriptors, so point the LDTR to the null descriptor
+    </span><span class="kw">unsafe </span>{
+        LocalDescriptorTableRegister::set(<span class="macro">global_selector!</span>(null_segment));
     }
 }
 
-<span class="kw">fn</span> <span class="ident">make_code_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
-    <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
+<span class="kw">fn </span>make_code_descriptor() -&gt; SegmentDescriptor {
+    <span class="attribute">#![allow(clippy::field_reassign_with_default)] </span><span class="comment">// Spurious: constructor is private
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
-    <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_granularity</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_code</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_code_readable</span>(<span class="bool-val">true</span>);
+    </span><span class="kw">let </span><span class="kw-2">mut </span>flags = SegmentDescriptorFlags::default();
+    flags.set_present(<span class="bool-val">true</span>);
+    flags.set_granularity(<span class="bool-val">true</span>);
+    flags.set_is_application(<span class="bool-val">true</span>);
+    flags.set_is_code(<span class="bool-val">true</span>);
+    flags.set_code_readable(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-    <span class="ident">flags</span>.<span class="ident">set_application_mode_32</span>(<span class="bool-val">true</span>);
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+    </span>flags.set_application_mode_32(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    <span class="ident">flags</span>.<span class="ident">set_code_mode_64</span>(<span class="bool-val">true</span>);
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span>flags.set_code_mode_64(<span class="bool-val">true</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
-    <span class="ident">descriptor</span>.<span class="ident">set_limit</span>(<span class="ident">SegmentDescriptor::LIMIT_MAX</span>);
-    <span class="ident">descriptor</span>
+    <span class="kw">let </span><span class="kw-2">mut </span>descriptor = SegmentDescriptor::default();
+    descriptor.flags = flags;
+    descriptor.set_limit(SegmentDescriptor::LIMIT_MAX);
+    descriptor
 }
 
-<span class="kw">fn</span> <span class="ident">make_data_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
-    <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
+<span class="kw">fn </span>make_data_descriptor() -&gt; SegmentDescriptor {
+    <span class="attribute">#![allow(clippy::field_reassign_with_default)] </span><span class="comment">// Spurious: constructor is private
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
-    <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_granularity</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_code</span>(<span class="bool-val">false</span>);
-    <span class="ident">flags</span>.<span class="ident">set_data_writable</span>(<span class="bool-val">true</span>);
+    </span><span class="kw">let </span><span class="kw-2">mut </span>flags = SegmentDescriptorFlags::default();
+    flags.set_present(<span class="bool-val">true</span>);
+    flags.set_granularity(<span class="bool-val">true</span>);
+    flags.set_is_application(<span class="bool-val">true</span>);
+    flags.set_is_code(<span class="bool-val">false</span>);
+    flags.set_data_writable(<span class="bool-val">true</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-    <span class="ident">flags</span>.<span class="ident">set_application_mode_32</span>(<span class="bool-val">true</span>);
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+    </span>flags.set_application_mode_32(<span class="bool-val">true</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
-    <span class="ident">descriptor</span>.<span class="ident">set_limit</span>(<span class="ident">SegmentDescriptor::LIMIT_MAX</span>);
-    <span class="ident">descriptor</span>
+    <span class="kw">let </span><span class="kw-2">mut </span>descriptor = SegmentDescriptor::default();
+    descriptor.flags = flags;
+    descriptor.set_limit(SegmentDescriptor::LIMIT_MAX);
+    descriptor
 }
 
-<span class="kw">fn</span> <span class="ident">make_task_state_descriptor</span>() -&gt; <span class="ident">SegmentDescriptor</span> {
-    <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
+<span class="kw">fn </span>make_task_state_descriptor() -&gt; SegmentDescriptor {
+    <span class="attribute">#![allow(clippy::field_reassign_with_default)] </span><span class="comment">// Spurious: constructor is private
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">SegmentDescriptorFlags::default</span>();
-    <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">false</span>);
-    <span class="ident">flags</span>.<span class="ident">set_system_type</span>(<span class="ident">SystemDescriptorType::TaskStateAvailable</span>);
+    </span><span class="kw">let </span><span class="kw-2">mut </span>flags = SegmentDescriptorFlags::default();
+    flags.set_present(<span class="bool-val">true</span>);
+    flags.set_is_application(<span class="bool-val">false</span>);
+    flags.set_system_type(SystemDescriptorType::TaskStateAvailable);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">SegmentDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
-    <span class="ident">descriptor</span>.<span class="ident">set_address</span>(<span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">TASK_STATE_SEGMENT</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> });
-    <span class="ident">descriptor</span>.<span class="ident">set_limit</span>((<span class="ident">size_of</span>::&lt;<span class="ident">TaskStateSegmentHeader</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>());
-    <span class="ident">descriptor</span>
+    <span class="kw">let </span><span class="kw-2">mut </span>descriptor = SegmentDescriptor::default();
+    descriptor.flags = flags;
+    descriptor.set_address(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>TASK_STATE_SEGMENT <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize });
+    descriptor.set_limit((size_of::&lt;TaskStateSegmentHeader&gt;() - <span class="number">1</span>).try_into().unwrap());
+    descriptor
 }
 
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize_interrupts</span>() {
-    <span class="doccomment">/// Create a function that forwards the given interrupt number to the</span>
-    <span class="doccomment">/// [`handle_unknown_interrupt`] function, and point the appropriate IDT entry to it.</span>
-    <span class="macro">macro_rules!</span> <span class="ident">forward_interrupt</span> {
-        [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>:<span class="ident">literal</span>] =&gt; {
-            <span class="macro">paste!</span> {
-                <span class="attribute">#[<span class="ident">naked</span>]</span>
-                <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> [&lt; <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> &gt;]() {
-                    <span class="comment">// TODO: Save register state before calling handler, and support</span>
-                    <span class="comment">// returning. This isn&#39;t critical at the moment since the handler just</span>
-                    <span class="comment">// panics.</span>
+<span class="kw">pub fn </span>initialize_interrupts() {
+    <span class="doccomment">/// Create a function that forwards the given interrupt number to the
+    /// [`handle_unknown_interrupt`] function, and point the appropriate IDT entry to it.
+    </span><span class="macro">macro_rules! </span>forward_interrupt {
+        [<span class="macro-nonterminal">$vector</span>:literal] =&gt; {
+            <span class="macro">paste! </span>{
+                <span class="attribute">#[naked]
+                </span><span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>[&lt; forward_interrupt_ <span class="macro-nonterminal">$vector </span>&gt;]() {
+                    <span class="comment">// TODO: Save register state before calling handler, and support
+                    // returning. This isn&#39;t critical at the moment since the handler just
+                    // panics.
 
-                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-                    <span class="macro">asm!</span>(
+                    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+                    </span><span class="macro">asm!</span>(
                         <span class="string">&quot;
                         push {}
                         call {}
                         &quot;</span>,
-                        <span class="kw">const</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>,
-                        <span class="ident">sym</span> <span class="ident">handle_unknown_interrupt</span>,
-                        <span class="ident">options</span>(<span class="ident">noreturn</span>),
+                        <span class="kw">const </span><span class="macro-nonterminal">$vector</span>,
+                        sym handle_unknown_interrupt,
+                        options(noreturn),
                     );
 
-                    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-                    <span class="macro">asm!</span>(
+                    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+                    </span><span class="macro">asm!</span>(
                         <span class="string">&quot;
                         mov rdi, {}
                         call {}
                         &quot;</span>,
-                        <span class="kw">const</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>,
-                        <span class="ident">sym</span> <span class="ident">handle_unknown_interrupt</span>,
-                        <span class="ident">options</span>(<span class="ident">noreturn</span>),
+                        <span class="kw">const </span><span class="macro-nonterminal">$vector</span>,
+                        sym handle_unknown_interrupt,
+                        options(noreturn),
                     );
                 }
 
-                <span class="kw">unsafe</span> {
-                    <span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span>.<span class="ident">descriptors</span>[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span>] =
-                        <span class="ident">make_interrupt_gate</span>(
-                            <span class="macro">global_selector!</span>(<span class="ident">code_segment</span>),
-                            [&lt; <span class="ident">forward_interrupt_</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">vector</span> &gt;],
+                <span class="kw">unsafe </span>{
+                    INTERRUPT_DESCRIPTOR_TABLE.descriptors[<span class="macro-nonterminal">$vector</span>] =
+                        make_interrupt_gate(
+                            <span class="macro">global_selector!</span>(code_segment),
+                            [&lt; forward_interrupt_ <span class="macro-nonterminal">$vector </span>&gt;],
                         );
                 }
             }
         }
     }
 
-    <span class="comment">// Set up the interrupt gates in our IDT</span>
-    <span class="macro">forward_interrupt!</span>(<span class="number">0</span>);
+    <span class="comment">// Set up the interrupt gates in our IDT
+    </span><span class="macro">forward_interrupt!</span>(<span class="number">0</span>);
     <span class="macro">forward_interrupt!</span>(<span class="number">1</span>);
     <span class="macro">forward_interrupt!</span>(<span class="number">2</span>);
     <span class="macro">forward_interrupt!</span>(<span class="number">3</span>);
@@ -651,34 +651,34 @@
     <span class="macro">forward_interrupt!</span>(<span class="number">30</span>);
     <span class="macro">forward_interrupt!</span>(<span class="number">31</span>);
 
-    <span class="comment">// Point the IDTR to our IDT</span>
-    <span class="kw">let</span> <span class="ident">idtr</span> = <span class="ident">InterruptDescriptorTableRegister</span> {
-        <span class="ident">address</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">INTERRUPT_DESCRIPTOR_TABLE</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span> },
-        <span class="ident">limit</span>: (<span class="ident">size_of</span>::&lt;<span class="ident">InterruptDescriptorTable</span>&gt;() - <span class="number">1</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+    <span class="comment">// Point the IDTR to our IDT
+    </span><span class="kw">let </span>idtr = InterruptDescriptorTableRegister {
+        address: <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>INTERRUPT_DESCRIPTOR_TABLE <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize },
+        limit: (size_of::&lt;InterruptDescriptorTable&gt;() - <span class="number">1</span>).try_into().unwrap(),
     };
-    <span class="kw">unsafe</span> { <span class="ident">InterruptDescriptorTableRegister::set</span>(<span class="kw-2">&amp;</span><span class="ident">idtr</span>) };
+    <span class="kw">unsafe </span>{ InterruptDescriptorTableRegister::set(<span class="kw-2">&amp;</span>idtr) };
 }
 
-<span class="kw">fn</span> <span class="ident">make_interrupt_gate</span>(
-    <span class="ident">code_segment</span>: <span class="ident">Selector</span>,
-    <span class="ident">handler</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(),
-) -&gt; <span class="ident">GateDescriptor</span> {
-    <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::field_reassign_with_default</span>)]</span> <span class="comment">// Spurious: constructor is private</span>
+<span class="kw">fn </span>make_interrupt_gate(
+    code_segment: Selector,
+    handler: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(),
+) -&gt; GateDescriptor {
+    <span class="attribute">#![allow(clippy::field_reassign_with_default)] </span><span class="comment">// Spurious: constructor is private
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> = <span class="ident">GateDescriptorFlags::default</span>();
-    <span class="ident">flags</span>.<span class="ident">set_present</span>(<span class="bool-val">true</span>);
-    <span class="ident">flags</span>.<span class="ident">set_is_application</span>(<span class="bool-val">false</span>);
-    <span class="ident">flags</span>.<span class="ident">set_system_type</span>(<span class="ident">SystemDescriptorType::InterruptGate</span>);
+    </span><span class="kw">let </span><span class="kw-2">mut </span>flags = GateDescriptorFlags::default();
+    flags.set_present(<span class="bool-val">true</span>);
+    flags.set_is_application(<span class="bool-val">false</span>);
+    flags.set_system_type(SystemDescriptorType::InterruptGate);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptor</span> = <span class="ident">GateDescriptor::default</span>();
-    <span class="ident">descriptor</span>.<span class="ident">flags</span> = <span class="ident">flags</span>;
-    <span class="ident">descriptor</span>.<span class="ident">set_selector</span>(<span class="ident">code_segment</span>);
-    <span class="ident">descriptor</span>.<span class="ident">set_entry_point_offset</span>(<span class="ident">handler</span> <span class="kw">as</span> <span class="ident">usize</span>);
-    <span class="ident">descriptor</span>
+    <span class="kw">let </span><span class="kw-2">mut </span>descriptor = GateDescriptor::default();
+    descriptor.flags = flags;
+    descriptor.set_selector(code_segment);
+    descriptor.set_entry_point_offset(handler <span class="kw">as </span>usize);
+    descriptor
 }
 
-<span class="kw">fn</span> <span class="ident">handle_unknown_interrupt</span>(<span class="ident">vector</span>: <span class="ident">InterruptVector</span>) {
-    <span class="macro">panic!</span>(<span class="string">&quot;Interrupt {:?}&quot;</span>, <span class="ident">vector</span>);
+<span class="kw">fn </span>handle_unknown_interrupt(vector: InterruptVector) {
+    <span class="macro">panic!</span>(<span class="string">&quot;Interrupt {:?}&quot;</span>, vector);
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

@@ -22,29 +22,29 @@
 <span id="22">22</span>
 <span id="23">23</span>
 <span id="24">24</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Interface to architecture-specific code</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Interface to architecture-specific code
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">mod</span> <span class="ident">x86_common</span>;
+</span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">mod </span>x86_common;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">x86_64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">x86_64</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+</span><span class="kw">mod </span>x86_64;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+</span><span class="kw">pub use </span>x86_64::<span class="kw-2">*</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">x86</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+</span><span class="kw">mod </span>x86;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+</span><span class="kw">pub use </span>x86::<span class="kw-2">*</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">arm</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">arm</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">mod </span>arm;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">pub use </span>arm::<span class="kw-2">*</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">aarch64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">aarch64</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+</span><span class="kw">mod </span>aarch64;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+</span><span class="kw">pub use </span>aarch64::<span class="kw-2">*</span>;
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

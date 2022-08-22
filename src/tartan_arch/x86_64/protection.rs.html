@@ -67,74 +67,74 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for protected mode operation.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This includes the minimal support for segmented memory and hardware task management</span>
-<span class="doccomment">//! that is required to operate in protected mode with a flat memory model.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for protected mode operation.
+//!
+//! This includes the minimal support for segmented memory and hardware task management
+//! that is required to operate in protected mode with a flat memory model.
 
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
+</span><span class="kw">use </span>core::mem::size_of;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_common::protection</span>::{<span class="ident">GateDescriptorFlags</span>, <span class="ident">IOPermissionBitmap</span>};
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_common::protection::{GateDescriptorFlags, IOPermissionBitmap};
 
 
-<span class="doccomment">/// Stack and I/O permission map pointers that make up the most significant part of a task</span>
-<span class="doccomment">/// state segment (TSS).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Since 64-bit mode does not support task switching, the name is a historical artifact,</span>
-<span class="doccomment">/// and this does not store any real task state.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>(<span class="number">16</span>))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaskStateSegmentHeader</span> {
-    <span class="ident">_reserved_a</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Stack and I/O permission map pointers that make up the most significant part of a task
+/// state segment (TSS).
+///
+/// Since 64-bit mode does not support task switching, the name is a historical artifact,
+/// and this does not store any real task state.
+</span><span class="attribute">#[repr(C, packed(<span class="number">16</span>))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>TaskStateSegmentHeader {
+    _reserved_a: u32,
 
-    <span class="doccomment">/// Stack pointers to use when switching to privilege levels 0–2.</span>
-    <span class="kw">pub</span> <span class="ident">privileged_stack</span>: [<span class="ident">u64</span>; <span class="number">3</span>],
+    <span class="doccomment">/// Stack pointers to use when switching to privilege levels 0–2.
+    </span><span class="kw">pub </span>privileged_stack: [u64; <span class="number">3</span>],
 
-    <span class="ident">_reserved_b</span>: <span class="ident">u64</span>,
+    _reserved_b: u64,
 
-    <span class="doccomment">/// Stack pointers available for use when handling interrupts. The specific entry</span>
-    <span class="doccomment">/// used is determined by the</span>
-    <span class="doccomment">/// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of</span>
-    <span class="doccomment">/// the relevant interrupt gate descriptor.</span>
-    <span class="kw">pub</span> <span class="ident">interrupt_stack</span>: [<span class="ident">u64</span>; <span class="number">7</span>],
+    <span class="doccomment">/// Stack pointers available for use when handling interrupts. The specific entry
+    /// used is determined by the
+    /// [`interrupt_stack_index`](GateDescriptorFlags::interrupt_stack_index) field of
+    /// the relevant interrupt gate descriptor.
+    </span><span class="kw">pub </span>interrupt_stack: [u64; <span class="number">7</span>],
 
-    <span class="ident">_reserved_c</span>: <span class="ident">u64</span>,
-    <span class="ident">_reserved_d</span>: <span class="ident">u16</span>,
+    _reserved_c: u64,
+    _reserved_d: u16,
 
-    <span class="doccomment">/// Offset from the start of this structure to start of the [`IOPermissionBitmap`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The I/O permission map ends at the limit of the containing segment, and must be</span>
-    <span class="doccomment">/// at least two bytes. If this offset is equal to or greater than the limit,</span>
-    <span class="doccomment">/// then the permission map is empty and all ports are assumed to be zero.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Not modified by the processor on a task switch.</span>
-    <span class="kw">pub</span> <span class="ident">io_permission_map_offset</span>: <span class="ident">u16</span>,
+    <span class="doccomment">/// Offset from the start of this structure to start of the [`IOPermissionBitmap`].
+    ///
+    /// The I/O permission map ends at the limit of the containing segment, and must be
+    /// at least two bytes. If this offset is equal to or greater than the limit,
+    /// then the permission map is empty and all ports are assumed to be zero.
+    ///
+    /// Not modified by the processor on a task switch.
+    </span><span class="kw">pub </span>io_permission_map_offset: u16,
 }
 
-<span class="kw">impl</span> <span class="ident">TaskStateSegmentHeader</span> {
-    <span class="doccomment">/// Create a header with zero-initialized stack pointers and an</span>
-    <span class="doccomment">/// [`io_permission_map_offset`](Self::io_permission_map_offset) that points directly</span>
-    <span class="doccomment">/// after the header.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        <span class="self">Self</span> {
-            <span class="ident">privileged_stack</span>: [<span class="number">0</span>; <span class="number">3</span>],
-            <span class="ident">interrupt_stack</span>: [<span class="number">0</span>; <span class="number">7</span>],
-            <span class="ident">io_permission_map_offset</span>: <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;() <span class="kw">as</span> <span class="ident">u16</span>,
+<span class="kw">impl </span>TaskStateSegmentHeader {
+    <span class="doccomment">/// Create a header with zero-initialized stack pointers and an
+    /// [`io_permission_map_offset`](Self::io_permission_map_offset) that points directly
+    /// after the header.
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+        </span><span class="self">Self </span>{
+            privileged_stack: [<span class="number">0</span>; <span class="number">3</span>],
+            interrupt_stack: [<span class="number">0</span>; <span class="number">7</span>],
+            io_permission_map_offset: size_of::&lt;<span class="self">Self</span>&gt;() <span class="kw">as </span>u16,
 
-            <span class="ident">_reserved_a</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_b</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_c</span>: <span class="number">0</span>,
-            <span class="ident">_reserved_d</span>: <span class="number">0</span>,
+            _reserved_a: <span class="number">0</span>,
+            _reserved_b: <span class="number">0</span>,
+            _reserved_c: <span class="number">0</span>,
+            _reserved_d: <span class="number">0</span>,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TaskStateSegmentHeader</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>TaskStateSegmentHeader {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

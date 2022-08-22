@@ -148,155 +148,155 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for managing interrupts.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for managing interrupts.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::model_specific_register_access</span>;
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::model_specific_register_access;
+<span class="kw">use </span>core::arch::asm;
+<span class="kw">use </span>tartan_bitfield::bitfield;
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::FlagRegister</span>;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">super</span>::FlagRegister;
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// An interrupt/exception number.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InterruptVector</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// `#DE`: Division by zero or overflow in division.</span>
-        <span class="ident">DivideError</span> = <span class="number">0</span>,
-        <span class="doccomment">/// `#DB`: Breakpoints or other debugging-related traps/faults.</span>
-        <span class="ident">DebugException</span> = <span class="number">1</span>,
-        <span class="doccomment">/// `NMI`: Severe external interrupt that cannot be ignored.</span>
-        <span class="ident">NonMaskable</span> = <span class="number">2</span>,
-        <span class="doccomment">/// `#BP`: Breakpoint via `INT3` instruction.</span>
-        <span class="ident">Breakpoint</span> = <span class="number">3</span>,
-        <span class="doccomment">/// `#OF`: Overflow condition was detected with `INTO` instruction.</span>
-        <span class="ident">Overflow</span> = <span class="number">4</span>,
-        <span class="doccomment">/// `#BR`: Out-of-bounds index detected with `BOUND` instruction.</span>
-        <span class="ident">Bound</span> = <span class="number">5</span>,
-        <span class="doccomment">/// `#UD`: Unrecognized or reserved instruction opcode.</span>
-        <span class="ident">InvalidOpcode</span> = <span class="number">6</span>,
-        <span class="doccomment">/// `#NM`: Tried to execute FPU instruction with no coprocessor present.</span>
-        <span class="ident">DeviceNotAvailable</span> = <span class="number">7</span>,
-        <span class="doccomment">/// `#DF`: A fault was triggered while handling another interrupt.</span>
-        <span class="ident">DoubleFault</span> = <span class="number">8</span>,
-        <span class="doccomment">/// `#TS`: An error was found in the TSS while task switching.</span>
-        <span class="ident">InvalidTaskSegment</span> = <span class="number">10</span>,
-        <span class="doccomment">/// `#NP`: Tried to use a segment without a descriptor defined. Does not apply to</span>
-        <span class="doccomment">/// the stack segment, which has its [own exception](Self::SegmentNotPresent).</span>
-        <span class="ident">SegmentNotPresent</span> = <span class="number">11</span>,
-        <span class="doccomment">/// `#SS`: The stack overflowed its segment or the segment was invalid.</span>
-        <span class="ident">StackFault</span> = <span class="number">12</span>,
-        <span class="doccomment">/// `#GP`: Memory protection or other miscellaneous error.</span>
-        <span class="ident">ProtectionFault</span> = <span class="number">13</span>,
-        <span class="doccomment">/// `#PF`: Tried to load a page that was not present, or used a page in a way that</span>
-        <span class="doccomment">/// was not allowed by its attributes.</span>
-        <span class="ident">PageFault</span> = <span class="number">14</span>,
-        <span class="doccomment">/// `#MF`: Unmasked floating-point error that was *not* part of a SIMD operation.</span>
-        <span class="ident">FloatingPointError</span> = <span class="number">16</span>,
-        <span class="doccomment">/// `#AC`: Improperly aligned memory access in user mode while alignment checks</span>
-        <span class="doccomment">/// were enabled.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// See [`FlagRegister::alignment_check_or_access_control`].</span>
-        <span class="ident">AlignmentCheck</span> = <span class="number">17</span>,
-        <span class="doccomment">/// `#MC`: Internal processor/bus error.</span>
-        <span class="ident">MachineCheck</span> = <span class="number">18</span>,
-        <span class="doccomment">/// `#XM`: Unmasked floating-point error during SIMD operation.</span>
-        <span class="ident">SIMDFloatingPointError</span> = <span class="number">19</span>,
-        <span class="doccomment">/// `#VE`: Improper use of virtualization extensions.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// See [`ControlRegister4::virtual_machine_extensions`].</span>
-        <span class="ident">VirtualizationException</span> = <span class="number">20</span>,
-        <span class="doccomment">/// `#CP`: Improper branching detected by control-flow guard.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// See [`ControlRegister4::control_flow_enforcement`].</span>
-        <span class="ident">ControlProtectionException</span> = <span class="number">21</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// An interrupt/exception number.
+    </span><span class="kw">pub enum </span>InterruptVector(u8) {
+        <span class="doccomment">/// `#DE`: Division by zero or overflow in division.
+        </span>DivideError = <span class="number">0</span>,
+        <span class="doccomment">/// `#DB`: Breakpoints or other debugging-related traps/faults.
+        </span>DebugException = <span class="number">1</span>,
+        <span class="doccomment">/// `NMI`: Severe external interrupt that cannot be ignored.
+        </span>NonMaskable = <span class="number">2</span>,
+        <span class="doccomment">/// `#BP`: Breakpoint via `INT3` instruction.
+        </span>Breakpoint = <span class="number">3</span>,
+        <span class="doccomment">/// `#OF`: Overflow condition was detected with `INTO` instruction.
+        </span>Overflow = <span class="number">4</span>,
+        <span class="doccomment">/// `#BR`: Out-of-bounds index detected with `BOUND` instruction.
+        </span>Bound = <span class="number">5</span>,
+        <span class="doccomment">/// `#UD`: Unrecognized or reserved instruction opcode.
+        </span>InvalidOpcode = <span class="number">6</span>,
+        <span class="doccomment">/// `#NM`: Tried to execute FPU instruction with no coprocessor present.
+        </span>DeviceNotAvailable = <span class="number">7</span>,
+        <span class="doccomment">/// `#DF`: A fault was triggered while handling another interrupt.
+        </span>DoubleFault = <span class="number">8</span>,
+        <span class="doccomment">/// `#TS`: An error was found in the TSS while task switching.
+        </span>InvalidTaskSegment = <span class="number">10</span>,
+        <span class="doccomment">/// `#NP`: Tried to use a segment without a descriptor defined. Does not apply to
+        /// the stack segment, which has its [own exception](Self::SegmentNotPresent).
+        </span>SegmentNotPresent = <span class="number">11</span>,
+        <span class="doccomment">/// `#SS`: The stack overflowed its segment or the segment was invalid.
+        </span>StackFault = <span class="number">12</span>,
+        <span class="doccomment">/// `#GP`: Memory protection or other miscellaneous error.
+        </span>ProtectionFault = <span class="number">13</span>,
+        <span class="doccomment">/// `#PF`: Tried to load a page that was not present, or used a page in a way that
+        /// was not allowed by its attributes.
+        </span>PageFault = <span class="number">14</span>,
+        <span class="doccomment">/// `#MF`: Unmasked floating-point error that was *not* part of a SIMD operation.
+        </span>FloatingPointError = <span class="number">16</span>,
+        <span class="doccomment">/// `#AC`: Improperly aligned memory access in user mode while alignment checks
+        /// were enabled.
+        ///
+        /// See [`FlagRegister::alignment_check_or_access_control`].
+        </span>AlignmentCheck = <span class="number">17</span>,
+        <span class="doccomment">/// `#MC`: Internal processor/bus error.
+        </span>MachineCheck = <span class="number">18</span>,
+        <span class="doccomment">/// `#XM`: Unmasked floating-point error during SIMD operation.
+        </span>SIMDFloatingPointError = <span class="number">19</span>,
+        <span class="doccomment">/// `#VE`: Improper use of virtualization extensions.
+        ///
+        /// See [`ControlRegister4::virtual_machine_extensions`].
+        </span>VirtualizationException = <span class="number">20</span>,
+        <span class="doccomment">/// `#CP`: Improper branching detected by control-flow guard.
+        ///
+        /// See [`ControlRegister4::control_flow_enforcement`].
+        </span>ControlProtectionException = <span class="number">21</span>,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">InterruptVector</span> {
-    <span class="doccomment">/// Minimum user-defined interrupt vector.</span>
-    <span class="kw">const</span> <span class="ident">MIN_USER</span>: <span class="ident">InterruptVector</span> = <span class="ident">InterruptVector</span>(<span class="number">32</span>);
+<span class="kw">impl </span>InterruptVector {
+    <span class="doccomment">/// Minimum user-defined interrupt vector.
+    </span><span class="kw">const </span>MIN_USER: InterruptVector = InterruptVector(<span class="number">32</span>);
 
-    <span class="doccomment">/// Indicates that this is interrupt vector is reserved by the system.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reserved</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span> &lt; <span class="ident"><span class="self">Self</span>::MIN_USER</span>
+    <span class="doccomment">/// Indicates that this is interrupt vector is reserved by the system.
+    </span><span class="kw">pub fn </span>reserved(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self </span>&lt; <span class="self">Self</span>::MIN_USER
     }
 }
 
 
-<span class="doccomment">/// `IDTR`: Contains the memory range of the interrupt descriptor table.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InterruptDescriptorTableRegister</span> {
-    <span class="doccomment">/// The inclusive maximum address offset (i.e., size - 1) of the descriptor table.</span>
-    <span class="kw">pub</span> <span class="ident">limit</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Base address of the descriptor table.</span>
-    <span class="kw">pub</span> <span class="ident">address</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// `IDTR`: Contains the memory range of the interrupt descriptor table.
+</span><span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::module_name_repetitions)]
+</span><span class="kw">pub struct </span>InterruptDescriptorTableRegister {
+    <span class="doccomment">/// The inclusive maximum address offset (i.e., size - 1) of the descriptor table.
+    </span><span class="kw">pub </span>limit: u16,
+    <span class="doccomment">/// Base address of the descriptor table.
+    </span><span class="kw">pub </span>address: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">InterruptDescriptorTableRegister</span> {
-    <span class="doccomment">/// Retrieve the current value of this register</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="ident"><span class="self">Self</span>::default</span>();
-        <span class="kw">unsafe</span> {
+<span class="kw">impl </span>InterruptDescriptorTableRegister {
+    <span class="doccomment">/// Retrieve the current value of this register
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>::default();
+        <span class="kw">unsafe </span>{
             <span class="macro">asm!</span>(
                 <span class="string">&quot;sidt [{0}]&quot;</span>,
-                <span class="kw">in</span>(<span class="ident">reg</span>) <span class="kw-2">&amp;mut</span> <span class="ident">value</span>,
+                <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>value,
             );
         }
-        <span class="ident">value</span>
+        value
     }
 
-    <span class="doccomment">/// Update the register to the given value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// This register can have fundamental affects on how programs execute.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
+    <span class="doccomment">/// Update the register to the given value.
+    ///
+    /// # Safety
+    /// This register can have fundamental affects on how programs execute.
+    </span><span class="kw">pub unsafe fn </span>set(value: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
         <span class="macro">asm!</span>(
             <span class="string">&quot;lidt [{0}]&quot;</span>,
-            <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>,
+            <span class="kw">in</span>(reg) value,
         );
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `IA32_APIC_BASE`: A model-specific register that allows relocating an advanced</span>
-    <span class="doccomment">/// programmable interrupt controller (APIC)&#39;s control structure.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See Intel ISA volume 2 §10.4.3–10.4.4.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">APICBaseRegister</span>(<span class="ident">u64</span>) {
-        <span class="doccomment">/// Can be cleared to disable the APIC. However, it cannot be re-enabled once</span>
-        <span class="doccomment">/// disabled with this mechanism.</span>
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">enabled</span>,
-        <span class="doccomment">/// Enable the APIC&#39;s</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">x2_interface</span>,
-        <span class="doccomment">/// Indicates that this core was designated as the bootstrap processor for</span>
-        <span class="doccomment">/// single-threaded operation on startup.</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">bootstrap_processor</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `IA32_APIC_BASE`: A model-specific register that allows relocating an advanced
+    /// programmable interrupt controller (APIC)&#39;s control structure.
+    ///
+    /// See Intel ISA volume 2 §10.4.3–10.4.4.
+    </span><span class="kw">pub struct </span>APICBaseRegister(u64) {
+        <span class="doccomment">/// Can be cleared to disable the APIC. However, it cannot be re-enabled once
+        /// disabled with this mechanism.
+        </span>[<span class="number">11</span>] <span class="kw">pub </span>enabled,
+        <span class="doccomment">/// Enable the APIC&#39;s
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>x2_interface,
+        <span class="doccomment">/// Indicates that this core was designated as the bootstrap processor for
+        /// single-threaded operation on startup.
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>bootstrap_processor,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">APICBaseRegister</span> {
-    <span class="doccomment">/// The default APIC base address when the processor is reset.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">DEFAULT_ADDRESS</span>: <span class="ident">usize</span> = <span class="number">0xfee0_0000</span>;
-    <span class="kw">const</span> <span class="ident">ADDRESS_MASK</span>: <span class="ident">u64</span> = <span class="number">0xffff_ffff_ffff_f000</span>;
+<span class="kw">impl </span>APICBaseRegister {
+    <span class="doccomment">/// The default APIC base address when the processor is reset.
+    </span><span class="kw">pub const </span>DEFAULT_ADDRESS: usize = <span class="number">0xfee0_0000</span>;
+    <span class="kw">const </span>ADDRESS_MASK: u64 = <span class="number">0xffff_ffff_ffff_f000</span>;
 
-    <span class="doccomment">/// Base address of the APIC&#39;s registers.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address</span>(<span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        (<span class="self">self</span>.<span class="number">0</span> &amp; <span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="doccomment">/// Base address of the APIC&#39;s registers.
+    </span><span class="kw">pub fn </span>address(<span class="self">self</span>) -&gt; usize {
+        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span>(<span class="self">self</span>.<span class="number">0 </span>&amp; <span class="self">Self</span>::ADDRESS_MASK) <span class="kw">as </span>usize
     }
 
-    <span class="doccomment">/// Update the base address of the APIC&#39;s registers.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_address</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">address</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="number">0</span> &amp;= !<span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span>;
-        <span class="self">self</span>.<span class="number">0</span> |= <span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span> &amp; <span class="ident">address</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="doccomment">/// Update the base address of the APIC&#39;s registers.
+    </span><span class="kw">pub fn </span>set_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, address: usize) {
+        <span class="self">self</span>.<span class="number">0 </span>&amp;= !<span class="self">Self</span>::ADDRESS_MASK;
+        <span class="self">self</span>.<span class="number">0 </span>|= <span class="self">Self</span>::ADDRESS_MASK &amp; address <span class="kw">as </span>u64;
     }
 }
 
-<span class="macro">model_specific_register_access!</span>(<span class="ident">APICBaseRegister</span>, <span class="number">0x1b</span>);
+<span class="macro">model_specific_register_access!</span>(APICBaseRegister, <span class="number">0x1b</span>);
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

@@ -73,64 +73,64 @@
 <span id="73">73</span>
 <span id="74">74</span>
 <span id="75">75</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for the [Devicetree](https://www.devicetree.org/) specification.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for the [Devicetree](https://www.devicetree.org/) specification.
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_size_of_val</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![feature(const_size_of_val)]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
+</span><span class="kw">use </span>core::fmt;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">blob</span>;
+<span class="kw">pub mod </span>blob;
 
 
-<span class="doccomment">/// Wrapper for a raw byte array used as the value of a Devicetree property. Used for</span>
-<span class="doccomment">/// intelligent formatting of unknown properties.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Value</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Property value as raw bytes</span>
-    <span class="kw">pub</span> <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
+<span class="doccomment">/// Wrapper for a raw byte array used as the value of a Devicetree property. Used for
+/// intelligent formatting of unknown properties.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>Value&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Property value as raw bytes
+    </span><span class="kw">pub </span>data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">Value</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Returns true if this looks like a null-terminated ASCII string or an array of</span>
-    <span class="doccomment">/// them.</span>
-    <span class="kw">fn</span> <span class="ident">is_string_like</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">data</span> = <span class="self">self</span>.<span class="ident">data</span>;
-        <span class="kw">if</span> <span class="ident">data</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Value&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Returns true if this looks like a null-terminated ASCII string or an array of
+    /// them.
+    </span><span class="kw">fn </span>is_string_like(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">let </span>data = <span class="self">self</span>.data;
+        <span class="kw">if </span>data.is_empty() {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
-        <span class="comment">// Must have at least a final null terminator.</span>
-        <span class="kw">if</span> <span class="ident">data</span>.<span class="ident">last</span>() != <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">0</span>) {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+        <span class="comment">// Must have at least a final null terminator.
+        </span><span class="kw">if </span>data.last() != <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">0</span>) {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
-        <span class="comment">// Don&#39;t count values that are entirely null.</span>
-        <span class="kw">if</span> <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">all</span>(|<span class="kw-2">&amp;</span><span class="ident">c</span>| <span class="ident">c</span> == <span class="number">0</span>) {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+        <span class="comment">// Don&#39;t count values that are entirely null.
+        </span><span class="kw">if </span>data.iter().all(|<span class="kw-2">&amp;</span>c| c == <span class="number">0</span>) {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
-        <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">all</span>(|<span class="kw-2">&amp;</span><span class="ident">c</span>| <span class="ident">c</span> == <span class="number">0</span> || <span class="ident">c</span>.<span class="ident">is_ascii_graphic</span>() || <span class="ident">c</span>.<span class="ident">is_ascii_whitespace</span>())
+        data.iter().all(|<span class="kw-2">&amp;</span>c| c == <span class="number">0 </span>|| c.is_ascii_graphic() || c.is_ascii_whitespace())
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Value</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="comment">// Write 32-bit hex &quot;cells&quot;</span>
-        <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;&lt;&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">let</span> <span class="ident">space</span> = <span class="kw">if</span> <span class="ident">i</span> &gt; <span class="number">0</span> &amp;&amp; <span class="ident">i</span> % <span class="number">4</span> == <span class="number">0</span> { <span class="string">&quot; &quot;</span> } <span class="kw">else</span> { <span class="string">&quot;&quot;</span> };
-            <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{:02x}&quot;</span>, <span class="ident">space</span>, <span class="ident">b</span>)<span class="question-mark">?</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; fmt::Debug <span class="kw">for </span>Value&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="comment">// Write 32-bit hex &quot;cells&quot;
+        </span>f.write_str(<span class="string">&quot;&lt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>b) <span class="kw">in </span><span class="self">self</span>.data.iter().enumerate() {
+            <span class="kw">let </span>space = <span class="kw">if </span>i &gt; <span class="number">0 </span>&amp;&amp; i % <span class="number">4 </span>== <span class="number">0 </span>{ <span class="string">&quot; &quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+            <span class="macro">write!</span>(f, <span class="string">&quot;{}{:02x}&quot;</span>, space, b)<span class="question-mark">?</span>;
         }
-        <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;&gt;&quot;</span>)<span class="question-mark">?</span>;
+        f.write_str(<span class="string">&quot;&gt;&quot;</span>)<span class="question-mark">?</span>;
 
-        <span class="comment">// If this looks like a string (or array of strings), print it</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_string_like</span>() {
-            <span class="kw">let</span> <span class="ident">init</span> = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>[..<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">len</span>() - <span class="number">1</span>];
-            <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">init</span>.<span class="ident">split</span>(|<span class="kw-2">&amp;</span><span class="ident">c</span>| <span class="ident">c</span> == <span class="number">0</span>) {
-                <span class="kw">let</span> <span class="ident">string_segment</span> = <span class="ident">core::str::from_utf8</span>(<span class="ident">segment</span>).<span class="ident">unwrap</span>();
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot; \&quot;{}\&quot;&quot;</span>, <span class="ident">string_segment</span>)<span class="question-mark">?</span>;
+        <span class="comment">// If this looks like a string (or array of strings), print it
+        </span><span class="kw">if </span><span class="self">self</span>.is_string_like() {
+            <span class="kw">let </span>init = <span class="kw-2">&amp;</span><span class="self">self</span>.data[..<span class="self">self</span>.data.len() - <span class="number">1</span>];
+            <span class="kw">for </span>segment <span class="kw">in </span>init.split(|<span class="kw-2">&amp;</span>c| c == <span class="number">0</span>) {
+                <span class="kw">let </span>string_segment = core::str::from_utf8(segment).unwrap();
+                <span class="macro">write!</span>(f, <span class="string">&quot; \&quot;{}\&quot;&quot;</span>, string_segment)<span class="question-mark">?</span>;
             }
         }
 
@@ -139,14 +139,14 @@
 }
 
 
-<span class="doccomment">/// Indicates an area of memory that the kernel does not have full control over: e.g.,</span>
-<span class="doccomment">/// ROMs, firmware.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryReservation</span> {
-    <span class="doccomment">/// Start address of the reserved memory</span>
-    <span class="kw">pub</span> <span class="ident">address</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Size of the reserved memory in bytes</span>
-    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">u64</span>,
+<span class="doccomment">/// Indicates an area of memory that the kernel does not have full control over: e.g.,
+/// ROMs, firmware.
+</span><span class="attribute">#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>MemoryReservation {
+    <span class="doccomment">/// Start address of the reserved memory
+    </span><span class="kw">pub </span>address: u64,
+    <span class="doccomment">/// Size of the reserved memory in bytes
+    </span><span class="kw">pub </span>size: u64,
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_devicetree" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_devicetree" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

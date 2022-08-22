@@ -183,190 +183,190 @@
 <span id="183">183</span>
 <span id="184">184</span>
 <span id="185">185</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for virtual memory paging.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for virtual memory paging.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::simple_register_access</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::{<span class="ident">bitfield</span>, <span class="ident">bitfield_accessors</span>, <span class="ident">Bitfield</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::simple_register_access;
+<span class="kw">use </span>tartan_bitfield::{bitfield, bitfield_accessors, Bitfield};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::features::BasicFeatures</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::ControlRegister4</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86_64::ExtendedFeatureEnableRegister</span>;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">super</span>::features::BasicFeatures;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">super</span>::ControlRegister4;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86_64::ExtendedFeatureEnableRegister;
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `CR2`: Contains the address that triggered a page fault.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlRegister2</span>(<span class="ident">usize</span>) {}
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `CR2`: Contains the address that triggered a page fault.
+    </span><span class="kw">pub struct </span>ControlRegister2(usize) {}
 }
 
-<span class="macro">simple_register_access!</span>(<span class="ident">ControlRegister2</span>, <span class="string">&quot;cr2&quot;</span>);
+<span class="macro">simple_register_access!</span>(ControlRegister2, <span class="string">&quot;cr2&quot;</span>);
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `CR3`: System control register that contains the top-level page table address</span>
-    <span class="doccomment">/// and two associated caching flags.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to work</span>
-    <span class="doccomment">/// with the actual register.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlRegister3</span>(<span class="ident">usize</span>) {
-        <span class="doccomment">/// `CR3.PWT`: Enables write-through caching for the top-level page table.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Does not apply when [`ControlRegister4::process_context_ids`] or</span>
-        <span class="doccomment">/// [`ControlRegister4::physical_address_extension`] is enabled.</span>
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">write_through</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `CR3`: System control register that contains the top-level page table address
+    /// and two associated caching flags.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to work
+    /// with the actual register.
+    </span><span class="kw">pub struct </span>ControlRegister3(usize) {
+        <span class="doccomment">/// `CR3.PWT`: Enables write-through caching for the top-level page table.
+        ///
+        /// Does not apply when [`ControlRegister4::process_context_ids`] or
+        /// [`ControlRegister4::physical_address_extension`] is enabled.
+        </span>[<span class="number">3</span>] <span class="kw">pub </span>write_through,
 
-        <span class="doccomment">/// `CR3.PCD`: Disables caching for the top-level page table.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Does not apply when [`ControlRegister4::process_context_ids`] or</span>
-        <span class="doccomment">/// [`ControlRegister4::physical_address_extension`] is enabled.</span>
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">cache_disabled</span>,
+        <span class="doccomment">/// `CR3.PCD`: Disables caching for the top-level page table.
+        ///
+        /// Does not apply when [`ControlRegister4::process_context_ids`] or
+        /// [`ControlRegister4::physical_address_extension`] is enabled.
+        </span>[<span class="number">4</span>] <span class="kw">pub </span>cache_disabled,
 
-        <span class="doccomment">/// `CR4.PCIDE`: The process-context identifier (PCID) associated with this</span>
-        <span class="doccomment">/// series of page tables.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires 64-bit mode and [`ControlRegister4::process_context_ids`].</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">0</span>..<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">process_context_id</span>: <span class="ident">u16</span>,
+        <span class="doccomment">/// `CR4.PCIDE`: The process-context identifier (PCID) associated with this
+        /// series of page tables.
+        ///
+        /// Requires 64-bit mode and [`ControlRegister4::process_context_ids`].
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">0</span>..<span class="number">11</span>] <span class="kw">pub </span>process_context_id: u16,
     }
 }
 
-<span class="macro">simple_register_access!</span>(<span class="ident">ControlRegister3</span>, <span class="string">&quot;cr3&quot;</span>);
+<span class="macro">simple_register_access!</span>(ControlRegister3, <span class="string">&quot;cr3&quot;</span>);
 
-<span class="kw">impl</span> <span class="ident">ControlRegister3</span> {
-    <span class="kw">const</span> <span class="ident">ADDRESS_MASK</span>: <span class="ident">usize</span> = !<span class="number">0xfff</span>;
+<span class="kw">impl </span>ControlRegister3 {
+    <span class="kw">const </span>ADDRESS_MASK: usize = !<span class="number">0xfff</span>;
 
-    <span class="doccomment">/// Get the address of the top-level page table.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address</span>(<span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="number">0</span> &amp; <span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span>
+    <span class="doccomment">/// Get the address of the top-level page table.
+    </span><span class="kw">pub fn </span>address(<span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.<span class="number">0 </span>&amp; <span class="self">Self</span>::ADDRESS_MASK
     }
 
-    <span class="doccomment">/// Set the address of the top-level page table.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics if the new address is not 4K-aligned.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_address</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) {
+    <span class="doccomment">/// Set the address of the top-level page table.
+    ///
+    /// # Panics
+    /// Panics if the new address is not 4K-aligned.
+    </span><span class="kw">pub fn </span>set_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: usize) {
         <span class="macro">assert!</span>(
-            <span class="ident">value</span> &amp; <span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span> == <span class="number">0</span>,
+            value &amp; <span class="self">Self</span>::ADDRESS_MASK == <span class="number">0</span>,
             <span class="string">&quot;Invalid page table address {:#x}. Must be 4K aligned.&quot;</span>,
-            <span class="ident">value</span>
+            value
         );
-        <span class="self">self</span>.<span class="number">0</span> &amp;= !<span class="ident"><span class="self">Self</span>::ADDRESS_MASK</span>;
-        <span class="self">self</span>.<span class="number">0</span> |= <span class="ident">value</span>;
+        <span class="self">self</span>.<span class="number">0 </span>&amp;= !<span class="self">Self</span>::ADDRESS_MASK;
+        <span class="self">self</span>.<span class="number">0 </span>|= value;
     }
 }
 
 
-<span class="doccomment">/// An entry in a page table at any level.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">GenericPageTableEntry</span>: <span class="ident">Bitfield</span>&lt;<span class="ident">usize</span>&gt; {
-    <span class="macro">bitfield_accessors!</span> {
-        <span class="doccomment">/// `P`: Indicates that this entry is mapped. Otherwise the whole entry is</span>
-        <span class="doccomment">/// ignored.</span>
-        [<span class="number">0</span>] <span class="ident">present</span>,
+<span class="doccomment">/// An entry in a page table at any level.
+</span><span class="kw">pub trait </span>GenericPageTableEntry: Bitfield&lt;usize&gt; {
+    <span class="macro">bitfield_accessors! </span>{
+        <span class="doccomment">/// `P`: Indicates that this entry is mapped. Otherwise the whole entry is
+        /// ignored.
+        </span>[<span class="number">0</span>] present,
 
-        <span class="doccomment">/// `R/W`: Allows writes to this memory region.</span>
-        [<span class="number">1</span>] <span class="ident">writable</span>,
+        <span class="doccomment">/// `R/W`: Allows writes to this memory region.
+        </span>[<span class="number">1</span>] writable,
 
-        <span class="doccomment">/// `U/S`: Allows access to this memory region from permission level 3. Otherwise,</span>
-        <span class="doccomment">/// it is only accessible from levels 0–2.</span>
-        [<span class="number">2</span>] <span class="ident">user</span>,
+        <span class="doccomment">/// `U/S`: Allows access to this memory region from permission level 3. Otherwise,
+        /// it is only accessible from levels 0–2.
+        </span>[<span class="number">2</span>] user,
 
-        <span class="doccomment">/// `PWT`: Enables write-through caching for this memory region.</span>
-        [<span class="number">3</span>] <span class="ident">write_through</span>,
+        <span class="doccomment">/// `PWT`: Enables write-through caching for this memory region.
+        </span>[<span class="number">3</span>] write_through,
 
-        <span class="doccomment">/// `PCD`: Disables caching for this memory region.</span>
-        [<span class="number">4</span>] <span class="ident">cache_disabled</span>,
+        <span class="doccomment">/// `PCD`: Disables caching for this memory region.
+        </span>[<span class="number">4</span>] cache_disabled,
 
-        <span class="doccomment">/// `A`: Set by the processor when an instruction accesses the memory region.</span>
-        [<span class="number">5</span>] <span class="ident">accessed</span>,
+        <span class="doccomment">/// `A`: Set by the processor when an instruction accesses the memory region.
+        </span>[<span class="number">5</span>] accessed,
 
-        <span class="doccomment">/// `XD`/`NX`: Prevent the processor from executing any instructions in this</span>
-        <span class="doccomment">/// memory region.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`ExtendedFeatureEnableRegister::no_execute`].</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">63</span>] <span class="ident">no_execute</span>,
+        <span class="doccomment">/// `XD`/`NX`: Prevent the processor from executing any instructions in this
+        /// memory region.
+        ///
+        /// Requires [`ExtendedFeatureEnableRegister::no_execute`].
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">63</span>] no_execute,
     }
 }
 
 
-<span class="doccomment">/// An page table entry (any level) that directly maps a page.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">DirectPageTableEntry</span>: <span class="ident">GenericPageTableEntry</span> {
-    <span class="macro">bitfield_accessors!</span> {
-        <span class="doccomment">/// `D`: Set by the processor when an instruction modifies the memory region.</span>
-        [<span class="number">6</span>] <span class="ident">dirty</span>,
+<span class="doccomment">/// An page table entry (any level) that directly maps a page.
+</span><span class="kw">pub trait </span>DirectPageTableEntry: GenericPageTableEntry {
+    <span class="macro">bitfield_accessors! </span>{
+        <span class="doccomment">/// `D`: Set by the processor when an instruction modifies the memory region.
+        </span>[<span class="number">6</span>] dirty,
 
-        <span class="doccomment">/// `PAT`: Used to associate this page with a page attribute table.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// In 32-bit mode, requires [`BasicFeatures::page_attribute_table`]. Always</span>
-        <span class="doccomment">/// applicable in 64-bit mode.</span>
-        <span class="comment">//</span>
-        <span class="comment">// NOTE: This bit is remapped for implementations of `HybridPageTableEntry`.</span>
-        [<span class="number">7</span>] <span class="ident">attribute_table</span>,
+        <span class="doccomment">/// `PAT`: Used to associate this page with a page attribute table.
+        ///
+        /// In 32-bit mode, requires [`BasicFeatures::page_attribute_table`]. Always
+        /// applicable in 64-bit mode.
+        </span><span class="comment">//
+        // NOTE: This bit is remapped for implementations of `HybridPageTableEntry`.
+        </span>[<span class="number">7</span>] attribute_table,
 
-        <span class="doccomment">/// `G`: Indicates that this is a global page shared by all task contexts.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`ControlRegister4::global_pages`].</span>
-        [<span class="number">8</span>] <span class="ident">global</span>,
+        <span class="doccomment">/// `G`: Indicates that this is a global page shared by all task contexts.
+        ///
+        /// Requires [`ControlRegister4::global_pages`].
+        </span>[<span class="number">8</span>] global,
 
-        <span class="doccomment">/// The protection key that applies to this memory region.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`ControlRegister4::user_protection_keys`] or</span>
-        <span class="doccomment">/// [`ControlRegister4::supervisor_protection_keys`].</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">59</span>..<span class="number">63</span>] <span class="ident">protection_key</span>: <span class="ident">u8</span>,
+        <span class="doccomment">/// The protection key that applies to this memory region.
+        ///
+        /// Requires [`ControlRegister4::user_protection_keys`] or
+        /// [`ControlRegister4::supervisor_protection_keys`].
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">59</span>..<span class="number">63</span>] protection_key: u8,
     }
 }
 
 
-<span class="doccomment">/// A page table entry (any level) that either directly maps a page or points to another</span>
-<span class="doccomment">/// page table.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait provides an implementation for [`DirectPageTableEntry`], but its methods</span>
-<span class="doccomment">/// are only applicable if [`is_page`](Self::is_page) is true.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">HybridPageTableEntry</span>: <span class="ident">GenericPageTableEntry</span> {
-    <span class="macro">bitfield_accessors!</span> {
-        <span class="doccomment">/// `PS`: Indicates that this entry directly maps a page. Otherwise, this</span>
-        <span class="doccomment">/// is a pointer to a lower-level page table.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// In 32-bit mode, requires [`ControlRegister4::page_size_extensions`]. Always</span>
-        <span class="doccomment">/// applicable in 64-bit mode.</span>
-        [<span class="number">7</span>] <span class="ident">is_page</span>,
+<span class="doccomment">/// A page table entry (any level) that either directly maps a page or points to another
+/// page table.
+///
+/// This trait provides an implementation for [`DirectPageTableEntry`], but its methods
+/// are only applicable if [`is_page`](Self::is_page) is true.
+</span><span class="kw">pub trait </span>HybridPageTableEntry: GenericPageTableEntry {
+    <span class="macro">bitfield_accessors! </span>{
+        <span class="doccomment">/// `PS`: Indicates that this entry directly maps a page. Otherwise, this
+        /// is a pointer to a lower-level page table.
+        ///
+        /// In 32-bit mode, requires [`ControlRegister4::page_size_extensions`]. Always
+        /// applicable in 64-bit mode.
+        </span>[<span class="number">7</span>] is_page,
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="ident">T</span>&gt; <span class="ident">DirectPageTableEntry</span> <span class="kw">for</span> <span class="ident">T</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">HybridPageTableEntry</span>,
+<span class="kw">impl</span>&lt;T&gt; DirectPageTableEntry <span class="kw">for </span>T
+<span class="kw">where
+    </span>T: HybridPageTableEntry,
 {
-    <span class="macro">bitfield_accessors!</span> {
-        <span class="comment">// This field is moved in hybrid page tables, because it conflicts with `is_page`.</span>
-        [<span class="number">12</span>] <span class="ident">attribute_table</span>,
+    <span class="macro">bitfield_accessors! </span>{
+        <span class="comment">// This field is moved in hybrid page tables, because it conflicts with `is_page`.
+        </span>[<span class="number">12</span>] attribute_table,
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Second-level page table (page directory) entry that either points to a</span>
-    <span class="doccomment">/// bottom-level page table or directly maps a 2MB/4MB page.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Level2PageTableEntry</span>(<span class="ident">usize</span>) {}
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Second-level page table (page directory) entry that either points to a
+    /// bottom-level page table or directly maps a 2MB/4MB page.
+    </span><span class="kw">pub struct </span>Level2PageTableEntry(usize) {}
 }
 
-<span class="kw">impl</span> <span class="ident">GenericPageTableEntry</span> <span class="kw">for</span> <span class="ident">Level2PageTableEntry</span> {}
-<span class="kw">impl</span> <span class="ident">HybridPageTableEntry</span> <span class="kw">for</span> <span class="ident">Level2PageTableEntry</span> {}
+<span class="kw">impl </span>GenericPageTableEntry <span class="kw">for </span>Level2PageTableEntry {}
+<span class="kw">impl </span>HybridPageTableEntry <span class="kw">for </span>Level2PageTableEntry {}
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Bottom-level page table entry that maps a single 4KB page.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Level1PageTableEntry</span>(<span class="ident">usize</span>) {}
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Bottom-level page table entry that maps a single 4KB page.
+    </span><span class="kw">pub struct </span>Level1PageTableEntry(usize) {}
 }
 
-<span class="kw">impl</span> <span class="ident">GenericPageTableEntry</span> <span class="kw">for</span> <span class="ident">Level1PageTableEntry</span> {}
-<span class="kw">impl</span> <span class="ident">DirectPageTableEntry</span> <span class="kw">for</span> <span class="ident">Level1PageTableEntry</span> {}
+<span class="kw">impl </span>GenericPageTableEntry <span class="kw">for </span>Level1PageTableEntry {}
+<span class="kw">impl </span>DirectPageTableEntry <span class="kw">for </span>Level1PageTableEntry {}
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

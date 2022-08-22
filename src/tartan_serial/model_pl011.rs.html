@@ -335,342 +335,342 @@
 <span id="335">335</span>
 <span id="336">336</span>
 <span id="337">337</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Driver for Arm&#39;s `PrimeCell` PL011 UART</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Driver for Arm&#39;s `PrimeCell` PL011 UART
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">baud_from_divisor</span>, <span class="ident">divisor_from_baud</span>, <span class="ident">LineMode</span>, <span class="ident">Parity</span>, <span class="ident">WordLength</span>, <span class="ident">UART</span>};
-<span class="kw">use</span> <span class="ident">core::ptr</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+</span><span class="kw">use super</span>::{baud_from_divisor, divisor_from_baud, LineMode, Parity, WordLength, UART};
+<span class="kw">use </span>core::ptr;
+<span class="kw">use </span>tartan_bitfield::bitfield;
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
 
 
-<span class="doccomment">/// Driver for the PL011 UART.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UARTPL011</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Memory-mapped registers for this device.</span>
-    <span class="kw">pub</span> <span class="ident">register_block</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">RegisterBlock</span>,
-    <span class="doccomment">/// Frequency, in hertz, of the clock input to the UART.</span>
-    <span class="kw">pub</span> <span class="ident">base_clock_rate</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Driver for the PL011 UART.
+</span><span class="kw">pub struct </span>UARTPL011&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Memory-mapped registers for this device.
+    </span><span class="kw">pub </span>register_block: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>RegisterBlock,
+    <span class="doccomment">/// Frequency, in hertz, of the clock input to the UART.
+    </span><span class="kw">pub </span>base_clock_rate: u32,
 }
 
-<span class="kw">impl</span> <span class="ident">UARTPL011</span>&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">max_baud</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="comment">// See RegisterBlock.divisor()</span>
-        <span class="number">4</span> * <span class="self">self</span>.<span class="ident">base_clock_rate</span>
+<span class="kw">impl </span>UARTPL011&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>max_baud(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="comment">// See RegisterBlock.divisor()
+        </span><span class="number">4 </span>* <span class="self">self</span>.base_clock_rate
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="ident">UART</span> <span class="kw">for</span> <span class="ident">UARTPL011</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Disable and flush before reprogramming</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">control</span> = <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">control</span>();
-        <span class="ident">control</span>.<span class="ident">set_enabled</span>(<span class="bool-val">false</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_control</span>(<span class="ident">control</span>);
-        <span class="comment">// FIXME (sync)</span>
-        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">flags</span>().<span class="ident">busy</span>() {}
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">clear_rx_status</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line_control</span> = <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">line_control</span>();
-        <span class="ident">line_control</span>.<span class="ident">set_fifo_enabled</span>(<span class="bool-val">false</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_line_control</span>(<span class="ident">line_control</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; UART <span class="kw">for </span>UARTPL011&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Disable and flush before reprogramming
+        </span><span class="kw">let </span><span class="kw-2">mut </span>control = <span class="self">self</span>.register_block.control();
+        control.set_enabled(<span class="bool-val">false</span>);
+        <span class="self">self</span>.register_block.set_control(control);
+        <span class="comment">// FIXME (sync)
+        </span><span class="kw">while </span><span class="self">self</span>.register_block.flags().busy() {}
+        <span class="self">self</span>.register_block.clear_rx_status();
+        <span class="kw">let </span><span class="kw-2">mut </span>line_control = <span class="self">self</span>.register_block.line_control();
+        line_control.set_fifo_enabled(<span class="bool-val">false</span>);
+        <span class="self">self</span>.register_block.set_line_control(line_control);
 
-        <span class="comment">// Now reprogram the control registers</span>
-        <span class="self">self</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_infrared_low_power_divisor</span>(<span class="number">0</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_fifo_control</span>(<span class="ident">FIFOControlRegister::default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_dma_control</span>(<span class="ident">DMAControlRegister::default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_interrupt_mask</span>(<span class="ident">InterruptFlags::default</span>());
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">clear_interrupt_status</span>(<span class="ident">InterruptFlags::ALL</span>);
+        <span class="comment">// Now reprogram the control registers
+        </span><span class="self">self</span>.set_line_mode(LineMode::default());
+        <span class="self">self</span>.register_block.set_infrared_low_power_divisor(<span class="number">0</span>);
+        <span class="self">self</span>.register_block.set_fifo_control(FIFOControlRegister::default());
+        <span class="self">self</span>.register_block.set_dma_control(DMAControlRegister::default());
+        <span class="self">self</span>.register_block.set_interrupt_mask(InterruptFlags::default());
+        <span class="self">self</span>.register_block.clear_interrupt_status(InterruptFlags::ALL);
 
-        <span class="comment">// Re-enable the UART last</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">control</span> = <span class="ident">ControlRegister::default</span>();
-        <span class="ident">control</span>.<span class="ident">set_enabled</span>(<span class="bool-val">true</span>);
-        <span class="ident">control</span>.<span class="ident">set_tx_enabled</span>(<span class="bool-val">true</span>);
-        <span class="ident">control</span>.<span class="ident">set_rx_enabled</span>(<span class="bool-val">true</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_control</span>(<span class="ident">control</span>);
+        <span class="comment">// Re-enable the UART last
+        </span><span class="kw">let </span><span class="kw-2">mut </span>control = ControlRegister::default();
+        control.set_enabled(<span class="bool-val">true</span>);
+        control.set_tx_enabled(<span class="bool-val">true</span>);
+        control.set_rx_enabled(<span class="bool-val">true</span>);
+        <span class="self">self</span>.register_block.set_control(control);
     }
 
-    <span class="kw">fn</span> <span class="ident">line_mode</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">LineMode</span> {
-        <span class="kw">let</span> <span class="ident">line_control</span> = <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">line_control</span>();
-        <span class="kw">let</span> <span class="ident">divisor</span> = <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">divisor</span>();
-        <span class="ident">LineMode</span> {
-            <span class="ident">baud</span>: <span class="ident">baud_from_divisor</span>(<span class="self">self</span>.<span class="ident">max_baud</span>(), <span class="ident">divisor</span>),
-            <span class="ident">data_bits</span>: <span class="ident">line_control</span>.<span class="ident">word_length</span>().<span class="ident">bits</span>(),
-            <span class="ident">parity</span>: <span class="ident">line_control</span>.<span class="ident">parity</span>(),
-            <span class="ident">extended_stop</span>: <span class="ident">line_control</span>.<span class="ident">extended_stop</span>(),
+    <span class="kw">fn </span>line_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; LineMode {
+        <span class="kw">let </span>line_control = <span class="self">self</span>.register_block.line_control();
+        <span class="kw">let </span>divisor = <span class="self">self</span>.register_block.divisor();
+        LineMode {
+            baud: baud_from_divisor(<span class="self">self</span>.max_baud(), divisor),
+            data_bits: line_control.word_length().bits(),
+            parity: line_control.parity(),
+            extended_stop: line_control.extended_stop(),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">set_line_mode</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">line_mode</span>: <span class="ident">LineMode</span>) {
-        <span class="kw">let</span> <span class="ident">divisor</span> = <span class="ident">divisor_from_baud</span>(<span class="self">self</span>.<span class="ident">max_baud</span>(), <span class="ident">line_mode</span>.<span class="ident">baud</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_divisor</span>(<span class="ident">divisor</span>);
+    <span class="kw">fn </span>set_line_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, line_mode: LineMode) {
+        <span class="kw">let </span>divisor = divisor_from_baud(<span class="self">self</span>.max_baud(), line_mode.baud);
+        <span class="self">self</span>.register_block.set_divisor(divisor);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line_control</span> = <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">line_control</span>();
-        <span class="ident">line_control</span>.<span class="ident">set_word_length</span>(<span class="ident">WordLength::from_bits</span>(<span class="ident">line_mode</span>.<span class="ident">data_bits</span>).<span class="ident">unwrap</span>());
-        <span class="ident">line_control</span>.<span class="ident">set_parity</span>(<span class="ident">line_mode</span>.<span class="ident">parity</span>);
-        <span class="ident">line_control</span>.<span class="ident">set_extended_stop</span>(<span class="ident">line_mode</span>.<span class="ident">extended_stop</span>);
-        <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">set_line_control</span>(<span class="ident">line_control</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>line_control = <span class="self">self</span>.register_block.line_control();
+        line_control.set_word_length(WordLength::from_bits(line_mode.data_bits).unwrap());
+        line_control.set_parity(line_mode.parity);
+        line_control.set_extended_stop(line_mode.extended_stop);
+        <span class="self">self</span>.register_block.set_line_control(line_control);
     }
 
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) {
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">byte</span> <span class="kw">in</span> <span class="ident">data</span> {
-            <span class="comment">// FIXME (sync)</span>
-            <span class="kw">while</span> !<span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">flags</span>().<span class="ident">tx_fifo_empty</span>() {}
-            <span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">push_tx_queue</span>(<span class="ident">byte</span>);
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) {
+        <span class="kw">for </span><span class="kw-2">&amp;</span>byte <span class="kw">in </span>data {
+            <span class="comment">// FIXME (sync)
+            </span><span class="kw">while </span>!<span class="self">self</span>.register_block.flags().tx_fifo_empty() {}
+            <span class="self">self</span>.register_block.push_tx_queue(byte);
         }
-        <span class="comment">// FIXME (sync)</span>
-        <span class="kw">while</span> !<span class="self">self</span>.<span class="ident">register_block</span>.<span class="ident">flags</span>().<span class="ident">tx_fifo_empty</span>() {}
+        <span class="comment">// FIXME (sync)
+        </span><span class="kw">while </span>!<span class="self">self</span>.register_block.flags().tx_fifo_empty() {}
     }
 }
 
 
-<span class="doccomment">/// Memory-mapped registers for PL011 UART.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RegisterBlock</span> {
-    <span class="ident">registers</span>: [<span class="ident">u8</span>; <span class="number">0x1000</span>],
+<span class="doccomment">/// Memory-mapped registers for PL011 UART.
+</span><span class="attribute">#[repr(transparent)]
+</span><span class="kw">pub struct </span>RegisterBlock {
+    registers: [u8; <span class="number">0x1000</span>],
 }
 
-<span class="kw">impl</span> <span class="ident">RegisterBlock</span> {
-    <span class="kw">fn</span> <span class="ident">read</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>) -&gt; <span class="ident">T</span> {
-        <span class="kw">let</span> <span class="ident">size</span> = <span class="ident">core::mem::size_of</span>::&lt;<span class="ident">T</span>&gt;();
-        <span class="kw">let</span> <span class="ident">slice</span> = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">registers</span>[<span class="ident">offset</span>..<span class="ident">offset</span> + <span class="ident">size</span>];
-        <span class="kw">unsafe</span> { <span class="ident">ptr::read_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>::&lt;<span class="ident">T</span>&gt;()) }
+<span class="kw">impl </span>RegisterBlock {
+    <span class="kw">fn </span>read&lt;T: Copy&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: usize) -&gt; T {
+        <span class="kw">let </span>size = core::mem::size_of::&lt;T&gt;();
+        <span class="kw">let </span>slice = <span class="kw-2">&amp;</span><span class="self">self</span>.registers[offset..offset + size];
+        <span class="kw">unsafe </span>{ ptr::read_volatile(slice.as_ptr().cast::&lt;T&gt;()) }
     }
 
-    <span class="kw">fn</span> <span class="ident">write</span>&lt;<span class="ident">T</span>: <span class="ident">Copy</span>&gt;(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
-        <span class="kw">let</span> <span class="ident">size</span> = <span class="ident">core::mem::size_of</span>::&lt;<span class="ident">T</span>&gt;();
-        <span class="kw">let</span> <span class="ident">slice</span> = <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">registers</span>[<span class="ident">offset</span>..<span class="ident">offset</span> + <span class="ident">size</span>];
-        <span class="kw">unsafe</span> { <span class="ident">ptr::write_volatile</span>(<span class="ident">slice</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>::&lt;<span class="ident">T</span>&gt;(), <span class="ident">value</span>) }
+    <span class="kw">fn </span>write&lt;T: Copy&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: usize, value: T) {
+        <span class="kw">let </span>size = core::mem::size_of::&lt;T&gt;();
+        <span class="kw">let </span>slice = <span class="kw-2">&amp;mut </span><span class="self">self</span>.registers[offset..offset + size];
+        <span class="kw">unsafe </span>{ ptr::write_volatile(slice.as_mut_ptr().cast::&lt;T&gt;(), value) }
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">pop_rx_queue</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DataRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>pop_rx_queue(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DataRegister {
+        <span class="self">self</span>.read(<span class="number">0</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">push_tx_queue</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u8</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0</span>, <span class="ident">value</span>);
+    <span class="kw">fn </span>push_tx_queue(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: u8) {
+        <span class="self">self</span>.write(<span class="number">0</span>, value);
     }
 
-    <span class="kw">fn</span> <span class="ident">clear_rx_status</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x4</span>, <span class="number">0_u8</span>);
+    <span class="kw">fn </span>clear_rx_status(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.write(<span class="number">0x4</span>, <span class="number">0_u8</span>);
     }
 
-    <span class="kw">fn</span> <span class="ident">flags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">FlagRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x18</span>)
+    <span class="kw">fn </span>flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FlagRegister {
+        <span class="self">self</span>.read(<span class="number">0x18</span>)
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">infrared_low_power_divisor</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u8</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x20</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>infrared_low_power_divisor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
+        <span class="self">self</span>.read(<span class="number">0x20</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">set_infrared_low_power_divisor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u8</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x20</span>, <span class="ident">value</span>);
+    <span class="kw">fn </span>set_infrared_low_power_divisor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: u8) {
+        <span class="self">self</span>.write(<span class="number">0x20</span>, value);
     }
 
-    <span class="kw">fn</span> <span class="ident">divisor</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="comment">// The PL011 splits the divisor into two registers, an &quot;integer part&quot; and a</span>
-        <span class="comment">// &quot;fractional part&quot; that is measured in 1/64ths. The base rate is divided by an</span>
-        <span class="comment">// additional factor of 16.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Instead, we treat it as one integer, split into lower 6 bits and upper 16 bits,</span>
-        <span class="comment">// and multiply the nominal base rate by 4.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">divisor</span> = <span class="ident">u32::from</span>(<span class="self">self</span>.<span class="ident">read</span>::&lt;<span class="ident">u8</span>&gt;(<span class="number">0x28</span>) &amp; <span class="number">0x3f</span>);
-        <span class="ident">divisor</span> |= <span class="ident">u32::from</span>(<span class="self">self</span>.<span class="ident">read</span>::&lt;<span class="ident">u16</span>&gt;(<span class="number">0x24</span>)) &lt;&lt; <span class="number">6</span>;
-        <span class="ident">divisor</span>
+    <span class="kw">fn </span>divisor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="comment">// The PL011 splits the divisor into two registers, an &quot;integer part&quot; and a
+        // &quot;fractional part&quot; that is measured in 1/64ths. The base rate is divided by an
+        // additional factor of 16.
+        //
+        // Instead, we treat it as one integer, split into lower 6 bits and upper 16 bits,
+        // and multiply the nominal base rate by 4.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>divisor = u32::from(<span class="self">self</span>.read::&lt;u8&gt;(<span class="number">0x28</span>) &amp; <span class="number">0x3f</span>);
+        divisor |= u32::from(<span class="self">self</span>.read::&lt;u16&gt;(<span class="number">0x24</span>)) &lt;&lt; <span class="number">6</span>;
+        divisor
     }
 
-    <span class="comment">// NOTE: Must always write to the line control register after this.</span>
-    <span class="comment">// TODO: Should update the IR low power divisor too</span>
-    <span class="kw">fn</span> <span class="ident">set_divisor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
-        <span class="comment">// See divisor()</span>
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x28</span>, (<span class="ident">value</span> &amp; <span class="number">0x3f</span>) <span class="kw">as</span> <span class="ident">u8</span>);
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x24</span>, (<span class="ident">value</span> &gt;&gt; <span class="number">6</span>) <span class="kw">as</span> <span class="ident">u16</span>);
+    <span class="comment">// NOTE: Must always write to the line control register after this.
+    // TODO: Should update the IR low power divisor too
+    </span><span class="kw">fn </span>set_divisor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: u32) {
+        <span class="comment">// See divisor()
+        </span><span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span><span class="self">self</span>.write(<span class="number">0x28</span>, (value &amp; <span class="number">0x3f</span>) <span class="kw">as </span>u8);
+        <span class="self">self</span>.write(<span class="number">0x24</span>, (value &gt;&gt; <span class="number">6</span>) <span class="kw">as </span>u16);
     }
 
-    <span class="kw">fn</span> <span class="ident">line_control</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">LineControlRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x2c</span>)
+    <span class="kw">fn </span>line_control(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LineControlRegister {
+        <span class="self">self</span>.read(<span class="number">0x2c</span>)
     }
 
-    <span class="comment">// NOTE: Requires disabling the UART</span>
-    <span class="kw">fn</span> <span class="ident">set_line_control</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">LineControlRegister</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x2c</span>, <span class="ident">value</span>);
+    <span class="comment">// NOTE: Requires disabling the UART
+    </span><span class="kw">fn </span>set_line_control(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: LineControlRegister) {
+        <span class="self">self</span>.write(<span class="number">0x2c</span>, value);
     }
 
-    <span class="kw">fn</span> <span class="ident">control</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ControlRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x30</span>)
+    <span class="kw">fn </span>control(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ControlRegister {
+        <span class="self">self</span>.read(<span class="number">0x30</span>)
     }
 
-    <span class="comment">// NOTE: Requires disabling AND flushing the UART</span>
-    <span class="kw">fn</span> <span class="ident">set_control</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">ControlRegister</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x30</span>, <span class="ident">value</span>);
+    <span class="comment">// NOTE: Requires disabling AND flushing the UART
+    </span><span class="kw">fn </span>set_control(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: ControlRegister) {
+        <span class="self">self</span>.write(<span class="number">0x30</span>, value);
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">fifo_control</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">FIFOControlRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x34</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>fifo_control(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FIFOControlRegister {
+        <span class="self">self</span>.read(<span class="number">0x34</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">set_fifo_control</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">FIFOControlRegister</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x34</span>, <span class="ident">value</span>);
+    <span class="kw">fn </span>set_fifo_control(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: FIFOControlRegister) {
+        <span class="self">self</span>.write(<span class="number">0x34</span>, value);
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">interrupt_mask</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">InterruptFlags</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x38</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>interrupt_mask(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; InterruptFlags {
+        <span class="self">self</span>.read(<span class="number">0x38</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">set_interrupt_mask</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">InterruptFlags</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x38</span>, <span class="ident">value</span>);
+    <span class="kw">fn </span>set_interrupt_mask(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: InterruptFlags) {
+        <span class="self">self</span>.write(<span class="number">0x38</span>, value);
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">raw_interrupt_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">InterruptFlags</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x3c</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>raw_interrupt_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; InterruptFlags {
+        <span class="self">self</span>.read(<span class="number">0x3c</span>)
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">masked_interrupt_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">InterruptFlags</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x40</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>masked_interrupt_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; InterruptFlags {
+        <span class="self">self</span>.read(<span class="number">0x40</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">clear_interrupt_status</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">InterruptFlags</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x44</span>, <span class="ident">value</span>);
+    <span class="kw">fn </span>clear_interrupt_status(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: InterruptFlags) {
+        <span class="self">self</span>.write(<span class="number">0x44</span>, value);
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">dma_control</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DMAControlRegister</span> {
-        <span class="self">self</span>.<span class="ident">read</span>(<span class="number">0x48</span>)
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">fn </span>dma_control(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DMAControlRegister {
+        <span class="self">self</span>.read(<span class="number">0x48</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">set_dma_control</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">DMAControlRegister</span>) {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="number">0x48</span>, <span class="ident">value</span>);
-    }
-}
-
-
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">DataRegister</span>(<span class="ident">u16</span>) {
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">data</span>: <span class="ident">u8</span>,
-        [ <span class="number">8</span>..<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">status</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">RxStatusRegister</span>,
-    }
-}
-
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">RxStatusRegister</span>(<span class="ident">u8</span>) {
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">framing_error</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">parity_error</span>,
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">break_error</span>,
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">overrun_error</span>,
-    }
-}
-
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">FlagRegister</span>(<span class="ident">u16</span>) {
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">clear_to_send</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">data_sent_ready</span>,
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">data_carrier_detect</span>,
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">busy</span>,
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">rx_fifo_empty</span>,
-        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">tx_fifo_full</span>,
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rx_fifo_full</span>,
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">tx_fifo_empty</span>,
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">ring_indicator</span>,
+    <span class="kw">fn </span>set_dma_control(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: DMAControlRegister) {
+        <span class="self">self</span>.write(<span class="number">0x48</span>, value);
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">LineControlRegister</span>(<span class="ident">u8</span>) {
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">parity_sticky</span>,
-        [<span class="number">5</span>..<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">word_length</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">WordLength</span>,
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">fifo_enabled</span>,
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">extended_stop</span>,
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">parity_even</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">parity_enabled</span>,
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">break_enabled</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>DataRegister(u16) {
+        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>data: u8,
+        [ <span class="number">8</span>..<span class="number">12</span>] <span class="kw">pub </span>status: u8 <span class="kw">as </span>RxStatusRegister,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">LineControlRegister</span> {
-    <span class="kw">fn</span> <span class="ident">parity</span>(<span class="self">self</span>) -&gt; <span class="ident">Parity</span> {
-        <span class="ident">Parity::from_flags</span>(
-            <span class="self">self</span>.<span class="ident">parity_enabled</span>(),
-            <span class="self">self</span>.<span class="ident">parity_even</span>(),
-            <span class="self">self</span>.<span class="ident">parity_sticky</span>(),
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>RxStatusRegister(u8) {
+        [<span class="number">0</span>] <span class="kw">pub </span>framing_error,
+        [<span class="number">1</span>] <span class="kw">pub </span>parity_error,
+        [<span class="number">2</span>] <span class="kw">pub </span>break_error,
+        [<span class="number">3</span>] <span class="kw">pub </span>overrun_error,
+    }
+}
+
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>FlagRegister(u16) {
+        [<span class="number">0</span>] <span class="kw">pub </span>clear_to_send,
+        [<span class="number">1</span>] <span class="kw">pub </span>data_sent_ready,
+        [<span class="number">2</span>] <span class="kw">pub </span>data_carrier_detect,
+        [<span class="number">3</span>] <span class="kw">pub </span>busy,
+        [<span class="number">4</span>] <span class="kw">pub </span>rx_fifo_empty,
+        [<span class="number">5</span>] <span class="kw">pub </span>tx_fifo_full,
+        [<span class="number">6</span>] <span class="kw">pub </span>rx_fifo_full,
+        [<span class="number">7</span>] <span class="kw">pub </span>tx_fifo_empty,
+        [<span class="number">8</span>] <span class="kw">pub </span>ring_indicator,
+    }
+}
+
+
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>LineControlRegister(u8) {
+        [<span class="number">7</span>] <span class="kw">pub </span>parity_sticky,
+        [<span class="number">5</span>..<span class="number">7</span>] <span class="kw">pub </span>word_length: u8 <span class="kw">as </span>WordLength,
+        [<span class="number">4</span>] <span class="kw">pub </span>fifo_enabled,
+        [<span class="number">3</span>] <span class="kw">pub </span>extended_stop,
+        [<span class="number">2</span>] <span class="kw">pub </span>parity_even,
+        [<span class="number">1</span>] <span class="kw">pub </span>parity_enabled,
+        [<span class="number">0</span>] <span class="kw">pub </span>break_enabled,
+    }
+}
+
+<span class="kw">impl </span>LineControlRegister {
+    <span class="kw">fn </span>parity(<span class="self">self</span>) -&gt; Parity {
+        Parity::from_flags(
+            <span class="self">self</span>.parity_enabled(),
+            <span class="self">self</span>.parity_even(),
+            <span class="self">self</span>.parity_sticky(),
         )
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_parity</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">Parity</span>) {
-        <span class="self">self</span>.<span class="ident">set_parity_enabled</span>(<span class="ident">value</span>.<span class="ident">enabled_flag</span>());
-        <span class="self">self</span>.<span class="ident">set_parity_even</span>(<span class="ident">value</span>.<span class="ident">even_flag</span>());
-        <span class="self">self</span>.<span class="ident">set_parity_sticky</span>(<span class="ident">value</span>.<span class="ident">sticky_flag</span>());
+    <span class="kw">pub fn </span>set_parity(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: Parity) {
+        <span class="self">self</span>.set_parity_enabled(value.enabled_flag());
+        <span class="self">self</span>.set_parity_even(value.even_flag());
+        <span class="self">self</span>.set_parity_sticky(value.sticky_flag());
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">ControlRegister</span>(<span class="ident">u16</span>) {
-        [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">clear_to_send_flow_enabled</span>,
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">request_to_send_flow_enabled</span>,
-        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">aux_out_2</span>,
-        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">aux_out_1</span>,
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">request_to_send</span>,
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">data_transmit_ready</span>,
-        [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">rx_enabled</span>,
-        [ <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">tx_enabled</span>,
-        [ <span class="number">7</span>] <span class="kw">pub</span> <span class="ident">loopback</span>,
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">infrared_low_power_mode</span>,
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">infrared_enabled</span>,
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">enabled</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>ControlRegister(u16) {
+        [<span class="number">15</span>] <span class="kw">pub </span>clear_to_send_flow_enabled,
+        [<span class="number">14</span>] <span class="kw">pub </span>request_to_send_flow_enabled,
+        [<span class="number">13</span>] <span class="kw">pub </span>aux_out_2,
+        [<span class="number">12</span>] <span class="kw">pub </span>aux_out_1,
+        [<span class="number">11</span>] <span class="kw">pub </span>request_to_send,
+        [<span class="number">10</span>] <span class="kw">pub </span>data_transmit_ready,
+        [ <span class="number">9</span>] <span class="kw">pub </span>rx_enabled,
+        [ <span class="number">8</span>] <span class="kw">pub </span>tx_enabled,
+        [ <span class="number">7</span>] <span class="kw">pub </span>loopback,
+        [ <span class="number">2</span>] <span class="kw">pub </span>infrared_low_power_mode,
+        [ <span class="number">1</span>] <span class="kw">pub </span>infrared_enabled,
+        [ <span class="number">0</span>] <span class="kw">pub </span>enabled,
     }
 }
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">FIFOControlRegister</span>(<span class="ident">u16</span>) {
-        [<span class="number">3</span>..<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rx_interrupt_trigger</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">FIFOInterruptTriggerLevel</span>,
-        [<span class="number">0</span>..<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">tx_interrupt_trigger</span>: <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">FIFOInterruptTriggerLevel</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>FIFOControlRegister(u16) {
+        [<span class="number">3</span>..<span class="number">6</span>] <span class="kw">pub </span>rx_interrupt_trigger: u8 <span class="kw">as </span>FIFOInterruptTriggerLevel,
+        [<span class="number">0</span>..<span class="number">3</span>] <span class="kw">pub </span>tx_interrupt_trigger: u8 <span class="kw">as </span>FIFOInterruptTriggerLevel,
     }
 }
 
-<span class="macro">c_enum!</span> {
-    <span class="kw">enum</span> <span class="ident">FIFOInterruptTriggerLevel</span>(<span class="ident">u8</span>) {
-        <span class="ident">FourBytes</span>,
-        <span class="ident">EightBytes</span>,
-        <span class="ident">SixteenBytes</span>,
-        <span class="ident">TwentyFourBytes</span>,
-        <span class="ident">TwentyEightBytes</span>,
+<span class="macro">c_enum! </span>{
+    <span class="kw">enum </span>FIFOInterruptTriggerLevel(u8) {
+        FourBytes,
+        EightBytes,
+        SixteenBytes,
+        TwentyFourBytes,
+        TwentyEightBytes,
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">InterruptFlags</span>(<span class="ident">u16</span>) {
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">overrun_error</span>,
-        [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">break_error</span>,
-        [ <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">parity_error</span>,
-        [ <span class="number">7</span>] <span class="kw">pub</span> <span class="ident">framing_error</span>,
-        [ <span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rx_timeout</span>,
-        [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">tx</span>,
-        [ <span class="number">4</span>] <span class="kw">pub</span> <span class="ident">rx</span>,
-        [ <span class="number">3</span>] <span class="kw">pub</span> <span class="ident">modem_data_set_ready</span>,
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">modem_carrier_detect</span>,
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">modem_clear_to_send</span>,
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">modem_ring</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>InterruptFlags(u16) {
+        [<span class="number">10</span>] <span class="kw">pub </span>overrun_error,
+        [ <span class="number">9</span>] <span class="kw">pub </span>break_error,
+        [ <span class="number">8</span>] <span class="kw">pub </span>parity_error,
+        [ <span class="number">7</span>] <span class="kw">pub </span>framing_error,
+        [ <span class="number">6</span>] <span class="kw">pub </span>rx_timeout,
+        [ <span class="number">5</span>] <span class="kw">pub </span>tx,
+        [ <span class="number">4</span>] <span class="kw">pub </span>rx,
+        [ <span class="number">3</span>] <span class="kw">pub </span>modem_data_set_ready,
+        [ <span class="number">2</span>] <span class="kw">pub </span>modem_carrier_detect,
+        [ <span class="number">1</span>] <span class="kw">pub </span>modem_clear_to_send,
+        [ <span class="number">0</span>] <span class="kw">pub </span>modem_ring,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">InterruptFlags</span> {
-    <span class="kw">const</span> <span class="ident">ALL</span>: <span class="ident">InterruptFlags</span> = <span class="ident">InterruptFlags</span>(<span class="number">0x07ff</span>);
+<span class="kw">impl </span>InterruptFlags {
+    <span class="kw">const </span>ALL: InterruptFlags = InterruptFlags(<span class="number">0x07ff</span>);
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">struct</span> <span class="ident">DMAControlRegister</span>(<span class="ident">u16</span>) {
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">enabled_on_error</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">tx_enabled</span>,
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">rx_enabled</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">struct </span>DMAControlRegister(u16) {
+        [<span class="number">2</span>] <span class="kw">pub </span>enabled_on_error,
+        [<span class="number">1</span>] <span class="kw">pub </span>tx_enabled,
+        [<span class="number">0</span>] <span class="kw">pub </span>rx_enabled,
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_serial" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

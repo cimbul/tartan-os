@@ -133,140 +133,140 @@
 <span id="133">133</span>
 <span id="134">134</span>
 <span id="135">135</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for 64-bit Arm.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for 64-bit Arm.
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
+</span><span class="kw">use </span>core::arch::asm;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">float</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">interrupt</span>;
+<span class="kw">pub mod </span>float;
+<span class="kw">pub mod </span>interrupt;
 
 
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="macro">macro_rules!</span> <span class="ident">system_register_access</span> {
-    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>:<span class="ident">literal</span> $(, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">setter_type</span>:<span class="ident">tt</span>)<span class="question-mark">?</span>] =&gt; {
-        <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {
-            <span class="doccomment">/// Retrieve the current value of this register</span>
-            <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="self">Self</span>(<span class="number">0</span>);
-                <span class="kw">unsafe</span> {
+<span class="attribute">#[macro_export]
+#[doc(hidden)]
+</span><span class="macro">macro_rules! </span>system_register_access {
+    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$register</span>:literal $(, <span class="macro-nonterminal">$setter_type</span>:tt)<span class="question-mark">?</span>] =&gt; {
+        <span class="kw">impl </span><span class="macro-nonterminal">$</span><span class="kw">struct </span>{
+            <span class="doccomment">/// Retrieve the current value of this register
+            </span><span class="kw">pub fn </span><span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>(<span class="number">0</span>);
+                <span class="kw">unsafe </span>{
                     <span class="macro">core::arch::asm!</span>(
-                        <span class="macro">concat!</span>(<span class="string">&quot;mrs {}, &quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>),
-                        <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                        <span class="macro">concat!</span>(<span class="string">&quot;mrs {}, &quot;</span>, <span class="macro-nonterminal">$register</span>),
+                        out(reg) value.<span class="number">0</span>,
                     );
                 }
-                <span class="ident">value</span>
+                value
             }
 
-            <span class="macro">system_register_access!</span>(@<span class="ident">setter</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">setter_type</span>)<span class="question-mark">?</span>);
+            <span class="macro">system_register_access!</span>(@setter <span class="macro-nonterminal">$register </span>$(<span class="macro-nonterminal">$setter_type</span>)<span class="question-mark">?</span>);
         }
     };
 
-    [@<span class="ident">setter</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>:<span class="ident">literal</span> <span class="ident">readonly</span>] =&gt; { };
+    [@setter <span class="macro-nonterminal">$register</span>:literal readonly] =&gt; { };
 
-    [@<span class="ident">setter</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>:<span class="ident">literal</span>] =&gt; {
-        <span class="doccomment">/// Update the register to the given value.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
-            <span class="kw">unsafe</span> {
+    [@setter <span class="macro-nonterminal">$register</span>:literal] =&gt; {
+        <span class="doccomment">/// Update the register to the given value.
+        </span><span class="kw">pub fn </span>set(value: <span class="self">Self</span>) {
+            <span class="kw">unsafe </span>{
                 <span class="macro">core::arch::asm!</span>(
-                    <span class="macro">concat!</span>(<span class="string">&quot;msr &quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>, <span class="string">&quot;, {}&quot;</span>),
-                    <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                    <span class="macro">concat!</span>(<span class="string">&quot;msr &quot;</span>, <span class="macro-nonterminal">$register</span>, <span class="string">&quot;, {}&quot;</span>),
+                    <span class="kw">in</span>(reg) value.<span class="number">0</span>,
                 );
             }
         }
     };
 
-    [@<span class="ident">setter</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>:<span class="ident">literal</span> <span class="kw">unsafe</span>] =&gt; {
-        <span class="doccomment">/// Update the register to the given value.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Safety</span>
-        <span class="doccomment">/// Altering certain system flags can have dramatic effects on the execution</span>
-        <span class="doccomment">/// of this and other programs, including memory safety.</span>
-        <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
+    [@setter <span class="macro-nonterminal">$register</span>:literal <span class="kw">unsafe</span>] =&gt; {
+        <span class="doccomment">/// Update the register to the given value.
+        ///
+        /// # Safety
+        /// Altering certain system flags can have dramatic effects on the execution
+        /// of this and other programs, including memory safety.
+        </span><span class="kw">pub unsafe fn </span>set(value: <span class="self">Self</span>) {
             <span class="macro">core::arch::asm!</span>(
-                <span class="macro">concat!</span>(<span class="string">&quot;msr &quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>, <span class="string">&quot;, {}&quot;</span>),
-                <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                <span class="macro">concat!</span>(<span class="string">&quot;msr &quot;</span>, <span class="macro-nonterminal">$register</span>, <span class="string">&quot;, {}&quot;</span>),
+                <span class="kw">in</span>(reg) value.<span class="number">0</span>,
             );
         }
     };
 }
 
 
-<span class="doccomment">/// `EL`: Defines the privilege level of executing code. Higher values have more</span>
-<span class="doccomment">/// privileges.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExceptionLevel</span> {
-    <span class="doccomment">/// `EL0`, used for unprivileged user code.</span>
-    <span class="ident">Zero</span>,
-    <span class="doccomment">/// `EL1`, used for OS kernel code.</span>
-    <span class="ident">One</span>,
-    <span class="doccomment">/// `EL2`, used for hypervisors in virtualized systems.</span>
-    <span class="ident">Two</span>,
-    <span class="doccomment">/// `EL3`, used for the secure manager.</span>
-    <span class="ident">Three</span>,
+<span class="doccomment">/// `EL`: Defines the privilege level of executing code. Higher values have more
+/// privileges.
+</span><span class="attribute">#[repr(u8)]
+</span><span class="kw">pub enum </span>ExceptionLevel {
+    <span class="doccomment">/// `EL0`, used for unprivileged user code.
+    </span>Zero,
+    <span class="doccomment">/// `EL1`, used for OS kernel code.
+    </span>One,
+    <span class="doccomment">/// `EL2`, used for hypervisors in virtualized systems.
+    </span>Two,
+    <span class="doccomment">/// `EL3`, used for the secure manager.
+    </span>Three,
 }
 
-<span class="kw">impl</span> <span class="ident">ExceptionLevel</span> {
-    <span class="doccomment">/// Get the current exception level. Only accessible from EL1 or higher.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">raw_value</span>: <span class="ident">u64</span>;
-        <span class="kw">unsafe</span> {
+<span class="kw">impl </span>ExceptionLevel {
+    <span class="doccomment">/// Get the current exception level. Only accessible from EL1 or higher.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>raw_value: u64;
+        <span class="kw">unsafe </span>{
             <span class="macro">asm!</span>(
                 <span class="string">&quot;mrs {}, CurrentEL&quot;</span>,
-                <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">raw_value</span>,
+                out(reg) raw_value,
             );
         }
-        <span class="ident"><span class="self">Self</span>::from</span>((<span class="ident">raw_value</span> &gt;&gt; <span class="number">2</span>) <span class="kw">as</span> <span class="ident">u8</span>)
+        <span class="self">Self</span>::from((raw_value &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>u8)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span>&lt;<span class="ident">u8</span>&gt; <span class="kw">for</span> <span class="ident">ExceptionLevel</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">value</span>: <span class="ident">u8</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// SAFETY: When truncating to two bits, the defined enum values are exhaustive</span>
-        <span class="kw">unsafe</span> { <span class="ident">core::mem::transmute</span>(<span class="ident">value</span> &amp; <span class="number">0b11</span>) }
+<span class="kw">impl </span>From&lt;u8&gt; <span class="kw">for </span>ExceptionLevel {
+    <span class="kw">fn </span>from(value: u8) -&gt; <span class="self">Self </span>{
+        <span class="comment">// SAFETY: When truncating to two bits, the defined enum values are exhaustive
+        </span><span class="kw">unsafe </span>{ core::mem::transmute(value &amp; <span class="number">0b11</span>) }
     }
 }
 
 
-<span class="doccomment">/// Controls which stack pointer register is used when executing code at EL1 or higher.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StackPointerSelect</span> {
-    <span class="doccomment">/// `T` (thread) mode: use the stack pointer register from EL0.</span>
-    <span class="ident">Level0</span>,
-    <span class="doccomment">/// `H` (handler) mode: use the stack pointer register for the current exception</span>
-    <span class="doccomment">/// level.</span>
-    <span class="ident">CurrentLevel</span>,
+<span class="doccomment">/// Controls which stack pointer register is used when executing code at EL1 or higher.
+</span><span class="kw">pub enum </span>StackPointerSelect {
+    <span class="doccomment">/// `T` (thread) mode: use the stack pointer register from EL0.
+    </span>Level0,
+    <span class="doccomment">/// `H` (handler) mode: use the stack pointer register for the current exception
+    /// level.
+    </span>CurrentLevel,
 }
 
-<span class="kw">impl</span> <span class="ident">StackPointerSelect</span> {
-    <span class="doccomment">/// Get the value of the flag for the current exception level. Only accessible from</span>
-    <span class="doccomment">/// EL1 or higher.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">raw_value</span>: <span class="ident">u64</span>;
-        <span class="kw">unsafe</span> {
+<span class="kw">impl </span>StackPointerSelect {
+    <span class="doccomment">/// Get the value of the flag for the current exception level. Only accessible from
+    /// EL1 or higher.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>raw_value: u64;
+        <span class="kw">unsafe </span>{
             <span class="macro">asm!</span>(
                 <span class="string">&quot;mrs {}, SPSel&quot;</span>,
-                <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">raw_value</span>,
+                out(reg) raw_value,
             );
         }
-        <span class="kw">if</span> <span class="ident">raw_value</span> &amp; <span class="number">1</span> == <span class="number">0</span> {
-            <span class="ident"><span class="self">Self</span>::Level0</span>
-        } <span class="kw">else</span> {
-            <span class="ident"><span class="self">Self</span>::CurrentLevel</span>
+        <span class="kw">if </span>raw_value &amp; <span class="number">1 </span>== <span class="number">0 </span>{
+            <span class="self">Self</span>::Level0
+        } <span class="kw">else </span>{
+            <span class="self">Self</span>::CurrentLevel
         }
     }
 
-    <span class="doccomment">/// Update the value of the flag for the current exception level.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// This can alter the current stack pointer, which can have dramatic effects on the</span>
-    <span class="doccomment">/// execution of the current function.</span>
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
+    <span class="doccomment">/// Update the value of the flag for the current exception level.
+    ///
+    /// # Safety
+    /// This can alter the current stack pointer, which can have dramatic effects on the
+    /// execution of the current function.
+    </span><span class="attribute">#[inline(always)]
+    </span><span class="kw">pub unsafe fn </span>set(value: <span class="self">Self</span>) {
         <span class="macro">asm!</span>(
             <span class="string">&quot;msr SPSel, {}&quot;</span>,
-            <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span> <span class="kw">as</span> <span class="ident">u64</span>,
+            <span class="kw">in</span>(reg) value <span class="kw">as </span>u64,
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

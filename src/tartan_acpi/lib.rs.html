@@ -220,227 +220,227 @@
 <span id="220">220</span>
 <span id="221">221</span>
 <span id="222">222</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for Advanced Configuration and Power Interface</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See ACPI spec v6.3 (Jan 2019).</span>
-<span class="comment">// TODO: Handle endianness (all ACPI tables use little-endian)</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for Advanced Configuration and Power Interface
+//!
+//! See ACPI spec v6.3 (Jan 2019).
+</span><span class="comment">// TODO: Handle endianness (all ACPI tables use little-endian)
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">fn_traits</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![feature(fn_traits)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+</span><span class="kw">extern crate </span>alloc;
 
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">static_assertions::const_assert_eq</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+<span class="kw">use </span>core::mem::size_of;
+<span class="kw">use </span>static_assertions::const_assert_eq;
+<span class="kw">use </span>tartan_bitfield::bitfield;
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">aml</span>;
+<span class="kw">pub mod </span>aml;
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="doccomment">/// Root System Description Pointer (RSDP) used in ACPI 1.0</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RootDescriptionPointerV1</span> {
-    <span class="kw">pub</span> <span class="ident">signature</span>: [<span class="ident">u8</span>; <span class="number">8</span>],
-    <span class="kw">pub</span> <span class="ident">checksum</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">oem_id</span>: [<span class="ident">u8</span>; <span class="number">6</span>],
-    <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">root_description_table_addr</span>: <span class="ident">u32</span>,
+<span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="doccomment">/// Root System Description Pointer (RSDP) used in ACPI 1.0
+</span><span class="kw">pub struct </span>RootDescriptionPointerV1 {
+    <span class="kw">pub </span>signature: [u8; <span class="number">8</span>],
+    <span class="kw">pub </span>checksum: u8,
+    <span class="kw">pub </span>oem_id: [u8; <span class="number">6</span>],
+    <span class="kw">pub </span>revision: u8,
+    <span class="kw">pub </span>root_description_table_addr: u32,
 }
-<span class="macro">const_assert_eq!</span>(<span class="number">20</span>, <span class="ident">size_of</span>::&lt;<span class="ident">RootDescriptionPointerV1</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">20</span>, size_of::&lt;RootDescriptionPointerV1&gt;());
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="doccomment">/// Extended RDSP defined by ACPI 2.0</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RootDescriptionPointerV2</span> {
-    <span class="kw">pub</span> <span class="ident">v1</span>: <span class="ident">RootDescriptionPointerV1</span>,
-    <span class="kw">pub</span> <span class="ident">length</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">extended_description_table_addr</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">extended_checksum</span>: <span class="ident">u8</span>,
-    <span class="ident">_reserved</span>: [<span class="ident">u8</span>; <span class="number">3</span>],
+<span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="doccomment">/// Extended RDSP defined by ACPI 2.0
+</span><span class="kw">pub struct </span>RootDescriptionPointerV2 {
+    <span class="kw">pub </span>v1: RootDescriptionPointerV1,
+    <span class="kw">pub </span>length: u32,
+    <span class="kw">pub </span>extended_description_table_addr: u64,
+    <span class="kw">pub </span>extended_checksum: u8,
+    _reserved: [u8; <span class="number">3</span>],
 }
-<span class="macro">const_assert_eq!</span>(<span class="number">36</span>, <span class="ident">size_of</span>::&lt;<span class="ident">RootDescriptionPointerV2</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">36</span>, size_of::&lt;RootDescriptionPointerV2&gt;());
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="doccomment">/// Common table header defined as `DESCRIPTION_HEADER` in the spec</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DescriptionHeader</span> {
-    <span class="kw">pub</span> <span class="ident">signature</span>: [<span class="ident">u8</span>; <span class="number">4</span>],
-    <span class="kw">pub</span> <span class="ident">length</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">checksum</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">oem_id</span>: [<span class="ident">u8</span>; <span class="number">6</span>],
-    <span class="kw">pub</span> <span class="ident">oem_table_id</span>: [<span class="ident">u8</span>; <span class="number">8</span>],
-    <span class="kw">pub</span> <span class="ident">oem_revision</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">creator_id</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">creator_revision</span>: <span class="ident">u32</span>,
+<span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="doccomment">/// Common table header defined as `DESCRIPTION_HEADER` in the spec
+</span><span class="kw">pub struct </span>DescriptionHeader {
+    <span class="kw">pub </span>signature: [u8; <span class="number">4</span>],
+    <span class="kw">pub </span>length: u32,
+    <span class="kw">pub </span>revision: u8,
+    <span class="kw">pub </span>checksum: u8,
+    <span class="kw">pub </span>oem_id: [u8; <span class="number">6</span>],
+    <span class="kw">pub </span>oem_table_id: [u8; <span class="number">8</span>],
+    <span class="kw">pub </span>oem_revision: u32,
+    <span class="kw">pub </span>creator_id: u32,
+    <span class="kw">pub </span>creator_revision: u32,
 }
-<span class="macro">const_assert_eq!</span>(<span class="number">36</span>, <span class="ident">size_of</span>::&lt;<span class="ident">DescriptionHeader</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">36</span>, size_of::&lt;DescriptionHeader&gt;());
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="doccomment">/// Fixed ACPI Description Table (FADT)</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FixedDescription</span> {
-    <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">DescriptionHeader</span>,
+<span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="doccomment">/// Fixed ACPI Description Table (FADT)
+</span><span class="kw">pub struct </span>FixedDescription {
+    <span class="kw">pub </span>header: DescriptionHeader,
 
-    <span class="kw">pub</span> <span class="ident">firmware_api_ctrl_addr_32</span>: <span class="ident">u32</span>, <span class="comment">// FACS</span>
-    <span class="kw">pub</span> <span class="ident">diff_description_addr_32</span>: <span class="ident">u32</span>,  <span class="comment">// DSDT</span>
+    <span class="kw">pub </span>firmware_api_ctrl_addr_32: u32, <span class="comment">// FACS
+    </span><span class="kw">pub </span>diff_description_addr_32: u32,  <span class="comment">// DSDT
 
-    <span class="ident">_reserved_a</span>: <span class="ident">u8</span>,
+    </span>_reserved_a: u8,
 
-    <span class="kw">pub</span> <span class="ident">preferred_power_profile</span>: <span class="ident">u8</span>, <span class="comment">// TODO: enum</span>
+    <span class="kw">pub </span>preferred_power_profile: u8, <span class="comment">// TODO: enum
 
-    <span class="comment">// START ignored in hardware-reduced ACPI</span>
-    <span class="kw">pub</span> <span class="ident">sci_interrupt</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">smi_command_port</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">smi_command_acpi_enable</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">smi_command_acpi_disable</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">smi_command_s4_bios_enter</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">smi_command_cpu_state_enable</span>: <span class="ident">u8</span>,
+    // START ignored in hardware-reduced ACPI
+    </span><span class="kw">pub </span>sci_interrupt: u16,
+    <span class="kw">pub </span>smi_command_port: u32,
+    <span class="kw">pub </span>smi_command_acpi_enable: u8,
+    <span class="kw">pub </span>smi_command_acpi_disable: u8,
+    <span class="kw">pub </span>smi_command_s4_bios_enter: u8,
+    <span class="kw">pub </span>smi_command_cpu_state_enable: u8,
 
-    <span class="kw">pub</span> <span class="ident">pm_event_port_block_1a_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_event_port_block_1b_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_cntrl_port_block_1a_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_cntrl_port_block_1b_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_cntrl_port_block_2_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_timer_port_block_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_0_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_1_32</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">pm_event_port_block_1_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">pm_cntrl_port_block_1_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">pm_cntrl_port_block_2_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">pm_timer_port_block_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_0_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_1_length</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_1_base</span>: <span class="ident">u8</span>,
+    <span class="kw">pub </span>pm_event_port_block_1a_32: u32,
+    <span class="kw">pub </span>pm_event_port_block_1b_32: u32,
+    <span class="kw">pub </span>pm_cntrl_port_block_1a_32: u32,
+    <span class="kw">pub </span>pm_cntrl_port_block_1b_32: u32,
+    <span class="kw">pub </span>pm_cntrl_port_block_2_32: u32,
+    <span class="kw">pub </span>pm_timer_port_block_32: u32,
+    <span class="kw">pub </span>general_event_port_block_0_32: u32,
+    <span class="kw">pub </span>general_event_port_block_1_32: u32,
+    <span class="kw">pub </span>pm_event_port_block_1_length: u8,
+    <span class="kw">pub </span>pm_cntrl_port_block_1_length: u8,
+    <span class="kw">pub </span>pm_cntrl_port_block_2_length: u8,
+    <span class="kw">pub </span>pm_timer_port_block_length: u8,
+    <span class="kw">pub </span>general_event_port_block_0_length: u8,
+    <span class="kw">pub </span>general_event_port_block_1_length: u8,
+    <span class="kw">pub </span>general_event_port_block_1_base: u8,
 
-    <span class="kw">pub</span> <span class="ident">smi_command_c_state_enable</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">cpu_c2_latency</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">cpu_c3_latency</span>: <span class="ident">u16</span>,
+    <span class="kw">pub </span>smi_command_c_state_enable: u8,
+    <span class="kw">pub </span>cpu_c2_latency: u16,
+    <span class="kw">pub </span>cpu_c3_latency: u16,
 
-    <span class="kw">pub</span> <span class="ident">cache_flush_stride_count</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">cache_flush_stride_width</span>: <span class="ident">u16</span>,
+    <span class="kw">pub </span>cache_flush_stride_count: u16,
+    <span class="kw">pub </span>cache_flush_stride_width: u16,
 
-    <span class="kw">pub</span> <span class="ident">cpu_duty_cycle_register_offset</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">cpu_duty_cycle_register_width</span>: <span class="ident">u8</span>,
+    <span class="kw">pub </span>cpu_duty_cycle_register_offset: u8,
+    <span class="kw">pub </span>cpu_duty_cycle_register_width: u8,
 
-    <span class="kw">pub</span> <span class="ident">rtc_day_alarm_index</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">rtc_month_alarm_index</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span> <span class="ident">rtc_century_alarm_index</span>: <span class="ident">u8</span>,
+    <span class="kw">pub </span>rtc_day_alarm_index: u8,
+    <span class="kw">pub </span>rtc_month_alarm_index: u8,
+    <span class="kw">pub </span>rtc_century_alarm_index: u8,
 
-    <span class="kw">pub</span> <span class="ident">pc_boot_architecture_flags</span>: <span class="ident">u16</span>,
+    <span class="kw">pub </span>pc_boot_architecture_flags: u16,
 
-    <span class="ident">_reserved_b</span>: <span class="ident">u8</span>,
+    _reserved_b: u8,
 
-    <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">FixedFlags</span>,
+    <span class="kw">pub </span>flags: FixedFlags,
 
-    <span class="kw">pub</span> <span class="ident">reset_register</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">reset_register_value</span>: <span class="ident">u8</span>,
+    <span class="kw">pub </span>reset_register: GenericAddress,
+    <span class="kw">pub </span>reset_register_value: u8,
 
-    <span class="kw">pub</span> <span class="ident">arm_boot_architecture_flags</span>: <span class="ident">u16</span>,
+    <span class="kw">pub </span>arm_boot_architecture_flags: u16,
 
-    <span class="kw">pub</span> <span class="ident">revision_minor</span>: <span class="ident">u8</span>,
+    <span class="kw">pub </span>revision_minor: u8,
 
-    <span class="kw">pub</span> <span class="ident">firmware_api_ctrl_addr_64</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">diff_description_addr_64</span>: <span class="ident">u64</span>,
+    <span class="kw">pub </span>firmware_api_ctrl_addr_64: u64,
+    <span class="kw">pub </span>diff_description_addr_64: u64,
 
-    <span class="kw">pub</span> <span class="ident">pm_event_port_block_1a_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">pm_event_port_block_1b_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">pm_control_port_block_1a_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">pm_control_port_block_1b_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">pm_control_port_block_2_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">pm_timer_port_block_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_0_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">general_event_port_block_1_64</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">sleep_control_register_addr</span>: <span class="ident">GenericAddress</span>,
-    <span class="kw">pub</span> <span class="ident">sleep_status_register_addr</span>: <span class="ident">GenericAddress</span>,
+    <span class="kw">pub </span>pm_event_port_block_1a_64: GenericAddress,
+    <span class="kw">pub </span>pm_event_port_block_1b_64: GenericAddress,
+    <span class="kw">pub </span>pm_control_port_block_1a_64: GenericAddress,
+    <span class="kw">pub </span>pm_control_port_block_1b_64: GenericAddress,
+    <span class="kw">pub </span>pm_control_port_block_2_64: GenericAddress,
+    <span class="kw">pub </span>pm_timer_port_block_64: GenericAddress,
+    <span class="kw">pub </span>general_event_port_block_0_64: GenericAddress,
+    <span class="kw">pub </span>general_event_port_block_1_64: GenericAddress,
+    <span class="kw">pub </span>sleep_control_register_addr: GenericAddress,
+    <span class="kw">pub </span>sleep_status_register_addr: GenericAddress,
 
-    <span class="kw">pub</span> <span class="ident">hypervisor_vendor</span>: <span class="ident">u64</span>,
+    <span class="kw">pub </span>hypervisor_vendor: u64,
 }
-<span class="macro">const_assert_eq!</span>(<span class="number">276</span>, <span class="ident">size_of</span>::&lt;<span class="ident">FixedDescription</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">276</span>, size_of::&lt;FixedDescription&gt;());
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>, <span class="ident">packed</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="doccomment">/// Extended address structure defined in ACPI 2.0 to support 64-bit systems</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GenericAddress</span> {
-    <span class="ident">address_space</span>: <span class="ident">AddressSpace</span>,
-    <span class="ident">register_bit_width</span>: <span class="ident">u8</span>,
-    <span class="ident">register_bit_offset</span>: <span class="ident">u8</span>,
-    <span class="ident">access_size</span>: <span class="ident">AccessSize</span>,
-    <span class="ident">address</span>: <span class="ident">u64</span>,
+<span class="attribute">#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="doccomment">/// Extended address structure defined in ACPI 2.0 to support 64-bit systems
+</span><span class="kw">pub struct </span>GenericAddress {
+    address_space: AddressSpace,
+    register_bit_width: u8,
+    register_bit_offset: u8,
+    access_size: AccessSize,
+    address: u64,
 }
-<span class="macro">const_assert_eq!</span>(<span class="number">12</span>, <span class="ident">size_of</span>::&lt;<span class="ident">GenericAddress</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">12</span>, size_of::&lt;GenericAddress&gt;());
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Type of register address</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AddressSpace</span>(<span class="ident">u8</span>) {
-        <span class="ident">SystemMemory</span>                  = <span class="number">0x00</span>,
-        <span class="ident">SystemIO</span>                      = <span class="number">0x01</span>,
-        <span class="ident">PCIConfiguration</span>              = <span class="number">0x02</span>,
-        <span class="ident">EmbeddedController</span>            = <span class="number">0x03</span>,
-        <span class="ident">SMBus</span>                         = <span class="number">0x04</span>,
-        <span class="ident">SystemCMOS</span>                    = <span class="number">0x05</span>,
-        <span class="ident">PCIBARTarget</span>                  = <span class="number">0x06</span>,
-        <span class="ident">IPMI</span>                          = <span class="number">0x07</span>,
-        <span class="ident">GeneralPurposeIo</span>              = <span class="number">0x08</span>,
-        <span class="ident">GenericSerialBus</span>              = <span class="number">0x09</span>,
-        <span class="ident">PlatformCommunicationsChannel</span> = <span class="number">0x0a</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Type of register address
+    </span><span class="kw">pub enum </span>AddressSpace(u8) {
+        SystemMemory                  = <span class="number">0x00</span>,
+        SystemIO                      = <span class="number">0x01</span>,
+        PCIConfiguration              = <span class="number">0x02</span>,
+        EmbeddedController            = <span class="number">0x03</span>,
+        SMBus                         = <span class="number">0x04</span>,
+        SystemCMOS                    = <span class="number">0x05</span>,
+        PCIBARTarget                  = <span class="number">0x06</span>,
+        IPMI                          = <span class="number">0x07</span>,
+        GeneralPurposeIo              = <span class="number">0x08</span>,
+        GenericSerialBus              = <span class="number">0x09</span>,
+        PlatformCommunicationsChannel = <span class="number">0x0a</span>,
 
-        <span class="ident">FunctionalFixed</span>               = <span class="number">0x7f</span>,
+        FunctionalFixed               = <span class="number">0x7f</span>,
 
-        <span class="ident">OEMDefinedMin</span>                 = <span class="number">0xc0</span>,
-        <span class="ident">OEMDefinedMax</span>                 = <span class="number">0xff</span>,
+        OEMDefinedMin                 = <span class="number">0xc0</span>,
+        OEMDefinedMax                 = <span class="number">0xff</span>,
     }
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Memory width used to read/write from a register</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AccessSize</span>(<span class="ident">u8</span>) {
-        <span class="ident">Undefined</span> = <span class="number">0</span>,
-        <span class="ident">Byte</span>      = <span class="number">1</span>,
-        <span class="ident">Word</span>      = <span class="number">2</span>,
-        <span class="ident">DWord</span>     = <span class="number">3</span>,
-        <span class="ident">QWord</span>     = <span class="number">4</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Memory width used to read/write from a register
+    </span><span class="kw">pub enum </span>AccessSize(u8) {
+        Undefined = <span class="number">0</span>,
+        Byte      = <span class="number">1</span>,
+        Word      = <span class="number">2</span>,
+        DWord     = <span class="number">3</span>,
+        QWord     = <span class="number">4</span>,
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Support flags from Fixed ACPI Description Table</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FixedFlags</span>(<span class="ident">u32</span>) {
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">x86_wbinvd_supported</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">x86_wbinvd_requires_flush</span>,
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">c1_supported</span>,
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">c2_multi_cpu_supported</span>,
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">power_button_is_control_method_device</span>,
-        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">sleep_button_is_control_method_device</span>,
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">rtc_not_fixed</span>,
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">rtc_can_wake_s4</span>,
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">timer_value_32_bit</span>,
-        [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">dock_capable</span>,
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">fixed_description_reset_supported</span>,
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">sealed_case</span>,
-        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">headless</span>,
-        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">execute_instruction_after_slp_typ</span>,
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">pci_express_wake</span>,
-        [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">use_platform_clock</span>,
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">rtc_status_valid_after_s4</span>,
-        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">remote_power_on_supported</span>,
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">force_apic_cluster_model</span>,
-        [<span class="number">19</span>] <span class="kw">pub</span> <span class="ident">force_apic_physical_destination_mode</span>,
-        [<span class="number">20</span>] <span class="kw">pub</span> <span class="ident">hardware_reduced_acpi</span>,
-        [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">low_power_s0_idle</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Support flags from Fixed ACPI Description Table
+    </span><span class="kw">pub struct </span>FixedFlags(u32) {
+        [<span class="number">0</span>] <span class="kw">pub </span>x86_wbinvd_supported,
+        [<span class="number">1</span>] <span class="kw">pub </span>x86_wbinvd_requires_flush,
+        [<span class="number">2</span>] <span class="kw">pub </span>c1_supported,
+        [<span class="number">3</span>] <span class="kw">pub </span>c2_multi_cpu_supported,
+        [<span class="number">4</span>] <span class="kw">pub </span>power_button_is_control_method_device,
+        [<span class="number">5</span>] <span class="kw">pub </span>sleep_button_is_control_method_device,
+        [<span class="number">6</span>] <span class="kw">pub </span>rtc_not_fixed,
+        [<span class="number">7</span>] <span class="kw">pub </span>rtc_can_wake_s4,
+        [<span class="number">8</span>] <span class="kw">pub </span>timer_value_32_bit,
+        [<span class="number">9</span>] <span class="kw">pub </span>dock_capable,
+        [<span class="number">10</span>] <span class="kw">pub </span>fixed_description_reset_supported,
+        [<span class="number">11</span>] <span class="kw">pub </span>sealed_case,
+        [<span class="number">12</span>] <span class="kw">pub </span>headless,
+        [<span class="number">13</span>] <span class="kw">pub </span>execute_instruction_after_slp_typ,
+        [<span class="number">14</span>] <span class="kw">pub </span>pci_express_wake,
+        [<span class="number">15</span>] <span class="kw">pub </span>use_platform_clock,
+        [<span class="number">16</span>] <span class="kw">pub </span>rtc_status_valid_after_s4,
+        [<span class="number">17</span>] <span class="kw">pub </span>remote_power_on_supported,
+        [<span class="number">18</span>] <span class="kw">pub </span>force_apic_cluster_model,
+        [<span class="number">19</span>] <span class="kw">pub </span>force_apic_physical_destination_mode,
+        [<span class="number">20</span>] <span class="kw">pub </span>hardware_reduced_acpi,
+        [<span class="number">21</span>] <span class="kw">pub </span>low_power_s0_idle,
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_acpi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_acpi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

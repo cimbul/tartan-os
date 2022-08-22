@@ -266,273 +266,273 @@
 <span id="266">266</span>
 <span id="267">267</span>
 <span id="268">268</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Processor feature detection with CPUID.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Processor feature detection with CPUID.
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+</span><span class="kw">use </span>core::arch::asm;
+<span class="kw">use </span>tartan_bitfield::bitfield;
 
 
-<span class="doccomment">/// Low-level CPUID call. Writes the leaf/subleaf index given in the arguments to EAX/ECX</span>
-<span class="doccomment">/// and returns the values written to EAX–EDX.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cpuid</span>(<span class="ident">leaf_index</span>: <span class="ident">u32</span>, <span class="ident">subleaf_index</span>: <span class="ident">u32</span>) -&gt; [<span class="ident">u32</span>; <span class="number">4</span>] {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> = [<span class="number">0_u32</span>; <span class="number">4</span>];
-    <span class="kw">unsafe</span> {
+<span class="doccomment">/// Low-level CPUID call. Writes the leaf/subleaf index given in the arguments to EAX/ECX
+/// and returns the values written to EAX–EDX.
+</span><span class="kw">pub fn </span>cpuid(leaf_index: u32, subleaf_index: u32) -&gt; [u32; <span class="number">4</span>] {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = [<span class="number">0_u32</span>; <span class="number">4</span>];
+    <span class="kw">unsafe </span>{
         <span class="macro">asm!</span>(
             <span class="string">&quot;
             cpuid
             mov {0:e}, ebx
             &quot;</span>,
-            <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">result</span>[<span class="number">1</span>],
-            <span class="ident">inout</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">leaf_index</span> =&gt; <span class="ident">result</span>[<span class="number">0</span>],
-            <span class="ident">inout</span>(<span class="string">&quot;ecx&quot;</span>) <span class="ident">subleaf_index</span> =&gt; <span class="ident">result</span>[<span class="number">2</span>],
-            <span class="ident">out</span>(<span class="string">&quot;edx&quot;</span>) <span class="ident">result</span>[<span class="number">3</span>],
+            out(reg) result[<span class="number">1</span>],
+            inout(<span class="string">&quot;eax&quot;</span>) leaf_index =&gt; result[<span class="number">0</span>],
+            inout(<span class="string">&quot;ecx&quot;</span>) subleaf_index =&gt; result[<span class="number">2</span>],
+            out(<span class="string">&quot;edx&quot;</span>) result[<span class="number">3</span>],
         );
     }
-    <span class="ident">result</span>
+    result
 }
 
-<span class="doccomment">/// Get the maximum primary index value (EAX) supported for *basic* CPUID calls by this</span>
-<span class="doccomment">/// processor (below `0x8000_0000`).</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">max_cpuid_index_basic</span>() -&gt; <span class="ident">u32</span> {
-    <span class="ident">cpuid</span>(<span class="number">0</span>, <span class="number">0</span>)[<span class="number">0</span>]
+<span class="doccomment">/// Get the maximum primary index value (EAX) supported for *basic* CPUID calls by this
+/// processor (below `0x8000_0000`).
+</span><span class="kw">pub fn </span>max_cpuid_index_basic() -&gt; u32 {
+    cpuid(<span class="number">0</span>, <span class="number">0</span>)[<span class="number">0</span>]
 }
 
-<span class="doccomment">/// Get the maximum primary index value (EAX) supported for *extended* CPUID calls by this</span>
-<span class="doccomment">/// processor (above `0x8000_0000`).</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">max_cpuid_index_extended</span>() -&gt; <span class="ident">u32</span> {
-    <span class="ident">cpuid</span>(<span class="number">0x8000_0000</span>, <span class="number">0</span>)[<span class="number">0</span>]
+<span class="doccomment">/// Get the maximum primary index value (EAX) supported for *extended* CPUID calls by this
+/// processor (above `0x8000_0000`).
+</span><span class="kw">pub fn </span>max_cpuid_index_extended() -&gt; u32 {
+    cpuid(<span class="number">0x8000_0000</span>, <span class="number">0</span>)[<span class="number">0</span>]
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Primary feature list returned in `CPUID.01H:ECX+EDX`.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BasicFeatures</span>(<span class="ident">u64</span>) {
-        <span class="comment">// Bits 0..32 from EDX</span>
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Primary feature list returned in `CPUID.01H:ECX+EDX`.
+    </span><span class="kw">pub struct </span>BasicFeatures(u64) {
+        <span class="comment">// Bits 0..32 from EDX
 
-        <span class="doccomment">/// `FPU`: The processor has a built-in x87 floating-point unit</span>
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">on_chip_fpu</span>,
-        <span class="doccomment">/// `VME`: Supports virtual real-mode extensions (VME) and protected-mode virtual</span>
-        <span class="doccomment">/// interrupts.</span>
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">virtual_8086_extensions</span>,
-        <span class="doccomment">/// `DE`: Supports breaking on I/O and on accessing debug registers `DR4`–`DR5`.</span>
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">debugging_extensions</span>,
-        <span class="doccomment">/// `PSE`: Supports 4MB virtual memory pages and the dirty flag.</span>
-        [ <span class="number">3</span>] <span class="kw">pub</span> <span class="ident">page_size_extension</span>,
-        <span class="doccomment">/// `TSC`: Supports reading the processor&#39;s timestamp with `RDTSC`.</span>
-        [ <span class="number">4</span>] <span class="kw">pub</span> <span class="ident">time_stamp_counter</span>,
-        <span class="doccomment">/// `MSR`: Has model-specific registers which can be accessed with</span>
-        <span class="doccomment">/// `RDMSR`/`WRMSR`.</span>
-        [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">model_registers</span>,
-        <span class="doccomment">/// `PAE`: Supports mapping virtual memory to physical addresses longer than 32</span>
-        <span class="doccomment">/// bits.</span>
-        [ <span class="number">6</span>] <span class="kw">pub</span> <span class="ident">physical_address_extension</span>,
-        <span class="doccomment">/// `MCE`: Defines an exception (18) for reporting internal processor errors.</span>
-        [ <span class="number">7</span>] <span class="kw">pub</span> <span class="ident">machine_check_exception</span>,
-        <span class="doccomment">/// `CX8`: Supports the 64-byte `CMPXCHG8B` atomic instruction.</span>
-        [ <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">compare_exchange_64bit</span>,
-        <span class="doccomment">/// `APIC`: The processor has a built-in advanced programmable interrupt</span>
-        <span class="doccomment">/// controller (APIC).</span>
-        [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">on_chip_apic</span>,
-        <span class="doccomment">/// `SEP`: Supports the `SYSENTER`/`SYSEXIT` instructions.</span>
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">sysenter</span>,
-        <span class="doccomment">/// `MTRR`: Has memory type range registers.</span>
-        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">memory_type_range_registers</span>,
-        <span class="doccomment">/// `PGE`: Supports global pages, which are available in all task contexts</span>
-        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">global_pages</span>,
-        <span class="doccomment">/// `MCA`: Supports extended features for reporting internal processor errors.</span>
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">machine_check_architecture</span>,
-        <span class="doccomment">/// `CMOV`: Supports the `CMOV` instruction and `FCMOV`/`FCOMI` if FPU is present.</span>
-        [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">conditional_move</span>,
-        <span class="doccomment">/// `PAT`: Supports page attribute tables.</span>
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">page_attribute_table</span>,
-        <span class="doccomment">/// `PSE-36`: Supports 4MB virtual memory pages that can map to physical addresses</span>
-        <span class="doccomment">/// longer than 32 bits.</span>
-        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">page_size_extension_36bit</span>,
-        <span class="doccomment">/// `PSN`: Supports retrieving a processor serial number with the CPUID</span>
-        <span class="doccomment">/// instruction.</span>
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">serial_number</span>,
-        <span class="doccomment">/// `CLFSH`: Supports flushing a cache line with the `CLFLUSH` instruction.</span>
-        [<span class="number">19</span>] <span class="kw">pub</span> <span class="ident">cache_line_flush</span>,
-        <span class="doccomment">/// `DS`: Supports writing debug information to memory.</span>
-        [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">debug_store</span>,
-        <span class="doccomment">/// `ACPI`: Supports thermal monitoring and power management with software.</span>
-        [<span class="number">22</span>] <span class="kw">pub</span> <span class="ident">thermal_power_management</span>,
-        <span class="doccomment">/// `MMX`: Supports MMX instructions.</span>
-        [<span class="number">23</span>] <span class="kw">pub</span> <span class="ident">mmx</span>,
-        <span class="doccomment">/// `FXSAVE`: Supports managing FPU state with `FXSAVE`/`FXRSTOR`.</span>
-        [<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">fpu_save</span>,
-        <span class="doccomment">/// `SSE`: Supports SSE instructions.</span>
-        [<span class="number">25</span>] <span class="kw">pub</span> <span class="ident">sse</span>,
-        <span class="doccomment">/// `SSE2`: Supports SSE2 instructions.</span>
-        [<span class="number">26</span>] <span class="kw">pub</span> <span class="ident">sse_2</span>,
-        <span class="doccomment">/// The processor can snoop on its own cache line. This helps deal with certain</span>
-        <span class="doccomment">/// memory issues.</span>
-        [<span class="number">27</span>] <span class="kw">pub</span> <span class="ident">self_snoop</span>,
-        <span class="doccomment">/// `HTT`: Indicates that the number of reserved APIC IDs is available with the</span>
-        <span class="doccomment">/// CPUID instruction. If clear, only one ID is reserved.</span>
-        [<span class="number">28</span>] <span class="kw">pub</span> <span class="ident">max_apic_id_field</span>,
-        <span class="doccomment">/// `TM`: Has thermal monitor control circuitry (TCC).</span>
-        [<span class="number">29</span>] <span class="kw">pub</span> <span class="ident">thermal_monitor</span>,
-        <span class="doccomment">/// `PBE`: Supports a pin notifying a stopped processor that an interrupt is</span>
-        <span class="doccomment">/// pending.</span>
-        [<span class="number">31</span>] <span class="kw">pub</span> <span class="ident">pending_break_enable</span>,
+        </span><span class="doccomment">/// `FPU`: The processor has a built-in x87 floating-point unit
+        </span>[ <span class="number">0</span>] <span class="kw">pub </span>on_chip_fpu,
+        <span class="doccomment">/// `VME`: Supports virtual real-mode extensions (VME) and protected-mode virtual
+        /// interrupts.
+        </span>[ <span class="number">1</span>] <span class="kw">pub </span>virtual_8086_extensions,
+        <span class="doccomment">/// `DE`: Supports breaking on I/O and on accessing debug registers `DR4`–`DR5`.
+        </span>[ <span class="number">2</span>] <span class="kw">pub </span>debugging_extensions,
+        <span class="doccomment">/// `PSE`: Supports 4MB virtual memory pages and the dirty flag.
+        </span>[ <span class="number">3</span>] <span class="kw">pub </span>page_size_extension,
+        <span class="doccomment">/// `TSC`: Supports reading the processor&#39;s timestamp with `RDTSC`.
+        </span>[ <span class="number">4</span>] <span class="kw">pub </span>time_stamp_counter,
+        <span class="doccomment">/// `MSR`: Has model-specific registers which can be accessed with
+        /// `RDMSR`/`WRMSR`.
+        </span>[ <span class="number">5</span>] <span class="kw">pub </span>model_registers,
+        <span class="doccomment">/// `PAE`: Supports mapping virtual memory to physical addresses longer than 32
+        /// bits.
+        </span>[ <span class="number">6</span>] <span class="kw">pub </span>physical_address_extension,
+        <span class="doccomment">/// `MCE`: Defines an exception (18) for reporting internal processor errors.
+        </span>[ <span class="number">7</span>] <span class="kw">pub </span>machine_check_exception,
+        <span class="doccomment">/// `CX8`: Supports the 64-byte `CMPXCHG8B` atomic instruction.
+        </span>[ <span class="number">8</span>] <span class="kw">pub </span>compare_exchange_64bit,
+        <span class="doccomment">/// `APIC`: The processor has a built-in advanced programmable interrupt
+        /// controller (APIC).
+        </span>[ <span class="number">9</span>] <span class="kw">pub </span>on_chip_apic,
+        <span class="doccomment">/// `SEP`: Supports the `SYSENTER`/`SYSEXIT` instructions.
+        </span>[<span class="number">11</span>] <span class="kw">pub </span>sysenter,
+        <span class="doccomment">/// `MTRR`: Has memory type range registers.
+        </span>[<span class="number">12</span>] <span class="kw">pub </span>memory_type_range_registers,
+        <span class="doccomment">/// `PGE`: Supports global pages, which are available in all task contexts
+        </span>[<span class="number">13</span>] <span class="kw">pub </span>global_pages,
+        <span class="doccomment">/// `MCA`: Supports extended features for reporting internal processor errors.
+        </span>[<span class="number">14</span>] <span class="kw">pub </span>machine_check_architecture,
+        <span class="doccomment">/// `CMOV`: Supports the `CMOV` instruction and `FCMOV`/`FCOMI` if FPU is present.
+        </span>[<span class="number">15</span>] <span class="kw">pub </span>conditional_move,
+        <span class="doccomment">/// `PAT`: Supports page attribute tables.
+        </span>[<span class="number">16</span>] <span class="kw">pub </span>page_attribute_table,
+        <span class="doccomment">/// `PSE-36`: Supports 4MB virtual memory pages that can map to physical addresses
+        /// longer than 32 bits.
+        </span>[<span class="number">17</span>] <span class="kw">pub </span>page_size_extension_36bit,
+        <span class="doccomment">/// `PSN`: Supports retrieving a processor serial number with the CPUID
+        /// instruction.
+        </span>[<span class="number">18</span>] <span class="kw">pub </span>serial_number,
+        <span class="doccomment">/// `CLFSH`: Supports flushing a cache line with the `CLFLUSH` instruction.
+        </span>[<span class="number">19</span>] <span class="kw">pub </span>cache_line_flush,
+        <span class="doccomment">/// `DS`: Supports writing debug information to memory.
+        </span>[<span class="number">21</span>] <span class="kw">pub </span>debug_store,
+        <span class="doccomment">/// `ACPI`: Supports thermal monitoring and power management with software.
+        </span>[<span class="number">22</span>] <span class="kw">pub </span>thermal_power_management,
+        <span class="doccomment">/// `MMX`: Supports MMX instructions.
+        </span>[<span class="number">23</span>] <span class="kw">pub </span>mmx,
+        <span class="doccomment">/// `FXSAVE`: Supports managing FPU state with `FXSAVE`/`FXRSTOR`.
+        </span>[<span class="number">24</span>] <span class="kw">pub </span>fpu_save,
+        <span class="doccomment">/// `SSE`: Supports SSE instructions.
+        </span>[<span class="number">25</span>] <span class="kw">pub </span>sse,
+        <span class="doccomment">/// `SSE2`: Supports SSE2 instructions.
+        </span>[<span class="number">26</span>] <span class="kw">pub </span>sse_2,
+        <span class="doccomment">/// The processor can snoop on its own cache line. This helps deal with certain
+        /// memory issues.
+        </span>[<span class="number">27</span>] <span class="kw">pub </span>self_snoop,
+        <span class="doccomment">/// `HTT`: Indicates that the number of reserved APIC IDs is available with the
+        /// CPUID instruction. If clear, only one ID is reserved.
+        </span>[<span class="number">28</span>] <span class="kw">pub </span>max_apic_id_field,
+        <span class="doccomment">/// `TM`: Has thermal monitor control circuitry (TCC).
+        </span>[<span class="number">29</span>] <span class="kw">pub </span>thermal_monitor,
+        <span class="doccomment">/// `PBE`: Supports a pin notifying a stopped processor that an interrupt is
+        /// pending.
+        </span>[<span class="number">31</span>] <span class="kw">pub </span>pending_break_enable,
 
 
-        <span class="comment">// Bits 32..64 from ECX</span>
+        <span class="comment">// Bits 32..64 from ECX
 
-        <span class="doccomment">/// `SSE3`: Supports SSE3 instructions.</span>
-        [<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">sse_3</span>,
-        <span class="doccomment">/// Supports carry-less multiplication of two 64-bit integers using the</span>
-        <span class="doccomment">/// `PCLMULQDQ` instruction.</span>
-        [<span class="number">33</span>] <span class="kw">pub</span> <span class="ident">carryless_multiply_64bit</span>,
-        <span class="doccomment">/// `DTES64`: Supports 64-bit addresses for the debug store.</span>
-        [<span class="number">34</span>] <span class="kw">pub</span> <span class="ident">debug_store_64bit</span>,
-        <span class="doccomment">/// `MONITOR`: Supports the `MONITOR`/`MWAIT` instructions.</span>
-        [<span class="number">35</span>] <span class="kw">pub</span> <span class="ident">monitor</span>,
-        <span class="doccomment">/// `DS-CPL`: Supports saving the permission level with data written to the debug</span>
-        <span class="doccomment">/// store.</span>
-        [<span class="number">36</span>] <span class="kw">pub</span> <span class="ident">permission_qualified_debug_store</span>,
-        <span class="doccomment">/// `VMX`: Supports virtual machine extensions.</span>
-        [<span class="number">37</span>] <span class="kw">pub</span> <span class="ident">virtual_machine_extensions</span>,
-        <span class="doccomment">/// `SMX`: Supports safer-mode extensions</span>
-        [<span class="number">38</span>] <span class="kw">pub</span> <span class="ident">safer_mode_extensions</span>,
-        <span class="doccomment">/// `EIST`: Supports enhanced SpeedStep throttling.</span>
-        [<span class="number">39</span>] <span class="kw">pub</span> <span class="ident">enhanced_speedstep</span>,
-        <span class="doccomment">/// Supports the TM2 thermal monitor interface.</span>
-        [<span class="number">40</span>] <span class="kw">pub</span> <span class="ident">thermal_monitor_2</span>,
-        <span class="doccomment">/// `SSSE3`: Supports Supplemental SSE3 (SSSE3) instructions.</span>
-        [<span class="number">41</span>] <span class="kw">pub</span> <span class="ident">supplemental_sse_3</span>,
-        <span class="doccomment">/// `CNXT-ID`: Supports setting the L1 cache to adaptive or shared mode.</span>
-        [<span class="number">42</span>] <span class="kw">pub</span> <span class="ident">l1_context_id</span>,
-        <span class="doccomment">/// `SDBG`: Supports an MSR for chip debugging.</span>
-        [<span class="number">43</span>] <span class="kw">pub</span> <span class="ident">debug_interface_model_register</span>,
-        <span class="doccomment">/// `FMA`: Supports fused multiply-add SSE instructions.</span>
-        [<span class="number">44</span>] <span class="kw">pub</span> <span class="ident">fused_multiply_add</span>,
-        <span class="doccomment">/// `CMPXCHG16B`: Supports the 128-bit `CMPXCHG16B` atomic instruction.</span>
-        [<span class="number">45</span>] <span class="kw">pub</span> <span class="ident">compare_exchange_128bit</span>,
-        <span class="doccomment">/// Supports disabling xTPR task priority messages to the chipset through</span>
-        <span class="doccomment">/// `IA32_MISC_ENABLE[23]`.</span>
-        [<span class="number">46</span>] <span class="kw">pub</span> <span class="ident">chipset_task_priority_control</span>,
-        <span class="doccomment">/// `PDCM`: Supports a model-specific register that lists performance-monitoring</span>
-        <span class="doccomment">/// and debug features.</span>
-        [<span class="number">47</span>] <span class="kw">pub</span> <span class="ident">monitor_debug_capabilities_register</span>,
-        <span class="doccomment">/// `PCID`: Supports process-context IDs.</span>
-        [<span class="number">49</span>] <span class="kw">pub</span> <span class="ident">process_context_ids</span>,
-        <span class="doccomment">/// `DCA`: Supports prefetching memory-mapped data from a device.</span>
-        [<span class="number">50</span>] <span class="kw">pub</span> <span class="ident">memory_mapped_prefetch</span>,
-        <span class="doccomment">/// `SSE4_1`: Supports SSE4.1 instructions.</span>
-        [<span class="number">51</span>] <span class="kw">pub</span> <span class="ident">sse_4_1</span>,
-        <span class="doccomment">/// `SSE4_2`: Supports SSE4.2 instructions.</span>
-        [<span class="number">52</span>] <span class="kw">pub</span> <span class="ident">sse_4_2</span>,
-        <span class="doccomment">/// `x2APIC`: Supports the enhanced &quot;x2&quot; interface for the APIC.</span>
-        [<span class="number">53</span>] <span class="kw">pub</span> <span class="ident">apic_x2</span>,
-        <span class="doccomment">/// Supports byte swapping with the `MOVBE` instruction.</span>
-        [<span class="number">54</span>] <span class="kw">pub</span> <span class="ident">byte_swap_move</span>,
-        <span class="doccomment">/// Supports counting the set bits in a value with the `POPCNT` instruction.</span>
-        [<span class="number">55</span>] <span class="kw">pub</span> <span class="ident">count_bits</span>,
-        <span class="doccomment">/// `TSC-Deadline`: Supports one-shot interrupts with the APIC using the timestamp</span>
-        <span class="doccomment">/// counter.</span>
-        [<span class="number">56</span>] <span class="kw">pub</span> <span class="ident">apic_timestamp_deadline</span>,
-        <span class="doccomment">/// `AESNI`: Supports AES acceleration instructions.</span>
-        [<span class="number">57</span>] <span class="kw">pub</span> <span class="ident">aes</span>,
-        <span class="doccomment">/// `XSAVE`: Supports instructions for saving and restoring extended processor</span>
-        <span class="doccomment">/// state (FPU/MMX/SSE/AVX).</span>
-        [<span class="number">58</span>] <span class="kw">pub</span> <span class="ident">extended_state_save</span>,
-        <span class="doccomment">/// `OSXSAVE`: Reflects the value of [`ControlRegister4::extended_state_save`],</span>
-        <span class="doccomment">/// indicating that the OS has enabled the `XSAVE` feature.</span>
-        [<span class="number">59</span>] <span class="kw">pub</span> <span class="ident">extended_state_save_enabled</span>,
-        <span class="doccomment">/// `AVX`: Supports AVX instructions.</span>
-        [<span class="number">60</span>] <span class="kw">pub</span> <span class="ident">avx</span>,
-        <span class="doccomment">/// `F16C`: Supports conversion instructions for 16-bit floats.</span>
-        [<span class="number">61</span>] <span class="kw">pub</span> <span class="ident">float_16_conversion</span>,
-        <span class="doccomment">/// Supports random number generation with the `RDRAND` instruction.</span>
-        [<span class="number">62</span>] <span class="kw">pub</span> <span class="ident">random</span>,
+        </span><span class="doccomment">/// `SSE3`: Supports SSE3 instructions.
+        </span>[<span class="number">32</span>] <span class="kw">pub </span>sse_3,
+        <span class="doccomment">/// Supports carry-less multiplication of two 64-bit integers using the
+        /// `PCLMULQDQ` instruction.
+        </span>[<span class="number">33</span>] <span class="kw">pub </span>carryless_multiply_64bit,
+        <span class="doccomment">/// `DTES64`: Supports 64-bit addresses for the debug store.
+        </span>[<span class="number">34</span>] <span class="kw">pub </span>debug_store_64bit,
+        <span class="doccomment">/// `MONITOR`: Supports the `MONITOR`/`MWAIT` instructions.
+        </span>[<span class="number">35</span>] <span class="kw">pub </span>monitor,
+        <span class="doccomment">/// `DS-CPL`: Supports saving the permission level with data written to the debug
+        /// store.
+        </span>[<span class="number">36</span>] <span class="kw">pub </span>permission_qualified_debug_store,
+        <span class="doccomment">/// `VMX`: Supports virtual machine extensions.
+        </span>[<span class="number">37</span>] <span class="kw">pub </span>virtual_machine_extensions,
+        <span class="doccomment">/// `SMX`: Supports safer-mode extensions
+        </span>[<span class="number">38</span>] <span class="kw">pub </span>safer_mode_extensions,
+        <span class="doccomment">/// `EIST`: Supports enhanced SpeedStep throttling.
+        </span>[<span class="number">39</span>] <span class="kw">pub </span>enhanced_speedstep,
+        <span class="doccomment">/// Supports the TM2 thermal monitor interface.
+        </span>[<span class="number">40</span>] <span class="kw">pub </span>thermal_monitor_2,
+        <span class="doccomment">/// `SSSE3`: Supports Supplemental SSE3 (SSSE3) instructions.
+        </span>[<span class="number">41</span>] <span class="kw">pub </span>supplemental_sse_3,
+        <span class="doccomment">/// `CNXT-ID`: Supports setting the L1 cache to adaptive or shared mode.
+        </span>[<span class="number">42</span>] <span class="kw">pub </span>l1_context_id,
+        <span class="doccomment">/// `SDBG`: Supports an MSR for chip debugging.
+        </span>[<span class="number">43</span>] <span class="kw">pub </span>debug_interface_model_register,
+        <span class="doccomment">/// `FMA`: Supports fused multiply-add SSE instructions.
+        </span>[<span class="number">44</span>] <span class="kw">pub </span>fused_multiply_add,
+        <span class="doccomment">/// `CMPXCHG16B`: Supports the 128-bit `CMPXCHG16B` atomic instruction.
+        </span>[<span class="number">45</span>] <span class="kw">pub </span>compare_exchange_128bit,
+        <span class="doccomment">/// Supports disabling xTPR task priority messages to the chipset through
+        /// `IA32_MISC_ENABLE[23]`.
+        </span>[<span class="number">46</span>] <span class="kw">pub </span>chipset_task_priority_control,
+        <span class="doccomment">/// `PDCM`: Supports a model-specific register that lists performance-monitoring
+        /// and debug features.
+        </span>[<span class="number">47</span>] <span class="kw">pub </span>monitor_debug_capabilities_register,
+        <span class="doccomment">/// `PCID`: Supports process-context IDs.
+        </span>[<span class="number">49</span>] <span class="kw">pub </span>process_context_ids,
+        <span class="doccomment">/// `DCA`: Supports prefetching memory-mapped data from a device.
+        </span>[<span class="number">50</span>] <span class="kw">pub </span>memory_mapped_prefetch,
+        <span class="doccomment">/// `SSE4_1`: Supports SSE4.1 instructions.
+        </span>[<span class="number">51</span>] <span class="kw">pub </span>sse_4_1,
+        <span class="doccomment">/// `SSE4_2`: Supports SSE4.2 instructions.
+        </span>[<span class="number">52</span>] <span class="kw">pub </span>sse_4_2,
+        <span class="doccomment">/// `x2APIC`: Supports the enhanced &quot;x2&quot; interface for the APIC.
+        </span>[<span class="number">53</span>] <span class="kw">pub </span>apic_x2,
+        <span class="doccomment">/// Supports byte swapping with the `MOVBE` instruction.
+        </span>[<span class="number">54</span>] <span class="kw">pub </span>byte_swap_move,
+        <span class="doccomment">/// Supports counting the set bits in a value with the `POPCNT` instruction.
+        </span>[<span class="number">55</span>] <span class="kw">pub </span>count_bits,
+        <span class="doccomment">/// `TSC-Deadline`: Supports one-shot interrupts with the APIC using the timestamp
+        /// counter.
+        </span>[<span class="number">56</span>] <span class="kw">pub </span>apic_timestamp_deadline,
+        <span class="doccomment">/// `AESNI`: Supports AES acceleration instructions.
+        </span>[<span class="number">57</span>] <span class="kw">pub </span>aes,
+        <span class="doccomment">/// `XSAVE`: Supports instructions for saving and restoring extended processor
+        /// state (FPU/MMX/SSE/AVX).
+        </span>[<span class="number">58</span>] <span class="kw">pub </span>extended_state_save,
+        <span class="doccomment">/// `OSXSAVE`: Reflects the value of [`ControlRegister4::extended_state_save`],
+        /// indicating that the OS has enabled the `XSAVE` feature.
+        </span>[<span class="number">59</span>] <span class="kw">pub </span>extended_state_save_enabled,
+        <span class="doccomment">/// `AVX`: Supports AVX instructions.
+        </span>[<span class="number">60</span>] <span class="kw">pub </span>avx,
+        <span class="doccomment">/// `F16C`: Supports conversion instructions for 16-bit floats.
+        </span>[<span class="number">61</span>] <span class="kw">pub </span>float_16_conversion,
+        <span class="doccomment">/// Supports random number generation with the `RDRAND` instruction.
+        </span>[<span class="number">62</span>] <span class="kw">pub </span>random,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">BasicFeatures</span> {
-    <span class="doccomment">/// Retrieve the feature list from the processor using the CPUID instruction.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">result</span> = <span class="ident">cpuid</span>(<span class="number">1</span>, <span class="number">0</span>);
-        <span class="comment">// Put ECX (result[2]) in high DWord, EDX (result[3]) in low. The features in EDX</span>
-        <span class="comment">// are older and more basic, so it makes sense to start the bit numbering with</span>
-        <span class="comment">// those.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> = <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="ident">features</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
-        <span class="ident">features</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">result</span>[<span class="number">2</span>]) &lt;&lt; <span class="number">32</span>;
-        <span class="ident">features</span>
-    }
-}
-
-
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Features applicable to 64-bit processors, returned in `CPUID.80000000H:ECX+EDX`.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExtendedFeatures</span>(<span class="ident">u64</span>) {
-        <span class="comment">// Bits 0..32 from EDX</span>
-
-        <span class="doccomment">/// Supports `SYSCALL`/`SYSRET` instructions. Always false if the processor is not</span>
-        <span class="doccomment">/// in 64-bit mode.</span>
-        [<span class="number">11</span>] <span class="ident">syscall</span>,
-        <span class="doccomment">/// Supports no-execute (NX) bit in virtual memory pages.</span>
-        [<span class="number">20</span>] <span class="ident">no_execute_bit</span>,
-        <span class="doccomment">/// Supports 1GB pages.</span>
-        [<span class="number">26</span>] <span class="ident">page_size_1gb</span>,
-        <span class="doccomment">/// Supports reading the processor ID along with the timestamp counter using the</span>
-        <span class="doccomment">/// `RDTSCP` instruction.</span>
-        [<span class="number">27</span>] <span class="ident">timestamp_with_processor</span>,
-        <span class="doccomment">/// Supports 64-bit mode.</span>
-        [<span class="number">29</span>] <span class="ident">long_mode</span>,
-
-
-        <span class="comment">// Bits 32..64 from ECX</span>
-
-        <span class="doccomment">/// Supports the `LAHF` instruction in 64-bit mode.</span>
-        [<span class="number">32</span>] <span class="ident">long_mode_ah_flags</span>,
-        <span class="doccomment">/// Supports counting leading zero bits with the `LZCNT` instruction.</span>
-        [<span class="number">37</span>] <span class="ident">count_leading_zeros</span>,
-        <span class="doccomment">/// Supports hinting pending writes with the `PREFETCHW` instruction.</span>
-        [<span class="number">40</span>] <span class="ident">prefetch_for_write</span>,
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ExtendedFeatures</span> {
-    <span class="doccomment">/// Retrieve the extended feature list from the processor using the CPUID instruction.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">result</span> = <span class="ident">cpuid</span>(<span class="number">0x8000_0001</span>, <span class="number">0</span>);
-        <span class="comment">// Same ordering rationale as with Features</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> = <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="ident">features</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">result</span>[<span class="number">3</span>]);
-        <span class="ident">features</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">result</span>[<span class="number">2</span>]) &lt;&lt; <span class="number">32</span>;
-        <span class="ident">features</span>
+<span class="kw">impl </span>BasicFeatures {
+    <span class="doccomment">/// Retrieve the feature list from the processor using the CPUID instruction.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>result = cpuid(<span class="number">1</span>, <span class="number">0</span>);
+        <span class="comment">// Put ECX (result[2]) in high DWord, EDX (result[3]) in low. The features in EDX
+        // are older and more basic, so it makes sense to start the bit numbering with
+        // those.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>features = <span class="self">Self</span>(<span class="number">0</span>);
+        features.<span class="number">0 </span>|= u64::from(result[<span class="number">3</span>]);
+        features.<span class="number">0 </span>|= u64::from(result[<span class="number">2</span>]) &lt;&lt; <span class="number">32</span>;
+        features
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Indicates the processor&#39;s maximum supported physical and virtual address sizes.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AddressSpaceSizes</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Maximum number of bits supported in physical addresses.</span>
-        [ <span class="number">0</span>.. <span class="number">8</span>] <span class="ident">physical_address_bits</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Maximum number of bits supported in virtual (linear) addresses.</span>
-        [ <span class="number">8</span>..<span class="number">16</span>] <span class="ident">virtual_address_bits</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Features applicable to 64-bit processors, returned in `CPUID.80000000H:ECX+EDX`.
+    </span><span class="kw">pub struct </span>ExtendedFeatures(u64) {
+        <span class="comment">// Bits 0..32 from EDX
+
+        </span><span class="doccomment">/// Supports `SYSCALL`/`SYSRET` instructions. Always false if the processor is not
+        /// in 64-bit mode.
+        </span>[<span class="number">11</span>] syscall,
+        <span class="doccomment">/// Supports no-execute (NX) bit in virtual memory pages.
+        </span>[<span class="number">20</span>] no_execute_bit,
+        <span class="doccomment">/// Supports 1GB pages.
+        </span>[<span class="number">26</span>] page_size_1gb,
+        <span class="doccomment">/// Supports reading the processor ID along with the timestamp counter using the
+        /// `RDTSCP` instruction.
+        </span>[<span class="number">27</span>] timestamp_with_processor,
+        <span class="doccomment">/// Supports 64-bit mode.
+        </span>[<span class="number">29</span>] long_mode,
+
+
+        <span class="comment">// Bits 32..64 from ECX
+
+        </span><span class="doccomment">/// Supports the `LAHF` instruction in 64-bit mode.
+        </span>[<span class="number">32</span>] long_mode_ah_flags,
+        <span class="doccomment">/// Supports counting leading zero bits with the `LZCNT` instruction.
+        </span>[<span class="number">37</span>] count_leading_zeros,
+        <span class="doccomment">/// Supports hinting pending writes with the `PREFETCHW` instruction.
+        </span>[<span class="number">40</span>] prefetch_for_write,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AddressSpaceSizes</span> {
-    <span class="doccomment">/// Retrieve the supported address space sizes from the processor using the CPUID</span>
-    <span class="doccomment">/// instruction.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">index</span> = <span class="number">0x8000_0008</span>;
-        <span class="kw">if</span> <span class="ident">index</span> &lt;= <span class="ident">max_cpuid_index_extended</span>() {
-            <span class="self">Self</span>(<span class="ident">cpuid</span>(<span class="ident">index</span>, <span class="number">0</span>)[<span class="number">0</span>])
-        } <span class="kw">else</span> {
-            <span class="comment">// Assume 32 bits for both</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> = <span class="ident"><span class="self">Self</span>::default</span>();
-            <span class="ident">result</span>.<span class="ident">set_physical_address_bits</span>(<span class="number">32</span>);
-            <span class="ident">result</span>.<span class="ident">set_virtual_address_bits</span>(<span class="number">32</span>);
-            <span class="ident">result</span>
+<span class="kw">impl </span>ExtendedFeatures {
+    <span class="doccomment">/// Retrieve the extended feature list from the processor using the CPUID instruction.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>result = cpuid(<span class="number">0x8000_0001</span>, <span class="number">0</span>);
+        <span class="comment">// Same ordering rationale as with Features
+        </span><span class="kw">let </span><span class="kw-2">mut </span>features = <span class="self">Self</span>(<span class="number">0</span>);
+        features.<span class="number">0 </span>|= u64::from(result[<span class="number">3</span>]);
+        features.<span class="number">0 </span>|= u64::from(result[<span class="number">2</span>]) &lt;&lt; <span class="number">32</span>;
+        features
+    }
+}
+
+
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Indicates the processor&#39;s maximum supported physical and virtual address sizes.
+    </span><span class="kw">pub struct </span>AddressSpaceSizes(u32) {
+        <span class="doccomment">/// Maximum number of bits supported in physical addresses.
+        </span>[ <span class="number">0</span>.. <span class="number">8</span>] physical_address_bits: u8,
+        <span class="doccomment">/// Maximum number of bits supported in virtual (linear) addresses.
+        </span>[ <span class="number">8</span>..<span class="number">16</span>] virtual_address_bits: u8,
+    }
+}
+
+<span class="kw">impl </span>AddressSpaceSizes {
+    <span class="doccomment">/// Retrieve the supported address space sizes from the processor using the CPUID
+    /// instruction.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>index = <span class="number">0x8000_0008</span>;
+        <span class="kw">if </span>index &lt;= max_cpuid_index_extended() {
+            <span class="self">Self</span>(cpuid(index, <span class="number">0</span>)[<span class="number">0</span>])
+        } <span class="kw">else </span>{
+            <span class="comment">// Assume 32 bits for both
+            </span><span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::default();
+            result.set_physical_address_bits(<span class="number">32</span>);
+            result.set_virtual_address_bits(<span class="number">32</span>);
+            result
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

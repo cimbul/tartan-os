@@ -501,508 +501,508 @@
 <span id="501">501</span>
 <span id="502">502</span>
 <span id="503">503</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives common to 32-bit and 64-bit x86 processors.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives common to 32-bit and 64-bit x86 processors.
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+</span><span class="kw">use </span>core::arch::asm;
+<span class="kw">use </span>tartan_bitfield::bitfield;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident">features::BasicFeatures</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">doc</span>)]</span>
-<span class="kw">use</span> <span class="ident">protection::IOPermissionBitmap</span>;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span>features::BasicFeatures;
+<span class="attribute">#[cfg(doc)]
+</span><span class="kw">use </span>protection::IOPermissionBitmap;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">features</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">interrupt</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">paging</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">protection</span>;
+<span class="kw">pub mod </span>features;
+<span class="kw">pub mod </span>interrupt;
+<span class="kw">pub mod </span>io;
+<span class="kw">pub mod </span>paging;
+<span class="kw">pub mod </span>protection;
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `EFLAGS`/`RFLAGS`: General flags, including control, status, and basic system</span>
-    <span class="doccomment">/// flags.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to work</span>
-    <span class="doccomment">/// with the actual register.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FlagRegister</span>(<span class="ident">usize</span>) {
-        <span class="doccomment">/// `CF`: Indicates an arithmetic instruction generated a carry/borrow (unsigned</span>
-        <span class="doccomment">/// overflow).</span>
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">carry</span>,
-        <span class="doccomment">/// `PF`: Indicates that the least-significant byte of the result has *even*</span>
-        <span class="doccomment">/// parity.</span>
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">parity</span>,
-        <span class="doccomment">/// `AF`: Indicates a carry/borrow/overflow out of bit 3 in binary-coded decimal</span>
-        <span class="doccomment">/// (BCD) arithmetic.</span>
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">aux_carry</span>,
-        <span class="doccomment">/// `ZF`: Indicates that the result of an instruction is zero.</span>
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">zero</span>,
-        <span class="doccomment">/// `SF`: Indicates that the most-significant bit of a result is 1.</span>
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">sign</span>,
-        <span class="doccomment">/// `TF`: Enable single-step debugging.</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">trap</span>,
-        <span class="doccomment">/// `IF`: Enable non-maskable interrupts. Non-maskable interrupts are always</span>
-        <span class="doccomment">/// enabled.</span>
-        [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">interrupt_enabled</span>,
-        <span class="doccomment">/// `DF`: String instructions work on addresses high-to-low when set, low-to-high</span>
-        <span class="doccomment">/// when clear.</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">direction</span>,
-        <span class="doccomment">/// `OF`: Indicates that the result overflowed for signed arithmetic (carry/borrow</span>
-        <span class="doccomment">/// for the second-most-significant bit).</span>
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">signed_overflow</span>,
-        <span class="doccomment">/// `IOPL`: Sets the privilege threshold for a task to access I/O address space.</span>
-        <span class="doccomment">/// Smaller numbers are higher privilege.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Individual I/O ports may still be accessible at lower privilege levels</span>
-        <span class="doccomment">/// (greater numeric values) if allowed by [`IOPermissionBitmap`] for the current</span>
-        <span class="doccomment">/// task.</span>
-        [<span class="number">12</span>..<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">io_privilege_level</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// `NT`: Indicates that the processor should switch back to a parent task when it</span>
-        <span class="doccomment">/// executes an `IRET` instruction.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Only supported in 32-bit mode. If this is set in 64-bit mode, `IRET` will</span>
-        <span class="doccomment">/// trigger an exception.</span>
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">nested_task</span>,
-        <span class="doccomment">/// `RF`: Disable instruction breakpoints.</span>
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">resume</span>,
-        <span class="doccomment">/// `VM`: Enable virtual real mode.</span>
-        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">virtual_8086_mode</span>,
-        <span class="doccomment">/// `AC`: Enable strict alignment checks for memory accesses in privilege level 3.</span>
-        <span class="doccomment">/// In privilege levels 0–2, allow access to pages assigned to lower privilege</span>
-        <span class="doccomment">/// levels.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Alignment checking requires [`ControlRegister0::alignment_check_mask`]. Access</span>
-        <span class="doccomment">/// protection requires [`ControlRegister4::supervisor_access_prevention`].</span>
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">alignment_check_or_access_control</span>,
-        <span class="doccomment">/// `VIF`: Virtual counterpart to the `interrupt_enabled` flag, used with</span>
-        <span class="doccomment">/// [VME](ControlRegister4::virtual_8086_extensions) or</span>
-        <span class="doccomment">/// [PVI](ControlRegister4::protected_virtual_interrupts).</span>
-        [<span class="number">19</span>] <span class="kw">pub</span> <span class="ident">virtual_interrupt_enabled</span>,
-        <span class="doccomment">/// `VIP`: Indicates an interrupt is pending for</span>
-        <span class="doccomment">/// [VME](ControlRegister4::virtual_8086_extensions) or</span>
-        <span class="doccomment">/// [PVI](ControlRegister4::protected_virtual_interrupts).</span>
-        [<span class="number">20</span>] <span class="kw">pub</span> <span class="ident">virtual_interrupt_pending</span>,
-        <span class="doccomment">/// `ID`: Indicates `CPUID` support when the flag is modifiable.</span>
-        [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">identification</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `EFLAGS`/`RFLAGS`: General flags, including control, status, and basic system
+    /// flags.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to work
+    /// with the actual register.
+    </span><span class="kw">pub struct </span>FlagRegister(usize) {
+        <span class="doccomment">/// `CF`: Indicates an arithmetic instruction generated a carry/borrow (unsigned
+        /// overflow).
+        </span>[<span class="number">0</span>] <span class="kw">pub </span>carry,
+        <span class="doccomment">/// `PF`: Indicates that the least-significant byte of the result has *even*
+        /// parity.
+        </span>[<span class="number">2</span>] <span class="kw">pub </span>parity,
+        <span class="doccomment">/// `AF`: Indicates a carry/borrow/overflow out of bit 3 in binary-coded decimal
+        /// (BCD) arithmetic.
+        </span>[<span class="number">4</span>] <span class="kw">pub </span>aux_carry,
+        <span class="doccomment">/// `ZF`: Indicates that the result of an instruction is zero.
+        </span>[<span class="number">6</span>] <span class="kw">pub </span>zero,
+        <span class="doccomment">/// `SF`: Indicates that the most-significant bit of a result is 1.
+        </span>[<span class="number">7</span>] <span class="kw">pub </span>sign,
+        <span class="doccomment">/// `TF`: Enable single-step debugging.
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>trap,
+        <span class="doccomment">/// `IF`: Enable non-maskable interrupts. Non-maskable interrupts are always
+        /// enabled.
+        </span>[<span class="number">9</span>] <span class="kw">pub </span>interrupt_enabled,
+        <span class="doccomment">/// `DF`: String instructions work on addresses high-to-low when set, low-to-high
+        /// when clear.
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>direction,
+        <span class="doccomment">/// `OF`: Indicates that the result overflowed for signed arithmetic (carry/borrow
+        /// for the second-most-significant bit).
+        </span>[<span class="number">11</span>] <span class="kw">pub </span>signed_overflow,
+        <span class="doccomment">/// `IOPL`: Sets the privilege threshold for a task to access I/O address space.
+        /// Smaller numbers are higher privilege.
+        ///
+        /// Individual I/O ports may still be accessible at lower privilege levels
+        /// (greater numeric values) if allowed by [`IOPermissionBitmap`] for the current
+        /// task.
+        </span>[<span class="number">12</span>..<span class="number">14</span>] <span class="kw">pub </span>io_privilege_level: u8,
+        <span class="doccomment">/// `NT`: Indicates that the processor should switch back to a parent task when it
+        /// executes an `IRET` instruction.
+        ///
+        /// Only supported in 32-bit mode. If this is set in 64-bit mode, `IRET` will
+        /// trigger an exception.
+        </span>[<span class="number">14</span>] <span class="kw">pub </span>nested_task,
+        <span class="doccomment">/// `RF`: Disable instruction breakpoints.
+        </span>[<span class="number">16</span>] <span class="kw">pub </span>resume,
+        <span class="doccomment">/// `VM`: Enable virtual real mode.
+        </span>[<span class="number">17</span>] <span class="kw">pub </span>virtual_8086_mode,
+        <span class="doccomment">/// `AC`: Enable strict alignment checks for memory accesses in privilege level 3.
+        /// In privilege levels 0–2, allow access to pages assigned to lower privilege
+        /// levels.
+        ///
+        /// Alignment checking requires [`ControlRegister0::alignment_check_mask`]. Access
+        /// protection requires [`ControlRegister4::supervisor_access_prevention`].
+        </span>[<span class="number">18</span>] <span class="kw">pub </span>alignment_check_or_access_control,
+        <span class="doccomment">/// `VIF`: Virtual counterpart to the `interrupt_enabled` flag, used with
+        /// [VME](ControlRegister4::virtual_8086_extensions) or
+        /// [PVI](ControlRegister4::protected_virtual_interrupts).
+        </span>[<span class="number">19</span>] <span class="kw">pub </span>virtual_interrupt_enabled,
+        <span class="doccomment">/// `VIP`: Indicates an interrupt is pending for
+        /// [VME](ControlRegister4::virtual_8086_extensions) or
+        /// [PVI](ControlRegister4::protected_virtual_interrupts).
+        </span>[<span class="number">20</span>] <span class="kw">pub </span>virtual_interrupt_pending,
+        <span class="doccomment">/// `ID`: Indicates `CPUID` support when the flag is modifiable.
+        </span>[<span class="number">21</span>] <span class="kw">pub </span>identification,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FlagRegister</span> {
-    <span class="doccomment">/// Retrieve the current value of the `EFLAGS` register.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="self">Self</span>(<span class="number">0</span>);
-        <span class="kw">unsafe</span> {
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-            <span class="macro">asm!</span>(
+<span class="kw">impl </span>FlagRegister {
+    <span class="doccomment">/// Retrieve the current value of the `EFLAGS` register.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>(<span class="number">0</span>);
+        <span class="kw">unsafe </span>{
+            <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+            </span><span class="macro">asm!</span>(
                 <span class="string">&quot;
                 pushfd
                 pop {0:e}
                 &quot;</span>,
-                <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                out(reg) value.<span class="number">0</span>,
             );
 
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-            <span class="macro">asm!</span>(
+            <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+            </span><span class="macro">asm!</span>(
                 <span class="string">&quot;
                 pushfq
                 pop {0:r}
                 &quot;</span>,
-                <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                out(reg) value.<span class="number">0</span>,
             );
         }
-        <span class="ident">value</span>
+        value
     }
 
-    <span class="doccomment">/// Update the `EFLAGS` register with the given value, as permission level allows.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Some flags will be unaffected depending on the processor mode and permission level</span>
-    <span class="doccomment">/// flags. See the reference for the POPF instruction in the _Intel 64 and IA-32</span>
-    <span class="doccomment">/// Architectures Software Developer&#39;s Manual_, volume 2.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// Altering certain system flags can have dramatic effects on the execution of this</span>
-    <span class="doccomment">/// and other programs, including memory safety. See volume 1 §3.4.3 (&quot;EFLAGS</span>
-    <span class="doccomment">/// Register&quot;) and volume 3 §2.3 (&quot;System Flags and Fields in the EFLAGS Register&quot;) of</span>
-    <span class="doccomment">/// the _Intel 64 and IA-32 Architectures Software Developer&#39;s Manual_.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-        <span class="macro">asm!</span>(
+    <span class="doccomment">/// Update the `EFLAGS` register with the given value, as permission level allows.
+    ///
+    /// Some flags will be unaffected depending on the processor mode and permission level
+    /// flags. See the reference for the POPF instruction in the _Intel 64 and IA-32
+    /// Architectures Software Developer&#39;s Manual_, volume 2.
+    ///
+    /// # Safety
+    /// Altering certain system flags can have dramatic effects on the execution of this
+    /// and other programs, including memory safety. See volume 1 §3.4.3 (&quot;EFLAGS
+    /// Register&quot;) and volume 3 §2.3 (&quot;System Flags and Fields in the EFLAGS Register&quot;) of
+    /// the _Intel 64 and IA-32 Architectures Software Developer&#39;s Manual_.
+    </span><span class="kw">pub unsafe fn </span>set(value: <span class="self">Self</span>) {
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        </span><span class="macro">asm!</span>(
             <span class="string">&quot;
             push {0:e}
             popfd
             &quot;</span>,
-            <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+            <span class="kw">in</span>(reg) value.<span class="number">0</span>,
         );
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-        <span class="macro">asm!</span>(
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        </span><span class="macro">asm!</span>(
             <span class="string">&quot;
             push {0:r}
             popfq
             &quot;</span>,
-            <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+            <span class="kw">in</span>(reg) value.<span class="number">0</span>,
         );
     }
 }
 
 
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="macro">macro_rules!</span> <span class="ident">simple_register_access</span> {
-    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>:<span class="ident">literal</span>] =&gt; {
-        <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {
-            <span class="doccomment">/// Retrieve the current value of this register</span>
-            <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="self">Self</span>(<span class="number">0</span>);
-                <span class="kw">unsafe</span> {
+<span class="attribute">#[macro_export]
+#[doc(hidden)]
+</span><span class="macro">macro_rules! </span>simple_register_access {
+    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$register</span>:literal] =&gt; {
+        <span class="kw">impl </span><span class="macro-nonterminal">$</span><span class="kw">struct </span>{
+            <span class="doccomment">/// Retrieve the current value of this register
+            </span><span class="kw">pub fn </span><span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>(<span class="number">0</span>);
+                <span class="kw">unsafe </span>{
                     <span class="macro">core::arch::asm!</span>(
-                        <span class="macro">concat!</span>(<span class="string">&quot;mov {0}, &quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>),
-                        <span class="ident">out</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                        <span class="macro">concat!</span>(<span class="string">&quot;mov {0}, &quot;</span>, <span class="macro-nonterminal">$register</span>),
+                        out(reg) value.<span class="number">0</span>,
                     );
                 }
-                <span class="ident">value</span>
+                value
             }
 
-            <span class="doccomment">/// Update the register to the given value.</span>
-            <span class="doccomment">///</span>
-            <span class="doccomment">/// # Safety</span>
-            <span class="doccomment">/// Altering certain system flags can have dramatic effects on the execution</span>
-            <span class="doccomment">/// of this and other programs, including memory safety.</span>
-            <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
+            <span class="doccomment">/// Update the register to the given value.
+            ///
+            /// # Safety
+            /// Altering certain system flags can have dramatic effects on the execution
+            /// of this and other programs, including memory safety.
+            </span><span class="kw">pub unsafe fn </span>set(value: <span class="self">Self</span>) {
                 <span class="macro">core::arch::asm!</span>(
-                    <span class="macro">concat!</span>(<span class="string">&quot;mov &quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">register</span>, <span class="string">&quot;, {0}&quot;</span>),
-                    <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">value</span>.<span class="number">0</span>,
+                    <span class="macro">concat!</span>(<span class="string">&quot;mov &quot;</span>, <span class="macro-nonterminal">$register</span>, <span class="string">&quot;, {0}&quot;</span>),
+                    <span class="kw">in</span>(reg) value.<span class="number">0</span>,
                 );
             }
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="macro">macro_rules!</span> <span class="ident">indexed_register_access</span> {
-    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>:<span class="ident">literal</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">read_instr</span>:<span class="ident">literal</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">write_instr</span>:<span class="ident">literal</span>] =&gt; {
-        <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="kw">struct</span> {
-            <span class="doccomment">/// Retrieve the current value of this register</span>
-            <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self</span> {
-                <span class="kw">let</span> <span class="ident">lower</span>: <span class="ident">u32</span>;
-                <span class="kw">let</span> <span class="ident">upper</span>: <span class="ident">u32</span>;
-                <span class="kw">unsafe</span> {
+<span class="attribute">#[macro_export]
+#[doc(hidden)]
+</span><span class="macro">macro_rules! </span>indexed_register_access {
+    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$index</span>:literal, <span class="macro-nonterminal">$read_instr</span>:literal, <span class="macro-nonterminal">$write_instr</span>:literal] =&gt; {
+        <span class="kw">impl </span><span class="macro-nonterminal">$</span><span class="kw">struct </span>{
+            <span class="doccomment">/// Retrieve the current value of this register
+            </span><span class="kw">pub fn </span><span class="macro-nonterminal">get</span>() -&gt; <span class="self">Self </span>{
+                <span class="kw">let </span>lower: u32;
+                <span class="kw">let </span>upper: u32;
+                <span class="kw">unsafe </span>{
                     <span class="macro">core::arch::asm!</span>(
-                        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">read_instr</span>,
-                        <span class="kw">in</span>(<span class="string">&quot;ecx&quot;</span>) <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>,
-                        <span class="ident">out</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">lower</span>,
-                        <span class="ident">out</span>(<span class="string">&quot;edx&quot;</span>) <span class="ident">upper</span>,
+                        <span class="macro-nonterminal">$read_instr</span>,
+                        <span class="kw">in</span>(<span class="string">&quot;ecx&quot;</span>) <span class="macro-nonterminal">$index</span>,
+                        out(<span class="string">&quot;eax&quot;</span>) lower,
+                        out(<span class="string">&quot;edx&quot;</span>) upper,
                     );
                 }
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> = <span class="self">Self</span>(<span class="number">0</span>);
-                <span class="ident">value</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">lower</span>);
-                <span class="ident">value</span>.<span class="number">0</span> |= <span class="ident">u64::from</span>(<span class="ident">upper</span>) &lt;&lt; <span class="number">32</span>;
-                <span class="ident">value</span>
+                <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">Self</span>(<span class="number">0</span>);
+                value.<span class="number">0 </span>|= u64::from(lower);
+                value.<span class="number">0 </span>|= u64::from(upper) &lt;&lt; <span class="number">32</span>;
+                value
             }
 
-            <span class="doccomment">/// Update the register to the given value.</span>
-            <span class="doccomment">///</span>
-            <span class="doccomment">/// # Safety</span>
-            <span class="doccomment">/// Altering certain system flags can have dramatic effects on the execution</span>
-            <span class="doccomment">/// of this and other programs, including memory safety.</span>
-            <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="self">Self</span>) {
-                <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-                <span class="kw">let</span> <span class="ident">lower</span> = <span class="ident">value</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u32</span>;
-                <span class="kw">let</span> <span class="ident">upper</span> = (<span class="ident">value</span>.<span class="number">0</span> &gt;&gt; <span class="number">32</span>) <span class="kw">as</span> <span class="ident">u32</span>;
+            <span class="doccomment">/// Update the register to the given value.
+            ///
+            /// # Safety
+            /// Altering certain system flags can have dramatic effects on the execution
+            /// of this and other programs, including memory safety.
+            </span><span class="kw">pub unsafe fn </span>set(value: <span class="self">Self</span>) {
+                <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+                </span><span class="kw">let </span>lower = value.<span class="number">0 </span><span class="kw">as </span>u32;
+                <span class="kw">let </span>upper = (value.<span class="number">0 </span>&gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32;
                 <span class="macro">core::arch::asm!</span>(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">write_instr</span>,
-                    <span class="kw">in</span>(<span class="string">&quot;ecx&quot;</span>) <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>,
-                    <span class="kw">in</span>(<span class="string">&quot;eax&quot;</span>) <span class="ident">lower</span>,
-                    <span class="kw">in</span>(<span class="string">&quot;edx&quot;</span>) <span class="ident">upper</span>,
+                    <span class="macro-nonterminal">$write_instr</span>,
+                    <span class="kw">in</span>(<span class="string">&quot;ecx&quot;</span>) <span class="macro-nonterminal">$index</span>,
+                    <span class="kw">in</span>(<span class="string">&quot;eax&quot;</span>) lower,
+                    <span class="kw">in</span>(<span class="string">&quot;edx&quot;</span>) upper,
                 );
             }
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="macro">macro_rules!</span> <span class="ident">extended_register_access</span> {
-    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>:<span class="ident">literal</span>] =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::indexed_register_access!</span>(<span class="macro-nonterminal">$</span><span class="kw">struct</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>, <span class="string">&quot;xgetbv&quot;</span>, <span class="string">&quot;xsetbv&quot;</span>);
+<span class="attribute">#[macro_export]
+#[doc(hidden)]
+</span><span class="macro">macro_rules! </span>extended_register_access {
+    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$index</span>:literal] =&gt; {
+        <span class="macro-nonterminal">$</span><span class="macro">crate::indexed_register_access!</span>(<span class="macro-nonterminal">$</span><span class="kw">struct</span>, <span class="macro-nonterminal">$index</span>, <span class="string">&quot;xgetbv&quot;</span>, <span class="string">&quot;xsetbv&quot;</span>);
     }
 }
 
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="macro">macro_rules!</span> <span class="ident">model_specific_register_access</span> {
-    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>:<span class="ident">literal</span>] =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::indexed_register_access!</span>(<span class="macro-nonterminal">$</span><span class="kw">struct</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">index</span>, <span class="string">&quot;rdmsr&quot;</span>, <span class="string">&quot;wrmsr&quot;</span>);
+<span class="attribute">#[macro_export]
+#[doc(hidden)]
+</span><span class="macro">macro_rules! </span>model_specific_register_access {
+    [<span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$index</span>:literal] =&gt; {
+        <span class="macro-nonterminal">$</span><span class="macro">crate::indexed_register_access!</span>(<span class="macro-nonterminal">$</span><span class="kw">struct</span>, <span class="macro-nonterminal">$index</span>, <span class="string">&quot;rdmsr&quot;</span>, <span class="string">&quot;wrmsr&quot;</span>);
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `CR0`: System control register with flags affecting protection, paging, and FPU</span>
-    <span class="doccomment">/// behavior.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to</span>
-    <span class="doccomment">/// work with the actual register.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlRegister0</span>(<span class="ident">usize</span>) {
-        <span class="doccomment">/// `CR0.PG`: Enable paging. Requires [`protected_mode`](Self::protected_mode).</span>
-        [<span class="number">31</span>] <span class="kw">pub</span> <span class="ident">paging</span>,
-        <span class="doccomment">/// `CR0.CD`: Disable all memory caching.</span>
-        [<span class="number">30</span>] <span class="kw">pub</span> <span class="ident">cache_disabled</span>,
-        <span class="doccomment">/// `CR0.NW`: Disable write-back/write-through caching.</span>
-        [<span class="number">29</span>] <span class="kw">pub</span> <span class="ident">cache_not_write_through</span>,
-        <span class="doccomment">/// `CR0.AM`: Enables strict alignment checks for memory access, in combination</span>
-        <span class="doccomment">/// with [`FlagRegister::alignment_check_or_access_control`].</span>
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">alignment_check_mask</span>,
-        <span class="doccomment">/// `CR0.WP`: Enforce read-only pages even in privilege levels 0–2. They are</span>
-        <span class="doccomment">/// always enforced in level 3.</span>
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">write_protect</span>,
-        <span class="doccomment">/// `CR0.NE`: Use internal error mechanism for FPU errors, rather than DOS-style.</span>
-        [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">native_fpu_error</span>,
-        <span class="doccomment">/// `CR0.ET`: On 386/486, 387 FPU instructions are supported if set. Always set</span>
-        <span class="doccomment">/// on modern processors.</span>
-        [ <span class="number">4</span>] <span class="kw">pub</span> <span class="ident">fpu_extension_type</span>,
-        <span class="doccomment">/// `CR0.TS`: Set by processor when task was switched but FPU context has not been</span>
-        <span class="doccomment">/// saved yet.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Used to save work when the new task does not alter the FPU state. When an FPU</span>
-        <span class="doccomment">/// instruction is executed with this flag set, the processor raises an exception</span>
-        <span class="doccomment">/// that allows the OS to save the FPU state. This behavior can be altered by</span>
-        <span class="doccomment">/// other flags. See [`monitor_fpu_state`](Self::monitor_fpu_state).</span>
-        [ <span class="number">3</span>] <span class="kw">pub</span> <span class="ident">task_switched_without_fpu_state</span>,
-        <span class="doccomment">/// `CR0.EM`: Trigger an exception on all FPU instructions. Used to support</span>
-        <span class="doccomment">/// software emulation.</span>
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">fpu_emulation</span>,
-        <span class="doccomment">/// `CR0.MP`: Enable exception behavior described for the `CR0.TS` flag for the</span>
-        <span class="doccomment">/// (`F`)`WAIT` instruction.</span>
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">monitor_fpu</span>,
-        <span class="doccomment">/// Enable protected mode. Does not enable paging on its own. See</span>
-        <span class="doccomment">/// [`paging`](Self::paging).</span>
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">protected_mode</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `CR0`: System control register with flags affecting protection, paging, and FPU
+    /// behavior.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to
+    /// work with the actual register.
+    </span><span class="kw">pub struct </span>ControlRegister0(usize) {
+        <span class="doccomment">/// `CR0.PG`: Enable paging. Requires [`protected_mode`](Self::protected_mode).
+        </span>[<span class="number">31</span>] <span class="kw">pub </span>paging,
+        <span class="doccomment">/// `CR0.CD`: Disable all memory caching.
+        </span>[<span class="number">30</span>] <span class="kw">pub </span>cache_disabled,
+        <span class="doccomment">/// `CR0.NW`: Disable write-back/write-through caching.
+        </span>[<span class="number">29</span>] <span class="kw">pub </span>cache_not_write_through,
+        <span class="doccomment">/// `CR0.AM`: Enables strict alignment checks for memory access, in combination
+        /// with [`FlagRegister::alignment_check_or_access_control`].
+        </span>[<span class="number">18</span>] <span class="kw">pub </span>alignment_check_mask,
+        <span class="doccomment">/// `CR0.WP`: Enforce read-only pages even in privilege levels 0–2. They are
+        /// always enforced in level 3.
+        </span>[<span class="number">16</span>] <span class="kw">pub </span>write_protect,
+        <span class="doccomment">/// `CR0.NE`: Use internal error mechanism for FPU errors, rather than DOS-style.
+        </span>[ <span class="number">5</span>] <span class="kw">pub </span>native_fpu_error,
+        <span class="doccomment">/// `CR0.ET`: On 386/486, 387 FPU instructions are supported if set. Always set
+        /// on modern processors.
+        </span>[ <span class="number">4</span>] <span class="kw">pub </span>fpu_extension_type,
+        <span class="doccomment">/// `CR0.TS`: Set by processor when task was switched but FPU context has not been
+        /// saved yet.
+        ///
+        /// Used to save work when the new task does not alter the FPU state. When an FPU
+        /// instruction is executed with this flag set, the processor raises an exception
+        /// that allows the OS to save the FPU state. This behavior can be altered by
+        /// other flags. See [`monitor_fpu_state`](Self::monitor_fpu_state).
+        </span>[ <span class="number">3</span>] <span class="kw">pub </span>task_switched_without_fpu_state,
+        <span class="doccomment">/// `CR0.EM`: Trigger an exception on all FPU instructions. Used to support
+        /// software emulation.
+        </span>[ <span class="number">2</span>] <span class="kw">pub </span>fpu_emulation,
+        <span class="doccomment">/// `CR0.MP`: Enable exception behavior described for the `CR0.TS` flag for the
+        /// (`F`)`WAIT` instruction.
+        </span>[ <span class="number">1</span>] <span class="kw">pub </span>monitor_fpu,
+        <span class="doccomment">/// Enable protected mode. Does not enable paging on its own. See
+        /// [`paging`](Self::paging).
+        </span>[ <span class="number">0</span>] <span class="kw">pub </span>protected_mode,
     }
 }
 
-<span class="macro">simple_register_access!</span>(<span class="ident">ControlRegister0</span>, <span class="string">&quot;cr0&quot;</span>);
+<span class="macro">simple_register_access!</span>(ControlRegister0, <span class="string">&quot;cr0&quot;</span>);
 
-<span class="kw">impl</span> <span class="ident">ControlRegister0</span> {
-    <span class="doccomment">/// Directly clear the</span>
-    <span class="doccomment">/// [`task_switched_without_fpu_state`](Self::task_switched_without_fpu_state) flag in</span>
-    <span class="doccomment">/// this register using a single instruction.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// Clearing this flag when inappropriate may clobber FPU state and potentially affect</span>
-    <span class="doccomment">/// memory safety.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">clear_task_switched_without_fpu_state</span>() {
+<span class="kw">impl </span>ControlRegister0 {
+    <span class="doccomment">/// Directly clear the
+    /// [`task_switched_without_fpu_state`](Self::task_switched_without_fpu_state) flag in
+    /// this register using a single instruction.
+    ///
+    /// # Safety
+    /// Clearing this flag when inappropriate may clobber FPU state and potentially affect
+    /// memory safety.
+    </span><span class="kw">pub unsafe fn </span>clear_task_switched_without_fpu_state() {
         <span class="macro">asm!</span>(<span class="string">&quot;clts&quot;</span>);
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `CR4`: Miscellaneous system control flags.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to</span>
-    <span class="doccomment">/// work with the actual register.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlRegister4</span>(<span class="ident">usize</span>) {
-        <span class="doccomment">/// `CR4.VME`: Enable interrupts and exception handling in [virtual</span>
-        <span class="doccomment">/// real-mode](EFLAGS::virtual_8086_mode).</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::virtual_8086_extensions`].</span>
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">virtual_8086_extensions</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `CR4`: Miscellaneous system control flags.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to
+    /// work with the actual register.
+    </span><span class="kw">pub struct </span>ControlRegister4(usize) {
+        <span class="doccomment">/// `CR4.VME`: Enable interrupts and exception handling in [virtual
+        /// real-mode](EFLAGS::virtual_8086_mode).
+        ///
+        /// Requires [`BasicFeatures::virtual_8086_extensions`].
+        </span>[<span class="number">0</span>] <span class="kw">pub </span>virtual_8086_extensions,
 
-        <span class="doccomment">/// `CR4.PVI`: Enable virtual interrupts in protected mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::virtual_8086_extensions`].</span>
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">protected_virtual_interrupts</span>,
+        <span class="doccomment">/// `CR4.PVI`: Enable virtual interrupts in protected mode.
+        ///
+        /// Requires [`BasicFeatures::virtual_8086_extensions`].
+        </span>[<span class="number">1</span>] <span class="kw">pub </span>protected_virtual_interrupts,
 
-        <span class="doccomment">/// `CR4.TSD`: Disable access to processor timestamp counter except in privilege</span>
-        <span class="doccomment">/// level 0.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::timestamp_counter`].</span>
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">timestamp_disabled</span>,
+        <span class="doccomment">/// `CR4.TSD`: Disable access to processor timestamp counter except in privilege
+        /// level 0.
+        ///
+        /// Requires [`BasicFeatures::timestamp_counter`].
+        </span>[<span class="number">2</span>] <span class="kw">pub </span>timestamp_disabled,
 
-        <span class="doccomment">/// `CR4.DE`: Enable newer debug register scheme where `DR4` and `DR5` are</span>
-        <span class="doccomment">/// unavailable.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// When this flag is clear, they are equivalent to `DR6` and `DR7`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::debugging_extensions`].</span>
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">debugging_extensions</span>,
+        <span class="doccomment">/// `CR4.DE`: Enable newer debug register scheme where `DR4` and `DR5` are
+        /// unavailable.
+        ///
+        /// When this flag is clear, they are equivalent to `DR6` and `DR7`.
+        ///
+        /// Requires [`BasicFeatures::debugging_extensions`].
+        </span>[<span class="number">3</span>] <span class="kw">pub </span>debugging_extensions,
 
-        <span class="doccomment">/// `CR4.PSE`: Support large pages (4MB). Applies to 32-bit mode only.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// When this flag is clear in 32-bit mode, pages are always 4KB. Large pages are</span>
-        <span class="doccomment">/// always enabled in 64-bit mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::page_size_extensions`].</span>
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">page_size_extensions</span>,
+        <span class="doccomment">/// `CR4.PSE`: Support large pages (4MB). Applies to 32-bit mode only.
+        ///
+        /// When this flag is clear in 32-bit mode, pages are always 4KB. Large pages are
+        /// always enabled in 64-bit mode.
+        ///
+        /// Requires [`BasicFeatures::page_size_extensions`].
+        </span>[<span class="number">4</span>] <span class="kw">pub </span>page_size_extensions,
 
-        <span class="doccomment">/// `CR4.PAE`: Enable pages to map to physical addresses larger than 32-bits.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Required for 64-bit mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::physical_address_extension`].</span>
-        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">physical_address_extension</span>,
+        <span class="doccomment">/// `CR4.PAE`: Enable pages to map to physical addresses larger than 32-bits.
+        ///
+        /// Required for 64-bit mode.
+        ///
+        /// Requires [`BasicFeatures::physical_address_extension`].
+        </span>[<span class="number">5</span>] <span class="kw">pub </span>physical_address_extension,
 
-        <span class="doccomment">/// `CR4.MCE`: Enable machine-check exception.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::machine_check_exception`].</span>
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">machine_check_exception</span>,
+        <span class="doccomment">/// `CR4.MCE`: Enable machine-check exception.
+        ///
+        /// Requires [`BasicFeatures::machine_check_exception`].
+        </span>[<span class="number">6</span>] <span class="kw">pub </span>machine_check_exception,
 
-        <span class="doccomment">/// `CR4.PGE`: Enable global pages, which are shared across task contexts.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::global_pages`].</span>
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">global_pages</span>,
+        <span class="doccomment">/// `CR4.PGE`: Enable global pages, which are shared across task contexts.
+        ///
+        /// Requires [`BasicFeatures::global_pages`].
+        </span>[<span class="number">7</span>] <span class="kw">pub </span>global_pages,
 
-        <span class="doccomment">/// `CR4.PCE`: Allow access to performance monitoring counter in privilege levels</span>
-        <span class="doccomment">/// 1–3 (always accessible in level 0).</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">performance_counter</span>,
+        <span class="doccomment">/// `CR4.PCE`: Allow access to performance monitoring counter in privilege levels
+        /// 1–3 (always accessible in level 0).
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>performance_counter,
 
-        <span class="doccomment">/// `CR4.OSFXSR`: Enable the `FXSAVE`/`FXRSTOR` and SSE instructions, if present.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// These instructions require special support from the operating system.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::fpu_save`].</span>
-        [<span class="number">9</span>] <span class="kw">pub</span> <span class="ident">sse_and_fpu_save</span>,
+        <span class="doccomment">/// `CR4.OSFXSR`: Enable the `FXSAVE`/`FXRSTOR` and SSE instructions, if present.
+        ///
+        /// These instructions require special support from the operating system.
+        ///
+        /// Requires [`BasicFeatures::fpu_save`].
+        </span>[<span class="number">9</span>] <span class="kw">pub </span>sse_and_fpu_save,
 
-        <span class="doccomment">/// `CR4.OSXMMEXCPT`: Enable unmasked SIMD floating-point exception handling for</span>
-        <span class="doccomment">/// SSE instructions.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// This requires special support from the operating system.</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">simd_exceptions</span>,
+        <span class="doccomment">/// `CR4.OSXMMEXCPT`: Enable unmasked SIMD floating-point exception handling for
+        /// SSE instructions.
+        ///
+        /// This requires special support from the operating system.
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>simd_exceptions,
 
-        <span class="doccomment">/// `CR4.UMIP`: Prevent access to instructions that allow reads from</span>
-        <span class="doccomment">/// descriptor/task registers, except in privilege level 0.</span>
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">restrict_user_mode_instructions</span>,
+        <span class="doccomment">/// `CR4.UMIP`: Prevent access to instructions that allow reads from
+        /// descriptor/task registers, except in privilege level 0.
+        </span>[<span class="number">11</span>] <span class="kw">pub </span>restrict_user_mode_instructions,
 
-        <span class="doccomment">/// `CR4.LA57`: Support 57-bit addresses using 5-level paging in 64-bit mode.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">five_level_paging</span>,
+        <span class="doccomment">/// `CR4.LA57`: Support 57-bit addresses using 5-level paging in 64-bit mode.
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">12</span>] <span class="kw">pub </span>five_level_paging,
 
-        <span class="doccomment">/// `CR4.VMX` (**Intel-only**): Enable virtual machine extensions.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::virtual_machine_extensions`].</span>
-        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">virtual_machine_extensions</span>,
+        <span class="doccomment">/// `CR4.VMX` (**Intel-only**): Enable virtual machine extensions.
+        ///
+        /// Requires [`BasicFeatures::virtual_machine_extensions`].
+        </span>[<span class="number">13</span>] <span class="kw">pub </span>virtual_machine_extensions,
 
-        <span class="doccomment">/// `CR4.SME` (**Intel-only**): Enable safer-mode extensions.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::safer_mode_extensions`].</span>
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">safer_mode_extensions</span>,
+        <span class="doccomment">/// `CR4.SME` (**Intel-only**): Enable safer-mode extensions.
+        ///
+        /// Requires [`BasicFeatures::safer_mode_extensions`].
+        </span>[<span class="number">14</span>] <span class="kw">pub </span>safer_mode_extensions,
 
-        <span class="doccomment">/// `CR4.FSGSBASE`: Enable instructions to load/store the `FS` and `GS` base</span>
-        <span class="doccomment">/// registers with 32/64-bit values in 64-bit mode.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">extended_base_registers</span>,
+        <span class="doccomment">/// `CR4.FSGSBASE`: Enable instructions to load/store the `FS` and `GS` base
+        /// registers with 32/64-bit values in 64-bit mode.
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">16</span>] <span class="kw">pub </span>extended_base_registers,
 
-        <span class="doccomment">/// `CR4.PCIDE`: Enable process-context identifiers (PCID) in 64-bit mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::process_context_ids`].</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">process_context_ids</span>,
+        <span class="doccomment">/// `CR4.PCIDE`: Enable process-context identifiers (PCID) in 64-bit mode.
+        ///
+        /// Requires [`BasicFeatures::process_context_ids`].
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">17</span>] <span class="kw">pub </span>process_context_ids,
 
-        <span class="doccomment">/// `CR4.OSXSAVE`: Enable instructions for saving and restoring extended processor</span>
-        <span class="doccomment">/// state (FPU/MMX/SSE/AVX).</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// These instructions require special support from the operating system.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`BasicFeatures::extended_state_save`].</span>
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">extended_state_save</span>,
+        <span class="doccomment">/// `CR4.OSXSAVE`: Enable instructions for saving and restoring extended processor
+        /// state (FPU/MMX/SSE/AVX).
+        ///
+        /// These instructions require special support from the operating system.
+        ///
+        /// Requires [`BasicFeatures::extended_state_save`].
+        </span>[<span class="number">18</span>] <span class="kw">pub </span>extended_state_save,
 
-        <span class="doccomment">/// `CR4.SMEP`: Enable execution prevention in privilege levels 0–2.</span>
-        [<span class="number">20</span>] <span class="kw">pub</span> <span class="ident">supervisor_execution_prevention</span>,
+        <span class="doccomment">/// `CR4.SMEP`: Enable execution prevention in privilege levels 0–2.
+        </span>[<span class="number">20</span>] <span class="kw">pub </span>supervisor_execution_prevention,
 
-        <span class="doccomment">/// `CR4.SMAP`: Enable access prevention in privilege levels 0–2.</span>
-        [<span class="number">21</span>] <span class="kw">pub</span> <span class="ident">supervisor_access_prevention</span>,
+        <span class="doccomment">/// `CR4.SMAP`: Enable access prevention in privilege levels 0–2.
+        </span>[<span class="number">21</span>] <span class="kw">pub </span>supervisor_access_prevention,
 
-        <span class="doccomment">/// `CR4.PKE`: Use page protection keys in 64-bit mode to control access from</span>
-        <span class="doccomment">/// privilege level 3.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">22</span>] <span class="kw">pub</span> <span class="ident">user_protection_keys</span>,
+        <span class="doccomment">/// `CR4.PKE`: Use page protection keys in 64-bit mode to control access from
+        /// privilege level 3.
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">22</span>] <span class="kw">pub </span>user_protection_keys,
 
-        <span class="doccomment">/// `CR4.CET` (**Intel-only**): Enable control-flow enforcement technology.</span>
-        <span class="doccomment">/// Requires [`ControlRegister0::write_protect`].</span>
-        [<span class="number">23</span>] <span class="kw">pub</span> <span class="ident">control_flow_enforcement</span>,
+        <span class="doccomment">/// `CR4.CET` (**Intel-only**): Enable control-flow enforcement technology.
+        /// Requires [`ControlRegister0::write_protect`].
+        </span>[<span class="number">23</span>] <span class="kw">pub </span>control_flow_enforcement,
 
-        <span class="doccomment">/// `CR4.PKS` (**Intel-only**): Use page protection keys in 64-bit mode to control</span>
-        <span class="doccomment">/// access from privilege levels 0-2.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">supervisor_protection_keys</span>,
+        <span class="doccomment">/// `CR4.PKS` (**Intel-only**): Use page protection keys in 64-bit mode to control
+        /// access from privilege levels 0-2.
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">24</span>] <span class="kw">pub </span>supervisor_protection_keys,
     }
 }
 
-<span class="macro">simple_register_access!</span>(<span class="ident">ControlRegister4</span>, <span class="string">&quot;cr4&quot;</span>);
+<span class="macro">simple_register_access!</span>(ControlRegister4, <span class="string">&quot;cr4&quot;</span>);
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `XCR0`: System control flags that indicate OS support for context management for</span>
-    <span class="doccomment">/// various registers with the `XSAVE` feature.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to</span>
-    <span class="doccomment">/// work with the actual register.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Requires [`BasicFeatures::extended_state_save`].</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExtendedControlRegister0</span>(<span class="ident">u64</span>) {
-        <span class="doccomment">/// `XCR0.X87`: Hardcoded to 1.</span>
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">fpu</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `XCR0`: System control flags that indicate OS support for context management for
+    /// various registers with the `XSAVE` feature.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to
+    /// work with the actual register.
+    ///
+    /// Requires [`BasicFeatures::extended_state_save`].
+    </span><span class="kw">pub struct </span>ExtendedControlRegister0(u64) {
+        <span class="doccomment">/// `XCR0.X87`: Hardcoded to 1.
+        </span>[<span class="number">0</span>] <span class="kw">pub </span>fpu,
 
-        <span class="doccomment">/// `XCR0.SSE`: Manage SSE state with `XSAVE`, including the `XMM` registers.</span>
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">sse</span>,
+        <span class="doccomment">/// `XCR0.SSE`: Manage SSE state with `XSAVE`, including the `XMM` registers.
+        </span>[<span class="number">1</span>] <span class="kw">pub </span>sse,
 
-        <span class="doccomment">/// `XCR0.AVX`: Manage 256-bit AVX state in upper halves of the `YMM` registers</span>
-        <span class="doccomment">/// with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`sse`](Self::sse). The lower halves of these registers are</span>
-        <span class="doccomment">/// equivalent to `XMM` and are covered by that flag.</span>
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">avx_256</span>,
+        <span class="doccomment">/// `XCR0.AVX`: Manage 256-bit AVX state in upper halves of the `YMM` registers
+        /// with `XSAVE`.
+        ///
+        /// Requires [`sse`](Self::sse). The lower halves of these registers are
+        /// equivalent to `XMM` and are covered by that flag.
+        </span>[<span class="number">2</span>] <span class="kw">pub </span>avx_256,
 
-        <span class="doccomment">/// `XCR0.BNDREG`: Manage MPX bounds registers with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`mpx_bound_config_status`](Self::mpx_bound_config_status).</span>
-        [<span class="number">3</span>] <span class="kw">pub</span> <span class="ident">mpx_bounds</span>,
+        <span class="doccomment">/// `XCR0.BNDREG`: Manage MPX bounds registers with `XSAVE`.
+        ///
+        /// Requires [`mpx_bound_config_status`](Self::mpx_bound_config_status).
+        </span>[<span class="number">3</span>] <span class="kw">pub </span>mpx_bounds,
 
-        <span class="doccomment">/// `XCR0.BNDCSR`: Manage MPX config and status registers with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`mpx_bounds`](Self::mpx_bounds).</span>
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">mpx_bound_config_status</span>,
+        <span class="doccomment">/// `XCR0.BNDCSR`: Manage MPX config and status registers with `XSAVE`.
+        ///
+        /// Requires [`mpx_bounds`](Self::mpx_bounds).
+        </span>[<span class="number">4</span>] <span class="kw">pub </span>mpx_bound_config_status,
 
-        <span class="doccomment">/// `XCR0.OPMASK`: Manage AVX-512 opmask registers with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires the other `avx_512_*` flags.</span>
-        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">avx_512_opmask</span>,
+        <span class="doccomment">/// `XCR0.OPMASK`: Manage AVX-512 opmask registers with `XSAVE`.
+        ///
+        /// Requires the other `avx_512_*` flags.
+        </span>[<span class="number">5</span>] <span class="kw">pub </span>avx_512_opmask,
 
-        <span class="doccomment">/// `XCR0.ZMM_Hi256`: Manage 512-bit AVX state in the upper halves of the `ZMM`</span>
-        <span class="doccomment">/// registers up to `ZMM15` with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Registers `ZMM8`–`ZMM15` are available in 64-bit mode only, so this only</span>
-        <span class="doccomment">/// applies up to `ZMM7` in 32-bit mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires [`avx_256`](Self::avx_256) and the other `avx_512_*` flags. The lower</span>
-        <span class="doccomment">/// halves of these registers are equivalent to `YMM` and are covered by</span>
-        <span class="doccomment">/// `avx_256`(Self::avx_256).</span>
-        [<span class="number">6</span>] <span class="kw">pub</span> <span class="ident">avx_512</span>,
+        <span class="doccomment">/// `XCR0.ZMM_Hi256`: Manage 512-bit AVX state in the upper halves of the `ZMM`
+        /// registers up to `ZMM15` with `XSAVE`.
+        ///
+        /// Registers `ZMM8`–`ZMM15` are available in 64-bit mode only, so this only
+        /// applies up to `ZMM7` in 32-bit mode.
+        ///
+        /// Requires [`avx_256`](Self::avx_256) and the other `avx_512_*` flags. The lower
+        /// halves of these registers are equivalent to `YMM` and are covered by
+        /// `avx_256`(Self::avx_256).
+        </span>[<span class="number">6</span>] <span class="kw">pub </span>avx_512,
 
-        <span class="doccomment">/// `XCR0.Hi16_ZMM`: Manage AVX-512 state in `ZMM16`–`ZMM31` with `XSAVE`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// These registers are only available in 64-bit mode.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// Requires the other `avx_512_*` flags.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-        <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-        [<span class="number">7</span>] <span class="kw">pub</span> <span class="ident">avx_512_extended</span>,
+        <span class="doccomment">/// `XCR0.Hi16_ZMM`: Manage AVX-512 state in `ZMM16`–`ZMM31` with `XSAVE`.
+        ///
+        /// These registers are only available in 64-bit mode.
+        ///
+        /// Requires the other `avx_512_*` flags.
+        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+        </span>[<span class="number">7</span>] <span class="kw">pub </span>avx_512_extended,
 
-        <span class="doccomment">/// `XCR0.PKRU`: Manage protection key rights registers with `XSAVE`.</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">protection_key_rights</span>,
+        <span class="doccomment">/// `XCR0.PKRU`: Manage protection key rights registers with `XSAVE`.
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>protection_key_rights,
     }
 }
 
-<span class="macro">extended_register_access!</span>(<span class="ident">ExtendedControlRegister0</span>, <span class="number">0</span>);
+<span class="macro">extended_register_access!</span>(ExtendedControlRegister0, <span class="number">0</span>);
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

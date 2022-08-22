@@ -161,168 +161,168 @@
 <span id="161">161</span>
 <span id="162">162</span>
 <span id="163">163</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Utilities for nom parsers</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Utilities for nom parsers
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">use</span> <span class="ident">nom::combinator::cut</span>;
-<span class="kw">use</span> <span class="ident">nom::error</span>::{<span class="ident">ContextError</span>, <span class="ident">ParseError</span>};
-<span class="kw">use</span> <span class="ident">nom::sequence::preceded</span>;
-<span class="kw">use</span> <span class="ident">nom</span>::{<span class="ident">IResult</span>, <span class="ident">InputLength</span>, <span class="ident">Parser</span>};
-
-
-<span class="doccomment">/// Helpers for reporting parsing errors</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
+</span><span class="kw">use </span>nom::combinator::cut;
+<span class="kw">use </span>nom::error::{ContextError, ParseError};
+<span class="kw">use </span>nom::sequence::preceded;
+<span class="kw">use </span>nom::{IResult, InputLength, Parser};
 
 
-<span class="doccomment">/// Parse struct fields in order using an initializer-like syntax</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # use nom::IResult;</span>
-<span class="doccomment">/// # use nom::character::complete::alphanumeric1;</span>
-<span class="doccomment">/// # use nom::number::complete::le_u16;</span>
-<span class="doccomment">/// # use tartan_parsers::struct_parser;</span>
-<span class="doccomment">/// #</span>
-<span class="doccomment">/// type Parser&lt;&#39;a, T&gt; = fn(&amp;&#39;a [u8]) -&gt; IResult&lt;&amp;&#39;a [u8], T, ()&gt;;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]</span>
-<span class="doccomment">/// struct Foo&lt;&#39;a&gt; { a: u16, b: &amp;&#39;a [u8] };</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Will parse `a`, then `b`, and return the struct if both succeed</span>
-<span class="doccomment">/// let parse_foo: Parser&lt;Foo&gt; = struct_parser!(</span>
-<span class="doccomment">///     Foo {</span>
-<span class="doccomment">///         a: le_u16,</span>
-<span class="doccomment">///         b: alphanumeric1,</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// );</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(</span>
-<span class="doccomment">///     parse_foo(b&quot;\x34\x12Bar10&quot;),</span>
-<span class="doccomment">///     Ok((b&quot;&quot; as &amp;[u8], Foo { a: 0x1234, b: b&quot;Bar10&quot; }))</span>
-<span class="doccomment">/// );</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules!</span> <span class="ident">struct_parser</span> {
-    <span class="comment">// Struct form</span>
-    [
-        <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span> $( :: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_x</span>:<span class="ident">ident</span> )* {
-            $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>:<span class="ident">ident</span> : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">parser</span>:<span class="ident">expr</span> ),+
-            $(,)<span class="question-mark">?</span>
-        }
+<span class="doccomment">/// Helpers for reporting parsing errors
+</span><span class="kw">pub mod </span>error;
+
+
+<span class="doccomment">/// Parse struct fields in order using an initializer-like syntax
+///
+/// # Example
+///
+/// ```
+/// # use nom::IResult;
+/// # use nom::character::complete::alphanumeric1;
+/// # use nom::number::complete::le_u16;
+/// # use tartan_parsers::struct_parser;
+/// #
+/// type Parser&lt;&#39;a, T&gt; = fn(&amp;&#39;a [u8]) -&gt; IResult&lt;&amp;&#39;a [u8], T, ()&gt;;
+///
+/// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// struct Foo&lt;&#39;a&gt; { a: u16, b: &amp;&#39;a [u8] };
+///
+/// // Will parse `a`, then `b`, and return the struct if both succeed
+/// let parse_foo: Parser&lt;Foo&gt; = struct_parser!(
+///     Foo {
+///         a: le_u16,
+///         b: alphanumeric1,
+///     }
+/// );
+///
+/// assert_eq!(
+///     parse_foo(b&quot;\x34\x12Bar10&quot;),
+///     Ok((b&quot;&quot; as &amp;[u8], Foo { a: 0x1234, b: b&quot;Bar10&quot; }))
+/// );
+/// ```
+</span><span class="attribute">#[macro_export]
+</span><span class="macro">macro_rules! </span>struct_parser {
+    <span class="comment">// Struct form
+    </span>[
+        <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident </span>$( :: <span class="macro-nonterminal">$struct_x</span>:ident )* {
+            $( <span class="macro-nonterminal">$field</span>:ident : <span class="macro-nonterminal">$parser</span>:expr ),+
+            $(,)<span class="question-mark">?
+        </span>}
     ] =&gt; {
-        |<span class="ident">i</span>| {
-            $( <span class="kw">let</span> (<span class="ident">i</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>) = <span class="macro-nonterminal">$</span><span class="macro-nonterminal">parser</span>(<span class="ident">i</span>)<span class="question-mark">?</span>; )+
-            <span class="kw">let</span> <span class="ident">result</span> = (<span class="macro-nonterminal">$</span><span class="kw">struct</span> $(::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_x</span>)* { $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>),+ });
-            <span class="prelude-val">Ok</span>((<span class="ident">i</span>, <span class="ident">result</span>))
+        |i| {
+            $( <span class="kw">let </span>(i, <span class="macro-nonterminal">$field</span>) = <span class="macro-nonterminal">$parser</span>(i)<span class="question-mark">?</span>; )+
+            <span class="kw">let </span>result = (<span class="macro-nonterminal">$</span><span class="kw">struct </span>$(::<span class="macro-nonterminal">$struct_x</span>)* { $(<span class="macro-nonterminal">$field</span>),+ });
+            <span class="prelude-val">Ok</span>((i, result))
         }
     };
 
-    <span class="comment">// Tuple form</span>
-    [
-        <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident</span> $( :: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_x</span>:<span class="ident">ident</span> )* (
-            $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">parser</span>:<span class="ident">expr</span> ),+
-            $(,)<span class="question-mark">?</span>
-        )
+    <span class="comment">// Tuple form
+    </span>[
+        <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident </span>$( :: <span class="macro-nonterminal">$struct_x</span>:ident )* (
+            $( <span class="macro-nonterminal">$parser</span>:expr ),+
+            $(,)<span class="question-mark">?
+        </span>)
     ] =&gt; {
-        |<span class="ident">i</span>| {
-            <span class="kw">let</span> (<span class="ident">i</span>, <span class="ident">t</span>) = <span class="ident">nom::sequence::tuple</span>(( $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">parser</span>),+ ))(<span class="ident">i</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">result</span> = <span class="ident">Fn::call</span>(&amp; <span class="macro-nonterminal">$</span><span class="kw">struct</span> $(::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">struct_x</span>)<span class="kw-2">*</span>, <span class="ident">t</span>);
-            <span class="prelude-val">Ok</span>((<span class="ident">i</span>, <span class="ident">result</span>))
+        |i| {
+            <span class="kw">let </span>(i, t) = nom::sequence::tuple(( $(<span class="macro-nonterminal">$parser</span>),+ ))(i)<span class="question-mark">?</span>;
+            <span class="kw">let </span>result = Fn::call(&amp; <span class="macro-nonterminal">$</span><span class="kw">struct </span>$(::<span class="macro-nonterminal">$struct_x</span>)<span class="kw-2">*</span>, t);
+            <span class="prelude-val">Ok</span>((i, result))
         }
     };
 }
 
 
-<span class="doccomment">/// Combinator for productions that use a deterministic opcode</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If a production is preceded by an unambiguous opcode, then we can avoid</span>
-<span class="doccomment">/// backtracking when parsing the rest. This enables better error messages in addition</span>
-<span class="doccomment">/// to faster parsing.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opcode</span>&lt;<span class="ident">I</span>, <span class="ident">O1</span>, <span class="ident">O2</span>, <span class="ident">E</span>, <span class="ident">P</span>, <span class="ident">Q</span>&gt;(
-    <span class="ident">description</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
-    <span class="ident">opcode_parser</span>: <span class="ident">P</span>,
-    <span class="ident">body_parser</span>: <span class="ident">Q</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">I</span>) -&gt; <span class="ident">IResult</span>&lt;<span class="ident">I</span>, <span class="ident">O2</span>, <span class="ident">E</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Clone</span>,
-    <span class="ident">P</span>: <span class="ident">Parser</span>&lt;<span class="ident">I</span>, <span class="ident">O1</span>, <span class="ident">E</span>&gt;,
-    <span class="ident">Q</span>: <span class="ident">Parser</span>&lt;<span class="ident">I</span>, <span class="ident">O2</span>, <span class="ident">E</span>&gt;,
-    <span class="ident">E</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt; + <span class="ident">ContextError</span>&lt;<span class="ident">I</span>&gt;,
+<span class="doccomment">/// Combinator for productions that use a deterministic opcode
+///
+/// If a production is preceded by an unambiguous opcode, then we can avoid
+/// backtracking when parsing the rest. This enables better error messages in addition
+/// to faster parsing.
+</span><span class="kw">pub fn </span>opcode&lt;I, O1, O2, E, P, Q&gt;(
+    description: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    opcode_parser: P,
+    body_parser: Q,
+) -&gt; <span class="kw">impl </span>FnMut(I) -&gt; IResult&lt;I, O2, E&gt;
+<span class="kw">where
+    </span>I: Clone,
+    P: Parser&lt;I, O1, E&gt;,
+    Q: Parser&lt;I, O2, E&gt;,
+    E: ParseError&lt;I&gt; + ContextError&lt;I&gt;,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">parser</span> = <span class="ident">preceded</span>(<span class="ident">opcode_parser</span>, <span class="ident">cut</span>(<span class="ident">body_parser</span>));
-    <span class="kw">move</span> |<span class="ident">i</span>: <span class="ident">I</span>| <span class="kw">match</span> <span class="ident">parser</span>.<span class="ident">parse</span>(<span class="ident">i</span>.<span class="ident">clone</span>()) {
-        <span class="prelude-val">Err</span>(<span class="ident">nom::Err::Failure</span>(<span class="ident">e</span>)) =&gt; {
-            <span class="comment">// Only add context to *failures*, on the assumption that these will only</span>
-            <span class="comment">// come from the opcode body, and we don&#39;t want to add context when the</span>
-            <span class="comment">// opcode itself wasn&#39;t recognized.</span>
-            <span class="prelude-val">Err</span>(<span class="ident">nom::Err::Failure</span>(<span class="ident">E::add_context</span>(<span class="ident">i</span>, <span class="ident">description</span>, <span class="ident">e</span>)))
+    <span class="kw">let </span><span class="kw-2">mut </span>parser = preceded(opcode_parser, cut(body_parser));
+    <span class="kw">move </span>|i: I| <span class="kw">match </span>parser.parse(i.clone()) {
+        <span class="prelude-val">Err</span>(nom::Err::Failure(e)) =&gt; {
+            <span class="comment">// Only add context to *failures*, on the assumption that these will only
+            // come from the opcode body, and we don&#39;t want to add context when the
+            // opcode itself wasn&#39;t recognized.
+            </span><span class="prelude-val">Err</span>(nom::Err::Failure(E::add_context(i, description, e)))
         }
-        <span class="ident">other</span> =&gt; <span class="ident">other</span>,
+        other =&gt; other,
     }
 }
 
 
-<span class="doccomment">/// Create an iterator that repeatedly executes the parser.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Unlike [`nom::combinator::iterator`], this yields a [`Result`] at every step, so</span>
-<span class="doccomment">/// errors are returned in the stream, and there is no separate `finish()` method. If the</span>
-<span class="doccomment">/// parser encounters an error, the iterator will yield that error and not attempt to</span>
-<span class="doccomment">/// parse any more elements.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result_iterator</span>&lt;<span class="ident">P</span>, <span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;(
-    <span class="ident">input</span>: <span class="ident">I</span>,
-    <span class="ident">parser</span>: <span class="ident">P</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="prelude-ty">Result</span>&lt;<span class="ident">O</span>, <span class="ident">nom::Err</span>&lt;<span class="ident">E</span>&gt;&gt;&gt;
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">I</span>) -&gt; <span class="ident">IResult</span>&lt;<span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;,
-    <span class="ident">I</span>: <span class="ident">InputLength</span>,
-    <span class="ident">E</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt;,
+<span class="doccomment">/// Create an iterator that repeatedly executes the parser.
+///
+/// Unlike [`nom::combinator::iterator`], this yields a [`Result`] at every step, so
+/// errors are returned in the stream, and there is no separate `finish()` method. If the
+/// parser encounters an error, the iterator will yield that error and not attempt to
+/// parse any more elements.
+</span><span class="kw">pub fn </span>result_iterator&lt;P, I, O, E&gt;(
+    input: I,
+    parser: P,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;O, nom::Err&lt;E&gt;&gt;&gt;
+<span class="kw">where
+    </span>P: Fn(I) -&gt; IResult&lt;I, O, E&gt;,
+    I: InputLength,
+    E: ParseError&lt;I&gt;,
 {
-    <span class="ident">ResultIterator</span> { <span class="ident">input</span>: <span class="prelude-val">Some</span>(<span class="ident">input</span>), <span class="ident">parser</span> }
+    ResultIterator { input: <span class="prelude-val">Some</span>(input), parser }
 }
 
 
-<span class="kw">struct</span> <span class="ident">ResultIterator</span>&lt;<span class="ident">P</span>, <span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">I</span>) -&gt; <span class="ident">IResult</span>&lt;<span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;,
-    <span class="ident">I</span>: <span class="ident">InputLength</span>,
-    <span class="ident">E</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt;,
+<span class="kw">struct </span>ResultIterator&lt;P, I, O, E&gt;
+<span class="kw">where
+    </span>P: Fn(I) -&gt; IResult&lt;I, O, E&gt;,
+    I: InputLength,
+    E: ParseError&lt;I&gt;,
 {
-    <span class="ident">input</span>: <span class="prelude-ty">Option</span>&lt;<span class="ident">I</span>&gt;,
-    <span class="ident">parser</span>: <span class="ident">P</span>,
+    input: <span class="prelude-ty">Option</span>&lt;I&gt;,
+    parser: P,
 }
 
-<span class="kw">impl</span>&lt;<span class="ident">P</span>, <span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt; <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ResultIterator</span>&lt;<span class="ident">P</span>, <span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Fn</span>(<span class="ident">I</span>) -&gt; <span class="ident">IResult</span>&lt;<span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt;,
-    <span class="ident">I</span>: <span class="ident">InputLength</span>,
-    <span class="ident">E</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt;,
+<span class="kw">impl</span>&lt;P, I, O, E&gt; Iterator <span class="kw">for </span>ResultIterator&lt;P, I, O, E&gt;
+<span class="kw">where
+    </span>P: Fn(I) -&gt; IResult&lt;I, O, E&gt;,
+    I: InputLength,
+    E: ParseError&lt;I&gt;,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> = <span class="prelude-ty">Result</span>&lt;<span class="ident">O</span>, <span class="ident">nom::Err</span>&lt;<span class="ident">E</span>&gt;&gt;;
+    <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;O, nom::Err&lt;E&gt;&gt;;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="ident"><span class="self">Self</span>::Item</span>&gt; {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">input</span> = <span class="prelude-val">None</span>;
-        <span class="ident">core::mem::swap</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">input</span>, <span class="kw-2">&amp;mut</span> <span class="ident">input</span>);
-        <span class="kw">match</span> <span class="ident">input</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">i</span>) <span class="kw">if</span> <span class="ident">i</span>.<span class="ident">input_len</span>() == <span class="number">0</span> =&gt; <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">i</span>) =&gt; <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">parser</span>)(<span class="ident">i</span>) {
-                <span class="prelude-val">Ok</span>((<span class="ident">rest</span>, <span class="ident">output</span>)) =&gt; {
-                    <span class="self">self</span>.<span class="ident">input</span> = <span class="prelude-val">Some</span>(<span class="ident">rest</span>);
-                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">output</span>))
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>input = <span class="prelude-val">None</span>;
+        core::mem::swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.input, <span class="kw-2">&amp;mut </span>input);
+        <span class="kw">match </span>input {
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(i) <span class="kw">if </span>i.input_len() == <span class="number">0 </span>=&gt; <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(i) =&gt; <span class="kw">match </span>(<span class="self">self</span>.parser)(i) {
+                <span class="prelude-val">Ok</span>((rest, output)) =&gt; {
+                    <span class="self">self</span>.input = <span class="prelude-val">Some</span>(rest);
+                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(output))
                 }
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-                    <span class="self">self</span>.<span class="ident">input</span> = <span class="prelude-val">None</span>;
-                    <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>))
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="self">self</span>.input = <span class="prelude-val">None</span>;
+                    <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e))
                 }
             },
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_parsers" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_parsers" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

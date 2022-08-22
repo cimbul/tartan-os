@@ -41,48 +41,48 @@
 <span id="41">41</span>
 <span id="42">42</span>
 <span id="43">43</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for 64-bit x86 processors.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for 64-bit x86 processors.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">model_specific_register_access</span>, <span class="ident">simple_register_access</span>};
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+</span><span class="kw">use crate</span>::{model_specific_register_access, simple_register_access};
+<span class="kw">use </span>tartan_bitfield::bitfield;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">protection</span>;
+<span class="kw">pub mod </span>protection;
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `CR8`: System control register for controlling interrupts based on priority.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Getters and setters for this structure only access a value in memory, not the</span>
-    <span class="doccomment">/// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to</span>
-    <span class="doccomment">/// work with the actual register.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlRegister8</span>(<span class="ident">usize</span>) {
-        <span class="doccomment">/// `CR8.TPL`: Threshold for blocking low-priority interrupts. Lower values are</span>
-        <span class="doccomment">/// higher priority.</span>
-        [<span class="number">0</span>..<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">task_priority_level</span>: <span class="ident">u8</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `CR8`: System control register for controlling interrupts based on priority.
+    ///
+    /// Getters and setters for this structure only access a value in memory, not the
+    /// register itself. Use the [`get`](Self::get) and [`set`](Self::set) methods to
+    /// work with the actual register.
+    </span><span class="kw">pub struct </span>ControlRegister8(usize) {
+        <span class="doccomment">/// `CR8.TPL`: Threshold for blocking low-priority interrupts. Lower values are
+        /// higher priority.
+        </span>[<span class="number">0</span>..<span class="number">4</span>] <span class="kw">pub </span>task_priority_level: u8,
     }
 }
 
-<span class="macro">simple_register_access!</span>(<span class="ident">ControlRegister8</span>, <span class="string">&quot;cr8&quot;</span>);
+<span class="macro">simple_register_access!</span>(ControlRegister8, <span class="string">&quot;cr8&quot;</span>);
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// `IA32_EFER`: Model-specific register that controls features relating to 64-bit</span>
-    <span class="doccomment">/// operation.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExtendedFeatureEnableRegister</span>(<span class="ident">u64</span>) {
-        <span class="doccomment">/// `IA32_EFER.SCE`: Support `SYSCALL`/`SYSRET` in 64-bit mode.</span>
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">syscall</span>,
-        <span class="doccomment">/// `IA32_EFER.LME`: Support 64-bit mode.</span>
-        [<span class="number">8</span>] <span class="kw">pub</span> <span class="ident">long_mode_enabled</span>,
-        <span class="doccomment">/// `IA32_EFER.LMA`: Indicates 64-bit mode is active. Read-only.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// This is logically the equivalent to `[Self::long_mode_enabled] &amp;</span>
-        <span class="doccomment">/// [ControlRegister0::paging]`.</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">long_mode_active</span>,
-        <span class="doccomment">/// `IA32-EFER.NXE`: Support no-execute (NX) bit in page tables.</span>
-        [<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">no_execute</span>,
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// `IA32_EFER`: Model-specific register that controls features relating to 64-bit
+    /// operation.
+    </span><span class="kw">pub struct </span>ExtendedFeatureEnableRegister(u64) {
+        <span class="doccomment">/// `IA32_EFER.SCE`: Support `SYSCALL`/`SYSRET` in 64-bit mode.
+        </span>[<span class="number">0</span>] <span class="kw">pub </span>syscall,
+        <span class="doccomment">/// `IA32_EFER.LME`: Support 64-bit mode.
+        </span>[<span class="number">8</span>] <span class="kw">pub </span>long_mode_enabled,
+        <span class="doccomment">/// `IA32_EFER.LMA`: Indicates 64-bit mode is active. Read-only.
+        ///
+        /// This is logically the equivalent to `[Self::long_mode_enabled] &amp;
+        /// [ControlRegister0::paging]`.
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>long_mode_active,
+        <span class="doccomment">/// `IA32-EFER.NXE`: Support no-execute (NX) bit in page tables.
+        </span>[<span class="number">11</span>] <span class="kw">pub </span>no_execute,
     }
 }
 
-<span class="macro">model_specific_register_access!</span>(<span class="ident">ExtendedFeatureEnableRegister</span>, <span class="number">0xc000_0080_u32</span>);
+<span class="macro">model_specific_register_access!</span>(ExtendedFeatureEnableRegister, <span class="number">0xc000_0080_u32</span>);
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

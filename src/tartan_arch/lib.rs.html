@@ -65,72 +65,72 @@
 <span id="65">65</span>
 <span id="66">66</span>
 <span id="67">67</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for Tartan OS</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific primitives for Tartan OS
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_cfg</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![feature(doc_cfg)]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">use</span> <span class="ident">core::arch::asm</span>;
+</span><span class="kw">use </span>core::arch::asm;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">aarch64</span>;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, doc))]
+#[doc(cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>))]
+#[macro_use]
+</span><span class="kw">pub mod </span>aarch64;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">arm</span>;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, doc))]
+#[doc(cfg(target_arch = <span class="string">&quot;arm&quot;</span>))]
+#[macro_use]
+</span><span class="kw">pub mod </span>arm;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">x86_64</span>;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+#[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">pub mod </span>x86_64;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">x86</span>;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+#[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
+</span><span class="kw">pub mod </span>x86;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">x86_common</span>;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+#[doc(cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>)))]
+#[macro_use]
+</span><span class="kw">pub mod </span>x86_common;
 
 
-<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// Make sure you know where you&#39;re going. You&#39;re not coming back.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">jump</span>(<span class="ident">address</span>: <span class="ident">usize</span>) -&gt; ! {
-    <span class="macro">asm!</span>(<span class="string">&quot;jmp {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">address</span>);
+<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address
+///
+/// # Safety
+/// Make sure you know where you&#39;re going. You&#39;re not coming back.
+</span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+#[allow(clippy::missing_panics_doc)]
+</span><span class="kw">pub unsafe fn </span>jump(address: usize) -&gt; ! {
+    <span class="macro">asm!</span>(<span class="string">&quot;jmp {}&quot;</span>, <span class="kw">in</span>(reg) address);
     <span class="macro">unreachable!</span>();
 }
 
-<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// Make sure you know where you&#39;re going. You&#39;re not coming back.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">jump</span>(<span class="ident">address</span>: <span class="ident">usize</span>) -&gt; ! {
-    <span class="macro">asm!</span>(<span class="string">&quot;bx {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">address</span>);
+<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address
+///
+/// # Safety
+/// Make sure you know where you&#39;re going. You&#39;re not coming back.
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+#[allow(clippy::missing_panics_doc)]
+</span><span class="kw">pub unsafe fn </span>jump(address: usize) -&gt; ! {
+    <span class="macro">asm!</span>(<span class="string">&quot;bx {}&quot;</span>, <span class="kw">in</span>(reg) address);
     <span class="macro">unreachable!</span>();
 }
 
-<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">/// Make sure you know where you&#39;re going. You&#39;re not coming back.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">jump</span>(<span class="ident">address</span>: <span class="ident">usize</span>) -&gt; ! {
-    <span class="macro">asm!</span>(<span class="string">&quot;br {}&quot;</span>, <span class="kw">in</span>(<span class="ident">reg</span>) <span class="ident">address</span>);
+<span class="doccomment">/// Unconditionally transfer control to the instruction at the given address
+///
+/// # Safety
+/// Make sure you know where you&#39;re going. You&#39;re not coming back.
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+#[allow(clippy::missing_panics_doc)]
+</span><span class="kw">pub unsafe fn </span>jump(address: usize) -&gt; ! {
+    <span class="macro">asm!</span>(<span class="string">&quot;br {}&quot;</span>, <span class="kw">in</span>(reg) address);
     <span class="macro">unreachable!</span>();
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

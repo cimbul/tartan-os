@@ -194,36 +194,36 @@
 <span id="194">194</span>
 <span id="195">195</span>
 <span id="196">196</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">target_os</span> = <span class="string">&quot;tartan&quot;</span>, <span class="ident">no_main</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_error_handler</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm_const</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm_sym</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">lang_items</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">naked_functions</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">panic_info_message</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">rustc_private</span>)]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">start</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![no_std]
+#![cfg_attr(target_os = <span class="string">&quot;tartan&quot;</span>, no_main)]
+#![feature(alloc_error_handler)]
+#![feature(asm_const)]
+#![feature(asm_sym)]
+#![feature(lang_items)]
+#![feature(naked_functions)]
+#![feature(panic_info_message)]
+#![feature(rustc_private)]
+#![feature(start)]
 
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+</span><span class="kw">extern crate </span>alloc;
 
-<span class="kw">use</span> <span class="ident">alloc::string::String</span>;
-<span class="kw">use</span> <span class="ident">core::fmt::Write</span>;
-<span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
-<span class="kw">use</span> <span class="ident">tartan_serial</span>::{<span class="ident">LineMode</span>, <span class="ident">UARTWriteAdapter</span>, <span class="ident">UART</span>};
-
-
-<span class="kw">mod</span> <span class="ident">allocator</span>;
-<span class="kw">mod</span> <span class="ident">arch</span>;
-<span class="kw">mod</span> <span class="ident">cpu</span>;
-<span class="kw">mod</span> <span class="ident">intrinsics</span>;
-<span class="kw">mod</span> <span class="ident">pci</span>;
+<span class="kw">use </span>alloc::string::String;
+<span class="kw">use </span>core::fmt::Write;
+<span class="kw">use </span>core::mem::MaybeUninit;
+<span class="kw">use </span>tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
-<span class="comment">// Reserve space for the initial stack in the BSS section of the executable image, which</span>
-<span class="comment">// will be allocated by the loader.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> = <span class="string">&quot;tartan&quot;</span>)]</span>
-<span class="macro">core::arch::global_asm!</span>(
+<span class="kw">mod </span>allocator;
+<span class="kw">mod </span>arch;
+<span class="kw">mod </span>cpu;
+<span class="kw">mod </span>intrinsics;
+<span class="kw">mod </span>pci;
+
+
+<span class="comment">// Reserve space for the initial stack in the BSS section of the executable image, which
+// will be allocated by the loader.
+</span><span class="attribute">#[cfg(target_os = <span class="string">&quot;tartan&quot;</span>)]
+</span><span class="macro">core::arch::global_asm!</span>(
     <span class="string">&quot;
     .section .bss
     .balign 16
@@ -231,62 +231,62 @@ stack_bottom:
     .skip 0x4000
     .global stack_top
 stack_top:
-    &quot;</span>
-);
+    &quot;
+</span>);
 
 
-<span class="attribute">#[<span class="ident">used</span>]</span>
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">X</span>: <span class="ident">usize</span> = <span class="number">0</span>;
+<span class="attribute">#[used]
+</span><span class="kw">static </span><span class="kw-2">mut </span>X: usize = <span class="number">0</span>;
 
-<span class="comment">// Dummy implementation when building for host</span>
-<span class="attribute">#[<span class="ident">start</span>]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> = <span class="string">&quot;tartan&quot;</span>))]</span>
-<span class="kw">fn</span> <span class="ident">_start</span>(<span class="kw">_</span>: <span class="ident">isize</span>, <span class="kw">_</span>: <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">u8</span>) -&gt; <span class="ident">isize</span> {
-    <span class="ident">kernel_main</span>()
+<span class="comment">// Dummy implementation when building for host
+</span><span class="attribute">#[start]
+#[cfg(not(target_os = <span class="string">&quot;tartan&quot;</span>))]
+</span><span class="kw">fn </span>_start(<span class="kw">_</span>: isize, <span class="kw">_</span>: <span class="kw-2">*const *const </span>u8) -&gt; isize {
+    kernel_main()
 }
 
-<span class="attribute">#[<span class="ident">naked</span>]</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> = <span class="string">&quot;tartan&quot;</span>)]</span>
-<span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">_start</span>() -&gt; ! {
-    <span class="kw">unsafe</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>)]</span>
-        <span class="macro">core::arch::asm!</span>(
+<span class="attribute">#[naked]
+#[no_mangle]
+#[cfg(target_os = <span class="string">&quot;tartan&quot;</span>)]
+</span><span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>_start() -&gt; ! {
+    <span class="kw">unsafe </span>{
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             mov esp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
         2:  hlt                        // Halt if main function ever returns
             jmp 2b
             &quot;</span>,
-            <span class="ident">sym</span> <span class="ident">kernel_main</span>,
-            <span class="ident">options</span>(<span class="ident">noreturn</span>),
+            sym kernel_main,
+            options(noreturn),
         );
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-        <span class="macro">core::arch::asm!</span>(
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             mov rsp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
         2:  hlt                        // Halt if main function ever returns
             jmp 2b
             &quot;</span>,
-            <span class="ident">sym</span> <span class="ident">kernel_main</span>,
-            <span class="ident">options</span>(<span class="ident">noreturn</span>),
+            sym kernel_main,
+            options(noreturn),
         );
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-        <span class="macro">core::arch::asm!</span>(
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+        </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             ldr sp, =stack_top  // Set up initial stack
             blx {}              // Call real main function
         1:  b 1b                // Spin if main function ever returns
             &quot;</span>,
-            <span class="ident">sym</span> <span class="ident">kernel_main</span>,
-            <span class="ident">options</span>(<span class="ident">noreturn</span>),
+            sym kernel_main,
+            options(noreturn),
         );
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-        <span class="macro">core::arch::asm!</span>(
+        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+        </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             ldr x0, =stack_top  // Set up initial stack
             mov sp, x0
@@ -294,101 +294,101 @@ stack_top:
         1:  wfe                 // Halt if main function ever returns
             b 1b
             &quot;</span>,
-            <span class="ident">sym</span> <span class="ident">kernel_main</span>,
-            <span class="ident">options</span>(<span class="ident">noreturn</span>),
+            sym kernel_main,
+            options(noreturn),
         );
     }
 }
 
-<span class="kw">fn</span> <span class="ident">kernel_main</span>() -&gt; ! {
-    <span class="ident">arch::initialize</span>();
+<span class="kw">fn </span>kernel_main() -&gt; ! {
+    arch::initialize();
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial</span> = <span class="ident">find_uart</span>();
-    <span class="ident">serial</span>.<span class="ident">reset</span>();
-    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> = <span class="ident">UARTWriteAdapter</span>(<span class="ident">serial</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>serial = find_uart();
+    serial.reset();
+    serial.set_line_mode(LineMode::default());
+    <span class="kw">let </span><span class="kw-2">mut </span>out = UARTWriteAdapter(serial);
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Hello, world!&quot;</span>).<span class="ident">unwrap</span>();
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;Hello, world!&quot;</span>).unwrap();
 
-    <span class="kw">unsafe</span> {
-        <span class="ident">ALLOCATOR</span>.<span class="ident">init</span>(<span class="ident">allocator::BlockList::from_block</span>(<span class="kw-2">&amp;mut</span> <span class="ident">HEAP</span>));
+    <span class="kw">unsafe </span>{
+        ALLOCATOR.init(allocator::BlockList::from_block(<span class="kw-2">&amp;mut </span>HEAP));
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap_message</span> = <span class="ident">String::from</span>(<span class="string">&quot;This came from...&quot;</span>);
-    <span class="ident">heap_message</span>.<span class="ident">push_str</span>(<span class="string">&quot;the heap!&quot;</span>);
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">heap_message</span>).<span class="ident">unwrap</span>();
+    <span class="kw">let </span><span class="kw-2">mut </span>heap_message = String::from(<span class="string">&quot;This came from...&quot;</span>);
+    heap_message.push_str(<span class="string">&quot;the heap!&quot;</span>);
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{}&quot;</span>, heap_message).unwrap();
 
-    <span class="ident">cpu::print_state</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
-    <span class="ident">pci::print_devices</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>).<span class="ident">unwrap</span>();
+    cpu::print_state(<span class="kw-2">&amp;mut </span>out).unwrap();
+    pci::print_devices(<span class="kw-2">&amp;mut </span>out).unwrap();
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Done doing anything useful.&quot;</span>).<span class="ident">unwrap</span>();
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;Done doing anything useful.&quot;</span>).unwrap();
 
-    <span class="kw">loop</span> {
-        <span class="kw">unsafe</span> {
-            <span class="ident">X</span> = <span class="ident">X</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
+    <span class="kw">loop </span>{
+        <span class="kw">unsafe </span>{
+            X = X.wrapping_add(<span class="number">1</span>);
         }
     }
 }
 
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">fn</span> <span class="ident">find_uart</span>() -&gt; <span class="kw">impl</span> <span class="ident">UART</span> {
-    <span class="ident">tartan_serial::model_16550::UART16550::new</span>(<span class="number">0x3f8</span>)
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">fn </span>find_uart() -&gt; <span class="kw">impl </span>UART {
+    tartan_serial::model_16550::UART16550::new(<span class="number">0x3f8</span>)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>))]</span>
-<span class="kw">fn</span> <span class="ident">find_uart</span>() -&gt; <span class="kw">impl</span> <span class="ident">UART</span> {
-    <span class="kw">use</span> <span class="ident">tartan_serial::model_pl011</span>::{<span class="ident">RegisterBlock</span>, <span class="ident">UARTPL011</span>};
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;aarch64&quot;</span>))]
+</span><span class="kw">fn </span>find_uart() -&gt; <span class="kw">impl </span>UART {
+    <span class="kw">use </span>tartan_serial::model_pl011::{RegisterBlock, UARTPL011};
 
-    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree</span>
-    <span class="ident">UARTPL011</span> {
-        <span class="ident">register_block</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="number">0x0900_0000</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">RegisterBlock</span>) },
-        <span class="ident">base_clock_rate</span>: <span class="number">24_000_000</span>,
+    <span class="comment">// FIXME: Hardcoded values copied from QEMU&#39;s &quot;virt&quot; board device tree
+    </span>UARTPL011 {
+        register_block: <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span>(<span class="number">0x0900_0000 </span><span class="kw">as </span><span class="kw-2">*mut </span>RegisterBlock) },
+        base_clock_rate: <span class="number">24_000_000</span>,
     }
 }
 
 
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">global_allocator</span>)]</span>
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">ALLOCATOR</span>: <span class="ident">allocator::Allocator</span> = <span class="ident">allocator::Allocator::uninitialized</span>();
+<span class="attribute">#[cfg_attr(not(test), global_allocator)]
+</span><span class="kw">static </span><span class="kw-2">mut </span>ALLOCATOR: allocator::Allocator = allocator::Allocator::uninitialized();
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">HEAP</span>: [<span class="ident">MaybeUninit</span>&lt;<span class="ident">usize</span>&gt;; <span class="number">0x8000</span>] = [<span class="ident">MaybeUninit::uninit</span>(); <span class="number">0x8000</span>];
+<span class="kw">static </span><span class="kw-2">mut </span>HEAP: [MaybeUninit&lt;usize&gt;; <span class="number">0x8000</span>] = [MaybeUninit::uninit(); <span class="number">0x8000</span>];
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
-<span class="attribute">#[<span class="ident">alloc_error_handler</span>]</span>
-<span class="kw">fn</span> <span class="ident">alloc_error</span>(<span class="ident">layout</span>: <span class="ident">core::alloc::Layout</span>) -&gt; ! {
-    <span class="macro">panic!</span>(<span class="string">&quot;Allocating {} bytes failed&quot;</span>, <span class="ident">layout</span>.<span class="ident">size</span>());
+<span class="attribute">#[cfg(not(test))]
+#[alloc_error_handler]
+</span><span class="kw">fn </span>alloc_error(layout: core::alloc::Layout) -&gt; ! {
+    <span class="macro">panic!</span>(<span class="string">&quot;Allocating {} bytes failed&quot;</span>, layout.size());
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
-<span class="attribute">#[<span class="ident">panic_handler</span>]</span>
-<span class="kw">fn</span> <span class="ident">panic_handler</span>(<span class="ident">info</span>: <span class="kw-2">&amp;</span><span class="ident">core::panic::PanicInfo</span>) -&gt; ! {
-    <span class="comment">// Not much we can do with Err results in a panic handler</span>
-    <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_must_use</span>)]</span>
+<span class="attribute">#[cfg(not(test))]
+#[panic_handler]
+</span><span class="kw">fn </span>panic_handler(info: <span class="kw-2">&amp;</span>core::panic::PanicInfo) -&gt; ! {
+    <span class="comment">// Not much we can do with Err results in a panic handler
+    </span><span class="attribute">#![allow(unused_must_use)]
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serial</span> = <span class="ident">find_uart</span>();
-    <span class="ident">serial</span>.<span class="ident">reset</span>();
-    <span class="ident">serial</span>.<span class="ident">set_line_mode</span>(<span class="ident">LineMode::default</span>());
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> = <span class="ident">UARTWriteAdapter</span>(<span class="ident">serial</span>);
+    </span><span class="kw">let </span><span class="kw-2">mut </span>serial = find_uart();
+    serial.reset();
+    serial.set_line_mode(LineMode::default());
+    <span class="kw">let </span><span class="kw-2">mut </span>out = UARTWriteAdapter(serial);
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;!!! Panic !!!&quot;</span>);
-    <span class="kw">match</span> <span class="ident">info</span>.<span class="ident">location</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">location</span>) =&gt; <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Location: {}&quot;</span>, <span class="ident">location</span>),
-        <span class="prelude-val">None</span> =&gt; <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;No location information&quot;</span>),
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;!!! Panic !!!&quot;</span>);
+    <span class="kw">match </span>info.location() {
+        <span class="prelude-val">Some</span>(location) =&gt; <span class="macro">writeln!</span>(out, <span class="string">&quot;Location: {}&quot;</span>, location),
+        <span class="prelude-val">None </span>=&gt; <span class="macro">writeln!</span>(out, <span class="string">&quot;No location information&quot;</span>),
     };
-    <span class="kw">match</span> <span class="ident">info</span>.<span class="ident">message</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">arguments</span>) =&gt; <span class="ident">core::fmt::write</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>, <span class="kw-2">*</span><span class="ident">arguments</span>),
-        <span class="prelude-val">None</span> =&gt; <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;No additional message&quot;</span>),
+    <span class="kw">match </span>info.message() {
+        <span class="prelude-val">Some</span>(arguments) =&gt; core::fmt::write(<span class="kw-2">&amp;mut </span>out, <span class="kw-2">*</span>arguments),
+        <span class="prelude-val">None </span>=&gt; <span class="macro">writeln!</span>(out, <span class="string">&quot;No additional message&quot;</span>),
     };
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::empty_loop</span>)]</span>
-    <span class="kw">loop</span> {}
+    <span class="attribute">#[allow(clippy::empty_loop)]
+    </span><span class="kw">loop </span>{}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
-<span class="attribute">#[<span class="ident">lang</span> = <span class="string">&quot;eh_personality&quot;</span>]</span>
-<span class="kw">fn</span> <span class="ident">eh_personality</span>() -&gt; ! {
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::empty_loop</span>)]</span>
-    <span class="kw">loop</span> {}
+<span class="attribute">#[cfg(not(test))]
+#[lang = <span class="string">&quot;eh_personality&quot;</span>]
+</span><span class="kw">fn </span>eh_personality() -&gt; ! {
+    <span class="attribute">#[allow(clippy::empty_loop)]
+    </span><span class="kw">loop </span>{}
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

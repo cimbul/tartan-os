@@ -244,251 +244,251 @@
 <span id="244">244</span>
 <span id="245">245</span>
 <span id="246">246</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![allow(clippy::module_name_repetitions)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::FixedConfigRegister</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">MAX_DEVICE</span>, <span class="ident">MAX_FUNCTION</span>};
-<span class="kw">use</span> <span class="ident">core::ops::RangeInclusive</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::config::FixedConfigRegister;
+<span class="kw">use crate</span>::{MAX_DEVICE, MAX_FUNCTION};
+<span class="kw">use </span>core::ops::RangeInclusive;
 
 
-<span class="doccomment">/// Provides methods to access PCI configuration space.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Implementations may only offer access to a limited number of registers on a specific</span>
-<span class="doccomment">/// range of segments/busses.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ConfigAccess</span> {
-    <span class="doccomment">/// Get a specific 32-bit register in PCI configuration space.</span>
-    <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u32</span>;
+<span class="doccomment">/// Provides methods to access PCI configuration space.
+///
+/// Implementations may only offer access to a limited number of registers on a specific
+/// range of segments/busses.
+</span><span class="kw">pub trait </span>ConfigAccess {
+    <span class="doccomment">/// Get a specific 32-bit register in PCI configuration space.
+    </span><span class="kw">fn </span>get_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16) -&gt; u32;
 
-    <span class="doccomment">/// Set a specific 32-bit register in PCI configuration space.</span>
-    <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>);
+    <span class="doccomment">/// Set a specific 32-bit register in PCI configuration space.
+    </span><span class="kw">fn </span>set_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16, value: u32);
 
-    <span class="doccomment">/// Get a register in PCI configuration space with an offset defined by the output</span>
-    <span class="doccomment">/// type.</span>
-    <span class="kw">fn</span> <span class="ident">get_fixed_register</span>&lt;<span class="ident">T</span>: <span class="ident">FixedConfigRegister</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>) -&gt; <span class="ident">T</span> {
-        <span class="self">self</span>.<span class="ident">get_register</span>(<span class="ident">selector</span>, <span class="ident">T::REGISTER_NUMBER</span>.<span class="ident">into</span>()).<span class="ident">into</span>()
+    <span class="doccomment">/// Get a register in PCI configuration space with an offset defined by the output
+    /// type.
+    </span><span class="kw">fn </span>get_fixed_register&lt;T: FixedConfigRegister&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector) -&gt; T {
+        <span class="self">self</span>.get_register(selector, T::REGISTER_NUMBER.into()).into()
     }
 
-    <span class="doccomment">/// Set a register in PCI configuration space with an offset defined by the input</span>
-    <span class="doccomment">/// type.</span>
-    <span class="kw">fn</span> <span class="ident">set_fixed_register</span>&lt;<span class="ident">T</span>: <span class="ident">FixedConfigRegister</span>&gt;(
+    <span class="doccomment">/// Set a register in PCI configuration space with an offset defined by the input
+    /// type.
+    </span><span class="kw">fn </span>set_fixed_register&lt;T: FixedConfigRegister&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>,
-        <span class="ident">value</span>: <span class="ident">T</span>,
+        selector: ConfigSelector,
+        value: T,
     ) {
-        <span class="self">self</span>.<span class="ident">set_register</span>(<span class="ident">selector</span>, <span class="ident">T::REGISTER_NUMBER</span>.<span class="ident">into</span>(), <span class="ident">value</span>.<span class="ident">into</span>());
+        <span class="self">self</span>.set_register(selector, T::REGISTER_NUMBER.into(), value.into());
     }
 }
 
 
-<span class="doccomment">/// Logical PCI address for a function of a specific segment/bus/device.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConfigSelector</span> {
-    <span class="doccomment">/// Segment group as defined by PCI Express. Always zero for PCI Local Bus devices.</span>
-    <span class="kw">pub</span> <span class="ident">segment_group</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// PCI bus number within the indicated segment group. The root bus is always bus</span>
-    <span class="doccomment">/// zero.</span>
-    <span class="kw">pub</span> <span class="ident">bus</span>: <span class="ident">u8</span>,
-    <span class="doccomment">/// PCI device number on the indicated bus.</span>
-    <span class="kw">pub</span> <span class="ident">device</span>: <span class="ident">u8</span>,
-    <span class="doccomment">/// PCI function number on the indicated device. Usually zero, but may be nonzero for</span>
-    <span class="doccomment">/// multi-function devices.</span>
-    <span class="kw">pub</span> <span class="ident">function</span>: <span class="ident">u8</span>,
+<span class="doccomment">/// Logical PCI address for a function of a specific segment/bus/device.
+</span><span class="attribute">#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>ConfigSelector {
+    <span class="doccomment">/// Segment group as defined by PCI Express. Always zero for PCI Local Bus devices.
+    </span><span class="kw">pub </span>segment_group: u16,
+    <span class="doccomment">/// PCI bus number within the indicated segment group. The root bus is always bus
+    /// zero.
+    </span><span class="kw">pub </span>bus: u8,
+    <span class="doccomment">/// PCI device number on the indicated bus.
+    </span><span class="kw">pub </span>device: u8,
+    <span class="doccomment">/// PCI function number on the indicated device. Usually zero, but may be nonzero for
+    /// multi-function devices.
+    </span><span class="kw">pub </span>function: u8,
 }
 
 
-<span class="doccomment">/// Access to memory-mapped PCI configuration space</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemMapConfigAccess</span> {
-    <span class="doccomment">/// Address of register 0 on bus</span>
-    <span class="kw">pub</span> <span class="ident">base_address</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// Bus numbers covered by this memory map</span>
-    <span class="kw">pub</span> <span class="ident">bus_range</span>: <span class="ident">RangeInclusive</span>&lt;<span class="ident">u8</span>&gt;,
+<span class="doccomment">/// Access to memory-mapped PCI configuration space
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>MemMapConfigAccess {
+    <span class="doccomment">/// Address of register 0 on bus
+    </span><span class="kw">pub </span>base_address: usize,
+    <span class="doccomment">/// Bus numbers covered by this memory map
+    </span><span class="kw">pub </span>bus_range: RangeInclusive&lt;u8&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">MemMapConfigAccess</span> {
-    <span class="kw">const</span> <span class="ident">MAP_SIZE</span>: <span class="ident">u16</span> = <span class="number">1</span> &lt;&lt; <span class="number">10</span>;
+<span class="kw">impl </span>MemMapConfigAccess {
+    <span class="kw">const </span>MAP_SIZE: u16 = <span class="number">1 </span>&lt;&lt; <span class="number">10</span>;
 
-    <span class="kw">fn</span> <span class="ident">register_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u32</span> {
+    <span class="kw">fn </span>register_address(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16) -&gt; <span class="kw-2">*mut </span>u32 {
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">selector</span>.<span class="ident">bus</span>),
+            <span class="self">self</span>.bus_range.contains(<span class="kw-2">&amp;</span>selector.bus),
             <span class="string">&quot;Cannot access bus {} with this memory map (covers buses {}-{})&quot;</span>,
-            <span class="ident">selector</span>.<span class="ident">bus</span>,
-            <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">start</span>(),
-            <span class="self">self</span>.<span class="ident">bus_range</span>.<span class="ident">end</span>(),
+            selector.bus,
+            <span class="self">self</span>.bus_range.start(),
+            <span class="self">self</span>.bus_range.end(),
         );
         <span class="macro">assert!</span>(
-            <span class="ident">selector</span>.<span class="ident">device</span> &lt;= <span class="ident">MAX_DEVICE</span>,
+            selector.device &lt;= MAX_DEVICE,
             <span class="string">&quot;Device number out of range: {}&quot;</span>,
-            <span class="ident">selector</span>.<span class="ident">device</span>,
+            selector.device,
         );
         <span class="macro">assert!</span>(
-            <span class="ident">selector</span>.<span class="ident">function</span> &lt;= <span class="ident">MAX_FUNCTION</span>,
+            selector.function &lt;= MAX_FUNCTION,
             <span class="string">&quot;Function number out of range: {}&quot;</span>,
-            <span class="ident">selector</span>.<span class="ident">function</span>,
+            selector.function,
         );
-        <span class="macro">assert!</span>(<span class="ident">register</span> &lt; <span class="ident"><span class="self">Self</span>::MAP_SIZE</span>, <span class="string">&quot;Register number out of range: {}&quot;</span>, <span class="ident">register</span>);
+        <span class="macro">assert!</span>(register &lt; <span class="self">Self</span>::MAP_SIZE, <span class="string">&quot;Register number out of range: {}&quot;</span>, register);
 
-        <span class="kw">let</span> <span class="ident">offset</span> = <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">bus</span>) &lt;&lt; <span class="number">20</span>
-            | <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">device</span>) &lt;&lt; <span class="number">15</span>
-            | <span class="ident">usize::from</span>(<span class="ident">selector</span>.<span class="ident">function</span>) &lt;&lt; <span class="number">12</span>
-            | <span class="ident">usize::from</span>(<span class="ident">register</span>) &lt;&lt; <span class="number">2</span>;
-        <span class="kw">let</span> <span class="ident">address</span> = <span class="self">self</span>.<span class="ident">base_address</span> + <span class="ident">offset</span>;
+        <span class="kw">let </span>offset = usize::from(selector.bus) &lt;&lt; <span class="number">20
+            </span>| usize::from(selector.device) &lt;&lt; <span class="number">15
+            </span>| usize::from(selector.function) &lt;&lt; <span class="number">12
+            </span>| usize::from(register) &lt;&lt; <span class="number">2</span>;
+        <span class="kw">let </span>address = <span class="self">self</span>.base_address + offset;
 
-        <span class="ident">address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u32</span>
+        address <span class="kw">as </span><span class="kw-2">*mut </span>u32
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">MemMapConfigAccess</span> {
-    <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u32</span> {
-        <span class="kw">let</span> <span class="ident">address</span> = <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">let</span> <span class="ident">register_data_le</span> = <span class="kw">unsafe</span> { <span class="ident">core::ptr::read_volatile</span>(<span class="ident">address</span>) };
-        <span class="ident">u32::from_le</span>(<span class="ident">register_data_le</span>)
+<span class="kw">impl </span>ConfigAccess <span class="kw">for </span>MemMapConfigAccess {
+    <span class="kw">fn </span>get_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16) -&gt; u32 {
+        <span class="kw">let </span>address = <span class="self">self</span>.register_address(selector, register);
+        <span class="kw">let </span>register_data_le = <span class="kw">unsafe </span>{ core::ptr::read_volatile(address) };
+        u32::from_le(register_data_le)
     }
 
-    <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
-        <span class="kw">let</span> <span class="ident">address</span> = <span class="self">self</span>.<span class="ident">register_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-        <span class="kw">unsafe</span> { <span class="ident">core::ptr::write_volatile</span>(<span class="ident">address</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) };
+    <span class="kw">fn </span>set_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16, value: u32) {
+        <span class="kw">let </span>address = <span class="self">self</span>.register_address(selector, register);
+        <span class="kw">unsafe </span>{ core::ptr::write_volatile(address, value.to_le()) };
     }
 }
 
 
-<span class="doccomment">/// Support for the I/O based configuration access method on x86/x86-64.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that other architectures have no concept of I/O space.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>, <span class="ident">doc</span>))]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::MAX_DEVICE</span>;
-    <span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
-    <span class="kw">use</span> <span class="ident">tartan_arch::x86_common::io</span>;
-    <span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
+<span class="doccomment">/// Support for the I/O based configuration access method on x86/x86-64.
+///
+/// Note that other architectures have no concept of I/O space.
+</span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+#[doc(cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>)))]
+</span><span class="kw">pub mod </span>io {
+    <span class="kw">use </span><span class="kw">crate</span>::access::{ConfigAccess, ConfigSelector};
+    <span class="kw">use </span><span class="kw">crate</span>::MAX_DEVICE;
+    <span class="kw">use </span>core::convert::TryFrom;
+    <span class="kw">use </span>tartan_arch::x86_common::io;
+    <span class="kw">use </span>tartan_bitfield::bitfield;
 
-    <span class="doccomment">/// I/O based configuration access method on x86/x86-64.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method only supports the 256 bits of I/O space defined by the PCI Local Bus</span>
-    <span class="doccomment">/// specification, and it has no concept of segment groups, which must always be zero.</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IOConfigAccess</span>;
+    <span class="doccomment">/// I/O based configuration access method on x86/x86-64.
+    ///
+    /// This method only supports the 256 bits of I/O space defined by the PCI Local Bus
+    /// specification, and it has no concept of segment groups, which must always be zero.
+    </span><span class="attribute">#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+    </span><span class="kw">pub struct </span>IOConfigAccess;
 
-    <span class="kw">impl</span> <span class="ident">IOConfigAccess</span> {
-        <span class="kw">const</span> <span class="ident">CONFIG_ADDRESS_PORT</span>: <span class="ident">u16</span> = <span class="number">0xcf8</span>;
-        <span class="kw">const</span> <span class="ident">CONFIG_DATA_PORT</span>: <span class="ident">u16</span> = <span class="number">0xcfc</span>;
+    <span class="kw">impl </span>IOConfigAccess {
+        <span class="kw">const </span>CONFIG_ADDRESS_PORT: u16 = <span class="number">0xcf8</span>;
+        <span class="kw">const </span>CONFIG_DATA_PORT: u16 = <span class="number">0xcfc</span>;
 
-        <span class="kw">fn</span> <span class="ident">write_config_address</span>(<span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) {
+        <span class="kw">fn </span>write_config_address(selector: ConfigSelector, register: u16) {
             <span class="macro">assert!</span>(
-                <span class="ident">selector</span>.<span class="ident">segment_group</span> == <span class="number">0</span>,
+                selector.segment_group == <span class="number">0</span>,
                 <span class="string">&quot;IO-based PCI config only supports segment group 0 (requested {})&quot;</span>,
-                <span class="ident">selector</span>.<span class="ident">segment_group</span>,
+                selector.segment_group,
             );
-            <span class="kw">let</span> <span class="ident">register_offset</span> = <span class="ident">u8::try_from</span>(<span class="ident">register</span> &lt;&lt; <span class="number">2</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;IO-based PCI config only supports register numbers &lt;= 0x3f&quot;</span>);
+            <span class="kw">let </span>register_offset = u8::try_from(register &lt;&lt; <span class="number">2</span>)
+                .expect(<span class="string">&quot;IO-based PCI config only supports register numbers &lt;= 0x3f&quot;</span>);
 
-            <span class="kw">let</span> <span class="ident">config_address</span> = <span class="ident">IOConfigAddress::new</span>(<span class="ident">selector</span>, <span class="ident">register_offset</span>);
-            <span class="kw">let</span> <span class="ident">config_address_le</span> = <span class="ident">config_address</span>.<span class="number">0</span>.<span class="ident">to_le</span>();
+            <span class="kw">let </span>config_address = IOConfigAddress::new(selector, register_offset);
+            <span class="kw">let </span>config_address_le = config_address.<span class="number">0</span>.to_le();
 
-            <span class="kw">unsafe</span> {
-                <span class="ident">io::out_u32</span>(<span class="ident"><span class="self">Self</span>::CONFIG_ADDRESS_PORT</span>, <span class="ident">config_address_le</span>);
+            <span class="kw">unsafe </span>{
+                io::out_u32(<span class="self">Self</span>::CONFIG_ADDRESS_PORT, config_address_le);
             };
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">ConfigAccess</span> <span class="kw">for</span> <span class="ident">IOConfigAccess</span> {
-        <span class="kw">fn</span> <span class="ident">get_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>) -&gt; <span class="ident">u32</span> {
-            <span class="ident"><span class="self">Self</span>::write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-            <span class="kw">let</span> <span class="ident">register_data_le</span> = <span class="kw">unsafe</span> { <span class="ident">io::in_u32</span>(<span class="ident"><span class="self">Self</span>::CONFIG_DATA_PORT</span>) };
-            <span class="ident">u32::from_le</span>(<span class="ident">register_data_le</span>)
+    <span class="kw">impl </span>ConfigAccess <span class="kw">for </span>IOConfigAccess {
+        <span class="kw">fn </span>get_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16) -&gt; u32 {
+            <span class="self">Self</span>::write_config_address(selector, register);
+            <span class="kw">let </span>register_data_le = <span class="kw">unsafe </span>{ io::in_u32(<span class="self">Self</span>::CONFIG_DATA_PORT) };
+            u32::from_le(register_data_le)
         }
 
-        <span class="kw">fn</span> <span class="ident">set_register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>) {
-            <span class="ident"><span class="self">Self</span>::write_config_address</span>(<span class="ident">selector</span>, <span class="ident">register</span>);
-            <span class="kw">unsafe</span> { <span class="ident">io::out_u32</span>(<span class="ident"><span class="self">Self</span>::CONFIG_DATA_PORT</span>, <span class="ident">value</span>.<span class="ident">to_le</span>()) }
-        }
-    }
-
-
-    <span class="macro">bitfield!</span> {
-        <span class="doccomment">/// Index value written to the `CONFIG_ADDRESS` port</span>
-        <span class="kw">struct</span> <span class="ident">IOConfigAddress</span>(<span class="ident">u32</span>) {
-            [<span class="number">31</span>    ] <span class="kw">pub</span> <span class="ident">enable</span>,
-            [<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub</span> <span class="ident">bus</span>:             <span class="ident">u8</span>,
-            [<span class="number">11</span>..<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">device</span>:          <span class="ident">u8</span>,
-            [ <span class="number">8</span>..<span class="number">11</span>] <span class="kw">pub</span> <span class="ident">function</span>:        <span class="ident">u8</span>,
-            [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">register_offset</span>: <span class="ident">u8</span>,
-        }
-    }
-
-    <span class="kw">impl</span> <span class="ident">IOConfigAddress</span> {
-        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">selector</span>: <span class="ident">ConfigSelector</span>, <span class="ident">register_offset</span>: <span class="ident">u8</span>) -&gt; <span class="self">Self</span> {
-            <span class="macro">assert!</span>(<span class="ident">selector</span>.<span class="ident">device</span> &lt;= <span class="ident">MAX_DEVICE</span>);
-            <span class="macro">assert!</span>(<span class="ident">selector</span>.<span class="ident">function</span> &lt;= <span class="ident">MAX_DEVICE</span>);
-
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> = <span class="ident"><span class="self">Self</span>::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_enable</span>(<span class="bool-val">true</span>);
-            <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="ident">selector</span>.<span class="ident">bus</span>);
-            <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="ident">selector</span>.<span class="ident">device</span>);
-            <span class="ident">address</span>.<span class="ident">set_function</span>(<span class="ident">selector</span>.<span class="ident">function</span>);
-            <span class="ident">address</span>.<span class="ident">set_register_offset</span>(<span class="ident">register_offset</span>);
-            <span class="ident">address</span>
+        <span class="kw">fn </span>set_register(<span class="kw-2">&amp;</span><span class="self">self</span>, selector: ConfigSelector, register: u16, value: u32) {
+            <span class="self">Self</span>::write_config_address(selector, register);
+            <span class="kw">unsafe </span>{ io::out_u32(<span class="self">Self</span>::CONFIG_DATA_PORT, value.to_le()) }
         }
     }
 
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-    <span class="kw">mod</span> <span class="ident">test</span> {
-        <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="macro">bitfield! </span>{
+        <span class="doccomment">/// Index value written to the `CONFIG_ADDRESS` port
+        </span><span class="kw">struct </span>IOConfigAddress(u32) {
+            [<span class="number">31    </span>] <span class="kw">pub </span>enable,
+            [<span class="number">16</span>..<span class="number">24</span>] <span class="kw">pub </span>bus:             u8,
+            [<span class="number">11</span>..<span class="number">16</span>] <span class="kw">pub </span>device:          u8,
+            [ <span class="number">8</span>..<span class="number">11</span>] <span class="kw">pub </span>function:        u8,
+            [ <span class="number">0</span>.. <span class="number">8</span>] <span class="kw">pub </span>register_offset: u8,
+        }
+    }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_io_config_address</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x00&quot;</span>);
+    <span class="kw">impl </span>IOConfigAddress {
+        <span class="kw">fn </span>new(selector: ConfigSelector, register_offset: u8) -&gt; <span class="self">Self </span>{
+            <span class="macro">assert!</span>(selector.device &lt;= MAX_DEVICE);
+            <span class="macro">assert!</span>(selector.function &lt;= MAX_DEVICE);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_enable</span>(<span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x80&quot;</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>address = <span class="self">Self</span>::default();
+            address.set_enable(<span class="bool-val">true</span>);
+            address.set_bus(selector.bus);
+            address.set_device(selector.device);
+            address.set_function(selector.function);
+            address.set_register_offset(register_offset);
+            address
+        }
+    }
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="number">0xff</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\xff\x00&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_bus</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x01\x00&quot;</span>);
+    <span class="attribute">#[cfg(test)]
+    </span><span class="kw">mod </span>test {
+        <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="number">0x1f</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\xf8\x00\x00&quot;</span>);
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_io_config_address() {
+            <span class="kw">let </span><span class="kw-2">mut </span>address = IOConfigAddress::default();
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_device</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x08\x00\x00&quot;</span>);
+            address = IOConfigAddress::default();
+            address.set_enable(<span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x00\x80&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_function</span>(<span class="number">0x07</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x07\x00\x00&quot;</span>);
+            address = IOConfigAddress::default();
+            address.set_bus(<span class="number">0xff</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\xff\x00&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_function</span>(<span class="number">0x01</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x01\x00\x00&quot;</span>);
+            address = IOConfigAddress::default();
+            address.set_bus(<span class="number">0x01</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x00\x01\x00&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_register_offset</span>(<span class="number">0xfc</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\xfc\x00\x00\x00&quot;</span>);
+            address = IOConfigAddress::default();
+            address.set_device(<span class="number">0x1f</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\xf8\x00\x00&quot;</span>);
 
-            <span class="ident">address</span> = <span class="ident">IOConfigAddress::default</span>();
-            <span class="ident">address</span>.<span class="ident">set_register_offset</span>(<span class="number">0x04</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x00\x00\x00&quot;</span>);
+            address = IOConfigAddress::default();
+            address.set_device(<span class="number">0x01</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x08\x00\x00&quot;</span>);
+
+            address = IOConfigAddress::default();
+            address.set_function(<span class="number">0x07</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x07\x00\x00&quot;</span>);
+
+            address = IOConfigAddress::default();
+            address.set_function(<span class="number">0x01</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x00\x01\x00\x00&quot;</span>);
+
+            address = IOConfigAddress::default();
+            address.set_register_offset(<span class="number">0xfc</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\xfc\x00\x00\x00&quot;</span>);
+
+            address = IOConfigAddress::default();
+            address.set_register_offset(<span class="number">0x04</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x00\x00\x00&quot;</span>);
         }
 
-        <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_io_config_address_new</span>() {
-            <span class="kw">let</span> <span class="ident">address</span> = <span class="ident">IOConfigAddress::new</span>(
-                <span class="ident">ConfigSelector</span> { <span class="ident">segment_group</span>: <span class="number">0</span>, <span class="ident">bus</span>: <span class="number">1</span>, <span class="ident">device</span>: <span class="number">2</span>, <span class="ident">function</span>: <span class="number">3</span> },
+        <span class="attribute">#[test]
+        </span><span class="kw">fn </span>test_io_config_address_new() {
+            <span class="kw">let </span>address = IOConfigAddress::new(
+                ConfigSelector { segment_group: <span class="number">0</span>, bus: <span class="number">1</span>, device: <span class="number">2</span>, function: <span class="number">3 </span>},
                 <span class="number">4</span>,
             );
-            <span class="macro">assert_eq!</span>(<span class="ident">address</span>.<span class="number">0</span>.<span class="ident">to_le_bytes</span>(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x13\x01\x80&quot;</span>);
+            <span class="macro">assert_eq!</span>(address.<span class="number">0</span>.to_le_bytes(), <span class="kw-2">*</span><span class="string">b&quot;\x04\x13\x01\x80&quot;</span>);
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

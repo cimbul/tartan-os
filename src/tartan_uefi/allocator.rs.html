@@ -104,111 +104,111 @@
 <span id="104">104</span>
 <span id="105">105</span>
 <span id="106">106</span>
-</pre><pre class="rust"><code><span class="doccomment">//! [`BootServices`](super::BootServices)-based heap allocator to support the standard</span>
-<span class="doccomment">//! [alloc] crate.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! [`BootServices`](super::BootServices)-based heap allocator to support the standard
+//! [alloc] crate.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::global::SYSTEM_TABLE</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::MemoryType</span>;
-<span class="kw">use</span> <span class="ident">core::alloc</span>::{<span class="ident">GlobalAlloc</span>, <span class="ident">Layout</span>};
-<span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
-<span class="kw">use</span> <span class="ident">core::ptr</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::global::SYSTEM_TABLE;
+<span class="kw">use </span><span class="kw">super</span>::MemoryType;
+<span class="kw">use </span>core::alloc::{GlobalAlloc, Layout};
+<span class="kw">use </span>core::ffi::c_void;
+<span class="kw">use </span>core::ptr;
 
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BootAllocator</span>;
+<span class="attribute">#[allow(clippy::module_name_repetitions)]
+</span><span class="kw">pub struct </span>BootAllocator;
 
-<span class="kw">impl</span> <span class="ident">BootAllocator</span> {
-    <span class="comment">// UEFI spec guarantees 8-byte alignment from allocate_pool()</span>
-    <span class="kw">const</span> <span class="ident">UEFI_ALIGNMENT</span>: <span class="ident">usize</span> = <span class="number">8</span>;
+<span class="kw">impl </span>BootAllocator {
+    <span class="comment">// UEFI spec guarantees 8-byte alignment from allocate_pool()
+    </span><span class="kw">const </span>UEFI_ALIGNMENT: usize = <span class="number">8</span>;
 
-    <span class="kw">const</span> <span class="ident">VOID_PTR_LAYOUT</span>: <span class="ident">Layout</span> = <span class="ident">Layout::new</span>::&lt;<span class="kw-2">*const</span> <span class="ident">c_void</span>&gt;();
+    <span class="kw">const </span>VOID_PTR_LAYOUT: Layout = Layout::new::&lt;<span class="kw-2">*const </span>c_void&gt;();
 
-    <span class="kw">fn</span> <span class="ident">extend_layout_for_alignment</span>(<span class="ident">orig_layout</span>: <span class="ident">Layout</span>) -&gt; (<span class="ident">Layout</span>, <span class="ident">usize</span>) {
-        <span class="comment">// To manually align the memory region, so we need extra space for:</span>
-        <span class="comment">//  * A place to store the original pointer that allocate_pool() gave us, so that</span>
-        <span class="comment">//    we can recover it for free_pool()</span>
-        <span class="comment">//  * One extra unit of alignment to accommodate any shifting we need to do to</span>
-        <span class="comment">//    align the pointer</span>
-        <span class="kw">let</span> (<span class="ident">saved_ptr_layout</span>, <span class="ident">saved_ptr_offset</span>) = <span class="ident">orig_layout</span>
-            .<span class="ident">extend</span>(<span class="ident"><span class="self">Self</span>::VOID_PTR_LAYOUT</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;Could not construct extended layout for alignment structure&quot;</span>);
-        <span class="kw">let</span> <span class="ident">adjusted_size</span> = <span class="ident">saved_ptr_layout</span>.<span class="ident">size</span>() + <span class="ident">saved_ptr_layout</span>.<span class="ident">align</span>();
-        <span class="kw">let</span> <span class="ident">adjusted_layout</span> =
-            <span class="ident">Layout::from_size_align</span>(<span class="ident">adjusted_size</span>, <span class="ident">saved_ptr_layout</span>.<span class="ident">align</span>())
-                .<span class="ident">expect</span>(<span class="string">&quot;Could not construct extended layout for alignable allocation&quot;</span>);
-        (<span class="ident">adjusted_layout</span>, <span class="ident">saved_ptr_offset</span>)
+    <span class="kw">fn </span>extend_layout_for_alignment(orig_layout: Layout) -&gt; (Layout, usize) {
+        <span class="comment">// To manually align the memory region, so we need extra space for:
+        //  * A place to store the original pointer that allocate_pool() gave us, so that
+        //    we can recover it for free_pool()
+        //  * One extra unit of alignment to accommodate any shifting we need to do to
+        //    align the pointer
+        </span><span class="kw">let </span>(saved_ptr_layout, saved_ptr_offset) = orig_layout
+            .extend(<span class="self">Self</span>::VOID_PTR_LAYOUT)
+            .expect(<span class="string">&quot;Could not construct extended layout for alignment structure&quot;</span>);
+        <span class="kw">let </span>adjusted_size = saved_ptr_layout.size() + saved_ptr_layout.align();
+        <span class="kw">let </span>adjusted_layout =
+            Layout::from_size_align(adjusted_size, saved_ptr_layout.align())
+                .expect(<span class="string">&quot;Could not construct extended layout for alignable allocation&quot;</span>);
+        (adjusted_layout, saved_ptr_offset)
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">system_table</span> = <span class="ident">SYSTEM_TABLE</span>.<span class="ident">expect</span>(<span class="string">&quot;System table not initialized&quot;</span>);
-        <span class="kw">let</span> <span class="ident">boot_services</span> =
-            (<span class="kw-2">*</span><span class="ident">system_table</span>).<span class="ident">boot_services</span>.<span class="ident">expect</span>(<span class="string">&quot;Boot services unavailable&quot;</span>);
+    <span class="kw">unsafe fn </span>alloc(layout: Layout) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">&quot;System table not initialized&quot;</span>);
+        <span class="kw">let </span>boot_services =
+            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">&quot;Boot services unavailable&quot;</span>);
 
-        <span class="kw">let</span> (<span class="ident">adjusted_layout</span>, <span class="ident">saved_ptr_offset</span>) =
-            <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() &lt;= <span class="ident"><span class="self">Self</span>::UEFI_ALIGNMENT</span> {
-                <span class="comment">// allocate_pool() will give the proper alignment. No adjustment needed.</span>
-                (<span class="ident">layout</span>, <span class="number">0</span>)
-            } <span class="kw">else</span> {
-                <span class="ident"><span class="self">Self</span>::extend_layout_for_alignment</span>(<span class="ident">layout</span>)
+        <span class="kw">let </span>(adjusted_layout, saved_ptr_offset) =
+            <span class="kw">if </span>layout.align() &lt;= <span class="self">Self</span>::UEFI_ALIGNMENT {
+                <span class="comment">// allocate_pool() will give the proper alignment. No adjustment needed.
+                </span>(layout, <span class="number">0</span>)
+            } <span class="kw">else </span>{
+                <span class="self">Self</span>::extend_layout_for_alignment(layout)
             };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span> = <span class="ident">ptr::null_mut</span>();
-        (<span class="ident">boot_services</span>.<span class="ident">allocate_pool</span>)(
-            <span class="ident">MemoryType::LoaderData</span>,
-            <span class="ident">adjusted_layout</span>.<span class="ident">size</span>(),
-            <span class="kw-2">&amp;mut</span> <span class="ident">buffer</span>,
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer: <span class="kw-2">*mut </span>c_void = ptr::null_mut();
+        (boot_services.allocate_pool)(
+            MemoryType::LoaderData,
+            adjusted_layout.size(),
+            <span class="kw-2">&amp;mut </span>buffer,
         )
-        .<span class="ident">into_result</span>()
-        .<span class="ident">expect</span>(<span class="string">&quot;allocate_pool() failed&quot;</span>);
+        .into_result()
+        .expect(<span class="string">&quot;allocate_pool() failed&quot;</span>);
 
-        <span class="kw">if</span> <span class="ident">adjusted_layout</span>.<span class="ident">align</span>() &gt; <span class="ident"><span class="self">Self</span>::UEFI_ALIGNMENT</span> {
-            <span class="kw">let</span> <span class="ident">orig_address</span> = <span class="ident">buffer</span> <span class="kw">as</span> <span class="ident">usize</span>;
-            <span class="kw">let</span> <span class="ident">align_offset</span> = <span class="ident">orig_address</span> % <span class="ident">adjusted_layout</span>.<span class="ident">align</span>();
-            <span class="kw">if</span> <span class="ident">align_offset</span> != <span class="number">0</span> {
-                <span class="comment">// Shift to accommodate alignment</span>
-                <span class="kw">let</span> <span class="ident">shifted_ptr</span> = <span class="ident">orig_address</span> + (<span class="ident">adjusted_layout</span>.<span class="ident">align</span>() - <span class="ident">align_offset</span>);
-                <span class="ident">buffer</span> = <span class="ident">shifted_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>;
+        <span class="kw">if </span>adjusted_layout.align() &gt; <span class="self">Self</span>::UEFI_ALIGNMENT {
+            <span class="kw">let </span>orig_address = buffer <span class="kw">as </span>usize;
+            <span class="kw">let </span>align_offset = orig_address % adjusted_layout.align();
+            <span class="kw">if </span>align_offset != <span class="number">0 </span>{
+                <span class="comment">// Shift to accommodate alignment
+                </span><span class="kw">let </span>shifted_ptr = orig_address + (adjusted_layout.align() - align_offset);
+                buffer = shifted_ptr <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
             }
-            <span class="comment">// Store the original pointer after the object we are allocating. This happens</span>
-            <span class="comment">// even if we didn&#39;t have make an alignment shift, because dealloc() has no</span>
-            <span class="comment">// way of telling whether we did.</span>
-            <span class="kw">let</span> <span class="ident">saved_ptr_ptr</span> = (<span class="ident">buffer</span> <span class="kw">as</span> <span class="ident">usize</span> + <span class="ident">saved_ptr_offset</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>;
-            <span class="kw-2">*</span><span class="ident">saved_ptr_ptr</span> = <span class="ident">orig_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>;
+            <span class="comment">// Store the original pointer after the object we are allocating. This happens
+            // even if we didn&#39;t have make an alignment shift, because dealloc() has no
+            // way of telling whether we did.
+            </span><span class="kw">let </span>saved_ptr_ptr = (buffer <span class="kw">as </span>usize + saved_ptr_offset) <span class="kw">as </span><span class="kw-2">*mut *mut </span>c_void;
+            <span class="kw-2">*</span>saved_ptr_ptr = orig_address <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
         }
 
-        <span class="ident">buffer</span>.<span class="ident">cast</span>()
+        buffer.cast()
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dealloc</span>(<span class="ident">buffer</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) {
-        <span class="kw">let</span> <span class="ident">system_table</span> = <span class="ident">SYSTEM_TABLE</span>.<span class="ident">expect</span>(<span class="string">&quot;System table not initialized&quot;</span>);
-        <span class="kw">let</span> <span class="ident">boot_services</span> =
-            (<span class="kw-2">*</span><span class="ident">system_table</span>).<span class="ident">boot_services</span>.<span class="ident">expect</span>(<span class="string">&quot;Boot services unavailable&quot;</span>);
+    <span class="kw">unsafe fn </span>dealloc(buffer: <span class="kw-2">*mut </span>u8, layout: Layout) {
+        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">&quot;System table not initialized&quot;</span>);
+        <span class="kw">let </span>boot_services =
+            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">&quot;Boot services unavailable&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">original_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span> = <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() &lt;= <span class="ident"><span class="self">Self</span>::UEFI_ALIGNMENT</span> {
-            <span class="comment">// We gave Rust the pointer that came from allocate_pool() directly</span>
-            <span class="ident">buffer</span>.<span class="ident">cast</span>()
-        } <span class="kw">else</span> {
-            <span class="comment">// This pointer was manually aligned, which means it isn&#39;t the same as the</span>
-            <span class="comment">// pointer that allocate_pool() gave us. We have to recover the original</span>
-            <span class="comment">// pointer to pass to free_pool().</span>
-            <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">saved_ptr_offset</span>) = <span class="ident"><span class="self">Self</span>::extend_layout_for_alignment</span>(<span class="ident">layout</span>);
-            <span class="kw">let</span> <span class="ident">saved_ptr_ptr</span> = (<span class="ident">buffer</span> <span class="kw">as</span> <span class="ident">usize</span> + <span class="ident">saved_ptr_offset</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>;
-            <span class="kw-2">*</span><span class="ident">saved_ptr_ptr</span>
+        <span class="kw">let </span>original_ptr: <span class="kw-2">*mut </span>c_void = <span class="kw">if </span>layout.align() &lt;= <span class="self">Self</span>::UEFI_ALIGNMENT {
+            <span class="comment">// We gave Rust the pointer that came from allocate_pool() directly
+            </span>buffer.cast()
+        } <span class="kw">else </span>{
+            <span class="comment">// This pointer was manually aligned, which means it isn&#39;t the same as the
+            // pointer that allocate_pool() gave us. We have to recover the original
+            // pointer to pass to free_pool().
+            </span><span class="kw">let </span>(<span class="kw">_</span>, saved_ptr_offset) = <span class="self">Self</span>::extend_layout_for_alignment(layout);
+            <span class="kw">let </span>saved_ptr_ptr = (buffer <span class="kw">as </span>usize + saved_ptr_offset) <span class="kw">as </span><span class="kw-2">*mut *mut </span>c_void;
+            <span class="kw-2">*</span>saved_ptr_ptr
         };
 
-        (<span class="ident">boot_services</span>.<span class="ident">free_pool</span>)(<span class="ident">original_ptr</span>)
-            .<span class="ident">into_result</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;Could not free memory&quot;</span>);
+        (boot_services.free_pool)(original_ptr)
+            .into_result()
+            .expect(<span class="string">&quot;Could not free memory&quot;</span>);
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">GlobalAlloc</span> <span class="kw">for</span> <span class="ident">BootAllocator</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="ident">BootAllocator::alloc</span>(<span class="ident">layout</span>)
+<span class="kw">unsafe impl </span>GlobalAlloc <span class="kw">for </span>BootAllocator {
+    <span class="kw">unsafe fn </span>alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, layout: Layout) -&gt; <span class="kw-2">*mut </span>u8 {
+        BootAllocator::alloc(layout)
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dealloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) {
-        <span class="ident">BootAllocator::dealloc</span>(<span class="ident">ptr</span>, <span class="ident">layout</span>);
+    <span class="kw">unsafe fn </span>dealloc(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: <span class="kw-2">*mut </span>u8, layout: Layout) {
+        BootAllocator::dealloc(ptr, layout);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

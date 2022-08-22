@@ -9,16 +9,16 @@
 <span id="9">9</span>
 <span id="10">10</span>
 <span id="11">11</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific bindings for 64-bit Intel x86-based processors</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Architecture-specific bindings for 64-bit Intel x86-based processors
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::x86_common</span>::<span class="kw-2">*</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::x86_common::<span class="kw-2">*</span>;
 
 
-<span class="doccomment">/// Perform early architecture-specific setup</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize</span>() {
-    <span class="ident">initialize_control_registers</span>();
-    <span class="ident">initialize_segments</span>();
-    <span class="ident">initialize_interrupts</span>();
+<span class="doccomment">/// Perform early architecture-specific setup
+</span><span class="kw">pub fn </span>initialize() {
+    initialize_control_registers();
+    initialize_segments();
+    initialize_interrupts();
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

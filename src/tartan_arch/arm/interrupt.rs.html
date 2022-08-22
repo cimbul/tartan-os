@@ -156,163 +156,163 @@
 <span id="156">156</span>
 <span id="157">157</span>
 <span id="158">158</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Exception and interrupt handling.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Exception and interrupt handling.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">cp15_register_get</span>, <span class="ident">cp15_register_set</span>};
+</span><span class="kw">use crate</span>::{cp15_register_get, cp15_register_set};
 
-<span class="comment">// Must be re-exported so that crates that use these macros will be able to resolve it</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">paste::paste</span>;
+<span class="comment">// Must be re-exported so that crates that use these macros will be able to resolve it
+</span><span class="attribute">#[doc(hidden)]
+</span><span class="kw">pub use </span>paste::paste;
 
 
-<span class="doccomment">/// Define an exception vector table that forwards all exceptions to the designated</span>
-<span class="doccomment">/// handler.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The first argument is the name of the vector table, which will be exported as an</span>
-<span class="doccomment">/// unmangled symbol and exposed to Rust code as an immutable static of type</span>
-<span class="doccomment">/// [`VectorTable`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The second argument is the name of the handler function, which should have</span>
-<span class="doccomment">/// signature `func(Kind)`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">/// ```ignore</span>
-<span class="doccomment">/// # use tartan_arch::arm_exception_vector_table;</span>
-<span class="doccomment">/// # use tartan_arch::arm::ExceptionLevel;</span>
-<span class="doccomment">/// # use tartan_arch::arm::interrupt::{Kind, VectorBaseAddressRegister};</span>
-<span class="doccomment">/// #</span>
-<span class="doccomment">/// arm_exception_vector_table!(exception_table, handle_exception);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn handle_exception(kind: Kind) {</span>
-<span class="doccomment">///     panic!(&quot;Exception {:?}&quot;, kind);</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn main() {</span>
-<span class="doccomment">///     VectorBaseAddressRegister::set(unsafe { &amp;exception_table });</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules!</span> <span class="ident">arm_exception_vector_table</span> {
-    [<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>:<span class="ident">path</span>] =&gt; {
-        <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">static</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::VectorTable</span>;
+<span class="doccomment">/// Define an exception vector table that forwards all exceptions to the designated
+/// handler.
+///
+/// The first argument is the name of the vector table, which will be exported as an
+/// unmangled symbol and exposed to Rust code as an immutable static of type
+/// [`VectorTable`].
+///
+/// The second argument is the name of the handler function, which should have
+/// signature `func(Kind)`.
+///
+/// # Example
+/// ```ignore
+/// # use tartan_arch::arm_exception_vector_table;
+/// # use tartan_arch::arm::ExceptionLevel;
+/// # use tartan_arch::arm::interrupt::{Kind, VectorBaseAddressRegister};
+/// #
+/// arm_exception_vector_table!(exception_table, handle_exception);
+///
+/// fn handle_exception(kind: Kind) {
+///     panic!(&quot;Exception {:?}&quot;, kind);
+/// }
+///
+/// fn main() {
+///     VectorBaseAddressRegister::set(unsafe { &amp;exception_table });
+/// }
+/// ```
+</span><span class="attribute">#[macro_export]
+</span><span class="macro">macro_rules! </span>arm_exception_vector_table {
+    [<span class="macro-nonterminal">$table</span>:ident, <span class="macro-nonterminal">$handler</span>:path] =&gt; {
+        <span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">static </span><span class="macro-nonterminal">$table</span>: <span class="macro-nonterminal">$crate::arm::interrupt::VectorTable</span>;
         }
 
         <span class="macro">core::arch::global_asm!</span>(<span class="macro">concat!</span>(<span class="string">&quot;
             .arm  // Exception handlers always use 32-bit (Arm-mode) instructions
             .balign 0x10
-        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;:
+        &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;:
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x00
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x00
             // Reset
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_reset
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_reset
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x04
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x04
             // Undefined instruction
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_undefined
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_undefined
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x08
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x08
             // Software interrupt
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_software
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_software
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x0c
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x0c
             // Prefetch abort
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_prefetch
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_prefetch
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x10
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x10
             // Data abort
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_data
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_data
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x18
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x18
             // Hardware interrupt (IRQ)
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_interrupt
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_interrupt
 
-        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot; + 0x1c
+        . = &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot; + 0x1c
             // Fast hardware interrupt (FIQ)
-            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span>), <span class="string">&quot;_fast_interrupt
+            ldr pc, &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$table</span>), <span class="string">&quot;_fast_interrupt
         &quot;</span>));
 
-        <span class="macro-nonterminal">$</span><span class="macro">crate::arm::interrupt::paste!</span> {
-            <span class="attribute">#[<span class="macro-nonterminal">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_reset</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::Reset</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::arm::interrupt::paste! </span>{
+            <span class="attribute">#[<span class="macro-nonterminal">no_mangle</span>]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_reset &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::Reset</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_undefined</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::UndefinedInstruction</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_undefined &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::UndefinedInstruction</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_software</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::SoftwareInterrupt</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_software &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::SoftwareInterrupt</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_prefetch</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::PrefetchAbort</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_prefetch &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::PrefetchAbort</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_data</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::DataAbort</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_data &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::DataAbort</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_interrupt</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::HardwareInterrupt</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_interrupt &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::HardwareInterrupt</span>);
             }
 
-            <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-            <span class="kw">fn</span> [&lt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">table</span> <span class="ident">_fast_interrupt</span> &gt;]() {
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">handler</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::arm::interrupt::Kind::FastHardwareInterrupt</span>);
+            <span class="attribute">#[no_mangle]
+            </span><span class="kw">fn </span>[&lt; <span class="macro-nonterminal">$table </span>_fast_interrupt &gt;]() {
+                <span class="macro-nonterminal">$handler</span>(<span class="macro-nonterminal">$crate::arm::interrupt::Kind::FastHardwareInterrupt</span>);
             }
         }
     };
 }
 
 
-<span class="doccomment">/// The kind of exception being handled</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Kind</span> {
-    <span class="ident">Reset</span>,
-    <span class="ident">UndefinedInstruction</span>,
-    <span class="ident">SoftwareInterrupt</span>,
-    <span class="ident">PrefetchAbort</span>,
-    <span class="ident">DataAbort</span>,
-    <span class="ident">HardwareInterrupt</span>,
-    <span class="ident">FastHardwareInterrupt</span>,
+<span class="doccomment">/// The kind of exception being handled
+</span><span class="attribute">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
+</span><span class="kw">pub enum </span>Kind {
+    Reset,
+    UndefinedInstruction,
+    SoftwareInterrupt,
+    PrefetchAbort,
+    DataAbort,
+    HardwareInterrupt,
+    FastHardwareInterrupt,
 }
 
 
-<span class="doccomment">/// Exception vector table that contains code to handle each exception [`Kind`].</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">0x10</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VectorTable</span>([<span class="ident">u8</span>; <span class="number">0x20</span>]);
+<span class="doccomment">/// Exception vector table that contains code to handle each exception [`Kind`].
+</span><span class="attribute">#[repr(align(<span class="number">0x10</span>))]
+</span><span class="kw">pub struct </span>VectorTable([u8; <span class="number">0x20</span>]);
 
 
-<span class="doccomment">/// Contains the address of the [`VectorTable`] that the processor should use.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">VectorBaseAddressRegister</span> {}
+<span class="doccomment">/// Contains the address of the [`VectorTable`] that the processor should use.
+</span><span class="kw">pub enum </span>VectorBaseAddressRegister {}
 
-<span class="kw">impl</span> <span class="ident">VectorBaseAddressRegister</span> {
-    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Only defined for exception levels 1–3. The register for a given exception level is</span>
-    <span class="doccomment">/// only accessible from that level or higher.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>() -&gt; <span class="kw-2">*const</span> <span class="ident">VectorTable</span> {
-        <span class="kw">let</span> <span class="ident">usize_value</span> = <span class="macro">cp15_register_get!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>);
-        <span class="ident">usize_value</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">VectorTable</span>
+<span class="kw">impl </span>VectorBaseAddressRegister {
+    <span class="doccomment">/// Retrieve the current value of this register for the specified exception level.
+    ///
+    /// Only defined for exception levels 1–3. The register for a given exception level is
+    /// only accessible from that level or higher.
+    </span><span class="kw">pub fn </span>get() -&gt; <span class="kw-2">*const </span>VectorTable {
+        <span class="kw">let </span>usize_value = <span class="macro">cp15_register_get!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>);
+        usize_value <span class="kw">as </span><span class="kw-2">*const </span>VectorTable
     }
 
-    <span class="doccomment">/// Update the register for the specified exception level with the given value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Address must be aligned to 11 bits (2048).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">value</span>: <span class="kw-2">*const</span> <span class="ident">VectorTable</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="macro">cp15_register_set!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>, <span class="ident">value</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    <span class="doccomment">/// Update the register for the specified exception level with the given value.
+    ///
+    /// Address must be aligned to 11 bits (2048).
+    </span><span class="kw">pub fn </span>set(value: <span class="kw-2">*const </span>VectorTable) {
+        <span class="kw">unsafe </span>{
+            <span class="macro">cp15_register_set!</span>(<span class="number">0</span>, <span class="string">&quot;c12&quot;</span>, <span class="string">&quot;c0&quot;</span>, <span class="number">0</span>, value <span class="kw">as </span>usize);
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

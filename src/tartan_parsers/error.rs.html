@@ -135,142 +135,142 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::cmp::min</span>;
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">nom::error</span>::{<span class="ident">ContextError</span>, <span class="ident">ErrorKind</span>, <span class="ident">ParseError</span>, <span class="ident">VerboseError</span>, <span class="ident">VerboseErrorKind</span>};
-<span class="kw">use</span> <span class="ident">nom</span>::{<span class="ident">AsBytes</span>, <span class="ident">IResult</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>core::cmp::min;
+<span class="kw">use </span>core::fmt;
+<span class="kw">use </span>nom::error::{ContextError, ErrorKind, ParseError, VerboseError, VerboseErrorKind};
+<span class="kw">use </span>nom::{AsBytes, IResult};
 
 
-<span class="doccomment">/// Trait alias combining the nom error traits [`ParseError`](nom::error::ParseError) and</span>
-<span class="doccomment">/// [`ContextError`](nom::error::ContextError).</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">GeneralParseError</span>&lt;<span class="ident">I</span>&gt;
-<span class="kw">where</span>
-    <span class="self">Self</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt; + <span class="ident">ContextError</span>&lt;<span class="ident">I</span>&gt;,
+<span class="doccomment">/// Trait alias combining the nom error traits [`ParseError`](nom::error::ParseError) and
+/// [`ContextError`](nom::error::ContextError).
+</span><span class="attribute">#[allow(clippy::module_name_repetitions)]
+</span><span class="kw">pub trait </span>GeneralParseError&lt;I&gt;
+<span class="kw">where
+    </span><span class="self">Self</span>: ParseError&lt;I&gt; + ContextError&lt;I&gt;,
 {
 }
 
-<span class="kw">impl</span>&lt;<span class="ident">T</span>, <span class="ident">I</span>&gt; <span class="ident">GeneralParseError</span>&lt;<span class="ident">I</span>&gt; <span class="kw">for</span> <span class="ident">T</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt; + <span class="ident">ContextError</span>&lt;<span class="ident">I</span>&gt; {}
+<span class="kw">impl</span>&lt;T, I&gt; GeneralParseError&lt;I&gt; <span class="kw">for </span>T <span class="kw">where </span>T: ParseError&lt;I&gt; + ContextError&lt;I&gt; {}
 
 
-<span class="doccomment">/// Shortcut for constructing parser errors</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_errors_doc</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">err</span>&lt;<span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>: <span class="ident">ParseError</span>&lt;<span class="ident">I</span>&gt;&gt;(<span class="ident">i</span>: <span class="ident">I</span>, <span class="ident">kind</span>: <span class="ident">ErrorKind</span>) -&gt; <span class="ident">IResult</span>&lt;<span class="ident">I</span>, <span class="ident">O</span>, <span class="ident">E</span>&gt; {
-    <span class="prelude-val">Err</span>(<span class="ident">nom::Err::Error</span>(<span class="ident">E::from_error_kind</span>(<span class="ident">i</span>, <span class="ident">kind</span>)))
+<span class="doccomment">/// Shortcut for constructing parser errors
+</span><span class="attribute">#[allow(clippy::missing_errors_doc)]
+</span><span class="kw">pub fn </span>err&lt;I, O, E: ParseError&lt;I&gt;&gt;(i: I, kind: ErrorKind) -&gt; IResult&lt;I, O, E&gt; {
+    <span class="prelude-val">Err</span>(nom::Err::Error(E::from_error_kind(i, kind)))
 }
 
 
-<span class="doccomment">/// Helper struct that prints human-readable position information when formatted with</span>
-<span class="doccomment">/// `Display`.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Position</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span>: <span class="ident">AsBytes</span> = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]&gt; {
-    <span class="doccomment">/// The state of the parser at the time we are interested in</span>
-    <span class="kw">pub</span> <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">I</span>,
-    <span class="doccomment">/// The complete input we are trying to parse</span>
-    <span class="kw">pub</span> <span class="ident">full_input</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
+<span class="doccomment">/// Helper struct that prints human-readable position information when formatted with
+/// `Display`.
+</span><span class="kw">pub struct </span>Position&lt;<span class="lifetime">&#39;a</span>, I: AsBytes = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; {
+    <span class="doccomment">/// The state of the parser at the time we are interested in
+    </span><span class="kw">pub </span>state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>I,
+    <span class="doccomment">/// The complete input we are trying to parse
+    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;<span class="ident">I</span>: <span class="ident">AsBytes</span>&gt; <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Position</span>&lt;<span class="lifetime">&#39;_</span>, <span class="ident">I</span>&gt; {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">out</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">full_input</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">return</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;in empty input&quot;</span>);
+<span class="kw">impl</span>&lt;I: AsBytes&gt; fmt::Display <span class="kw">for </span>Position&lt;<span class="lifetime">&#39;_</span>, I&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+        <span class="kw">if </span><span class="self">self</span>.full_input.is_empty() {
+            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;in empty input&quot;</span>);
         }
 
-        <span class="comment">// NOTE: nom&#39;s Offset implementation can panic. Avoid it.</span>
-        <span class="kw">let</span> <span class="ident">full_input_pos</span> = <span class="self">self</span>.<span class="ident">full_input</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">state_pos</span> = <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">as_bytes</span>().<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">offset</span> = <span class="kw">match</span> <span class="ident">state_pos</span>.<span class="ident">checked_sub</span>(<span class="ident">full_input_pos</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">o</span>) =&gt; <span class="ident">o</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;at unknown/invalid offset&quot;</span>),
+        <span class="comment">// NOTE: nom&#39;s Offset implementation can panic. Avoid it.
+        </span><span class="kw">let </span>full_input_pos = <span class="self">self</span>.full_input.as_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>state_pos = <span class="self">self</span>.state.as_bytes().as_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>offset = <span class="kw">match </span>state_pos.checked_sub(full_input_pos) {
+            <span class="prelude-val">Some</span>(o) =&gt; o,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;at unknown/invalid offset&quot;</span>),
         };
 
-        <span class="kw">let</span> <span class="ident">context_start</span> = <span class="ident">offset</span>.<span class="ident">saturating_sub</span>(<span class="number">10</span>);
-        <span class="kw">let</span> <span class="ident">context_end</span> = <span class="ident">min</span>(<span class="ident">offset</span> + <span class="number">10</span>, <span class="self">self</span>.<span class="ident">full_input</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> <span class="ident">context_slice</span> = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">full_input</span>[<span class="ident">context_start</span>..<span class="ident">context_end</span>];
+        <span class="kw">let </span>context_start = offset.saturating_sub(<span class="number">10</span>);
+        <span class="kw">let </span>context_end = min(offset + <span class="number">10</span>, <span class="self">self</span>.full_input.len());
+        <span class="kw">let </span>context_slice = <span class="kw-2">&amp;</span><span class="self">self</span>.full_input[context_start..context_end];
 
-        <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;at offset {0} ({0:#x}):\n &quot;</span>, <span class="ident">offset</span>)<span class="question-mark">?</span>;
-        <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="ident">context_slice</span> {
-            <span class="kw">let</span> <span class="ident">ascii_char</span> = <span class="kw">match</span> <span class="ident">byte</span> {
-                <span class="ident">b</span> <span class="kw">if</span> <span class="ident">b</span>.<span class="ident">is_ascii_graphic</span>() =&gt; <span class="kw-2">*</span><span class="ident">b</span> <span class="kw">as</span> <span class="ident">char</span>,
-                <span class="string">b&#39; &#39;</span> =&gt; <span class="string">&#39; &#39;</span>,
-                <span class="kw">_</span> =&gt; <span class="string">&#39;.&#39;</span>,
+        <span class="macro">write!</span>(out, <span class="string">&quot;at offset {0} ({0:#x}):\n &quot;</span>, offset)<span class="question-mark">?</span>;
+        <span class="kw">for </span>byte <span class="kw">in </span>context_slice {
+            <span class="kw">let </span>ascii_char = <span class="kw">match </span>byte {
+                b <span class="kw">if </span>b.is_ascii_graphic() =&gt; <span class="kw-2">*</span>b <span class="kw">as </span>char,
+                <span class="string">b&#39; &#39; </span>=&gt; <span class="string">&#39; &#39;</span>,
+                <span class="kw">_ </span>=&gt; <span class="string">&#39;.&#39;</span>,
             };
-            <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot; {:2}&quot;</span>, <span class="ident">ascii_char</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(out, <span class="string">&quot; {:2}&quot;</span>, ascii_char)<span class="question-mark">?</span>;
         }
-        <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;\n &quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="ident">context_slice</span> {
-            <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot; {:02x}&quot;</span>, <span class="ident">byte</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(out, <span class="string">&quot;\n &quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>byte <span class="kw">in </span>context_slice {
+            <span class="macro">write!</span>(out, <span class="string">&quot; {:02x}&quot;</span>, byte)<span class="question-mark">?</span>;
         }
         <span class="macro">write!</span>(
-            <span class="ident">out</span>,
+            out,
             <span class="string">&quot;\n  {caret:&gt;caret_offset$}\n&quot;</span>,
-            <span class="ident">caret</span> = <span class="string">&#39;^&#39;</span>,
-            <span class="ident">caret_offset</span> = (<span class="ident">offset</span> - <span class="ident">context_start</span>) * <span class="number">3</span> + <span class="number">1</span>,
+            caret = <span class="string">&#39;^&#39;</span>,
+            caret_offset = (offset - context_start) * <span class="number">3 </span>+ <span class="number">1</span>,
         )
     }
 }
 
 
-<span class="doccomment">/// A parser error with position info useful for printing human-readable messages.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::module_name_repetitions</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ErrorWithPosition</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span> = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]&gt;
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">From</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]&gt; + <span class="ident">AsBytes</span>,
+<span class="doccomment">/// A parser error with position info useful for printing human-readable messages.
+</span><span class="attribute">#[derive(Debug, Clone)]
+#[allow(clippy::module_name_repetitions)]
+</span><span class="kw">pub struct </span>ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;
+<span class="kw">where
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
 {
-    <span class="doccomment">/// The error returned by the parser</span>
-    <span class="kw">pub</span> <span class="ident">error</span>: <span class="ident">VerboseError</span>&lt;<span class="ident">I</span>&gt;,
-    <span class="doccomment">/// The complete input we were trying to parse</span>
-    <span class="kw">pub</span> <span class="ident">full_input</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
+    <span class="doccomment">/// The error returned by the parser
+    </span><span class="kw">pub </span>error: VerboseError&lt;I&gt;,
+    <span class="doccomment">/// The complete input we were trying to parse
+    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span>&gt; <span class="ident">ErrorWithPosition</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">From</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]&gt; + <span class="ident">AsBytes</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">where
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
 {
-    <span class="doccomment">/// Associate a parse error with its full input, to reference the affected position</span>
-    <span class="doccomment">/// in error messages.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">wrapped_error</span>: <span class="ident">nom::Err</span>&lt;<span class="ident">VerboseError</span>&lt;<span class="ident">I</span>&gt;&gt;, <span class="ident">full_input</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">wrapped_error</span> {
-            <span class="ident">nom::Err::Error</span>(<span class="ident">error</span>) | <span class="ident">nom::Err::Failure</span>(<span class="ident">error</span>) =&gt; {
-                <span class="ident">ErrorWithPosition</span> { <span class="ident">error</span>, <span class="ident">full_input</span> }
+    <span class="doccomment">/// Associate a parse error with its full input, to reference the affected position
+    /// in error messages.
+    </span><span class="kw">pub fn </span>new(wrapped_error: nom::Err&lt;VerboseError&lt;I&gt;&gt;, full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>wrapped_error {
+            nom::Err::Error(error) | nom::Err::Failure(error) =&gt; {
+                ErrorWithPosition { error, full_input }
             }
-            <span class="ident">nom::Err::Incomplete</span>(<span class="kw">_</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">error</span> = <span class="ident">VerboseError::from_error_kind</span>(
-                    <span class="ident">I::from</span>(<span class="ident">full_input</span>),
-                    <span class="ident">ErrorKind::Complete</span>,
+            nom::Err::Incomplete(<span class="kw">_</span>) =&gt; {
+                <span class="kw">let </span>error = VerboseError::from_error_kind(
+                    I::from(full_input),
+                    ErrorKind::Complete,
                 );
-                <span class="ident">ErrorWithPosition</span> { <span class="ident">error</span>, <span class="ident">full_input</span> }
+                ErrorWithPosition { error, full_input }
             }
         }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span>&gt; <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ErrorWithPosition</span>&lt;<span class="lifetime">&#39;a</span>, <span class="ident">I</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">From</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]&gt; + <span class="ident">AsBytes</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; fmt::Display <span class="kw">for </span>ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">where
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
 {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">out</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="ident">fmt::Error</span>&gt; {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">error</span>.<span class="ident">errors</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">return</span> <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;Unknown parsing error&quot;</span>);
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+        <span class="kw">if </span><span class="self">self</span>.error.errors.is_empty() {
+            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;Unknown parsing error&quot;</span>);
         }
 
-        <span class="kw">for</span> (<span class="ident">state</span>, <span class="ident">kind</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">error</span>.<span class="ident">errors</span> {
-            <span class="kw">match</span> <span class="ident">kind</span> {
-                <span class="ident">VerboseErrorKind::Context</span>(<span class="ident">context</span>) =&gt; {
-                    <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;In {}&quot;</span>, <span class="ident">context</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>(state, kind) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.error.errors {
+            <span class="kw">match </span>kind {
+                VerboseErrorKind::Context(context) =&gt; {
+                    <span class="macro">write!</span>(out, <span class="string">&quot;In {}&quot;</span>, context)<span class="question-mark">?</span>;
                 }
-                <span class="ident">VerboseErrorKind::Char</span>(<span class="ident">c</span>) =&gt; {
-                    <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;Expected &#39;{}&#39;&quot;</span>, <span class="ident">c</span>)<span class="question-mark">?</span>;
+                VerboseErrorKind::Char(c) =&gt; {
+                    <span class="macro">write!</span>(out, <span class="string">&quot;Expected &#39;{}&#39;&quot;</span>, c)<span class="question-mark">?</span>;
                 }
-                <span class="ident">VerboseErrorKind::Nom</span>(<span class="ident">e</span>) =&gt; {
-                    <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;Failed {}&quot;</span>, <span class="ident">e</span>.<span class="ident">description</span>())<span class="question-mark">?</span>;
+                VerboseErrorKind::Nom(e) =&gt; {
+                    <span class="macro">write!</span>(out, <span class="string">&quot;Failed {}&quot;</span>, e.description())<span class="question-mark">?</span>;
                 }
             }
-            <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot; {}&quot;</span>, <span class="ident">Position</span> { <span class="ident">state</span>, <span class="ident">full_input</span>: <span class="self">self</span>.<span class="ident">full_input</span> })<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(out, <span class="string">&quot; {}&quot;</span>, Position { state, full_input: <span class="self">self</span>.full_input })<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_parsers" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_parsers" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

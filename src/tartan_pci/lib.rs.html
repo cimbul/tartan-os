@@ -121,128 +121,128 @@
 <span id="121">121</span>
 <span id="122">122</span>
 <span id="123">123</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for Peripheral Component Interconnect (PCI) and PCI Express (`PCIe`) devices.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for Peripheral Component Interconnect (PCI) and PCI Express (`PCIe`) devices.
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_cfg</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![feature(doc_cfg)]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">use</span> <span class="ident">access</span>::{<span class="ident">ConfigAccess</span>, <span class="ident">ConfigSelector</span>};
-<span class="kw">use</span> <span class="ident">core::iter</span>;
+</span><span class="kw">use </span>access::{ConfigAccess, ConfigSelector};
+<span class="kw">use </span>core::iter;
 
-<span class="doccomment">/// Access methods for PCI configuration space.</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">access</span>;
+<span class="doccomment">/// Access methods for PCI configuration space.
+</span><span class="kw">pub mod </span>access;
 
-<span class="doccomment">/// Data exposed in PCI configuration space.</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">config</span>;
+<span class="doccomment">/// Data exposed in PCI configuration space.
+</span><span class="kw">pub mod </span>config;
 
-<span class="doccomment">/// Highest device number allowed by the PCI specification.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_DEVICE</span>: <span class="ident">u8</span> = (<span class="number">1</span> &lt;&lt; <span class="number">5</span>) - <span class="number">1</span>;
+<span class="doccomment">/// Highest device number allowed by the PCI specification.
+</span><span class="kw">pub const </span>MAX_DEVICE: u8 = (<span class="number">1 </span>&lt;&lt; <span class="number">5</span>) - <span class="number">1</span>;
 
-<span class="doccomment">/// Highest function number allowed by the PCI specification.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_FUNCTION</span>: <span class="ident">u8</span> = (<span class="number">1</span> &lt;&lt; <span class="number">3</span>) - <span class="number">1</span>;
+<span class="doccomment">/// Highest function number allowed by the PCI specification.
+</span><span class="kw">pub const </span>MAX_FUNCTION: u8 = (<span class="number">1 </span>&lt;&lt; <span class="number">3</span>) - <span class="number">1</span>;
 
-<span class="doccomment">/// Placeholder value that will always be returned in the vendor field when querying PCI</span>
-<span class="doccomment">/// configuration space for a device that does not exist.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">INVALID_VENDOR</span>: <span class="ident">u16</span> = <span class="number">0xffff</span>;
+<span class="doccomment">/// Placeholder value that will always be returned in the vendor field when querying PCI
+/// configuration space for a device that does not exist.
+</span><span class="kw">pub const </span>INVALID_VENDOR: u16 = <span class="number">0xffff</span>;
 
 
-<span class="doccomment">/// Iterate over the devices and functions present on the specified bus.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enumerate_bus</span>&lt;<span class="ident">A</span>&gt;(
-    <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
-    <span class="ident">bus_selector</span>: <span class="ident">ConfigSelector</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="ident">ConfigSelector</span>&gt; + <span class="lifetime">&#39;_</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigAccess</span>,
+<span class="doccomment">/// Iterate over the devices and functions present on the specified bus.
+</span><span class="kw">pub fn </span>enumerate_bus&lt;A&gt;(
+    access: <span class="kw-2">&amp;</span>A,
+    bus_selector: ConfigSelector,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = ConfigSelector&gt; + <span class="lifetime">&#39;_
+</span><span class="kw">where
+    </span>A: ConfigAccess,
 {
-    <span class="ident">enumerate_bus_devices</span>(<span class="ident">access</span>, <span class="ident">bus_selector</span>)
-        .<span class="ident">flat_map</span>(<span class="kw">move</span> |<span class="ident">device</span>| <span class="ident">enumerate_device_functions</span>(<span class="ident">access</span>, <span class="ident">device</span>))
+    enumerate_bus_devices(access, bus_selector)
+        .flat_map(<span class="kw">move </span>|device| enumerate_device_functions(access, device))
 }
 
 
-<span class="doccomment">/// Iterate over the devices present on the specified bus.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enumerate_bus_devices</span>&lt;<span class="ident">A</span>&gt;(
-    <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
-    <span class="ident">bus_selector</span>: <span class="ident">ConfigSelector</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="ident">ConfigSelector</span>&gt; + <span class="lifetime">&#39;_</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigAccess</span>,
+<span class="doccomment">/// Iterate over the devices present on the specified bus.
+</span><span class="kw">pub fn </span>enumerate_bus_devices&lt;A&gt;(
+    access: <span class="kw-2">&amp;</span>A,
+    bus_selector: ConfigSelector,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = ConfigSelector&gt; + <span class="lifetime">&#39;_
+</span><span class="kw">where
+    </span>A: ConfigAccess,
 {
-    (<span class="number">0</span>..=<span class="ident">MAX_DEVICE</span>).<span class="ident">filter_map</span>(<span class="kw">move</span> |<span class="ident">device</span>| {
-        <span class="kw">let</span> <span class="ident">selector</span> = <span class="ident">ConfigSelector</span> { <span class="ident">device</span>, <span class="ident">function</span>: <span class="number">0</span>, ..<span class="ident">bus_selector</span> };
-        <span class="kw">if</span> <span class="ident">check_valid</span>(<span class="ident">access</span>, <span class="ident">selector</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">selector</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        }
+    (<span class="number">0</span>..=MAX_DEVICE).filter_map(<span class="kw">move </span>|device| {
+        <span class="kw">let </span>selector = ConfigSelector { device, function: <span class="number">0</span>, ..bus_selector };
+        <span class="kw">if </span>check_valid(access, selector) {
+            <span class="prelude-val">Some</span>(selector)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     })
 }
 
-<span class="doccomment">/// Iterate over the functions available on the specified device.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enumerate_device_functions</span>&lt;<span class="ident">A</span>&gt;(
-    <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
-    <span class="ident">device_selector</span>: <span class="ident">ConfigSelector</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="ident">ConfigSelector</span>&gt; + <span class="lifetime">&#39;_</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigAccess</span>,
+<span class="doccomment">/// Iterate over the functions available on the specified device.
+</span><span class="kw">pub fn </span>enumerate_device_functions&lt;A&gt;(
+    access: <span class="kw-2">&amp;</span>A,
+    device_selector: ConfigSelector,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = ConfigSelector&gt; + <span class="lifetime">&#39;_
+</span><span class="kw">where
+    </span>A: ConfigAccess,
 {
-    <span class="kw">let</span> <span class="ident">fn_0_register</span>: <span class="ident">config::HeaderRegister3</span> =
-        <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">device_selector</span>);
-    <span class="kw">let</span> <span class="ident">function_range</span> =
-        <span class="kw">if</span> <span class="ident">fn_0_register</span>.<span class="ident">multi_function</span>() { <span class="number">0</span>..<span class="ident">MAX_FUNCTION</span> } <span class="kw">else</span> { <span class="number">0</span>..<span class="number">1</span> };
-    <span class="ident">function_range</span>.<span class="ident">filter_map</span>(<span class="kw">move</span> |<span class="ident">function</span>| {
-        <span class="kw">let</span> <span class="ident">fn_selector</span> = <span class="ident">ConfigSelector</span> { <span class="ident">function</span>, ..<span class="ident">device_selector</span> };
-        <span class="kw">if</span> <span class="ident">check_valid</span>(<span class="ident">access</span>, <span class="ident">fn_selector</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">fn_selector</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        }
+    <span class="kw">let </span>fn_0_register: config::HeaderRegister3 =
+        access.get_fixed_register(device_selector);
+    <span class="kw">let </span>function_range =
+        <span class="kw">if </span>fn_0_register.multi_function() { <span class="number">0</span>..MAX_FUNCTION } <span class="kw">else </span>{ <span class="number">0</span>..<span class="number">1 </span>};
+    function_range.filter_map(<span class="kw">move </span>|function| {
+        <span class="kw">let </span>fn_selector = ConfigSelector { function, ..device_selector };
+        <span class="kw">if </span>check_valid(access, fn_selector) {
+            <span class="prelude-val">Some</span>(fn_selector)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     })
 }
 
-<span class="doccomment">/// Return true if a function is available at the specified selector.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check_valid</span>&lt;<span class="ident">A</span>&gt;(<span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>, <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>) -&gt; <span class="ident">bool</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigAccess</span>,
+<span class="doccomment">/// Return true if a function is available at the specified selector.
+</span><span class="kw">pub fn </span>check_valid&lt;A&gt;(access: <span class="kw-2">&amp;</span>A, selector: ConfigSelector) -&gt; bool
+<span class="kw">where
+    </span>A: ConfigAccess,
 {
-    <span class="kw">let</span> <span class="ident">id_register</span>: <span class="ident">config::HeaderRegister0</span> = <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);
-    <span class="ident">id_register</span>.<span class="ident">valid</span>()
+    <span class="kw">let </span>id_register: config::HeaderRegister0 = access.get_fixed_register(selector);
+    id_register.valid()
 }
 
-<span class="doccomment">/// Information to identify and locate capability registers</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CapabilityEntry</span> {
-    <span class="doccomment">/// Capability ID defined by PCI-SIG</span>
-    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">u8</span>,
-    <span class="doccomment">/// Register number in config space (offset in 4-byte units) of the start of the</span>
-    <span class="doccomment">/// capability data.</span>
-    <span class="kw">pub</span> <span class="ident">register</span>: <span class="ident">u16</span>,
+<span class="doccomment">/// Information to identify and locate capability registers
+</span><span class="kw">pub struct </span>CapabilityEntry {
+    <span class="doccomment">/// Capability ID defined by PCI-SIG
+    </span><span class="kw">pub </span>id: u8,
+    <span class="doccomment">/// Register number in config space (offset in 4-byte units) of the start of the
+    /// capability data.
+    </span><span class="kw">pub </span>register: u16,
 }
 
-<span class="doccomment">/// Iterate over all capabilities defined in the configuration space for a PCI function</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter_capabilities</span>&lt;<span class="ident">A</span>&gt;(
-    <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
-    <span class="ident">selector</span>: <span class="ident">ConfigSelector</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="ident">CapabilityEntry</span>&gt; + <span class="lifetime">&#39;_</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigAccess</span>,
+<span class="doccomment">/// Iterate over all capabilities defined in the configuration space for a PCI function
+</span><span class="kw">pub fn </span>iter_capabilities&lt;A&gt;(
+    access: <span class="kw-2">&amp;</span>A,
+    selector: ConfigSelector,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = CapabilityEntry&gt; + <span class="lifetime">&#39;_
+</span><span class="kw">where
+    </span>A: ConfigAccess,
 {
-    <span class="kw">let</span> <span class="ident">capability_header</span>: <span class="ident">config::Type0HeaderRegister13</span> =
-        <span class="ident">access</span>.<span class="ident">get_fixed_register</span>(<span class="ident">selector</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_offset</span> = <span class="ident">capability_header</span>.<span class="ident">capabilities_offset</span>();
-    <span class="ident">iter::from_fn</span>(<span class="kw">move</span> || {
-        <span class="kw">if</span> <span class="ident">next_offset</span> == <span class="number">0</span> {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">register</span> = <span class="ident">u16::from</span>(<span class="ident">next_offset</span> / <span class="number">4</span>);
-            <span class="kw">let</span> <span class="ident">capability</span>: <span class="ident">config::GenericCapabilityRegister</span> =
-                <span class="ident">access</span>.<span class="ident">get_register</span>(<span class="ident">selector</span>, <span class="ident">register</span>).<span class="ident">into</span>();
-            <span class="ident">next_offset</span> = <span class="ident">capability</span>.<span class="ident">next_offset</span>();
-            <span class="prelude-val">Some</span>(<span class="ident">CapabilityEntry</span> { <span class="ident">id</span>: <span class="ident">capability</span>.<span class="ident">id</span>(), <span class="ident">register</span> })
+    <span class="kw">let </span>capability_header: config::Type0HeaderRegister13 =
+        access.get_fixed_register(selector);
+    <span class="kw">let </span><span class="kw-2">mut </span>next_offset = capability_header.capabilities_offset();
+    iter::from_fn(<span class="kw">move </span>|| {
+        <span class="kw">if </span>next_offset == <span class="number">0 </span>{
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">let </span>register = u16::from(next_offset / <span class="number">4</span>);
+            <span class="kw">let </span>capability: config::GenericCapabilityRegister =
+                access.get_register(selector, register).into();
+            next_offset = capability.next_offset();
+            <span class="prelude-val">Some</span>(CapabilityEntry { id: capability.id(), register })
         }
     })
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_pci" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

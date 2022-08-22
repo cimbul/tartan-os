@@ -612,619 +612,619 @@
 <span id="612">612</span>
 <span id="613">613</span>
 <span id="614">614</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for Executable and Linkable Format (ELF) binaries.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for Executable and Linkable Format (ELF) binaries.
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
 
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">static_assertions::const_assert_eq</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield</span>::{<span class="ident">bitfield</span>, <span class="ident">Bitfield</span>};
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+</span><span class="kw">use </span>core::mem::size_of;
+<span class="kw">use </span>static_assertions::const_assert_eq;
+<span class="kw">use </span>tartan_bitfield::{bitfield, Bitfield};
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
 
-<span class="doccomment">/// Variant of the [`Header`] structure native to the current target.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HeaderNative</span> = <span class="ident">Header</span>&lt;<span class="ident">usize</span>&gt;;
+<span class="doccomment">/// Variant of the [`Header`] structure native to the current target.
+</span><span class="kw">pub type </span>HeaderNative = Header&lt;usize&gt;;
 
-<span class="doccomment">/// File header for an ELF file with a specific address size.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Header</span>&lt;<span class="ident">Addr</span>: <span class="ident">Copy</span>&gt; {
-    <span class="doccomment">/// Header common to all ELF variants.</span>
-    <span class="kw">pub</span> <span class="ident">ident</span>: <span class="ident">HeaderIdent</span>,
-    <span class="doccomment">/// Distinguishes executables, libraries, etc.</span>
-    <span class="kw">pub</span> <span class="ident">file_type</span>: <span class="ident">FileType</span>,
-    <span class="doccomment">/// CPU architecture</span>
-    <span class="kw">pub</span> <span class="ident">machine</span>: <span class="ident">Machine</span>,
-    <span class="doccomment">/// ELF format version</span>
-    <span class="kw">pub</span> <span class="ident">version</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Virtual address of executable entry point. Zero if not present.</span>
-    <span class="kw">pub</span> <span class="ident">entry_point</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// File offset to the array of program section headers which control executable</span>
-    <span class="doccomment">/// loading. Zero if not present.</span>
-    <span class="kw">pub</span> <span class="ident">program_header_offset</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// File offset to the array of section header which control linking. Zero if not</span>
-    <span class="doccomment">/// present.</span>
-    <span class="kw">pub</span> <span class="ident">section_header_offset</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// CPU architecture-specific flags.</span>
-    <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Size in bytes of this header. May be longer than the structure in code.</span>
-    <span class="kw">pub</span> <span class="ident">header_size</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Size in bytes of of each program segment header. May be longer than the structure</span>
-    <span class="doccomment">/// in code.</span>
-    <span class="kw">pub</span> <span class="ident">program_header_size</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Number of program segment headers.</span>
-    <span class="kw">pub</span> <span class="ident">program_header_count</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Size in bytes of each section header. May be longer than the structure in code.</span>
-    <span class="kw">pub</span> <span class="ident">section_header_size</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Number of section headers.</span>
-    <span class="kw">pub</span> <span class="ident">section_header_count</span>: <span class="ident">u16</span>,
-    <span class="doccomment">/// Index of the section header which contains the list of section names.</span>
-    <span class="kw">pub</span> <span class="ident">section_names_index</span>: <span class="ident">u16</span>,
+<span class="doccomment">/// File header for an ELF file with a specific address size.
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>Header&lt;Addr: Copy&gt; {
+    <span class="doccomment">/// Header common to all ELF variants.
+    </span><span class="kw">pub </span>ident: HeaderIdent,
+    <span class="doccomment">/// Distinguishes executables, libraries, etc.
+    </span><span class="kw">pub </span>file_type: FileType,
+    <span class="doccomment">/// CPU architecture
+    </span><span class="kw">pub </span>machine: Machine,
+    <span class="doccomment">/// ELF format version
+    </span><span class="kw">pub </span>version: u32,
+    <span class="doccomment">/// Virtual address of executable entry point. Zero if not present.
+    </span><span class="kw">pub </span>entry_point: Addr,
+    <span class="doccomment">/// File offset to the array of program section headers which control executable
+    /// loading. Zero if not present.
+    </span><span class="kw">pub </span>program_header_offset: Addr,
+    <span class="doccomment">/// File offset to the array of section header which control linking. Zero if not
+    /// present.
+    </span><span class="kw">pub </span>section_header_offset: Addr,
+    <span class="doccomment">/// CPU architecture-specific flags.
+    </span><span class="kw">pub </span>flags: u32,
+    <span class="doccomment">/// Size in bytes of this header. May be longer than the structure in code.
+    </span><span class="kw">pub </span>header_size: u16,
+    <span class="doccomment">/// Size in bytes of of each program segment header. May be longer than the structure
+    /// in code.
+    </span><span class="kw">pub </span>program_header_size: u16,
+    <span class="doccomment">/// Number of program segment headers.
+    </span><span class="kw">pub </span>program_header_count: u16,
+    <span class="doccomment">/// Size in bytes of each section header. May be longer than the structure in code.
+    </span><span class="kw">pub </span>section_header_size: u16,
+    <span class="doccomment">/// Number of section headers.
+    </span><span class="kw">pub </span>section_header_count: u16,
+    <span class="doccomment">/// Index of the section header which contains the list of section names.
+    </span><span class="kw">pub </span>section_names_index: u16,
 }
 
-<span class="macro">const_assert_eq!</span>(<span class="number">52</span>, <span class="ident">size_of</span>::&lt;<span class="ident">Header</span>&lt;<span class="ident">u32</span>&gt;&gt;());
-<span class="macro">const_assert_eq!</span>(<span class="number">64</span>, <span class="ident">size_of</span>::&lt;<span class="ident">Header</span>&lt;<span class="ident">u64</span>&gt;&gt;());
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>)]</span>
-<span class="macro">const_assert_eq!</span>(<span class="ident">size_of</span>::&lt;<span class="ident">HeaderNative</span>&gt;(), <span class="ident">size_of</span>::&lt;<span class="ident">Header</span>&lt;<span class="ident">u32</span>&gt;&gt;());
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;64&quot;</span>)]</span>
-<span class="macro">const_assert_eq!</span>(<span class="ident">size_of</span>::&lt;<span class="ident">HeaderNative</span>&gt;(), <span class="ident">size_of</span>::&lt;<span class="ident">Header</span>&lt;<span class="ident">u64</span>&gt;&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">52</span>, size_of::&lt;Header&lt;u32&gt;&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">64</span>, size_of::&lt;Header&lt;u64&gt;&gt;());
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="macro">const_assert_eq!</span>(size_of::&lt;HeaderNative&gt;(), size_of::&lt;Header&lt;u32&gt;&gt;());
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="macro">const_assert_eq!</span>(size_of::&lt;HeaderNative&gt;(), size_of::&lt;Header&lt;u64&gt;&gt;());
 
-<span class="kw">impl</span>&lt;<span class="ident">Addr</span>: <span class="ident">Copy</span>&gt; <span class="ident">Header</span>&lt;<span class="ident">Addr</span>&gt; {
-    <span class="doccomment">/// Expected value of the [`version`](Self::version) field.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VERSION</span>: <span class="ident">u32</span> = <span class="number">1</span>;
+<span class="kw">impl</span>&lt;Addr: Copy&gt; Header&lt;Addr&gt; {
+    <span class="doccomment">/// Expected value of the [`version`](Self::version) field.
+    </span><span class="kw">pub const </span>VERSION: u32 = <span class="number">1</span>;
 
-    <span class="doccomment">/// Checks that the header represents a valid ELF file for the current platform, and</span>
-    <span class="doccomment">/// panics otherwise</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics when the header is not valid for the current platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_native</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">ident</span>.<span class="ident">verify_native</span>();
+    <span class="doccomment">/// Checks that the header represents a valid ELF file for the current platform, and
+    /// panics otherwise
+    ///
+    /// # Panics
+    /// Panics when the header is not valid for the current platform.
+    </span><span class="kw">pub fn </span>verify_native(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.ident.verify_native();
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">version</span> == <span class="ident"><span class="self">Self</span>::VERSION</span>,
+            <span class="self">self</span>.version == <span class="self">Self</span>::VERSION,
             <span class="string">&quot;Unsupported ELF header version {:#x}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">version</span>,
+            <span class="self">self</span>.version,
         );
         <span class="macro">assert!</span>(
-            <span class="ident">usize::from</span>(<span class="self">self</span>.<span class="ident">header_size</span>) &gt;= <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;(),
+            usize::from(<span class="self">self</span>.header_size) &gt;= size_of::&lt;<span class="self">Self</span>&gt;(),
             <span class="string">&quot;Invalid ELF header size {:#x}. Expected at least {:#x} bytes.&quot;</span>,
-            <span class="self">self</span>.<span class="ident">header_size</span>,
-            <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;(),
+            <span class="self">self</span>.header_size,
+            size_of::&lt;<span class="self">Self</span>&gt;(),
         );
         <span class="macro">assert!</span>(
-            <span class="ident">usize::from</span>(<span class="self">self</span>.<span class="ident">program_header_size</span>) &gt;= <span class="ident">size_of</span>::&lt;<span class="ident">ProgramHeaderNative</span>&gt;(),
+            usize::from(<span class="self">self</span>.program_header_size) &gt;= size_of::&lt;ProgramHeaderNative&gt;(),
             <span class="string">&quot;Invalid program header size {:#x}. Expected at least {:#x} bytes.&quot;</span>,
-            <span class="self">self</span>.<span class="ident">program_header_size</span>,
-            <span class="ident">size_of</span>::&lt;<span class="ident">ProgramHeaderNative</span>&gt;(),
+            <span class="self">self</span>.program_header_size,
+            size_of::&lt;ProgramHeaderNative&gt;(),
         );
         <span class="macro">assert!</span>(
-            <span class="ident">usize::from</span>(<span class="self">self</span>.<span class="ident">section_header_size</span>) &gt;= <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeaderNative</span>&gt;(),
+            usize::from(<span class="self">self</span>.section_header_size) &gt;= size_of::&lt;SectionHeaderNative&gt;(),
             <span class="string">&quot;Invalid section header size {:#x}. Expected at least {:#x} bytes.&quot;</span>,
-            <span class="self">self</span>.<span class="ident">section_header_size</span>,
-            <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeaderNative</span>&gt;(),
+            <span class="self">self</span>.section_header_size,
+            size_of::&lt;SectionHeaderNative&gt;(),
         );
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">machine</span> == <span class="ident">Machine::NATIVE</span>,
+            <span class="self">self</span>.machine == Machine::NATIVE,
             <span class="string">&quot;Unsupported ELF machine type {:?}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">machine</span>,
+            <span class="self">self</span>.machine,
         );
     }
 }
 
 
-<span class="doccomment">/// Initial header which has the same layout in all ELF variants and determines how to</span>
-<span class="doccomment">/// interpret the rest of the file (endianness, sizes).</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HeaderIdent</span> {
-    <span class="doccomment">/// Magic number that identifies this as an ELF file.</span>
-    <span class="kw">pub</span> <span class="ident">magic</span>: [<span class="ident">u8</span>; <span class="number">4</span>],
-    <span class="doccomment">/// Specifies the address size (32- or 64-bit) of the file.</span>
-    <span class="kw">pub</span> <span class="ident">class</span>: <span class="ident">FileClass</span>,
-    <span class="doccomment">/// Specifies whether the file uses big or little endian byte ordering.</span>
-    <span class="kw">pub</span> <span class="ident">endianness</span>: <span class="ident">Endianness</span>,
-    <span class="doccomment">/// Version of the ELF header.</span>
-    <span class="kw">pub</span> <span class="ident">header_version</span>: <span class="ident">u8</span>,
-    <span class="doccomment">/// Operating-system-specific ABI extensions that this file uses.</span>
-    <span class="kw">pub</span> <span class="ident">os_abi</span>: <span class="ident">OSABI</span>,
-    <span class="doccomment">/// Backwards-incompatible version number of the [`os_abi`](Self::os_abi) extensions</span>
-    <span class="doccomment">/// that this file uses.</span>
-    <span class="kw">pub</span> <span class="ident">os_abi_version</span>: <span class="ident">u8</span>,
-    <span class="ident">_pad</span>: [<span class="ident">u8</span>; <span class="number">7</span>],
+<span class="doccomment">/// Initial header which has the same layout in all ELF variants and determines how to
+/// interpret the rest of the file (endianness, sizes).
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>HeaderIdent {
+    <span class="doccomment">/// Magic number that identifies this as an ELF file.
+    </span><span class="kw">pub </span>magic: [u8; <span class="number">4</span>],
+    <span class="doccomment">/// Specifies the address size (32- or 64-bit) of the file.
+    </span><span class="kw">pub </span>class: FileClass,
+    <span class="doccomment">/// Specifies whether the file uses big or little endian byte ordering.
+    </span><span class="kw">pub </span>endianness: Endianness,
+    <span class="doccomment">/// Version of the ELF header.
+    </span><span class="kw">pub </span>header_version: u8,
+    <span class="doccomment">/// Operating-system-specific ABI extensions that this file uses.
+    </span><span class="kw">pub </span>os_abi: OSABI,
+    <span class="doccomment">/// Backwards-incompatible version number of the [`os_abi`](Self::os_abi) extensions
+    /// that this file uses.
+    </span><span class="kw">pub </span>os_abi_version: u8,
+    _pad: [u8; <span class="number">7</span>],
 }
 
-<span class="macro">const_assert_eq!</span>(<span class="number">16</span>, <span class="ident">size_of</span>::&lt;<span class="ident">HeaderIdent</span>&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">16</span>, size_of::&lt;HeaderIdent&gt;());
 
-<span class="kw">impl</span> <span class="ident">HeaderIdent</span> {
-    <span class="doccomment">/// Expected value of the [`magic`](Self::magic) field.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAGIC</span>: [<span class="ident">u8</span>; <span class="number">4</span>] = [<span class="number">0x7f</span>, <span class="number">0x45</span>, <span class="number">0x4c</span>, <span class="number">0x46</span>];
+<span class="kw">impl </span>HeaderIdent {
+    <span class="doccomment">/// Expected value of the [`magic`](Self::magic) field.
+    </span><span class="kw">pub const </span>MAGIC: [u8; <span class="number">4</span>] = [<span class="number">0x7f</span>, <span class="number">0x45</span>, <span class="number">0x4c</span>, <span class="number">0x46</span>];
 
-    <span class="doccomment">/// Expected value of the [`header_version`](Self::header_version) field.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VERSION</span>: <span class="ident">u8</span> = <span class="number">1</span>;
+    <span class="doccomment">/// Expected value of the [`header_version`](Self::header_version) field.
+    </span><span class="kw">pub const </span>VERSION: u8 = <span class="number">1</span>;
 
-    <span class="doccomment">/// Checks that the header represents a valid ELF file, of any variant, and panics</span>
-    <span class="doccomment">/// otherwise.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics when the header is not valid.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_format</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="doccomment">/// Checks that the header represents a valid ELF file, of any variant, and panics
+    /// otherwise.
+    ///
+    /// # Panics
+    /// Panics when the header is not valid.
+    </span><span class="kw">pub fn </span>verify_format(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">magic</span> == <span class="ident"><span class="self">Self</span>::MAGIC</span>,
+            <span class="self">self</span>.magic == <span class="self">Self</span>::MAGIC,
             <span class="string">&quot;Unrecognized magic number for ELF file: {:#x?}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">magic</span>,
+            <span class="self">self</span>.magic,
         );
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">header_version</span> == <span class="ident"><span class="self">Self</span>::VERSION</span>,
+            <span class="self">self</span>.header_version == <span class="self">Self</span>::VERSION,
             <span class="string">&quot;Unsupported ELF identity header version {:#x}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">header_version</span>,
+            <span class="self">self</span>.header_version,
         );
     }
 
-    <span class="doccomment">/// Checks that the header represents an ELF file in the native endianness and address</span>
-    <span class="doccomment">/// size, and panics otherwise.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics when the header is not valid for the current platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_native</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">verify_format</span>();
+    <span class="doccomment">/// Checks that the header represents an ELF file in the native endianness and address
+    /// size, and panics otherwise.
+    ///
+    /// # Panics
+    /// Panics when the header is not valid for the current platform.
+    </span><span class="kw">pub fn </span>verify_native(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.verify_format();
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">endianness</span> == <span class="ident">Endianness::NATIVE</span>,
+            <span class="self">self</span>.endianness == Endianness::NATIVE,
             <span class="string">&quot;ELF variant {:?} not supported on this architecture&quot;</span>,
-            <span class="self">self</span>.<span class="ident">endianness</span>,
+            <span class="self">self</span>.endianness,
         );
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">class</span> == <span class="ident">FileClass::NATIVE</span>,
+            <span class="self">self</span>.class == FileClass::NATIVE,
             <span class="string">&quot;ELF variant {:?} not supported on this architecture&quot;</span>,
-            <span class="self">self</span>.<span class="ident">class</span>,
+            <span class="self">self</span>.class,
         );
     }
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Specifies the address size (32- or 64-bit) of the file.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FileClass</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// Invalid placeholder value.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// File uses 32-bit addresses/offsets.</span>
-        <span class="ident">Size32</span>,
-        <span class="doccomment">/// File uses 64-bit addresses/offsets.</span>
-        <span class="ident">Size64</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Specifies the address size (32- or 64-bit) of the file.
+    </span><span class="kw">pub enum </span>FileClass(u8) {
+        <span class="doccomment">/// Invalid placeholder value.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// File uses 32-bit addresses/offsets.
+        </span>Size32,
+        <span class="doccomment">/// File uses 64-bit addresses/offsets.
+        </span>Size64,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FileClass</span> {
-    <span class="doccomment">/// The expected file class for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>, <span class="ident">doc</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">FileClass</span> = <span class="ident">FileClass::Size32</span>;
+<span class="kw">impl </span>FileClass {
+    <span class="doccomment">/// The expected file class for the current platform.
+    </span><span class="attribute">#[cfg(any(target_pointer_width = <span class="string">&quot;32&quot;</span>, doc))]
+    </span><span class="kw">pub const </span>NATIVE: FileClass = FileClass::Size32;
 
-    <span class="doccomment">/// The expected file class for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">FileClass</span> = <span class="ident">FileClass::Size64</span>;
+    <span class="doccomment">/// The expected file class for the current platform.
+    </span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">pub const </span>NATIVE: FileClass = FileClass::Size64;
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Specifies whether the file uses big or little endian byte ordering.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Endianness</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// Invalid placeholder value.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// File uses little-endian (LSB first) byte ordering.</span>
-        <span class="ident">Little</span>,
-        <span class="doccomment">/// File uses big-endian (MSB-first) byte ordering.</span>
-        <span class="ident">Big</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Specifies whether the file uses big or little endian byte ordering.
+    </span><span class="kw">pub enum </span>Endianness(u8) {
+        <span class="doccomment">/// Invalid placeholder value.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// File uses little-endian (LSB first) byte ordering.
+        </span>Little,
+        <span class="doccomment">/// File uses big-endian (MSB-first) byte ordering.
+        </span>Big,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Endianness</span> {
-    <span class="doccomment">/// The expected endianness value for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_endian</span> = <span class="string">&quot;little&quot;</span>, <span class="ident">doc</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Endianness</span> = <span class="ident">Endianness::Little</span>;
+<span class="kw">impl </span>Endianness {
+    <span class="doccomment">/// The expected endianness value for the current platform.
+    </span><span class="attribute">#[cfg(any(target_endian = <span class="string">&quot;little&quot;</span>, doc))]
+    </span><span class="kw">pub const </span>NATIVE: Endianness = Endianness::Little;
 
-    <span class="doccomment">/// The expected endianness value for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_endian</span> = <span class="string">&quot;big&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Endianness</span> = <span class="ident">Endianness::Big</span>;
+    <span class="doccomment">/// The expected endianness value for the current platform.
+    </span><span class="attribute">#[cfg(target_endian = <span class="string">&quot;big&quot;</span>)]
+    </span><span class="kw">pub const </span>NATIVE: Endianness = Endianness::Big;
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Operating-system-specific ABI extensions supported by the ELF specification.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OSABI</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// Original Unix System V ABI</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// HP-UX</span>
-        <span class="ident">HPUX</span>,
-        <span class="doccomment">/// NetBSD</span>
-        <span class="ident">NetBSD</span>,
-        <span class="doccomment">/// GNU with Linux kernel</span>
-        <span class="ident">Linux</span>,
-        <span class="doccomment">/// GNU with Hurd kernel</span>
-        <span class="ident">Hurd</span>,
-        <span class="doccomment">/// Sun/Oracle Solaris</span>
-        <span class="ident">Solaris</span> = <span class="number">6</span>,
-        <span class="doccomment">/// IBM AIX</span>
-        <span class="ident">AIX</span>,
-        <span class="doccomment">/// SGI IRIX</span>
-        <span class="ident">IRIX</span>,
-        <span class="doccomment">/// FreeBSD</span>
-        <span class="ident">FreeBSD</span>,
-        <span class="doccomment">/// Compaq TRU64 Unix</span>
-        <span class="ident">TRU64</span>,
-        <span class="doccomment">/// Novell Modesto</span>
-        <span class="ident">Modesto</span>,
-        <span class="doccomment">/// OpenBSD</span>
-        <span class="ident">OpenBSD</span>,
-        <span class="doccomment">/// DEC OpenVMS</span>
-        <span class="ident">OpenVMS</span>,
-        <span class="doccomment">/// HP Non-Stop Kernel</span>
-        <span class="ident">NonStopKernel</span>,
-        <span class="doccomment">/// AROS (Amiga)</span>
-        <span class="ident">AROS</span>,
-        <span class="doccomment">/// FenixOS (Passas and Karlsson 2011?)</span>
-        <span class="ident">FenixOS</span>,
-        <span class="doccomment">/// Nuxi CloudABI</span>
-        <span class="ident">CloudABI</span>,
-        <span class="doccomment">/// Stratus Open VOS</span>
-        <span class="ident">OpenVOS</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Operating-system-specific ABI extensions supported by the ELF specification.
+    </span><span class="kw">pub enum </span>OSABI(u8) {
+        <span class="doccomment">/// Original Unix System V ABI
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// HP-UX
+        </span>HPUX,
+        <span class="doccomment">/// NetBSD
+        </span>NetBSD,
+        <span class="doccomment">/// GNU with Linux kernel
+        </span>Linux,
+        <span class="doccomment">/// GNU with Hurd kernel
+        </span>Hurd,
+        <span class="doccomment">/// Sun/Oracle Solaris
+        </span>Solaris = <span class="number">6</span>,
+        <span class="doccomment">/// IBM AIX
+        </span>AIX,
+        <span class="doccomment">/// SGI IRIX
+        </span>IRIX,
+        <span class="doccomment">/// FreeBSD
+        </span>FreeBSD,
+        <span class="doccomment">/// Compaq TRU64 Unix
+        </span>TRU64,
+        <span class="doccomment">/// Novell Modesto
+        </span>Modesto,
+        <span class="doccomment">/// OpenBSD
+        </span>OpenBSD,
+        <span class="doccomment">/// DEC OpenVMS
+        </span>OpenVMS,
+        <span class="doccomment">/// HP Non-Stop Kernel
+        </span>NonStopKernel,
+        <span class="doccomment">/// AROS (Amiga)
+        </span>AROS,
+        <span class="doccomment">/// FenixOS (Passas and Karlsson 2011?)
+        </span>FenixOS,
+        <span class="doccomment">/// Nuxi CloudABI
+        </span>CloudABI,
+        <span class="doccomment">/// Stratus Open VOS
+        </span>OpenVOS,
 
-        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MinArchDefined</span> = <span class="number">0x40</span>,
-        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MaxArchDefined</span> = <span class="number">0xff</span>,
-    }
-}
-
-
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Types of object files supported by the ELF specification</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FileType</span>(<span class="ident">u16</span>) {
-        <span class="doccomment">/// Invalid placeholder value.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// Relocatable object file</span>
-        <span class="ident">Relocatable</span>,
-        <span class="doccomment">/// A file with an entry point that can be executed</span>
-        <span class="ident">Executable</span>,
-        <span class="doccomment">/// Dynamic shared library</span>
-        <span class="ident">SharedObject</span>,
-        <span class="doccomment">/// Core dump</span>
-        <span class="ident">Core</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values</span>
-        <span class="ident">MinOSDefined</span> = <span class="number">0xfe00</span>,
-        <span class="doccomment">/// End of range (inclusive) for OS-specific values</span>
-        <span class="ident">MaxOSDefined</span> = <span class="number">0xfeff</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MinArchDefined</span> = <span class="number">0xff00</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MaxArchDefined</span> = <span class="number">0xffff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values
+        </span>MinArchDefined = <span class="number">0x40</span>,
+        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values
+        </span>MaxArchDefined = <span class="number">0xff</span>,
     }
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Identifies the target CPU architecture.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The variants defined here are a small subset of the values supported by the System</span>
-    <span class="doccomment">/// V ABI. There are lots of obscure platforms it doesn&#39;t make sense to list.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Machine</span>(<span class="ident">u8</span>) {
-        <span class="doccomment">/// No specific architecture defined.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// Sun/Oracle SPARC</span>
-        <span class="ident">SPARC</span> = <span class="number">2</span>,
-        <span class="doccomment">/// 32-bit x86</span>
-        <span class="ident">X86</span> = <span class="number">3</span>,
-        <span class="doccomment">/// Motorola 68000</span>
-        <span class="ident">M68K</span> = <span class="number">4</span>,
-        <span class="doccomment">/// MIPS I</span>
-        <span class="ident">MIPS</span> = <span class="number">8</span>,
-        <span class="doccomment">/// MIPS RS3000 (little-endian)</span>
-        <span class="ident">MIPSRS3kLittleEndian</span> = <span class="number">10</span>,
-        <span class="doccomment">/// 32-bit PowerPC</span>
-        <span class="ident">PowerPC</span> = <span class="number">20</span>,
-        <span class="doccomment">/// 64-bit PowerPC</span>
-        <span class="ident">PowerPC64</span> = <span class="number">21</span>,
-        <span class="doccomment">/// 32-bit Arm</span>
-        <span class="ident">Arm</span> = <span class="number">40</span>,
-        <span class="doccomment">/// Intel Itanium IA-64</span>
-        <span class="ident">IA64</span> = <span class="number">50</span>,
-        <span class="doccomment">/// 64-bit x86</span>
-        <span class="ident">X86_64</span> = <span class="number">62</span>,
-        <span class="doccomment">/// 64-bit Arm</span>
-        <span class="ident">Arm64</span> = <span class="number">183</span>,
-        <span class="doccomment">/// RISC-V</span>
-        <span class="ident">RISCV</span> = <span class="number">243</span>,
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Machine</span> {
-    <span class="doccomment">/// The expected machine type for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">doc</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Machine</span> = <span class="ident">Machine::X86</span>;
-
-    <span class="doccomment">/// The expected machine type for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Machine</span> = <span class="ident">Machine::X86_64</span>;
-
-    <span class="doccomment">/// The expected machine type for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Machine</span> = <span class="ident">Machine::Arm</span>;
-
-    <span class="doccomment">/// The expected machine type for the current platform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;aarch64&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NATIVE</span>: <span class="ident">Machine</span> = <span class="ident">Machine::Arm64</span>;
-}
-
-
-<span class="doccomment">/// Program header variant native to the current target</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProgramHeaderNative</span> = <span class="ident">ProgramHeader32</span>;
-
-<span class="doccomment">/// Program header variant native to the current target</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProgramHeaderNative</span> = <span class="ident">ProgramHeader64</span>;
-
-
-<span class="doccomment">/// Header that controls loading of a single segment of an executable (32-bit variant)</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProgramHeader32</span> {
-    <span class="doccomment">/// Indicates the contents/meaning of the segment described by this header.</span>
-    <span class="kw">pub</span> <span class="ident">segment_type</span>: <span class="ident">ProgramSegmentType</span>,
-    <span class="doccomment">/// File offset to the start of this segment&#39;s data.</span>
-    <span class="kw">pub</span> <span class="ident">file_offset</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Virtual base address where the segment should be loaded.</span>
-    <span class="kw">pub</span> <span class="ident">virtual_addr</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Physical base address where the segment should be loaded. Typically ignored.</span>
-    <span class="kw">pub</span> <span class="ident">physical_addr</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Size in bytes of the file data for this segment.</span>
-    <span class="kw">pub</span> <span class="ident">file_size</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Size in bytes of this segment once it is loaded into memory.</span>
-    <span class="kw">pub</span> <span class="ident">mem_size</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Controls permissions and other OS/arch-specific flags.</span>
-    <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">ProgramSegmentFlags</span>,
-    <span class="doccomment">/// Alignment of the segment in bytes, for both the file and memory.</span>
-    <span class="kw">pub</span> <span class="ident">alignment</span>: <span class="ident">u32</span>,
-}
-
-<span class="macro">const_assert_eq!</span>(<span class="number">32</span>, <span class="ident">size_of</span>::&lt;<span class="ident">ProgramHeader32</span>&gt;());
-
-
-<span class="doccomment">/// Header that controls loading of a single segment of an executable (64-bit variant)</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProgramHeader64</span> {
-    <span class="doccomment">/// Indicates the contents/meaning of the segment described by this header.</span>
-    <span class="kw">pub</span> <span class="ident">segment_type</span>: <span class="ident">ProgramSegmentType</span>,
-    <span class="doccomment">/// Controls permissions and other OS/arch-specific flags.</span>
-    <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">ProgramSegmentFlags</span>,
-    <span class="doccomment">/// File offset to the start of this segment&#39;s data.</span>
-    <span class="kw">pub</span> <span class="ident">file_offset</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Virtual base address where the segment should be loaded.</span>
-    <span class="kw">pub</span> <span class="ident">virtual_addr</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Physical base address where the segment should be loaded. Typically ignored.</span>
-    <span class="kw">pub</span> <span class="ident">physical_addr</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Size in bytes of the file data for this segment.</span>
-    <span class="kw">pub</span> <span class="ident">file_size</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Size in bytes of this segment once it is loaded into memory.</span>
-    <span class="kw">pub</span> <span class="ident">mem_size</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Alignment of the segment in bytes, for both the file and memory.</span>
-    <span class="kw">pub</span> <span class="ident">alignment</span>: <span class="ident">u64</span>,
-}
-
-<span class="macro">const_assert_eq!</span>(<span class="number">56</span>, <span class="ident">size_of</span>::&lt;<span class="ident">ProgramHeader64</span>&gt;());
-
-
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Defines the contents and meaning of individual program segments.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ProgramSegmentType</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Marks an ignored or unused segment.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// Segment that should be loaded into memory.</span>
-        <span class="ident">Loadable</span>,
-        <span class="doccomment">/// Segment containing information for the dynamic linker.</span>
-        <span class="ident">DynamicLink</span>,
-        <span class="doccomment">/// Segment containing the path to the program&#39;s interpreter (typically the</span>
-        <span class="doccomment">/// dynamic loader).</span>
-        <span class="ident">Interpreter</span>,
-        <span class="doccomment">/// Segment containing auxillary information.</span>
-        <span class="ident">Note</span>,
-        <span class="doccomment">/// Segment that contains the program header itself, including all segment</span>
-        <span class="doccomment">/// headers.</span>
-        <span class="ident">ProgramHeaderTable</span> = <span class="number">6</span>,
-        <span class="doccomment">/// Segment that contains a template for the thread-local storage area.</span>
-        <span class="ident">ThreadLocalStorage</span>,
-
-        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values</span>
-        <span class="ident">MinOSDefined</span>  = <span class="number">0x6000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for OS-specific values</span>
-        <span class="ident">MaxOSDefined</span>  = <span class="number">0x6FFF_FFFF</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MinArchDefined</span> = <span class="number">0x7000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MaxArchDefined</span> = <span class="number">0x7FFF_FFFF</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Types of object files supported by the ELF specification
+    </span><span class="kw">pub enum </span>FileType(u16) {
+        <span class="doccomment">/// Invalid placeholder value.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// Relocatable object file
+        </span>Relocatable,
+        <span class="doccomment">/// A file with an entry point that can be executed
+        </span>Executable,
+        <span class="doccomment">/// Dynamic shared library
+        </span>SharedObject,
+        <span class="doccomment">/// Core dump
+        </span>Core,
+        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values
+        </span>MinOSDefined = <span class="number">0xfe00</span>,
+        <span class="doccomment">/// End of range (inclusive) for OS-specific values
+        </span>MaxOSDefined = <span class="number">0xfeff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values
+        </span>MinArchDefined = <span class="number">0xff00</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values
+        </span>MaxArchDefined = <span class="number">0xffff</span>,
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Permissions and other OS/arch-specific flags for individual program segments.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProgramSegmentFlags</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Indicates the segment contains code that should be executable by the process.</span>
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">execute</span>,
-        <span class="doccomment">/// Indicates the segment contains data that should be writable by the process.</span>
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">write</span>,
-        <span class="doccomment">/// Indicates the segment contains data that should be readable by the process.</span>
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">read</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Identifies the target CPU architecture.
+    ///
+    /// The variants defined here are a small subset of the values supported by the System
+    /// V ABI. There are lots of obscure platforms it doesn&#39;t make sense to list.
+    </span><span class="kw">pub enum </span>Machine(u8) {
+        <span class="doccomment">/// No specific architecture defined.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// Sun/Oracle SPARC
+        </span>SPARC = <span class="number">2</span>,
+        <span class="doccomment">/// 32-bit x86
+        </span>X86 = <span class="number">3</span>,
+        <span class="doccomment">/// Motorola 68000
+        </span>M68K = <span class="number">4</span>,
+        <span class="doccomment">/// MIPS I
+        </span>MIPS = <span class="number">8</span>,
+        <span class="doccomment">/// MIPS RS3000 (little-endian)
+        </span>MIPSRS3kLittleEndian = <span class="number">10</span>,
+        <span class="doccomment">/// 32-bit PowerPC
+        </span>PowerPC = <span class="number">20</span>,
+        <span class="doccomment">/// 64-bit PowerPC
+        </span>PowerPC64 = <span class="number">21</span>,
+        <span class="doccomment">/// 32-bit Arm
+        </span>Arm = <span class="number">40</span>,
+        <span class="doccomment">/// Intel Itanium IA-64
+        </span>IA64 = <span class="number">50</span>,
+        <span class="doccomment">/// 64-bit x86
+        </span>X86_64 = <span class="number">62</span>,
+        <span class="doccomment">/// 64-bit Arm
+        </span>Arm64 = <span class="number">183</span>,
+        <span class="doccomment">/// RISC-V
+        </span>RISCV = <span class="number">243</span>,
+    }
+}
 
-        <span class="doccomment">/// Bits that are left for OS-specific flags.</span>
-        [<span class="number">20</span>..<span class="number">28</span>] <span class="kw">pub</span> <span class="ident">os_defined</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Bits that are left for CPU architecture-specific flags.</span>
-        [<span class="number">28</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">arch_defined</span>: <span class="ident">u8</span>,
+<span class="kw">impl </span>Machine {
+    <span class="doccomment">/// The expected machine type for the current platform.
+    </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+    </span><span class="kw">pub const </span>NATIVE: Machine = Machine::X86;
+
+    <span class="doccomment">/// The expected machine type for the current platform.
+    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span><span class="kw">pub const </span>NATIVE: Machine = Machine::X86_64;
+
+    <span class="doccomment">/// The expected machine type for the current platform.
+    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+    </span><span class="kw">pub const </span>NATIVE: Machine = Machine::Arm;
+
+    <span class="doccomment">/// The expected machine type for the current platform.
+    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    </span><span class="kw">pub const </span>NATIVE: Machine = Machine::Arm64;
+}
+
+
+<span class="doccomment">/// Program header variant native to the current target
+</span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">pub type </span>ProgramHeaderNative = ProgramHeader32;
+
+<span class="doccomment">/// Program header variant native to the current target
+</span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="kw">pub type </span>ProgramHeaderNative = ProgramHeader64;
+
+
+<span class="doccomment">/// Header that controls loading of a single segment of an executable (32-bit variant)
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>ProgramHeader32 {
+    <span class="doccomment">/// Indicates the contents/meaning of the segment described by this header.
+    </span><span class="kw">pub </span>segment_type: ProgramSegmentType,
+    <span class="doccomment">/// File offset to the start of this segment&#39;s data.
+    </span><span class="kw">pub </span>file_offset: u32,
+    <span class="doccomment">/// Virtual base address where the segment should be loaded.
+    </span><span class="kw">pub </span>virtual_addr: u32,
+    <span class="doccomment">/// Physical base address where the segment should be loaded. Typically ignored.
+    </span><span class="kw">pub </span>physical_addr: u32,
+    <span class="doccomment">/// Size in bytes of the file data for this segment.
+    </span><span class="kw">pub </span>file_size: u32,
+    <span class="doccomment">/// Size in bytes of this segment once it is loaded into memory.
+    </span><span class="kw">pub </span>mem_size: u32,
+    <span class="doccomment">/// Controls permissions and other OS/arch-specific flags.
+    </span><span class="kw">pub </span>flags: ProgramSegmentFlags,
+    <span class="doccomment">/// Alignment of the segment in bytes, for both the file and memory.
+    </span><span class="kw">pub </span>alignment: u32,
+}
+
+<span class="macro">const_assert_eq!</span>(<span class="number">32</span>, size_of::&lt;ProgramHeader32&gt;());
+
+
+<span class="doccomment">/// Header that controls loading of a single segment of an executable (64-bit variant)
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>ProgramHeader64 {
+    <span class="doccomment">/// Indicates the contents/meaning of the segment described by this header.
+    </span><span class="kw">pub </span>segment_type: ProgramSegmentType,
+    <span class="doccomment">/// Controls permissions and other OS/arch-specific flags.
+    </span><span class="kw">pub </span>flags: ProgramSegmentFlags,
+    <span class="doccomment">/// File offset to the start of this segment&#39;s data.
+    </span><span class="kw">pub </span>file_offset: u64,
+    <span class="doccomment">/// Virtual base address where the segment should be loaded.
+    </span><span class="kw">pub </span>virtual_addr: u64,
+    <span class="doccomment">/// Physical base address where the segment should be loaded. Typically ignored.
+    </span><span class="kw">pub </span>physical_addr: u64,
+    <span class="doccomment">/// Size in bytes of the file data for this segment.
+    </span><span class="kw">pub </span>file_size: u64,
+    <span class="doccomment">/// Size in bytes of this segment once it is loaded into memory.
+    </span><span class="kw">pub </span>mem_size: u64,
+    <span class="doccomment">/// Alignment of the segment in bytes, for both the file and memory.
+    </span><span class="kw">pub </span>alignment: u64,
+}
+
+<span class="macro">const_assert_eq!</span>(<span class="number">56</span>, size_of::&lt;ProgramHeader64&gt;());
+
+
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Defines the contents and meaning of individual program segments.
+    </span><span class="kw">pub enum </span>ProgramSegmentType(u32) {
+        <span class="doccomment">/// Marks an ignored or unused segment.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// Segment that should be loaded into memory.
+        </span>Loadable,
+        <span class="doccomment">/// Segment containing information for the dynamic linker.
+        </span>DynamicLink,
+        <span class="doccomment">/// Segment containing the path to the program&#39;s interpreter (typically the
+        /// dynamic loader).
+        </span>Interpreter,
+        <span class="doccomment">/// Segment containing auxillary information.
+        </span>Note,
+        <span class="doccomment">/// Segment that contains the program header itself, including all segment
+        /// headers.
+        </span>ProgramHeaderTable = <span class="number">6</span>,
+        <span class="doccomment">/// Segment that contains a template for the thread-local storage area.
+        </span>ThreadLocalStorage,
+
+        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values
+        </span>MinOSDefined  = <span class="number">0x6000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for OS-specific values
+        </span>MaxOSDefined  = <span class="number">0x6FFF_FFFF</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values
+        </span>MinArchDefined = <span class="number">0x7000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values
+        </span>MaxArchDefined = <span class="number">0x7FFF_FFFF</span>,
     }
 }
 
 
-<span class="doccomment">/// Variant of the [`SectionHeader`] structure native to the current target</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SectionHeaderNative</span> = <span class="ident">SectionHeader</span>&lt;<span class="ident">usize</span>&gt;;
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Permissions and other OS/arch-specific flags for individual program segments.
+    </span><span class="kw">pub struct </span>ProgramSegmentFlags(u32) {
+        <span class="doccomment">/// Indicates the segment contains code that should be executable by the process.
+        </span>[<span class="number">0</span>] <span class="kw">pub </span>execute,
+        <span class="doccomment">/// Indicates the segment contains data that should be writable by the process.
+        </span>[<span class="number">1</span>] <span class="kw">pub </span>write,
+        <span class="doccomment">/// Indicates the segment contains data that should be readable by the process.
+        </span>[<span class="number">2</span>] <span class="kw">pub </span>read,
 
-<span class="doccomment">/// Header that controls linking</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SectionHeader</span>&lt;<span class="ident">Addr</span>: <span class="ident">Copy</span>&gt; {
-    <span class="doccomment">/// Offset within the names section to the start of this section&#39;s name.</span>
-    <span class="kw">pub</span> <span class="ident">name_table_offset</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Indicates the contents/meaning of the section described by this header.</span>
-    <span class="kw">pub</span> <span class="ident">section_type</span>: <span class="ident">SectionType</span>,
-    <span class="doccomment">/// Flags for various attributes of this section.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is the raw numeric value of the flags. Use the [`flags`](Self::flags)</span>
-    <span class="doccomment">/// accessor to view as a [`SectionFlags`] type.</span>
-    <span class="kw">pub</span> <span class="ident">flags_raw</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// Virtual address where this section should be loaded in memory, if applicable.</span>
-    <span class="kw">pub</span> <span class="ident">virtual_addr</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// File offset to the start of this section&#39;s data.</span>
-    <span class="kw">pub</span> <span class="ident">file_offset</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// Size in bytes of this section&#39;s file data.</span>
-    <span class="kw">pub</span> <span class="ident">file_size</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// Depending on the [`section_type`](Self::section_type), this may identify another</span>
-    <span class="doccomment">/// related section.</span>
-    <span class="kw">pub</span> <span class="ident">associated_section_index</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Additional flags that depend on the [`section_type`](Self::section_type).</span>
-    <span class="kw">pub</span> <span class="ident">extra_info</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Required alignment of the section in bytes.</span>
-    <span class="kw">pub</span> <span class="ident">alignment</span>: <span class="ident">Addr</span>,
-    <span class="doccomment">/// Depending on the [`section_type`](Self::section_type), this may identify the size</span>
-    <span class="doccomment">/// of individual data entries within the section.</span>
-    <span class="kw">pub</span> <span class="ident">entry_size</span>: <span class="ident">Addr</span>,
+        <span class="doccomment">/// Bits that are left for OS-specific flags.
+        </span>[<span class="number">20</span>..<span class="number">28</span>] <span class="kw">pub </span>os_defined: u8,
+        <span class="doccomment">/// Bits that are left for CPU architecture-specific flags.
+        </span>[<span class="number">28</span>..<span class="number">32</span>] <span class="kw">pub </span>arch_defined: u8,
+    }
 }
 
-<span class="macro">const_assert_eq!</span>(<span class="number">40</span>, <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeader</span>&lt;<span class="ident">u32</span>&gt;&gt;());
-<span class="macro">const_assert_eq!</span>(<span class="number">64</span>, <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeader</span>&lt;<span class="ident">u64</span>&gt;&gt;());
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>)]</span>
-<span class="macro">const_assert_eq!</span>(<span class="ident">size_of</span>::&lt;<span class="ident">SectionHeaderNative</span>&gt;(), <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeader</span>&lt;<span class="ident">u32</span>&gt;&gt;());
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;64&quot;</span>)]</span>
-<span class="macro">const_assert_eq!</span>(<span class="ident">size_of</span>::&lt;<span class="ident">SectionHeaderNative</span>&gt;(), <span class="ident">size_of</span>::&lt;<span class="ident">SectionHeader</span>&lt;<span class="ident">u64</span>&gt;&gt;());
 
-<span class="kw">impl</span>&lt;<span class="ident">Addr</span>&gt; <span class="ident">SectionHeader</span>&lt;<span class="ident">Addr</span>&gt;
-<span class="kw">where</span>
-    <span class="ident">Addr</span>: <span class="ident">Copy</span> + <span class="ident">From</span>&lt;<span class="ident">SectionFlags</span>&gt; + <span class="ident">Into</span>&lt;<span class="ident">SectionFlags</span>&gt;,
+<span class="doccomment">/// Variant of the [`SectionHeader`] structure native to the current target
+</span><span class="kw">pub type </span>SectionHeaderNative = SectionHeader&lt;usize&gt;;
+
+<span class="doccomment">/// Header that controls linking
+</span><span class="attribute">#[repr(C)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>SectionHeader&lt;Addr: Copy&gt; {
+    <span class="doccomment">/// Offset within the names section to the start of this section&#39;s name.
+    </span><span class="kw">pub </span>name_table_offset: u32,
+    <span class="doccomment">/// Indicates the contents/meaning of the section described by this header.
+    </span><span class="kw">pub </span>section_type: SectionType,
+    <span class="doccomment">/// Flags for various attributes of this section.
+    ///
+    /// This is the raw numeric value of the flags. Use the [`flags`](Self::flags)
+    /// accessor to view as a [`SectionFlags`] type.
+    </span><span class="kw">pub </span>flags_raw: Addr,
+    <span class="doccomment">/// Virtual address where this section should be loaded in memory, if applicable.
+    </span><span class="kw">pub </span>virtual_addr: Addr,
+    <span class="doccomment">/// File offset to the start of this section&#39;s data.
+    </span><span class="kw">pub </span>file_offset: Addr,
+    <span class="doccomment">/// Size in bytes of this section&#39;s file data.
+    </span><span class="kw">pub </span>file_size: Addr,
+    <span class="doccomment">/// Depending on the [`section_type`](Self::section_type), this may identify another
+    /// related section.
+    </span><span class="kw">pub </span>associated_section_index: u32,
+    <span class="doccomment">/// Additional flags that depend on the [`section_type`](Self::section_type).
+    </span><span class="kw">pub </span>extra_info: u32,
+    <span class="doccomment">/// Required alignment of the section in bytes.
+    </span><span class="kw">pub </span>alignment: Addr,
+    <span class="doccomment">/// Depending on the [`section_type`](Self::section_type), this may identify the size
+    /// of individual data entries within the section.
+    </span><span class="kw">pub </span>entry_size: Addr,
+}
+
+<span class="macro">const_assert_eq!</span>(<span class="number">40</span>, size_of::&lt;SectionHeader&lt;u32&gt;&gt;());
+<span class="macro">const_assert_eq!</span>(<span class="number">64</span>, size_of::&lt;SectionHeader&lt;u64&gt;&gt;());
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="macro">const_assert_eq!</span>(size_of::&lt;SectionHeaderNative&gt;(), size_of::&lt;SectionHeader&lt;u32&gt;&gt;());
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="macro">const_assert_eq!</span>(size_of::&lt;SectionHeaderNative&gt;(), size_of::&lt;SectionHeader&lt;u64&gt;&gt;());
+
+<span class="kw">impl</span>&lt;Addr&gt; SectionHeader&lt;Addr&gt;
+<span class="kw">where
+    </span>Addr: Copy + From&lt;SectionFlags&gt; + Into&lt;SectionFlags&gt;,
 {
-    <span class="doccomment">/// Flags for various attributes of this section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SectionFlags</span> {
-        <span class="self">self</span>.<span class="ident">flags_raw</span>.<span class="ident">into</span>()
+    <span class="doccomment">/// Flags for various attributes of this section.
+    </span><span class="kw">pub fn </span>flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SectionFlags {
+        <span class="self">self</span>.flags_raw.into()
     }
 
-    <span class="doccomment">/// Flags for various attributes of this section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_flags</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">flags</span>: <span class="ident">SectionFlags</span>) {
-        <span class="self">self</span>.<span class="ident">flags_raw</span> = <span class="ident">flags</span>.<span class="ident">into</span>();
-    }
-}
-
-
-<span class="macro">c_enum!</span> {
-    <span class="doccomment">/// Defines the contents and meaning of individual sections.</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SectionType</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Marks an ignored or unused section.</span>
-        <span class="prelude-val">None</span>,
-        <span class="doccomment">/// Section containing data that is only meaningful to the program.</span>
-        <span class="ident">ProgramDefined</span>,
-        <span class="doccomment">/// Section containing the symbol table for this object file.</span>
-        <span class="ident">Symbols</span>,
-        <span class="doccomment">/// Section containing packed null-terminated strings.</span>
-        <span class="ident">Strings</span>,
-        <span class="doccomment">/// Section containing relocation data with addends given in the section itself.</span>
-        <span class="ident">RelocationWithAdded</span>,
-        <span class="doccomment">/// Section containing the hash table for symbols.</span>
-        <span class="ident">SymbolHash</span>,
-        <span class="doccomment">/// Section containing information for the dynamic linker.</span>
-        <span class="ident">DynamicLink</span>,
-        <span class="doccomment">/// Section containing auxillary information.</span>
-        <span class="ident">Note</span>,
-        <span class="doccomment">/// An empty file section that will be filled with zeros when loaded in memory</span>
-        <span class="doccomment">/// (BSS).</span>
-        <span class="ident">NoBits</span>,
-        <span class="doccomment">/// Section containing relocation data where the addends are determined by</span>
-        <span class="doccomment">/// context in the target section.</span>
-        <span class="ident">RelocationNoAdded</span>,
-        <span class="doccomment">/// Section containing the symbol table for dynamic linking.</span>
-        <span class="ident">DynamicLinkSymbol</span> = <span class="number">11</span>,
-        <span class="doccomment">/// Section containing the addresses of constructor functions that should be run</span>
-        <span class="doccomment">/// when the program is loaded.</span>
-        <span class="ident">Constructors</span>,
-        <span class="doccomment">/// Section containing the addresses of destructor functions that should be run</span>
-        <span class="doccomment">/// when the program is unloaded.</span>
-        <span class="ident">Destructors</span>,
-        <span class="doccomment">/// Section containing the addresses of constructor functions that should be run</span>
-        <span class="doccomment">/// before other [`Constructors`](Self::Constructors) when the program is loaded.</span>
-        <span class="ident">PreConstructors</span>,
-        <span class="doccomment">/// Section that groups other sections.</span>
-        <span class="ident">Group</span>,
-        <span class="doccomment">/// Table of section indexes that correspond to entries in the symbol table with</span>
-        <span class="doccomment">/// indirect sections.</span>
-        <span class="ident">SymbolIndirectSections</span>,
-
-        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values</span>
-        <span class="ident">MinOSDefined</span> = <span class="number">0x6000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for OS-specific values</span>
-        <span class="ident">MaxOSDefined</span> = <span class="number">0x6fff_ffff</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MinArchDefined</span> = <span class="number">0x7000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values</span>
-        <span class="ident">MaxArchDefined</span> = <span class="number">0x7fff_ffff</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for user-defined values</span>
-        <span class="ident">MinUserDefined</span> = <span class="number">0x8000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for user-defined values</span>
-        <span class="ident">MaxUserDefined</span> = <span class="number">0xffff_ffff</span>,
+    <span class="doccomment">/// Flags for various attributes of this section.
+    </span><span class="kw">pub fn </span>set_flags(<span class="kw-2">&amp;mut </span><span class="self">self</span>, flags: SectionFlags) {
+        <span class="self">self</span>.flags_raw = flags.into();
     }
 }
 
 
-<span class="macro">bitfield!</span> {
-    <span class="doccomment">/// Additional attributes for object file sections.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SectionFlags</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Indicates the section contains data that should be writable by the process.</span>
-        [ <span class="number">0</span>] <span class="kw">pub</span> <span class="ident">write</span>,
-        <span class="doccomment">/// Indicates this section should be loaded into memory when the process is run.</span>
-        [ <span class="number">1</span>] <span class="kw">pub</span> <span class="ident">allocate</span>,
-        <span class="doccomment">/// Indicates this section contains code that should be executable by the process.</span>
-        [ <span class="number">2</span>] <span class="kw">pub</span> <span class="ident">execute</span>,
-        <span class="doccomment">/// Indicates that multiple sections of this type can be combined while deleting</span>
-        <span class="doccomment">/// duplicate contents.</span>
-        [ <span class="number">4</span>] <span class="kw">pub</span> <span class="ident">merged</span>,
-        <span class="doccomment">/// Indicates the section contains null-terminate strings.</span>
-        [ <span class="number">5</span>] <span class="kw">pub</span> <span class="ident">strings</span>,
-        <span class="doccomment">/// Indicates that the [`extra_info`](SectionHeader::extra_info) field of the</span>
-        <span class="doccomment">/// section header contains an index to another section header.</span>
-        [ <span class="number">6</span>] <span class="kw">pub</span> <span class="ident">extra_info_is_link</span>,
-        <span class="doccomment">/// Indicates that this section and the [`associated_section_index`] should</span>
-        <span class="doccomment">/// maintain their relative order when linking.</span>
-        [ <span class="number">7</span>] <span class="kw">pub</span> <span class="ident">keep_order</span>,
-        <span class="doccomment">/// Indicates that the section must be processed in an OS-defined way during</span>
-        <span class="doccomment">/// linking.</span>
-        [ <span class="number">8</span>] <span class="kw">pub</span> <span class="ident">os_nonconforming</span>,
-        <span class="doccomment">/// Indicates the section is listed by a section with type [`SectionType::Group`].</span>
-        [ <span class="number">9</span>] <span class="kw">pub</span> <span class="ident">group_member</span>,
-        <span class="doccomment">/// Indicates the section contains a template for the thread-local storage area.</span>
-        [<span class="number">10</span>] <span class="kw">pub</span> <span class="ident">thread_locals</span>,
-        <span class="doccomment">/// Bits that are left for OS-defined flags.</span>
-        [<span class="number">20</span>..<span class="number">28</span>] <span class="kw">pub</span> <span class="ident">os_defined</span>: <span class="ident">u8</span>,
-        <span class="doccomment">/// Bits that are left for CPU architecture-defined flags.</span>
-        [<span class="number">28</span>..<span class="number">32</span>] <span class="kw">pub</span> <span class="ident">arch_defined</span>: <span class="ident">u8</span>,
+<span class="macro">c_enum! </span>{
+    <span class="doccomment">/// Defines the contents and meaning of individual sections.
+    </span><span class="kw">pub enum </span>SectionType(u32) {
+        <span class="doccomment">/// Marks an ignored or unused section.
+        </span><span class="prelude-val">None</span>,
+        <span class="doccomment">/// Section containing data that is only meaningful to the program.
+        </span>ProgramDefined,
+        <span class="doccomment">/// Section containing the symbol table for this object file.
+        </span>Symbols,
+        <span class="doccomment">/// Section containing packed null-terminated strings.
+        </span>Strings,
+        <span class="doccomment">/// Section containing relocation data with addends given in the section itself.
+        </span>RelocationWithAdded,
+        <span class="doccomment">/// Section containing the hash table for symbols.
+        </span>SymbolHash,
+        <span class="doccomment">/// Section containing information for the dynamic linker.
+        </span>DynamicLink,
+        <span class="doccomment">/// Section containing auxillary information.
+        </span>Note,
+        <span class="doccomment">/// An empty file section that will be filled with zeros when loaded in memory
+        /// (BSS).
+        </span>NoBits,
+        <span class="doccomment">/// Section containing relocation data where the addends are determined by
+        /// context in the target section.
+        </span>RelocationNoAdded,
+        <span class="doccomment">/// Section containing the symbol table for dynamic linking.
+        </span>DynamicLinkSymbol = <span class="number">11</span>,
+        <span class="doccomment">/// Section containing the addresses of constructor functions that should be run
+        /// when the program is loaded.
+        </span>Constructors,
+        <span class="doccomment">/// Section containing the addresses of destructor functions that should be run
+        /// when the program is unloaded.
+        </span>Destructors,
+        <span class="doccomment">/// Section containing the addresses of constructor functions that should be run
+        /// before other [`Constructors`](Self::Constructors) when the program is loaded.
+        </span>PreConstructors,
+        <span class="doccomment">/// Section that groups other sections.
+        </span>Group,
+        <span class="doccomment">/// Table of section indexes that correspond to entries in the symbol table with
+        /// indirect sections.
+        </span>SymbolIndirectSections,
+
+        <span class="doccomment">/// Beginning of range (inclusive) for OS-specific values
+        </span>MinOSDefined = <span class="number">0x6000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for OS-specific values
+        </span>MaxOSDefined = <span class="number">0x6fff_ffff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for CPU architecture-specific values
+        </span>MinArchDefined = <span class="number">0x7000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for CPU architecture-specific values
+        </span>MaxArchDefined = <span class="number">0x7fff_ffff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for user-defined values
+        </span>MinUserDefined = <span class="number">0x8000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for user-defined values
+        </span>MaxUserDefined = <span class="number">0xffff_ffff</span>,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span>&lt;<span class="ident">usize</span>&gt; <span class="kw">for</span> <span class="ident">SectionFlags</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="ident">SectionFlags</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        <span class="ident">SectionFlags</span>(<span class="ident">value</span> <span class="kw">as</span> <span class="ident">u32</span>)
+
+<span class="macro">bitfield! </span>{
+    <span class="doccomment">/// Additional attributes for object file sections.
+    </span><span class="kw">pub struct </span>SectionFlags(u32) {
+        <span class="doccomment">/// Indicates the section contains data that should be writable by the process.
+        </span>[ <span class="number">0</span>] <span class="kw">pub </span>write,
+        <span class="doccomment">/// Indicates this section should be loaded into memory when the process is run.
+        </span>[ <span class="number">1</span>] <span class="kw">pub </span>allocate,
+        <span class="doccomment">/// Indicates this section contains code that should be executable by the process.
+        </span>[ <span class="number">2</span>] <span class="kw">pub </span>execute,
+        <span class="doccomment">/// Indicates that multiple sections of this type can be combined while deleting
+        /// duplicate contents.
+        </span>[ <span class="number">4</span>] <span class="kw">pub </span>merged,
+        <span class="doccomment">/// Indicates the section contains null-terminate strings.
+        </span>[ <span class="number">5</span>] <span class="kw">pub </span>strings,
+        <span class="doccomment">/// Indicates that the [`extra_info`](SectionHeader::extra_info) field of the
+        /// section header contains an index to another section header.
+        </span>[ <span class="number">6</span>] <span class="kw">pub </span>extra_info_is_link,
+        <span class="doccomment">/// Indicates that this section and the [`associated_section_index`] should
+        /// maintain their relative order when linking.
+        </span>[ <span class="number">7</span>] <span class="kw">pub </span>keep_order,
+        <span class="doccomment">/// Indicates that the section must be processed in an OS-defined way during
+        /// linking.
+        </span>[ <span class="number">8</span>] <span class="kw">pub </span>os_nonconforming,
+        <span class="doccomment">/// Indicates the section is listed by a section with type [`SectionType::Group`].
+        </span>[ <span class="number">9</span>] <span class="kw">pub </span>group_member,
+        <span class="doccomment">/// Indicates the section contains a template for the thread-local storage area.
+        </span>[<span class="number">10</span>] <span class="kw">pub </span>thread_locals,
+        <span class="doccomment">/// Bits that are left for OS-defined flags.
+        </span>[<span class="number">20</span>..<span class="number">28</span>] <span class="kw">pub </span>os_defined: u8,
+        <span class="doccomment">/// Bits that are left for CPU architecture-defined flags.
+        </span>[<span class="number">28</span>..<span class="number">32</span>] <span class="kw">pub </span>arch_defined: u8,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span>&lt;<span class="ident">SectionFlags</span>&gt; <span class="kw">for</span> <span class="ident">usize</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">flags</span>: <span class="ident">SectionFlags</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">flags</span>.<span class="ident">value</span>() <span class="kw">as</span> <span class="ident">usize</span>
+<span class="kw">impl </span>From&lt;usize&gt; <span class="kw">for </span>SectionFlags {
+    <span class="kw">fn </span>from(value: usize) -&gt; SectionFlags {
+        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span>SectionFlags(value <span class="kw">as </span>u32)
+    }
+}
+
+<span class="kw">impl </span>From&lt;SectionFlags&gt; <span class="kw">for </span>usize {
+    <span class="kw">fn </span>from(flags: SectionFlags) -&gt; usize {
+        flags.value() <span class="kw">as </span>usize
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_elf" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_elf" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

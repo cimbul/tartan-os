@@ -87,94 +87,94 @@
 <span id="87">87</span>
 <span id="88">88</span>
 <span id="89">89</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>core::fmt;
 
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_state</span>(<span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">fmt::Write</span>) -&gt; <span class="ident">fmt::Result</span> {
-    <span class="comment">// TODO</span>
-    <span class="prelude-val">Ok</span>(())
+<span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>)))]
+</span><span class="kw">pub fn </span>print_state(<span class="kw">_</span>: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write) -&gt; fmt::Result {
+    <span class="comment">// TODO
+    </span><span class="prelude-val">Ok</span>(())
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">print_state</span>(<span class="ident">out</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">fmt::Write</span>) -&gt; <span class="ident">fmt::Result</span> {
-    <span class="kw">use</span> <span class="ident">tartan_arch::x86_common</span>::{<span class="self">self</span>, <span class="ident">features</span>, <span class="ident">interrupt</span>, <span class="ident">paging</span>, <span class="ident">protection</span>};
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">pub fn </span>print_state(out: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write) -&gt; fmt::Result {
+    <span class="kw">use </span>tartan_arch::x86_common::{<span class="self">self</span>, features, interrupt, paging, protection};
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;CPUID max basic: {:x?}&quot;</span>, <span class="ident">features::max_cpuid_index_basic</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;CPUID max ext.: {:x?}&quot;</span>, <span class="ident">features::max_cpuid_index_extended</span>())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;CPUID max basic: {:x?}&quot;</span>, features::max_cpuid_index_basic())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;CPUID max ext.: {:x?}&quot;</span>, features::max_cpuid_index_extended())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">basic_features</span> = <span class="ident">features::BasicFeatures::get</span>();
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">basic_features</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">features::ExtendedFeatures::get</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">features::AddressSpaceSizes::get</span>())<span class="question-mark">?</span>;
+    <span class="kw">let </span>basic_features = features::BasicFeatures::get();
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, basic_features)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, features::ExtendedFeatures::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, features::AddressSpaceSizes::get())<span class="question-mark">?</span>;
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_common::FlagRegister::get</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_common::ControlRegister0::get</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_common::ControlRegister4::get</span>())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::FlagRegister::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ControlRegister0::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ControlRegister4::get())<span class="question-mark">?</span>;
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">paging::ControlRegister2::get</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">paging::ControlRegister3::get</span>())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, paging::ControlRegister2::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, paging::ControlRegister3::get())<span class="question-mark">?</span>;
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::if_not_else</span>)]</span>
-    <span class="kw">if</span> !<span class="ident">basic_features</span>.<span class="ident">extended_state_save</span>() {
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;ExtendedControlRegister0 unsupported&quot;</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> <span class="kw">if</span> !<span class="ident">basic_features</span>.<span class="ident">extended_state_save_enabled</span>() {
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;ExtendedControlRegister0 disabled&quot;</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> {
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_common::ExtendedControlRegister0::get</span>())<span class="question-mark">?</span>;
+    <span class="attribute">#[allow(clippy::if_not_else)]
+    </span><span class="kw">if </span>!basic_features.extended_state_save() {
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;ExtendedControlRegister0 unsupported&quot;</span>)<span class="question-mark">?</span>;
+    } <span class="kw">else if </span>!basic_features.extended_state_save_enabled() {
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;ExtendedControlRegister0 disabled&quot;</span>)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ExtendedControlRegister0::get())<span class="question-mark">?</span>;
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>)]</span>
-    {
-        <span class="kw">use</span> <span class="ident">tartan_arch::x86_64</span>;
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    </span>{
+        <span class="kw">use </span>tartan_arch::x86_64;
 
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_64::ControlRegister8::get</span>())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">x86_64::ExtendedFeatureEnableRegister::get</span>())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_64::ControlRegister8::get())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_64::ExtendedFeatureEnableRegister::get())<span class="question-mark">?</span>;
     }
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">interrupt::InterruptDescriptorTableRegister::get</span>())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">protection::GlobalDescriptorTableRegister::get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(
-        <span class="ident">out</span>,
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, interrupt::InterruptDescriptorTableRegister::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, protection::GlobalDescriptorTableRegister::get())<span class="question-mark">?</span>;
+    describe_segment_register(
+        out,
         <span class="string">&quot;LDTR&quot;</span>,
-        <span class="ident">protection::LocalDescriptorTableRegister::get</span>(),
+        protection::LocalDescriptorTableRegister::get(),
     )<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;TR&quot;</span>, <span class="ident">protection::TaskRegister::get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;CS&quot;</span>, <span class="ident">protection::SegmentRegister::Code</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;DS&quot;</span>, <span class="ident">protection::SegmentRegister::Data</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;SS&quot;</span>, <span class="ident">protection::SegmentRegister::Stack</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;ES&quot;</span>, <span class="ident">protection::SegmentRegister::Extra</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;FS&quot;</span>, <span class="ident">protection::SegmentRegister::ExtraF</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
-    <span class="ident">describe_segment_register</span>(<span class="ident">out</span>, <span class="string">&quot;GS&quot;</span>, <span class="ident">protection::SegmentRegister::ExtraG</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;TR&quot;</span>, protection::TaskRegister::get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;CS&quot;</span>, protection::SegmentRegister::Code.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;DS&quot;</span>, protection::SegmentRegister::Data.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;SS&quot;</span>, protection::SegmentRegister::Stack.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;ES&quot;</span>, protection::SegmentRegister::Extra.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;FS&quot;</span>, protection::SegmentRegister::ExtraF.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">&quot;GS&quot;</span>, protection::SegmentRegister::ExtraG.get())<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> = <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> = <span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">fn</span> <span class="ident">describe_segment_register</span>(
-    <span class="ident">out</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">fmt::Write</span>,
-    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    <span class="ident">selector</span>: <span class="ident">tartan_arch::x86_common::protection::Selector</span>,
-) -&gt; <span class="ident">fmt::Result</span> {
-    <span class="kw">use</span> <span class="ident">tartan_arch::x86_common::protection</span>::{
-        <span class="ident">DescriptorFlags</span>, <span class="ident">GateDescriptor</span>, <span class="ident">GenericDescriptor</span>, <span class="ident">SegmentDescriptor</span>,
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">fn </span>describe_segment_register(
+    out: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write,
+    name: <span class="kw-2">&amp;</span>str,
+    selector: tartan_arch::x86_common::protection::Selector,
+) -&gt; fmt::Result {
+    <span class="kw">use </span>tartan_arch::x86_common::protection::{
+        DescriptorFlags, GateDescriptor, GenericDescriptor, SegmentDescriptor,
     };
 
-    <span class="macro">writeln!</span>(<span class="ident">out</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{}:&quot;</span>, <span class="ident">name</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="ident">selector</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{}:&quot;</span>, name)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, selector)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">descriptor</span> = <span class="ident">selector</span>.<span class="ident">descriptor_address</span>() <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">GenericDescriptor</span>;
-    <span class="kw">let</span> <span class="ident">descriptor_flags</span> = <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="ident">descriptor</span>).<span class="ident">flags</span> };
-    <span class="kw">if</span> <span class="ident">descriptor_flags</span>.<span class="ident">is_gate</span>() {
-        <span class="kw">let</span> <span class="ident">gate_descriptor</span> = <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">descriptor</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">GateDescriptor</span>) };
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span><span class="ident">gate_descriptor</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">seg_descriptor</span> = <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">descriptor</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">SegmentDescriptor</span>) };
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span><span class="ident">seg_descriptor</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>descriptor = selector.descriptor_address() <span class="kw">as </span><span class="kw-2">*const </span>GenericDescriptor;
+    <span class="kw">let </span>descriptor_flags = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>descriptor).flags };
+    <span class="kw">if </span>descriptor_flags.is_gate() {
+        <span class="kw">let </span>gate_descriptor = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(descriptor <span class="kw">as </span><span class="kw-2">*const </span>GateDescriptor) };
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span>gate_descriptor)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>seg_descriptor = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(descriptor <span class="kw">as </span><span class="kw-2">*const </span>SegmentDescriptor) };
+        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span>seg_descriptor)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

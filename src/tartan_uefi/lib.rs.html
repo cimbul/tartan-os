@@ -1292,1299 +1292,1299 @@
 <span id="1292">1292</span>
 <span id="1293">1293</span>
 <span id="1294">1294</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Support for Unified Extensible Firmware Interface</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See EDK `MdePkg/Include/Uefi/UefiSpec.h`</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Support for Unified Extensible Firmware Interface
+//!
+//! See EDK `MdePkg/Include/Uefi/UefiSpec.h`
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">fn_traits</span>)]</span>
-<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy::pedantic</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::must_use_candidate</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::non_ascii_literal</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::upper_case_acronyms</span>)]</span>
+</span><span class="attribute">#![no_std]
+#![feature(fn_traits)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::non_ascii_literal)]
+#![allow(clippy::upper_case_acronyms)]
 
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+</span><span class="kw">extern crate </span>alloc;
 
-<span class="kw">use</span> <span class="ident">::alloc::vec::Vec</span>;
-<span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
-<span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>};
-<span class="kw">use</span> <span class="ident">core::slice</span>;
-<span class="kw">use</span> <span class="ident">crc_any::CRCu32</span>;
-<span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-<span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+<span class="kw">use </span>::alloc::vec::Vec;
+<span class="kw">use </span>core::convert::TryInto;
+<span class="kw">use </span>core::ffi::c_void;
+<span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::mem::{align_of, size_of};
+<span class="kw">use </span>core::slice;
+<span class="kw">use </span>crc_any::CRCu32;
+<span class="kw">use </span>tartan_bitfield::bitfield;
+<span class="kw">use </span>tartan_c_enum::c_enum;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">allocator</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">global</span>;
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span>;
-
-
-<span class="doccomment">/// Constant page size defined by UEFI specification for [`BootServices::allocate_pages`].</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PAGE_SIZE</span>: <span class="ident">usize</span> = <span class="number">4096</span>;
+<span class="kw">pub mod </span>allocator;
+<span class="kw">pub mod </span>global;
+<span class="attribute">#[macro_use]
+</span><span class="kw">pub mod </span>io;
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="ident">usize</span>);
+<span class="doccomment">/// Constant page size defined by UEFI specification for [`BootServices::allocate_pages`].
+</span><span class="kw">pub const </span>PAGE_SIZE: usize = <span class="number">4096</span>;
 
-<span class="kw">impl</span> <span class="ident">Handle</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NULL</span>: <span class="ident">Handle</span> = <span class="ident">Handle</span>(<span class="number">0</span>);
+
+<span class="attribute">#[repr(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>Handle(usize);
+
+<span class="kw">impl </span>Handle {
+    <span class="kw">pub const </span>NULL: Handle = Handle(<span class="number">0</span>);
 }
 
 
-<span class="macro">c_enum!</span> {
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Revision</span>(<span class="ident">u32</span>) {
-        <span class="ident">V2_80</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">80</span>,
-        <span class="ident">V2_70</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">70</span>,
-        <span class="ident">V2_60</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">60</span>,
-        <span class="ident">V2_50</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">50</span>,
-        <span class="ident">V2_40</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">40</span>,
-        <span class="ident">V2_31</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">31</span>,
-        <span class="ident">V2_30</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">30</span>,
-        <span class="ident">V2_20</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">20</span>,
-        <span class="ident">V2_10</span> = (<span class="number">2</span> &lt;&lt; <span class="number">16</span>) | <span class="number">10</span>,
-        <span class="ident">V2_00</span> =  <span class="number">2</span> &lt;&lt; <span class="number">16</span>      ,
-        <span class="ident">V1_10</span> = (<span class="number">1</span> &lt;&lt; <span class="number">16</span>) | <span class="number">10</span>,
-        <span class="ident">V1_02</span> = (<span class="number">1</span> &lt;&lt; <span class="number">16</span>) |  <span class="number">2</span>,
+<span class="macro">c_enum! </span>{
+    <span class="kw">pub enum </span>Revision(u32) {
+        V2_80 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">80</span>,
+        V2_70 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">70</span>,
+        V2_60 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">60</span>,
+        V2_50 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">50</span>,
+        V2_40 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">40</span>,
+        V2_31 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">31</span>,
+        V2_30 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">30</span>,
+        V2_20 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">20</span>,
+        V2_10 = (<span class="number">2 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">10</span>,
+        V2_00 =  <span class="number">2 </span>&lt;&lt; <span class="number">16      </span>,
+        V1_10 = (<span class="number">1 </span>&lt;&lt; <span class="number">16</span>) | <span class="number">10</span>,
+        V1_02 = (<span class="number">1 </span>&lt;&lt; <span class="number">16</span>) |  <span class="number">2</span>,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Revision</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">LATEST</span>: <span class="ident">Revision</span> = <span class="ident">Revision::V2_80</span>;
+<span class="kw">impl </span>Revision {
+    <span class="kw">pub const </span>LATEST: Revision = Revision::V2_80;
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">major_version</span>(<span class="self">self</span>) -&gt; <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        (<span class="self">self</span>.<span class="number">0</span> &gt;&gt; <span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>
+    <span class="kw">pub fn </span>major_version(<span class="self">self</span>) -&gt; u16 {
+        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span>(<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">16</span>) <span class="kw">as </span>u16
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">minor_version</span>(<span class="self">self</span>) -&gt; <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) / <span class="number">10</span>
-    }
+    <span class="kw">pub fn </span>minor_version(<span class="self">self</span>) -&gt; u16 {
+        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u16) / <span class="number">10
+    </span>}
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fix_version</span>(<span class="self">self</span>) -&gt; <span class="ident">u16</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u16</span>) % <span class="number">10</span>
-    }
+    <span class="kw">pub fn </span>fix_version(<span class="self">self</span>) -&gt; u16 {
+        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u16) % <span class="number">10
+    </span>}
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Revision</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="ident">fmt::Result</span> {
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>Revision {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         <span class="macro">write!</span>(
-            <span class="ident">f</span>,
+            f,
             <span class="string">&quot;{}.{}.{}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">major_version</span>(),
-            <span class="self">self</span>.<span class="ident">minor_version</span>(),
-            <span class="self">self</span>.<span class="ident">fix_version</span>(),
+            <span class="self">self</span>.major_version(),
+            <span class="self">self</span>.minor_version(),
+            <span class="self">self</span>.fix_version(),
         )
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test_revision</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test_revision {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_components</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">major_version</span>(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">minor_version</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V1_02</span>.<span class="ident">fix_version</span>(), <span class="number">2</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_components() {
+        <span class="macro">assert_eq!</span>(Revision::V1_02.major_version(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(Revision::V1_02.minor_version(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(Revision::V1_02.fix_version(), <span class="number">2</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">major_version</span>(), <span class="number">2</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">minor_version</span>(), <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">Revision::V2_31</span>.<span class="ident">fix_version</span>(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(Revision::V2_31.major_version(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(Revision::V2_31.minor_version(), <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(Revision::V2_31.fix_version(), <span class="number">1</span>);
     }
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="prelude-ty">Result</span> = <span class="ident">core::result::Result</span>&lt;<span class="ident">Status</span>, <span class="ident">Status</span>&gt;;
+<span class="kw">pub type </span><span class="prelude-ty">Result </span>= core::result::Result&lt;Status, Status&gt;;
 
-<span class="macro">c_enum!</span> {
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Status</span>(<span class="ident">usize</span>) {
-        <span class="comment">// Appendix D</span>
-        <span class="ident">Success</span>             = <span class="number">0</span>,
+<span class="macro">c_enum! </span>{
+    <span class="kw">pub enum </span>Status(usize) {
+        <span class="comment">// Appendix D
+        </span>Success             = <span class="number">0</span>,
 
-        <span class="ident">WarnUnknownGlyph</span>    = <span class="number">1</span>,
-        <span class="ident">WarnDeleteFailure</span>   = <span class="number">2</span>,
-        <span class="ident">WarnWriteFailure</span>    = <span class="number">3</span>,
-        <span class="ident">WarnBufferTooSmall</span>  = <span class="number">4</span>,
-        <span class="ident">WarnStaleData</span>       = <span class="number">5</span>,
-        <span class="ident">WarnFileSystem</span>      = <span class="number">6</span>,
-        <span class="ident">WarnResetRequired</span>   = <span class="number">7</span>,
+        WarnUnknownGlyph    = <span class="number">1</span>,
+        WarnDeleteFailure   = <span class="number">2</span>,
+        WarnWriteFailure    = <span class="number">3</span>,
+        WarnBufferTooSmall  = <span class="number">4</span>,
+        WarnStaleData       = <span class="number">5</span>,
+        WarnFileSystem      = <span class="number">6</span>,
+        WarnResetRequired   = <span class="number">7</span>,
 
-        <span class="ident">LoadError</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">1</span>,
-        <span class="ident">InvalidParameter</span>    = <span class="ident">Status::ERROR_BIT</span> | <span class="number">2</span>,
-        <span class="ident">Unsupported</span>         = <span class="ident">Status::ERROR_BIT</span> | <span class="number">3</span>,
-        <span class="ident">BadBufferSize</span>       = <span class="ident">Status::ERROR_BIT</span> | <span class="number">4</span>,
-        <span class="ident">BufferTooSmall</span>      = <span class="ident">Status::ERROR_BIT</span> | <span class="number">5</span>,
-        <span class="ident">NotReady</span>            = <span class="ident">Status::ERROR_BIT</span> | <span class="number">6</span>,
-        <span class="ident">DeviceError</span>         = <span class="ident">Status::ERROR_BIT</span> | <span class="number">7</span>,
-        <span class="ident">WriteProtected</span>      = <span class="ident">Status::ERROR_BIT</span> | <span class="number">8</span>,
-        <span class="ident">OutOfResources</span>      = <span class="ident">Status::ERROR_BIT</span> | <span class="number">9</span>,
-        <span class="ident">VolumeCorrupted</span>     = <span class="ident">Status::ERROR_BIT</span> | <span class="number">10</span>,
-        <span class="ident">VolumeFull</span>          = <span class="ident">Status::ERROR_BIT</span> | <span class="number">11</span>,
-        <span class="ident">NoMedia</span>             = <span class="ident">Status::ERROR_BIT</span> | <span class="number">12</span>,
-        <span class="ident">MediaChanged</span>        = <span class="ident">Status::ERROR_BIT</span> | <span class="number">13</span>,
-        <span class="ident">NotFound</span>            = <span class="ident">Status::ERROR_BIT</span> | <span class="number">14</span>,
-        <span class="ident">AccessDenied</span>        = <span class="ident">Status::ERROR_BIT</span> | <span class="number">15</span>,
-        <span class="ident">NoResponse</span>          = <span class="ident">Status::ERROR_BIT</span> | <span class="number">16</span>,
-        <span class="ident">NoMapping</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">17</span>,
-        <span class="ident">Timeout</span>             = <span class="ident">Status::ERROR_BIT</span> | <span class="number">18</span>,
-        <span class="ident">NotStarted</span>          = <span class="ident">Status::ERROR_BIT</span> | <span class="number">19</span>,
-        <span class="ident">AlreadyStarted</span>      = <span class="ident">Status::ERROR_BIT</span> | <span class="number">20</span>,
-        <span class="ident">Aborted</span>             = <span class="ident">Status::ERROR_BIT</span> | <span class="number">21</span>,
-        <span class="ident">ICMPError</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">22</span>,
-        <span class="ident">TFTPError</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">23</span>,
-        <span class="ident">ProtocolError</span>       = <span class="ident">Status::ERROR_BIT</span> | <span class="number">24</span>,
-        <span class="ident">IncompatibleVersion</span> = <span class="ident">Status::ERROR_BIT</span> | <span class="number">25</span>,
-        <span class="ident">SecurityViolation</span>   = <span class="ident">Status::ERROR_BIT</span> | <span class="number">26</span>,
-        <span class="ident">CRCError</span>            = <span class="ident">Status::ERROR_BIT</span> | <span class="number">27</span>,
-        <span class="ident">EndOfMedia</span>          = <span class="ident">Status::ERROR_BIT</span> | <span class="number">28</span>,
-        <span class="ident">EndOfFile</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">31</span>,
-        <span class="ident">InvalidLanguage</span>     = <span class="ident">Status::ERROR_BIT</span> | <span class="number">32</span>,
-        <span class="ident">CompromisedData</span>     = <span class="ident">Status::ERROR_BIT</span> | <span class="number">33</span>,
-        <span class="ident">HTTPError</span>           = <span class="ident">Status::ERROR_BIT</span> | <span class="number">35</span>,
+        LoadError           = Status::ERROR_BIT | <span class="number">1</span>,
+        InvalidParameter    = Status::ERROR_BIT | <span class="number">2</span>,
+        Unsupported         = Status::ERROR_BIT | <span class="number">3</span>,
+        BadBufferSize       = Status::ERROR_BIT | <span class="number">4</span>,
+        BufferTooSmall      = Status::ERROR_BIT | <span class="number">5</span>,
+        NotReady            = Status::ERROR_BIT | <span class="number">6</span>,
+        DeviceError         = Status::ERROR_BIT | <span class="number">7</span>,
+        WriteProtected      = Status::ERROR_BIT | <span class="number">8</span>,
+        OutOfResources      = Status::ERROR_BIT | <span class="number">9</span>,
+        VolumeCorrupted     = Status::ERROR_BIT | <span class="number">10</span>,
+        VolumeFull          = Status::ERROR_BIT | <span class="number">11</span>,
+        NoMedia             = Status::ERROR_BIT | <span class="number">12</span>,
+        MediaChanged        = Status::ERROR_BIT | <span class="number">13</span>,
+        NotFound            = Status::ERROR_BIT | <span class="number">14</span>,
+        AccessDenied        = Status::ERROR_BIT | <span class="number">15</span>,
+        NoResponse          = Status::ERROR_BIT | <span class="number">16</span>,
+        NoMapping           = Status::ERROR_BIT | <span class="number">17</span>,
+        Timeout             = Status::ERROR_BIT | <span class="number">18</span>,
+        NotStarted          = Status::ERROR_BIT | <span class="number">19</span>,
+        AlreadyStarted      = Status::ERROR_BIT | <span class="number">20</span>,
+        Aborted             = Status::ERROR_BIT | <span class="number">21</span>,
+        ICMPError           = Status::ERROR_BIT | <span class="number">22</span>,
+        TFTPError           = Status::ERROR_BIT | <span class="number">23</span>,
+        ProtocolError       = Status::ERROR_BIT | <span class="number">24</span>,
+        IncompatibleVersion = Status::ERROR_BIT | <span class="number">25</span>,
+        SecurityViolation   = Status::ERROR_BIT | <span class="number">26</span>,
+        CRCError            = Status::ERROR_BIT | <span class="number">27</span>,
+        EndOfMedia          = Status::ERROR_BIT | <span class="number">28</span>,
+        EndOfFile           = Status::ERROR_BIT | <span class="number">31</span>,
+        InvalidLanguage     = Status::ERROR_BIT | <span class="number">32</span>,
+        CompromisedData     = Status::ERROR_BIT | <span class="number">33</span>,
+        HTTPError           = Status::ERROR_BIT | <span class="number">35</span>,
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Status</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ERROR_BIT</span>: <span class="ident">usize</span> = <span class="number">0x1_usize</span>.<span class="ident">reverse_bits</span>(); <span class="comment">// high bit</span>
+<span class="kw">impl </span>Status {
+    <span class="kw">pub const </span>ERROR_BIT: usize = <span class="number">0x1_usize</span>.reverse_bits(); <span class="comment">// high bit
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_error</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        (<span class="self">self</span>.<span class="number">0</span> &amp; <span class="ident">Status::ERROR_BIT</span>) != <span class="number">0</span>
+    </span><span class="kw">pub fn </span>is_error(<span class="self">self</span>) -&gt; bool {
+        (<span class="self">self</span>.<span class="number">0 </span>&amp; Status::ERROR_BIT) != <span class="number">0
+    </span>}
+
+    <span class="kw">pub fn </span>is_warning(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self </span>!= Status::Success &amp;&amp; !<span class="self">self</span>.is_error()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_warning</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span> != <span class="ident">Status::Success</span> &amp;&amp; !<span class="self">self</span>.<span class="ident">is_error</span>()
-    }
-
-    <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_errors_doc</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_result</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_error</span>() {
+    <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].
+    </span><span class="attribute">#[allow(clippy::missing_errors_doc)]
+    </span><span class="kw">pub fn </span>into_result(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result </span>{
+        <span class="kw">if </span><span class="self">self</span>.is_error() {
             <span class="prelude-val">Err</span>(<span class="self">self</span>)
-        } <span class="kw">else</span> {
+        } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="self">self</span>)
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span>&lt;<span class="ident">Status</span>&gt; <span class="kw">for</span> <span class="prelude-ty">Result</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">status</span>: <span class="ident">Status</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">status</span>.<span class="ident">into_result</span>()
+<span class="kw">impl </span>From&lt;Status&gt; <span class="kw">for </span><span class="prelude-ty">Result </span>{
+    <span class="kw">fn </span>from(status: Status) -&gt; <span class="self">Self </span>{
+        status.into_result()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test_status</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test_status {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_equality</span>() {
-        <span class="kw">let</span> <span class="ident">status</span> = <span class="ident">Status</span>(<span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">status</span>, <span class="ident">Status::WarnUnknownGlyph</span>);
-        <span class="macro">assert_ne!</span>(<span class="ident">status</span>, <span class="ident">Status::Success</span>);
-        <span class="macro">assert_ne!</span>(<span class="ident">status</span>, <span class="ident">Status::LoadError</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_equality() {
+        <span class="kw">let </span>status = Status(<span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(status, Status::WarnUnknownGlyph);
+        <span class="macro">assert_ne!</span>(status, Status::Success);
+        <span class="macro">assert_ne!</span>(status, Status::LoadError);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::bool_assert_comparison</span>)]</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::branches_sharing_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">test_is_error</span>() {
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::Success</span>.<span class="ident">is_error</span>());
+    <span class="attribute">#[test]
+    #[allow(clippy::bool_assert_comparison)]
+    #[allow(clippy::branches_sharing_code)]
+    </span><span class="kw">fn </span>test_is_error() {
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::Success.is_error());
 
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnUnknownGlyph</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnFileSystem</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::WarnResetRequired</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::WarnUnknownGlyph.is_error());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::WarnFileSystem.is_error());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::WarnResetRequired.is_error());
 
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::LoadError</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::AccessDenied</span>.<span class="ident">is_error</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::HTTPError</span>.<span class="ident">is_error</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::LoadError.is_error());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::AccessDenied.is_error());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::HTTPError.is_error());
 
-        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>) {
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
-        } <span class="kw">else</span> {
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_error</span>(), <span class="bool-val">true</span>);
+        <span class="kw">if </span><span class="macro">cfg!</span>(target_pointer_width = <span class="string">&quot;32&quot;</span>) {
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0001</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x7fff_ffff</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x8000_0000</span>).is_error(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0xffff_ffff</span>).is_error(), <span class="bool-val">true</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000_0000_0000</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000_0000_0001</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x7fff_ffff_ffff_ffff</span>).is_error(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x8000_0000_0000_0000</span>).is_error(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0xffff_ffff_ffff_ffff</span>).is_error(), <span class="bool-val">true</span>);
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::bool_assert_comparison</span>)]</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::branches_sharing_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">test_is_warning</span>() {
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::Success</span>.<span class="ident">is_warning</span>());
+    <span class="attribute">#[test]
+    #[allow(clippy::bool_assert_comparison)]
+    #[allow(clippy::branches_sharing_code)]
+    </span><span class="kw">fn </span>test_is_warning() {
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::Success.is_warning());
 
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnUnknownGlyph</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnFileSystem</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, <span class="ident">Status::WarnResetRequired</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::WarnUnknownGlyph.is_warning());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::WarnFileSystem.is_warning());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">true</span>, Status::WarnResetRequired.is_warning());
 
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::LoadError</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::AccessDenied</span>.<span class="ident">is_warning</span>());
-        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, <span class="ident">Status::HTTPError</span>.<span class="ident">is_warning</span>());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::LoadError.is_warning());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::AccessDenied.is_warning());
+        <span class="macro">assert_eq!</span>(<span class="bool-val">false</span>, Status::HTTPError.is_warning());
 
-        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_pointer_width</span> = <span class="string">&quot;32&quot;</span>) {
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-        } <span class="kw">else</span> {
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x0000_0000_0000_0001</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x7fff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">true</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0x8000_0000_0000_0000</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">Status</span>(<span class="number">0xffff_ffff_ffff_ffff</span>).<span class="ident">is_warning</span>(), <span class="bool-val">false</span>);
+        <span class="kw">if </span><span class="macro">cfg!</span>(target_pointer_width = <span class="string">&quot;32&quot;</span>) {
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000</span>).is_warning(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0001</span>).is_warning(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x7fff_ffff</span>).is_warning(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x8000_0000</span>).is_warning(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0xffff_ffff</span>).is_warning(), <span class="bool-val">false</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000_0000_0000</span>).is_warning(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x0000_0000_0000_0001</span>).is_warning(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x7fff_ffff_ffff_ffff</span>).is_warning(), <span class="bool-val">true</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0x8000_0000_0000_0000</span>).is_warning(), <span class="bool-val">false</span>);
+            <span class="macro">assert_eq!</span>(Status(<span class="number">0xffff_ffff_ffff_ffff</span>).is_warning(), <span class="bool-val">false</span>);
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_into_result</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">Status::Success</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status::Success</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">Status::WarnFileSystem</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Ok</span>(<span class="ident">Status::WarnFileSystem</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">Status::LoadError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status::LoadError</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">Status::HTTPError</span>.<span class="ident">into_result</span>(), <span class="prelude-val">Err</span>(<span class="ident">Status::HTTPError</span>));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_into_result() {
+        <span class="macro">assert_eq!</span>(Status::Success.into_result(), <span class="prelude-val">Ok</span>(Status::Success));
+        <span class="macro">assert_eq!</span>(Status::WarnFileSystem.into_result(), <span class="prelude-val">Ok</span>(Status::WarnFileSystem));
+        <span class="macro">assert_eq!</span>(Status::LoadError.into_result(), <span class="prelude-val">Err</span>(Status::LoadError));
+        <span class="macro">assert_eq!</span>(Status::HTTPError.into_result(), <span class="prelude-val">Err</span>(Status::HTTPError));
     }
 }
 
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Table</span> {
-    <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span>;
+<span class="kw">pub trait </span>Table {
+    <span class="kw">const </span>SIGNATURE: u64;
+    <span class="kw">const </span>MIN_REVISION: Revision;
 
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">TableHeader</span>;
+    <span class="kw">fn </span>header(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableHeader;
 
-    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>)
-    <span class="kw">where</span>
-        <span class="self">Self</span>: <span class="ident">Sized</span>,
+    <span class="kw">fn </span>verify(<span class="kw-2">&amp;</span><span class="self">self</span>)
+    <span class="kw">where
+        </span><span class="self">Self</span>: Sized,
     {
-        <span class="self">self</span>.<span class="ident">verify_signature</span>();
-        <span class="self">self</span>.<span class="ident">verify_revision</span>();
-        <span class="self">self</span>.<span class="ident">verify_size</span>();
-        <span class="self">self</span>.<span class="ident">verify_crc32</span>();
+        <span class="self">self</span>.verify_signature();
+        <span class="self">self</span>.verify_revision();
+        <span class="self">self</span>.verify_size();
+        <span class="self">self</span>.verify_crc32();
     }
 
-    <span class="kw">fn</span> <span class="ident">verify_signature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">actual_signature</span> = <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">signature</span>;
+    <span class="kw">fn </span>verify_signature(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>actual_signature = <span class="self">self</span>.header().signature;
         <span class="macro">assert!</span>(
-            <span class="ident">actual_signature</span> == <span class="ident"><span class="self">Self</span>::SIGNATURE</span>,
+            actual_signature == <span class="self">Self</span>::SIGNATURE,
             <span class="string">&quot;Signature mismatch. Expected {:x}, received {:x}&quot;</span>,
-            <span class="ident">actual_signature</span>,
-            <span class="ident"><span class="self">Self</span>::SIGNATURE</span>,
+            actual_signature,
+            <span class="self">Self</span>::SIGNATURE,
         );
     }
 
-    <span class="kw">fn</span> <span class="ident">verify_revision</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">actual_revision</span> = <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">revision</span>;
+    <span class="kw">fn </span>verify_revision(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>actual_revision = <span class="self">self</span>.header().revision;
         <span class="macro">assert!</span>(
-            <span class="ident">actual_revision</span> &gt;= <span class="ident"><span class="self">Self</span>::MIN_REVISION</span>,
+            actual_revision &gt;= <span class="self">Self</span>::MIN_REVISION,
             <span class="string">&quot;Revision {} older than minimum supported revision {}&quot;</span>,
-            <span class="ident">actual_revision</span>,
-            <span class="ident"><span class="self">Self</span>::MIN_REVISION</span>,
+            actual_revision,
+            <span class="self">Self</span>::MIN_REVISION,
         );
     }
 
-    <span class="kw">fn</span> <span class="ident">verify_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>)
-    <span class="kw">where</span>
-        <span class="self">Self</span>: <span class="ident">Sized</span>,
+    <span class="kw">fn </span>verify_size(<span class="kw-2">&amp;</span><span class="self">self</span>)
+    <span class="kw">where
+        </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let</span> <span class="ident">actual_size</span> = <span class="self">self</span>.<span class="ident">header</span>().<span class="ident">header_size</span> <span class="kw">as</span> <span class="ident">usize</span>;
+        <span class="kw">let </span>actual_size = <span class="self">self</span>.header().header_size <span class="kw">as </span>usize;
         <span class="macro">assert!</span>(
-            <span class="ident">actual_size</span> &gt;= <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;(),
+            actual_size &gt;= size_of::&lt;<span class="self">Self</span>&gt;(),
             <span class="string">&quot;Header size {} was less than expected {} bytes&quot;</span>,
-            <span class="ident">actual_size</span>,
-            <span class="ident">size_of</span>::&lt;<span class="self">Self</span>&gt;(),
+            actual_size,
+            size_of::&lt;<span class="self">Self</span>&gt;(),
         );
     }
 
-    <span class="kw">fn</span> <span class="ident">verify_crc32</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">const</span> <span class="ident">CRC_FIELD_LENGTH</span>: <span class="ident">usize</span> = <span class="ident">size_of</span>::&lt;<span class="ident">u32</span>&gt;();
+    <span class="kw">fn </span>verify_crc32(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">const </span>CRC_FIELD_LENGTH: usize = size_of::&lt;u32&gt;();
 
-        <span class="kw">let</span> <span class="ident">header</span> = <span class="self">self</span>.<span class="ident">header</span>();
-        <span class="kw">let</span> <span class="ident">size</span> = <span class="ident">header</span>.<span class="ident">header_size</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">start_address</span> = (<span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="self">Self</span>).<span class="ident">cast</span>::&lt;<span class="ident">u8</span>&gt;();
-        <span class="kw">let</span> <span class="ident">crc_field_address</span> = <span class="macro">core::ptr::addr_of!</span>(<span class="ident">header</span>.<span class="ident">crc32</span>).<span class="ident">cast</span>::&lt;<span class="ident">u8</span>&gt;();
+        <span class="kw">let </span>header = <span class="self">self</span>.header();
+        <span class="kw">let </span>size = header.header_size <span class="kw">as </span>usize;
+        <span class="kw">let </span>start_address = (<span class="self">self </span><span class="kw">as </span><span class="kw-2">*const </span><span class="self">Self</span>).cast::&lt;u8&gt;();
+        <span class="kw">let </span>crc_field_address = <span class="macro">core::ptr::addr_of!</span>(header.crc32).cast::&lt;u8&gt;();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">crc</span> = <span class="ident">CRCu32::crc32</span>();
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Digest start of header until right before CRC value</span>
-            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice::from_raw_parts</span>(
-                <span class="ident">start_address</span>,
-                <span class="ident">crc_field_address</span>.<span class="ident">offset_from</span>(<span class="ident">start_address</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+        <span class="kw">let </span><span class="kw-2">mut </span>crc = CRCu32::crc32();
+        <span class="kw">unsafe </span>{
+            <span class="comment">// Digest start of header until right before CRC value
+            </span>crc.digest(slice::from_raw_parts(
+                start_address,
+                crc_field_address.offset_from(start_address).try_into().unwrap(),
             ));
 
-            <span class="comment">// Replace CRC field with zeros</span>
-            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="kw-2">&amp;</span>[<span class="number">0_u8</span>; <span class="ident">CRC_FIELD_LENGTH</span>]);
+            <span class="comment">// Replace CRC field with zeros
+            </span>crc.digest(<span class="kw-2">&amp;</span>[<span class="number">0_u8</span>; CRC_FIELD_LENGTH]);
 
-            <span class="comment">// Digest rest of header starting past end of CRC field</span>
-            <span class="kw">let</span> <span class="ident">crc_field_end</span> = <span class="ident">crc_field_address</span>.<span class="ident">add</span>(<span class="ident">CRC_FIELD_LENGTH</span>);
-            <span class="kw">let</span> <span class="ident">end_address</span> = <span class="ident">start_address</span>.<span class="ident">add</span>(<span class="ident">size</span>);
-            <span class="ident">crc</span>.<span class="ident">digest</span>(<span class="ident">slice::from_raw_parts</span>(
-                <span class="ident">crc_field_end</span>,
-                <span class="ident">end_address</span>.<span class="ident">offset_from</span>(<span class="ident">crc_field_end</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+            <span class="comment">// Digest rest of header starting past end of CRC field
+            </span><span class="kw">let </span>crc_field_end = crc_field_address.add(CRC_FIELD_LENGTH);
+            <span class="kw">let </span>end_address = start_address.add(size);
+            crc.digest(slice::from_raw_parts(
+                crc_field_end,
+                end_address.offset_from(crc_field_end).try_into().unwrap(),
             ));
         }
 
-        <span class="kw">let</span> <span class="ident">orig_remainder</span> = <span class="ident">header</span>.<span class="ident">crc32</span>;
-        <span class="kw">let</span> <span class="ident">actual_remainder</span> = <span class="ident">crc</span>.<span class="ident">get_crc</span>();
+        <span class="kw">let </span>orig_remainder = header.crc32;
+        <span class="kw">let </span>actual_remainder = crc.get_crc();
         <span class="macro">assert!</span>(
-            <span class="ident">actual_remainder</span> == <span class="ident">orig_remainder</span>,
+            actual_remainder == orig_remainder,
             <span class="string">&quot;Calculated CRC {:x} does not match listed value {:x}&quot;</span>,
-            <span class="ident">actual_remainder</span>,
-            <span class="ident">orig_remainder</span>,
+            actual_remainder,
+            orig_remainder,
         );
     }
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TableHeader</span> {
-    <span class="kw">pub</span> <span class="ident">signature</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">Revision</span>,
-    <span class="kw">pub</span> <span class="ident">header_size</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">crc32</span>: <span class="ident">u32</span>,
-    <span class="ident">reserved</span>: <span class="ident">u32</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>TableHeader {
+    <span class="kw">pub </span>signature: u64,
+    <span class="kw">pub </span>revision: Revision,
+    <span class="kw">pub </span>header_size: u32,
+    <span class="kw">pub </span>crc32: u32,
+    reserved: u32,
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SystemTable</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">TableHeader</span>,
-    <span class="kw">pub</span> <span class="ident">firmware_vendor</span>: <span class="kw-2">*const</span> <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">firmware_revision</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span> <span class="ident">console_in_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">console_in</span>: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextInput</span>&gt;,
-    <span class="kw">pub</span> <span class="ident">console_out_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">console_out</span>: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextOutput</span>&gt;,
-    <span class="kw">pub</span> <span class="ident">std_err_handle</span>: <span class="ident">Handle</span>,
-    <span class="kw">pub</span> <span class="ident">std_err</span>: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">proto::SimpleTextOutput</span>&gt;,
-    <span class="kw">pub</span> <span class="ident">runtime_services</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">RuntimeServices</span>,
-    <span class="kw">pub</span> <span class="ident">boot_services</span>: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BootServices</span>&gt;,
-    <span class="kw">pub</span> <span class="ident">config_entry_count</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span> <span class="ident">config_table</span>: <span class="kw-2">*const</span> <span class="ident">ConfigurationTable</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>SystemTable&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub </span>header: TableHeader,
+    <span class="kw">pub </span>firmware_vendor: <span class="kw-2">*const </span>u16,
+    <span class="kw">pub </span>firmware_revision: u32,
+    <span class="kw">pub </span>console_in_handle: Handle,
+    <span class="kw">pub </span>console_in: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>proto::SimpleTextInput&gt;,
+    <span class="kw">pub </span>console_out_handle: Handle,
+    <span class="kw">pub </span>console_out: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>proto::SimpleTextOutput&gt;,
+    <span class="kw">pub </span>std_err_handle: Handle,
+    <span class="kw">pub </span>std_err: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>proto::SimpleTextOutput&gt;,
+    <span class="kw">pub </span>runtime_services: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RuntimeServices,
+    <span class="kw">pub </span>boot_services: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BootServices&gt;,
+    <span class="kw">pub </span>config_entry_count: usize,
+    <span class="kw">pub </span>config_table: <span class="kw-2">*const </span>ConfigurationTable,
 }
 
-<span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">SystemTable</span>&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> = <span class="number">0x5453_5953_2049_4249</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> = <span class="ident">Revision::V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
+<span class="kw">impl </span>Table <span class="kw">for </span>SystemTable&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">const </span>SIGNATURE: u64 = <span class="number">0x5453_5953_2049_4249</span>;
+    <span class="kw">const </span>MIN_REVISION: Revision = Revision::V2_00;
+    <span class="kw">fn </span>header(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableHeader {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.header
     }
 }
 
-<span class="kw">impl</span> <span class="ident">SystemTable</span>&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="doccomment">/// Safe(r) wrapper around [`BootServices::exit_boot_services`] that fetches the</span>
-    <span class="doccomment">/// latest memory map and ensures that pointers to boot services are removed from the</span>
-    <span class="doccomment">/// system table on success.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// After this succeeds, pointers to functions that provide any kind of boot services</span>
-    <span class="doccomment">/// are no longer valid. This includes the console streams and memory allocation,</span>
-    <span class="doccomment">/// which may be referenced by globals outside of the control of this object. It is</span>
-    <span class="doccomment">/// the caller&#39;s responsibility to make sure any dangling references are cleared or</span>
-    <span class="doccomment">/// unused.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">exit_boot_services</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">image_handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">MemoryMap</span> {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-        <span class="kw">let</span> <span class="ident">boot_services</span> = <span class="self">self</span>.<span class="ident">boot_services</span>.<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">memory_map</span> = <span class="ident">boot_services</span>.<span class="ident">get_memory_map</span>();
-        <span class="comment">// This shouldn&#39;t fail since we just got the memory map</span>
-        <span class="ident">boot_services</span>.<span class="ident">exit_boot_services</span>(<span class="ident">image_handle</span>, <span class="ident">memory_map</span>.<span class="ident">key</span>).<span class="ident">unwrap</span>();
+<span class="kw">impl </span>SystemTable&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="doccomment">/// Safe(r) wrapper around [`BootServices::exit_boot_services`] that fetches the
+    /// latest memory map and ensures that pointers to boot services are removed from the
+    /// system table on success.
+    ///
+    /// # Safety
+    /// After this succeeds, pointers to functions that provide any kind of boot services
+    /// are no longer valid. This includes the console streams and memory allocation,
+    /// which may be referenced by globals outside of the control of this object. It is
+    /// the caller&#39;s responsibility to make sure any dangling references are cleared or
+    /// unused.
+    </span><span class="kw">pub unsafe fn </span>exit_boot_services(<span class="kw-2">&amp;mut </span><span class="self">self</span>, image_handle: Handle) -&gt; MemoryMap {
+        <span class="attribute">#![allow(clippy::missing_panics_doc)]
+        </span><span class="kw">let </span>boot_services = <span class="self">self</span>.boot_services.unwrap();
+        <span class="kw">let </span>memory_map = boot_services.get_memory_map();
+        <span class="comment">// This shouldn&#39;t fail since we just got the memory map
+        </span>boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
 
-        <span class="comment">// Clear pointers to boot services and console streams, which are now invalid</span>
-        <span class="self">self</span>.<span class="ident">boot_services</span> = <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">console_in_handle</span> = <span class="ident">Handle::NULL</span>;
-        <span class="self">self</span>.<span class="ident">console_in</span> = <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">console_out_handle</span> = <span class="ident">Handle::NULL</span>;
-        <span class="self">self</span>.<span class="ident">console_out</span> = <span class="prelude-val">None</span>;
-        <span class="self">self</span>.<span class="ident">std_err_handle</span> = <span class="ident">Handle::NULL</span>;
-        <span class="self">self</span>.<span class="ident">std_err</span> = <span class="prelude-val">None</span>;
+        <span class="comment">// Clear pointers to boot services and console streams, which are now invalid
+        </span><span class="self">self</span>.boot_services = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.console_in_handle = Handle::NULL;
+        <span class="self">self</span>.console_in = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.console_out_handle = Handle::NULL;
+        <span class="self">self</span>.console_out = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.std_err_handle = Handle::NULL;
+        <span class="self">self</span>.std_err = <span class="prelude-val">None</span>;
 
-        <span class="ident">memory_map</span>
-    }
-}
-
-
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RuntimeServices</span> {
-    <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">TableHeader</span>,
-
-    <span class="comment">// Time Services</span>
-    <span class="ident">get_time</span>: <span class="ident">usize</span>,
-    <span class="ident">set_time</span>: <span class="ident">usize</span>,
-    <span class="ident">get_wakeup_time</span>: <span class="ident">usize</span>,
-    <span class="ident">set_wakeup_time</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Virtual Memory Services</span>
-    <span class="ident">set_virtual_address_map</span>: <span class="ident">usize</span>,
-    <span class="ident">convert_pointer</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Variable Services</span>
-    <span class="ident">get_variable</span>: <span class="ident">usize</span>,
-    <span class="ident">get_next_variable_name</span>: <span class="ident">usize</span>,
-    <span class="ident">set_variable</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Miscellaneous Services</span>
-    <span class="ident">get_next_high_monotonic_count</span>: <span class="ident">usize</span>,
-    <span class="ident">reset_system</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// UEFI 2.0 Capsule Services</span>
-    <span class="ident">update_capsule</span>: <span class="ident">usize</span>,
-    <span class="ident">query_capsule_capabilities</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Miscellaneous UEFI 2.0 Service</span>
-    <span class="ident">query_variable_info</span>: <span class="ident">usize</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">RuntimeServices</span> {
-    <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> = <span class="number">0x5652_4553_544e_5552</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> = <span class="ident">Revision::V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
+        memory_map
     }
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BootServices</span> {
-    <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">TableHeader</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>RuntimeServices {
+    <span class="kw">pub </span>header: TableHeader,
 
-    <span class="comment">// Task Priority Services</span>
-    <span class="ident">raise_tpl</span>: <span class="ident">usize</span>,
-    <span class="ident">restore_tpl</span>: <span class="ident">usize</span>,
+    <span class="comment">// Time Services
+    </span>get_time: usize,
+    set_time: usize,
+    get_wakeup_time: usize,
+    set_wakeup_time: usize,
 
-    <span class="comment">// Memory Services</span>
-    <span class="comment">// NOTE: Physical addresses are represented as u64 even on 32-bit systems</span>
-    <span class="ident">allocate_pages_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-        <span class="ident">allocate_type</span>: <span class="ident">AllocateType</span>,
-        <span class="ident">memory_type</span>: <span class="ident">MemoryType</span>,
-        <span class="ident">page_count</span>: <span class="ident">usize</span>,
-        <span class="ident">physical_address</span>: <span class="kw-2">*mut</span> <span class="ident">u64</span>,
-    ) -&gt; <span class="ident">Status</span>,
-    <span class="kw">pub</span> <span class="ident">free_pages</span>:
-        <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">physical_address</span>: <span class="ident">u64</span>, <span class="ident">page_count</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Status</span>,
-    <span class="ident">get_memory_map_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-        <span class="ident">map_size</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>,
-        <span class="ident">map</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-        <span class="ident">map_key</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>,
-        <span class="ident">descriptor_size</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>,
-        <span class="ident">descriptor_version</span>: <span class="kw-2">&amp;mut</span> <span class="ident">u32</span>,
-    ) -&gt; <span class="ident">Status</span>,
-    <span class="kw">pub</span> <span class="ident">allocate_pool</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-        <span class="ident">pool_type</span>: <span class="ident">MemoryType</span>,
-        <span class="ident">size</span>: <span class="ident">usize</span>,
-        <span class="ident">buffer</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    ) -&gt; <span class="ident">Status</span>,
-    <span class="kw">pub</span> <span class="ident">free_pool</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">buffer</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>) -&gt; <span class="ident">Status</span>,
+    <span class="comment">// Virtual Memory Services
+    </span>set_virtual_address_map: usize,
+    convert_pointer: usize,
 
-    <span class="comment">// Event &amp; Timer Services</span>
-    <span class="ident">create_event</span>: <span class="ident">usize</span>,
-    <span class="ident">set_timer</span>: <span class="ident">usize</span>,
-    <span class="ident">wait_for_event</span>: <span class="ident">usize</span>,
-    <span class="ident">signal_event</span>: <span class="ident">usize</span>,
-    <span class="ident">close_event</span>: <span class="ident">usize</span>,
-    <span class="ident">check_event</span>: <span class="ident">usize</span>,
+    <span class="comment">// Variable Services
+    </span>get_variable: usize,
+    get_next_variable_name: usize,
+    set_variable: usize,
 
-    <span class="comment">// Protocol Handler Services</span>
-    <span class="ident">install_protocol_interface</span>: <span class="ident">usize</span>,
-    <span class="ident">reinstall_protocol_interface</span>: <span class="ident">usize</span>,
-    <span class="ident">uninstall_protocol_interface</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span> <span class="ident">handle_protocol</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-        <span class="ident">handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">protocol</span>: <span class="kw-2">&amp;</span><span class="ident">GUID</span>,
-        <span class="ident">interface</span>: <span class="kw-2">*mut</span> <span class="kw-2">*const</span> <span class="ident">c_void</span>,
-    ) -&gt; <span class="ident">Status</span>,
-    <span class="ident">reserved</span>: <span class="ident">usize</span>,
-    <span class="ident">register_protocol_notify</span>: <span class="ident">usize</span>,
-    <span class="ident">locate_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">locate_device_path</span>: <span class="ident">usize</span>,
-    <span class="ident">install_configuration_table</span>: <span class="ident">usize</span>,
+    <span class="comment">// Miscellaneous Services
+    </span>get_next_high_monotonic_count: usize,
+    reset_system: usize,
 
-    <span class="comment">// Image Services</span>
-    <span class="ident">load_image</span>: <span class="ident">usize</span>,
-    <span class="ident">start_image</span>: <span class="ident">usize</span>,
-    <span class="ident">exit</span>: <span class="ident">usize</span>,
-    <span class="ident">unload_image</span>: <span class="ident">usize</span>,
-    <span class="ident">exit_boot_services_</span>:
-        <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">image_handle</span>: <span class="ident">Handle</span>, <span class="ident">memory_map_key</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Status</span>,
+    <span class="comment">// UEFI 2.0 Capsule Services
+    </span>update_capsule: usize,
+    query_capsule_capabilities: usize,
 
-    <span class="comment">// Miscellaneous Services</span>
-    <span class="ident">get_next_monotonic_count</span>: <span class="ident">usize</span>,
-    <span class="ident">stall</span>: <span class="ident">usize</span>,
-    <span class="ident">set_watchdog_timer</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Driver Support Services</span>
-    <span class="ident">connect_controller</span>: <span class="ident">usize</span>,
-    <span class="ident">disconnect_controller</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Open and Close Protocol Services</span>
-    <span class="ident">open_protocol_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-        <span class="ident">handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">guid</span>: <span class="kw-2">&amp;</span><span class="ident">GUID</span>,
-        <span class="ident">interface</span>: <span class="kw-2">*mut</span> <span class="kw-2">*const</span> <span class="ident">c_void</span>,
-        <span class="ident">agent_handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">controller_handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">attributes</span>: <span class="ident">OpenProtocolAttributes</span>,
-    ) -&gt; <span class="ident">Status</span>,
-    <span class="ident">close_protocol</span>: <span class="ident">usize</span>,
-    <span class="ident">open_protocol_information</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Library Services</span>
-    <span class="ident">protocols_per_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">locate_handle_buffer</span>: <span class="ident">usize</span>,
-    <span class="ident">locate_protocol</span>: <span class="ident">usize</span>,
-    <span class="ident">install_multiple_protocol_interfaces</span>: <span class="ident">usize</span>,
-    <span class="ident">uninstall_multiple_protocol_interfaces</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// 32-bit CRC Services</span>
-    <span class="ident">calculate_crc32</span>: <span class="ident">usize</span>,
-
-    <span class="comment">// Miscellaneous Services</span>
-    <span class="ident">copy_mem</span>: <span class="ident">usize</span>,
-    <span class="ident">set_mem</span>: <span class="ident">usize</span>,
-    <span class="ident">create_event_ex</span>: <span class="ident">usize</span>,
+    <span class="comment">// Miscellaneous UEFI 2.0 Service
+    </span>query_variable_info: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Table</span> <span class="kw">for</span> <span class="ident">BootServices</span> {
-    <span class="kw">const</span> <span class="ident">SIGNATURE</span>: <span class="ident">u64</span> = <span class="number">0x5652_4553_544f_4f42</span>;
-    <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">Revision</span> = <span class="ident">Revision::V2_00</span>;
-    <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">TableHeader</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">header</span>
+<span class="kw">impl </span>Table <span class="kw">for </span>RuntimeServices {
+    <span class="kw">const </span>SIGNATURE: u64 = <span class="number">0x5652_4553_544e_5552</span>;
+    <span class="kw">const </span>MIN_REVISION: Revision = Revision::V2_00;
+    <span class="kw">fn </span>header(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableHeader {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.header
     }
 }
 
-<span class="kw">impl</span> <span class="ident">BootServices</span> {
-    <span class="doccomment">/// Allocate a number of pages of a given type of memory, optionally constraining its</span>
-    <span class="doccomment">/// location.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Pages are 4KB ([`PAGE_SIZE`]) on all platforms.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The meaning of `reference_address` depends on `allocate_type`:</span>
-    <span class="doccomment">///   * [`AnyAddress`](AllocateType::AnyAddress): Search for a block of pages anywhere</span>
-    <span class="doccomment">///     in memory. `reference_address` is ignored, and should be `None`.</span>
-    <span class="doccomment">///   * [`MaxAddress`](AllocateType::MaxAddress): Search for a block of pages below</span>
-    <span class="doccomment">///     the given address.</span>
-    <span class="doccomment">///   * [`ExactAddress`](AllocateType::ExactAddress): Reserve the block of pages</span>
-    <span class="doccomment">///     starting at `reference_address`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">/// This function will return:</span>
-    <span class="doccomment">///   * [`Status::OutOfResources`] if there was not enough memory available with the</span>
-    <span class="doccomment">///     specified constraints.</span>
-    <span class="doccomment">///   * [`Status::InvalidParameter`] if the memory type is unsupported.</span>
-    <span class="doccomment">///   * [`Status::NotFound`] if the requested memory location is out of bounds of</span>
-    <span class="doccomment">///     physical memory.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_pages</span>(
+
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>BootServices {
+    <span class="kw">pub </span>header: TableHeader,
+
+    <span class="comment">// Task Priority Services
+    </span>raise_tpl: usize,
+    restore_tpl: usize,
+
+    <span class="comment">// Memory Services
+    // NOTE: Physical addresses are represented as u64 even on 32-bit systems
+    </span>allocate_pages_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+        allocate_type: AllocateType,
+        memory_type: MemoryType,
+        page_count: usize,
+        physical_address: <span class="kw-2">*mut </span>u64,
+    ) -&gt; Status,
+    <span class="kw">pub </span>free_pages:
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(physical_address: u64, page_count: usize) -&gt; Status,
+    get_memory_map_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+        map_size: <span class="kw-2">&amp;mut </span>usize,
+        map: <span class="kw-2">*mut </span>c_void,
+        map_key: <span class="kw-2">&amp;mut </span>usize,
+        descriptor_size: <span class="kw-2">&amp;mut </span>usize,
+        descriptor_version: <span class="kw-2">&amp;mut </span>u32,
+    ) -&gt; Status,
+    <span class="kw">pub </span>allocate_pool: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+        pool_type: MemoryType,
+        size: usize,
+        buffer: <span class="kw-2">*mut *mut </span>c_void,
+    ) -&gt; Status,
+    <span class="kw">pub </span>free_pool: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(buffer: <span class="kw-2">*mut </span>c_void) -&gt; Status,
+
+    <span class="comment">// Event &amp; Timer Services
+    </span>create_event: usize,
+    set_timer: usize,
+    wait_for_event: usize,
+    signal_event: usize,
+    close_event: usize,
+    check_event: usize,
+
+    <span class="comment">// Protocol Handler Services
+    </span>install_protocol_interface: usize,
+    reinstall_protocol_interface: usize,
+    uninstall_protocol_interface: usize,
+    <span class="kw">pub </span>handle_protocol: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+        handle: Handle,
+        protocol: <span class="kw-2">&amp;</span>GUID,
+        interface: <span class="kw-2">*mut *const </span>c_void,
+    ) -&gt; Status,
+    reserved: usize,
+    register_protocol_notify: usize,
+    locate_handle: usize,
+    locate_device_path: usize,
+    install_configuration_table: usize,
+
+    <span class="comment">// Image Services
+    </span>load_image: usize,
+    start_image: usize,
+    exit: usize,
+    unload_image: usize,
+    exit_boot_services_:
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(image_handle: Handle, memory_map_key: usize) -&gt; Status,
+
+    <span class="comment">// Miscellaneous Services
+    </span>get_next_monotonic_count: usize,
+    stall: usize,
+    set_watchdog_timer: usize,
+
+    <span class="comment">// Driver Support Services
+    </span>connect_controller: usize,
+    disconnect_controller: usize,
+
+    <span class="comment">// Open and Close Protocol Services
+    </span>open_protocol_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+        handle: Handle,
+        guid: <span class="kw-2">&amp;</span>GUID,
+        interface: <span class="kw-2">*mut *const </span>c_void,
+        agent_handle: Handle,
+        controller_handle: Handle,
+        attributes: OpenProtocolAttributes,
+    ) -&gt; Status,
+    close_protocol: usize,
+    open_protocol_information: usize,
+
+    <span class="comment">// Library Services
+    </span>protocols_per_handle: usize,
+    locate_handle_buffer: usize,
+    locate_protocol: usize,
+    install_multiple_protocol_interfaces: usize,
+    uninstall_multiple_protocol_interfaces: usize,
+
+    <span class="comment">// 32-bit CRC Services
+    </span>calculate_crc32: usize,
+
+    <span class="comment">// Miscellaneous Services
+    </span>copy_mem: usize,
+    set_mem: usize,
+    create_event_ex: usize,
+}
+
+<span class="kw">impl </span>Table <span class="kw">for </span>BootServices {
+    <span class="kw">const </span>SIGNATURE: u64 = <span class="number">0x5652_4553_544f_4f42</span>;
+    <span class="kw">const </span>MIN_REVISION: Revision = Revision::V2_00;
+    <span class="kw">fn </span>header(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableHeader {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.header
+    }
+}
+
+<span class="kw">impl </span>BootServices {
+    <span class="doccomment">/// Allocate a number of pages of a given type of memory, optionally constraining its
+    /// location.
+    ///
+    /// Pages are 4KB ([`PAGE_SIZE`]) on all platforms.
+    ///
+    /// The meaning of `reference_address` depends on `allocate_type`:
+    ///   * [`AnyAddress`](AllocateType::AnyAddress): Search for a block of pages anywhere
+    ///     in memory. `reference_address` is ignored, and should be `None`.
+    ///   * [`MaxAddress`](AllocateType::MaxAddress): Search for a block of pages below
+    ///     the given address.
+    ///   * [`ExactAddress`](AllocateType::ExactAddress): Reserve the block of pages
+    ///     starting at `reference_address`.
+    ///
+    /// # Errors
+    /// This function will return:
+    ///   * [`Status::OutOfResources`] if there was not enough memory available with the
+    ///     specified constraints.
+    ///   * [`Status::InvalidParameter`] if the memory type is unsupported.
+    ///   * [`Status::NotFound`] if the requested memory location is out of bounds of
+    ///     physical memory.
+    </span><span class="kw">pub fn </span>allocate_pages(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">allocate_type</span>: <span class="ident">AllocateType</span>,
-        <span class="ident">memory_type</span>: <span class="ident">MemoryType</span>,
-        <span class="ident">page_count</span>: <span class="ident">usize</span>,
-        <span class="ident">reference_address</span>: <span class="prelude-ty">Option</span>&lt;<span class="ident">u64</span>&gt;,
-    ) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="ident">u64</span>, <span class="ident">Status</span>&gt; {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">physical_address</span> = <span class="ident">reference_address</span>.<span class="ident">unwrap_or_default</span>();
-        <span class="kw">unsafe</span> {
-            (<span class="self">self</span>.<span class="ident">allocate_pages_</span>)(
-                <span class="ident">allocate_type</span>,
-                <span class="ident">memory_type</span>,
-                <span class="ident">page_count</span>,
-                <span class="kw-2">&amp;mut</span> <span class="ident">physical_address</span>,
+        allocate_type: AllocateType,
+        memory_type: MemoryType,
+        page_count: usize,
+        reference_address: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    ) -&gt; core::result::Result&lt;u64, Status&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>physical_address = reference_address.unwrap_or_default();
+        <span class="kw">unsafe </span>{
+            (<span class="self">self</span>.allocate_pages_)(
+                allocate_type,
+                memory_type,
+                page_count,
+                <span class="kw-2">&amp;mut </span>physical_address,
             )
-            .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
+            .into_result()<span class="question-mark">?</span>;
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">physical_address</span>)
+        <span class="prelude-val">Ok</span>(physical_address)
     }
 
 
-    <span class="doccomment">/// Get a map representing the status of all available memory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_memory_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">MemoryMap</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory_map_size</span> = <span class="number">0_usize</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory_map</span> = <span class="ident">MemoryMap::new</span>();
+    <span class="doccomment">/// Get a map representing the status of all available memory.
+    ///
+    /// # Panics
+    /// Panics if the firmware does not behave according to the spec.
+    </span><span class="kw">pub fn </span>get_memory_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MemoryMap {
+        <span class="kw">let </span><span class="kw-2">mut </span>memory_map_size = <span class="number">0_usize</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>memory_map = MemoryMap::new();
 
-        <span class="kw">loop</span> {
-            <span class="ident">memory_map</span>.<span class="ident">raw_map</span>.<span class="ident">resize</span>(<span class="ident">memory_map_size</span>, <span class="number">0</span>);
+        <span class="kw">loop </span>{
+            memory_map.raw_map.resize(memory_map_size, <span class="number">0</span>);
 
-            <span class="kw">let</span> <span class="ident">result</span> = <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">get_memory_map_</span>)(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">memory_map_size</span>,
-                    <span class="comment">// TODO: Make sure this is aligned properly. memory_map.verify() will</span>
-                    <span class="comment">// check and panic if it isn&#39;t, but we should be able to ensure it.</span>
-                    <span class="ident">memory_map</span>.<span class="ident">raw_map</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>(),
-                    <span class="kw-2">&amp;mut</span> <span class="ident">memory_map</span>.<span class="ident">key</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">memory_map</span>.<span class="ident">descriptor_size</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">memory_map</span>.<span class="ident">descriptor_version</span>,
+            <span class="kw">let </span>result = <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.get_memory_map_)(
+                    <span class="kw-2">&amp;mut </span>memory_map_size,
+                    <span class="comment">// TODO: Make sure this is aligned properly. memory_map.verify() will
+                    // check and panic if it isn&#39;t, but we should be able to ensure it.
+                    </span>memory_map.raw_map.as_mut_ptr().cast(),
+                    <span class="kw-2">&amp;mut </span>memory_map.key,
+                    <span class="kw-2">&amp;mut </span>memory_map.descriptor_size,
+                    <span class="kw-2">&amp;mut </span>memory_map.descriptor_version,
                 )
-                .<span class="ident">into_result</span>()
+                .into_result()
             };
-            <span class="kw">match</span> <span class="ident">result</span> {
+            <span class="kw">match </span>result {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">break</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">Status::BufferTooSmall</span>) =&gt; {
-                    <span class="comment">// Allow room for another entry since we have to reallocate the buffer</span>
-                    <span class="ident">memory_map_size</span> += <span class="ident">memory_map</span>.<span class="ident">descriptor_size</span>;
+                <span class="prelude-val">Err</span>(Status::BufferTooSmall) =&gt; {
+                    <span class="comment">// Allow room for another entry since we have to reallocate the buffer
+                    </span>memory_map_size += memory_map.descriptor_size;
                 }
-                <span class="comment">// We shouldn&#39;t run into any of the other errors listed in the spec.</span>
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unexpected error from get_memory_map: {:?}&quot;</span>, <span class="ident">e</span>),
+                <span class="comment">// We shouldn&#39;t run into any of the other errors listed in the spec.
+                </span><span class="prelude-val">Err</span>(e) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unexpected error from get_memory_map: {:?}&quot;</span>, e),
             }
         }
 
-        <span class="comment">// Trim anything that wasn&#39;t used</span>
-        <span class="ident">memory_map</span>.<span class="ident">raw_map</span>.<span class="ident">resize</span>(<span class="ident">memory_map_size</span>, <span class="number">0</span>);
+        <span class="comment">// Trim anything that wasn&#39;t used
+        </span>memory_map.raw_map.resize(memory_map_size, <span class="number">0</span>);
 
-        <span class="ident">memory_map</span>.<span class="ident">verify</span>();
-        <span class="ident">memory_map</span>
+        memory_map.verify();
+        memory_map
     }
 
 
-    <span class="doccomment">/// Get the implementation of a protocol offered by the given `handle`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For UEFI applications, `agent_handle` is the application&#39;s image handle. This</span>
-    <span class="doccomment">/// method does not offer all the options required by UEFI drivers.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">/// Fails if `handle` is not valid, or it does not implement the specified protocol.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_protocol</span>&lt;<span class="ident">T</span>: <span class="ident">proto::Protocol</span>&gt;(
+    <span class="doccomment">/// Get the implementation of a protocol offered by the given `handle`.
+    ///
+    /// For UEFI applications, `agent_handle` is the application&#39;s image handle. This
+    /// method does not offer all the options required by UEFI drivers.
+    ///
+    /// # Errors
+    /// Fails if `handle` is not valid, or it does not implement the specified protocol.
+    ///
+    /// # Panics
+    /// Panics if the firmware does not behave according to the spec.
+    </span><span class="kw">pub fn </span>get_protocol&lt;T: proto::Protocol&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">agent_handle</span>: <span class="ident">Handle</span>,
-    ) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">Status</span>&gt; {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol</span> = <span class="ident">core::ptr::null</span>::&lt;<span class="ident">T</span>&gt;();
-        <span class="kw">unsafe</span> {
-            (<span class="self">self</span>.<span class="ident">open_protocol_</span>)(
-                <span class="ident">handle</span>,
-                <span class="kw-2">&amp;</span><span class="ident">T::PROTOCOL_ID</span>,
-                <span class="macro">core::ptr::addr_of_mut!</span>(<span class="ident">protocol</span>).<span class="ident">cast</span>(),
-                <span class="ident">agent_handle</span>,
-                <span class="ident">Handle::NULL</span>,
-                <span class="ident">OpenProtocolAttributes::Get</span>,
+        handle: Handle,
+        agent_handle: Handle,
+    ) -&gt; core::result::Result&lt;<span class="kw-2">&amp;</span>T, Status&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>protocol = core::ptr::null::&lt;T&gt;();
+        <span class="kw">unsafe </span>{
+            (<span class="self">self</span>.open_protocol_)(
+                handle,
+                <span class="kw-2">&amp;</span>T::PROTOCOL_ID,
+                <span class="macro">core::ptr::addr_of_mut!</span>(protocol).cast(),
+                agent_handle,
+                Handle::NULL,
+                OpenProtocolAttributes::Get,
             )
-            .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(<span class="ident">protocol</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
+            .into_result()<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(protocol.as_ref().unwrap())
         }
     }
 
-    <span class="doccomment">/// Signal to UEFI that the OS is now taking over.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If this function exits successfully, the OS is now in charge of memory management,</span>
-    <span class="doccomment">/// and it is no longer safe to call any functions on [`BootServices`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// In order to ensure that the OS has an accurate picture of the system, the caller</span>
-    <span class="doccomment">/// must pass the [`key`](MemoryMap::key) from a prior call to</span>
-    <span class="doccomment">/// [`BootServices::get_memory_map`]. If it does not match the latest value, this</span>
-    <span class="doccomment">/// function returns with an error and the caller will have to fetch a new map before</span>
-    <span class="doccomment">/// trying again.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">/// If this function exits successfully, then this object is no longer valid. The</span>
-    <span class="doccomment">/// pointer to this table should be removed from the [`SystemTable`] and any other</span>
-    <span class="doccomment">/// copies should be deleted.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the function exits with an error, then it is only safe to call memory services</span>
-    <span class="doccomment">/// like [`allocate_pages`](Self::allocate_pages) and</span>
-    <span class="doccomment">/// [`get_memory_map`](Self::get_memory_map). Any other boot services may have been</span>
-    <span class="doccomment">/// unloaded already.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">/// Will fail with [`Status::InvalidParameter`] if the `memory_map_key` does not match</span>
-    <span class="doccomment">/// the latest value.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">exit_boot_services</span>(
+    <span class="doccomment">/// Signal to UEFI that the OS is now taking over.
+    ///
+    /// If this function exits successfully, the OS is now in charge of memory management,
+    /// and it is no longer safe to call any functions on [`BootServices`].
+    ///
+    /// In order to ensure that the OS has an accurate picture of the system, the caller
+    /// must pass the [`key`](MemoryMap::key) from a prior call to
+    /// [`BootServices::get_memory_map`]. If it does not match the latest value, this
+    /// function returns with an error and the caller will have to fetch a new map before
+    /// trying again.
+    ///
+    /// # Safety
+    /// If this function exits successfully, then this object is no longer valid. The
+    /// pointer to this table should be removed from the [`SystemTable`] and any other
+    /// copies should be deleted.
+    ///
+    /// If the function exits with an error, then it is only safe to call memory services
+    /// like [`allocate_pages`](Self::allocate_pages) and
+    /// [`get_memory_map`](Self::get_memory_map). Any other boot services may have been
+    /// unloaded already.
+    ///
+    /// # Errors
+    /// Will fail with [`Status::InvalidParameter`] if the `memory_map_key` does not match
+    /// the latest value.
+    </span><span class="kw">pub unsafe fn </span>exit_boot_services(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">image_handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">memory_map_key</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="prelude-ty">Result</span> {
-        (<span class="self">self</span>.<span class="ident">exit_boot_services_</span>)(<span class="ident">image_handle</span>, <span class="ident">memory_map_key</span>).<span class="ident">into_result</span>()
+        image_handle: Handle,
+        memory_map_key: usize,
+    ) -&gt; <span class="prelude-ty">Result </span>{
+        (<span class="self">self</span>.exit_boot_services_)(image_handle, memory_map_key).into_result()
     }
 }
 
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GUID</span>(<span class="ident">u32</span>, <span class="ident">u16</span>, <span class="ident">u16</span>, [<span class="ident">u8</span>; <span class="number">8</span>]);
+<span class="attribute">#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>GUID(u32, u16, u16, [u8; <span class="number">8</span>]);
 
-<span class="kw">impl</span> <span class="ident">GUID</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) -&gt; <span class="self">Self</span> {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::cast_possible_truncation</span>)]</span>
-        <span class="ident">GUID</span>(
-            (<span class="ident">n</span> &gt;&gt; <span class="number">96</span>) <span class="kw">as</span> <span class="ident">u32</span>,
-            (<span class="ident">n</span> &gt;&gt; <span class="number">80</span>) <span class="kw">as</span> <span class="ident">u16</span>,
-            (<span class="ident">n</span> &gt;&gt; <span class="number">64</span>) <span class="kw">as</span> <span class="ident">u16</span>,
-            (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">to_be_bytes</span>(),
+<span class="kw">impl </span>GUID {
+    <span class="kw">pub const fn </span>from(n: u128) -&gt; <span class="self">Self </span>{
+        <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+        </span>GUID(
+            (n &gt;&gt; <span class="number">96</span>) <span class="kw">as </span>u32,
+            (n &gt;&gt; <span class="number">80</span>) <span class="kw">as </span>u16,
+            (n &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>u16,
+            (n <span class="kw">as </span>u64).to_be_bytes(),
         )
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span>&lt;<span class="ident">u128</span>&gt; <span class="kw">for</span> <span class="ident">GUID</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">n</span>: <span class="ident">u128</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">GUID::from</span>(<span class="ident">n</span>)
+<span class="kw">impl </span>From&lt;u128&gt; <span class="kw">for </span>GUID {
+    <span class="kw">fn </span>from(n: u128) -&gt; <span class="self">Self </span>{
+        GUID::from(n)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test_guid</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test_guid {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_from_u128</span>() {
-        <span class="kw">let</span> <span class="ident">guid</span> = <span class="ident">GUID::from</span>(<span class="number">0x01020304_0506_0708_0910_111213141516</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">0</span>, <span class="number">0x0102_0304</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">1</span>, <span class="number">0x0506</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">2</span>, <span class="number">0x0708</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">guid</span>.<span class="number">3</span>, <span class="kw-2">*</span><span class="string">b&quot;\x09\x10\x11\x12\x13\x14\x15\x16&quot;</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_from_u128() {
+        <span class="kw">let </span>guid = GUID::from(<span class="number">0x01020304_0506_0708_0910_111213141516</span>);
+        <span class="macro">assert_eq!</span>(guid.<span class="number">0</span>, <span class="number">0x0102_0304</span>);
+        <span class="macro">assert_eq!</span>(guid.<span class="number">1</span>, <span class="number">0x0506</span>);
+        <span class="macro">assert_eq!</span>(guid.<span class="number">2</span>, <span class="number">0x0708</span>);
+        <span class="macro">assert_eq!</span>(guid.<span class="number">3</span>, <span class="kw-2">*</span><span class="string">b&quot;\x09\x10\x11\x12\x13\x14\x15\x16&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_equality</span>() {
-        <span class="kw">let</span> <span class="ident">guid_a</span> = <span class="ident">GUID::from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
-        <span class="kw">let</span> <span class="ident">guid_b</span> = <span class="ident">GUID::from</span>(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
-        <span class="kw">let</span> <span class="ident">guid_c</span> = <span class="ident">GUID::from</span>(<span class="number">0x028c338c_0b14_4687_9ad7_14cba520b645</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_b</span>);
-        <span class="macro">assert_ne!</span>(<span class="ident">guid_a</span>, <span class="ident">guid_c</span>);
-        <span class="macro">assert_ne!</span>(<span class="ident">guid_b</span>, <span class="ident">guid_c</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_equality() {
+        <span class="kw">let </span>guid_a = GUID::from(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
+        <span class="kw">let </span>guid_b = GUID::from(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
+        <span class="kw">let </span>guid_c = GUID::from(<span class="number">0x028c338c_0b14_4687_9ad7_14cba520b645</span>);
+        <span class="macro">assert_eq!</span>(guid_a, guid_b);
+        <span class="macro">assert_ne!</span>(guid_a, guid_c);
+        <span class="macro">assert_ne!</span>(guid_b, guid_c);
     }
 }
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConfigurationTable</span> {
-    <span class="kw">pub</span> <span class="ident">vendor_guid</span>: <span class="ident">GUID</span>,
-    <span class="ident">vendor_table</span>: <span class="ident">usize</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>ConfigurationTable {
+    <span class="kw">pub </span>vendor_guid: GUID,
+    vendor_table: usize,
 }
 
-<span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
-<span class="kw">impl</span> <span class="ident">ConfigurationTable</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_20_GUID</span>:    <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0x8868e871_e4f1_11d3_bc22_0080c73c8881</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ACPI_GUID</span>:       <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d30_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SAL_SYSTEM_GUID</span>: <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d32_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS_GUID</span>:     <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d31_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMBIOS3_GUID</span>:    <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0xf2fd1544_9794_4a2c_992e_e5bbcf20e394</span>);
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MPS_GUID</span>:        <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0xeb9d2d2f_2d88_11d3_9a16_0090273fc14d</span>);
-    <span class="comment">// TODO: ... more defined in sect. 4.6</span>
+<span class="attribute">#[rustfmt::skip]
+</span><span class="kw">impl </span>ConfigurationTable {
+    <span class="kw">pub const </span>ACPI_20_GUID:    GUID = GUID::from(<span class="number">0x8868e871_e4f1_11d3_bc22_0080c73c8881</span>);
+    <span class="kw">pub const </span>ACPI_GUID:       GUID = GUID::from(<span class="number">0xeb9d2d30_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub const </span>SAL_SYSTEM_GUID: GUID = GUID::from(<span class="number">0xeb9d2d32_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub const </span>SMBIOS_GUID:     GUID = GUID::from(<span class="number">0xeb9d2d31_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="kw">pub const </span>SMBIOS3_GUID:    GUID = GUID::from(<span class="number">0xf2fd1544_9794_4a2c_992e_e5bbcf20e394</span>);
+    <span class="kw">pub const </span>MPS_GUID:        GUID = GUID::from(<span class="number">0xeb9d2d2f_2d88_11d3_9a16_0090273fc14d</span>);
+    <span class="comment">// TODO: ... more defined in sect. 4.6
+</span>}
+
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>MemoryDescriptor {
+    <span class="kw">pub </span>memory_type: MemoryType,
+    <span class="comment">// NOTE: Addresses represented as u64 even on 32-bit systems
+    </span><span class="kw">pub </span>physical_start: u64,
+    <span class="kw">pub </span>virtual_start: u64,
+    <span class="kw">pub </span>page_count: u64,
+    <span class="kw">pub </span>attributes: MemoryAttributes,
 }
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryDescriptor</span> {
-    <span class="kw">pub</span> <span class="ident">memory_type</span>: <span class="ident">MemoryType</span>,
-    <span class="comment">// NOTE: Addresses represented as u64 even on 32-bit systems</span>
-    <span class="kw">pub</span> <span class="ident">physical_start</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">virtual_start</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">page_count</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">attributes</span>: <span class="ident">MemoryAttributes</span>,
+<span class="comment">// NOTE: Not strictly part of UEFI API. Might belong in another module.
+</span><span class="kw">pub struct </span>MemoryMap {
+    <span class="kw">pub </span>raw_map: Vec&lt;u8&gt;,
+    <span class="kw">pub </span>key: usize,
+    <span class="kw">pub </span>descriptor_size: usize,
+    <span class="kw">pub </span>descriptor_version: u32,
 }
 
-<span class="comment">// NOTE: Not strictly part of UEFI API. Might belong in another module.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryMap</span> {
-    <span class="kw">pub</span> <span class="ident">raw_map</span>: <span class="ident">Vec</span>&lt;<span class="ident">u8</span>&gt;,
-    <span class="kw">pub</span> <span class="ident">key</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span> <span class="ident">descriptor_size</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span> <span class="ident">descriptor_version</span>: <span class="ident">u32</span>,
-}
+<span class="kw">impl </span>MemoryMap {
+    <span class="kw">pub const </span>MIN_VERSION: u32 = <span class="number">1</span>;
 
-<span class="kw">impl</span> <span class="ident">MemoryMap</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MIN_VERSION</span>: <span class="ident">u32</span> = <span class="number">1</span>;
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">MemoryMap</span> {
-            <span class="ident">raw_map</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">key</span>: <span class="number">0</span>,
-            <span class="ident">descriptor_size</span>: <span class="number">0</span>,
-            <span class="ident">descriptor_version</span>: <span class="number">0</span>,
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        MemoryMap {
+            raw_map: Vec::new(),
+            key: <span class="number">0</span>,
+            descriptor_size: <span class="number">0</span>,
+            descriptor_version: <span class="number">0</span>,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">verify_version</span>();
-        <span class="self">self</span>.<span class="ident">verify_descriptor_size</span>();
-        <span class="self">self</span>.<span class="ident">verify_map</span>();
+    <span class="kw">pub fn </span>verify(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.verify_version();
+        <span class="self">self</span>.verify_descriptor_size();
+        <span class="self">self</span>.verify_map();
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    </span><span class="kw">pub fn </span>verify_version(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_version</span> &gt;= <span class="ident"><span class="self">Self</span>::MIN_VERSION</span>,
+            <span class="self">self</span>.descriptor_version &gt;= <span class="self">Self</span>::MIN_VERSION,
             <span class="string">&quot;Descriptor version {} less than required version {}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">descriptor_version</span>,
-            <span class="ident"><span class="self">Self</span>::MIN_VERSION</span>,
+            <span class="self">self</span>.descriptor_version,
+            <span class="self">Self</span>::MIN_VERSION,
         );
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_descriptor_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    </span><span class="kw">pub fn </span>verify_descriptor_size(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_size</span> &gt;= <span class="ident">size_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;(),
+            <span class="self">self</span>.descriptor_size &gt;= size_of::&lt;MemoryDescriptor&gt;(),
             <span class="string">&quot;Descriptor size {} shorter than required {} bytes&quot;</span>,
-            <span class="self">self</span>.<span class="ident">descriptor_size</span>,
-            <span class="ident">size_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;(),
+            <span class="self">self</span>.descriptor_size,
+            size_of::&lt;MemoryDescriptor&gt;(),
         );
 
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">descriptor_size</span> % <span class="ident">align_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;() == <span class="number">0</span>,
+            <span class="self">self</span>.descriptor_size % align_of::&lt;MemoryDescriptor&gt;() == <span class="number">0</span>,
             <span class="string">&quot;Descriptor size {} not a multiple of the MemoryDescriptor struct alignment \
              {}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">descriptor_size</span>,
-            <span class="ident">align_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;(),
+            <span class="self">self</span>.descriptor_size,
+            align_of::&lt;MemoryDescriptor&gt;(),
         );
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::missing_panics_doc</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    </span><span class="kw">pub fn </span>verify_map(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>() % <span class="self">self</span>.<span class="ident">descriptor_size</span> == <span class="number">0</span>,
+            <span class="self">self</span>.raw_map.len() % <span class="self">self</span>.descriptor_size == <span class="number">0</span>,
             <span class="string">&quot;Memory map total size {} is not a multiple of descriptor size {}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">len</span>(),
-            <span class="self">self</span>.<span class="ident">descriptor_size</span>,
+            <span class="self">self</span>.raw_map.len(),
+            <span class="self">self</span>.descriptor_size,
         );
 
         <span class="macro">assert!</span>(
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>().<span class="ident">align_offset</span>(<span class="ident">align_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;()) == <span class="number">0</span>,
+            <span class="self">self</span>.raw_map.as_ptr().align_offset(align_of::&lt;MemoryDescriptor&gt;()) == <span class="number">0</span>,
             <span class="string">&quot;Memory map at {:p} not aligned properly for dereferencing. Required: {:x}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">raw_map</span>.<span class="ident">as_ptr</span>(),
-            <span class="ident">align_of</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;(),
+            <span class="self">self</span>.raw_map.as_ptr(),
+            align_of::&lt;MemoryDescriptor&gt;(),
         );
     }
 
-    <span class="doccomment">/// Iterate over memory descriptors contained in the map.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span>&lt;<span class="ident">Item</span> = <span class="kw-2">&amp;</span><span class="ident">MemoryDescriptor</span>&gt; {
-        <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::cast_ptr_alignment</span>)]</span>
+    <span class="doccomment">/// Iterate over memory descriptors contained in the map.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>MemoryDescriptor&gt; {
+        <span class="attribute">#![allow(clippy::cast_ptr_alignment)]
 
-        <span class="comment">// SAFETY: We check the pointer alignment in the verify() call. Since</span>
-        <span class="comment">// MemoryDescriptor is only composed of unsigned integer types, it is safe to</span>
-        <span class="comment">// interpret any sequence of bytes as a MemoryDescriptor.</span>
-        <span class="self">self</span>.<span class="ident">verify</span>();
-        <span class="self">self</span>.<span class="ident">raw_map</span>
-            .<span class="ident">as_slice</span>()
-            .<span class="ident">chunks_exact</span>(<span class="self">self</span>.<span class="ident">descriptor_size</span>)
-            .<span class="ident">map</span>(|<span class="ident">raw</span>| <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">raw</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>::&lt;<span class="ident">MemoryDescriptor</span>&gt;() })
+        </span><span class="comment">// SAFETY: We check the pointer alignment in the verify() call. Since
+        // MemoryDescriptor is only composed of unsigned integer types, it is safe to
+        // interpret any sequence of bytes as a MemoryDescriptor.
+        </span><span class="self">self</span>.verify();
+        <span class="self">self</span>.raw_map
+            .as_slice()
+            .chunks_exact(<span class="self">self</span>.descriptor_size)
+            .map(|raw| <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>raw.as_ptr().cast::&lt;MemoryDescriptor&gt;() })
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">MemoryMap</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>MemoryMap {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
-<span class="macro">c_enum!</span> {
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MemoryType</span>(<span class="ident">u32</span>) {
-        <span class="doccomment">/// Memory that is never available for use</span>
-        <span class="ident">Reserved</span>            = <span class="number">0</span>,
-        <span class="doccomment">/// Memory used for UEFI application code.</span>
-        <span class="ident">LoaderCode</span>          = <span class="number">1</span>,
-        <span class="doccomment">/// Memory allocated by UEFI applications.</span>
-        <span class="ident">LoaderData</span>          = <span class="number">2</span>,
-        <span class="doccomment">/// Memory used for drivers that provide [`BootServices`].</span>
-        <span class="ident">BootServicesCode</span>    = <span class="number">3</span>,
-        <span class="doccomment">/// Memory allocated by drivers that provide [`BootServices`].</span>
-        <span class="ident">BootServicesData</span>    = <span class="number">4</span>,
-        <span class="doccomment">/// Memory used for drivers that provide [`RuntimeServices`].</span>
-        <span class="ident">RuntimeServicesCode</span> = <span class="number">5</span>,
-        <span class="doccomment">/// Memory allocated by drivers that provide [`RuntimeServices`].</span>
-        <span class="ident">RuntimeServicesData</span> = <span class="number">6</span>,
-        <span class="doccomment">/// Free memory.</span>
-        <span class="ident">Conventional</span>        = <span class="number">7</span>,
-        <span class="doccomment">/// Damaged memory modules.</span>
-        <span class="ident">Unusable</span>            = <span class="number">8</span>,
-        <span class="doccomment">/// Memory that can be used after the OS initializes ACPI.</span>
-        <span class="ident">ACPIReclaim</span>         = <span class="number">9</span>,
-        <span class="doccomment">/// Memory that must be preserved in ACPI states S1–S3.</span>
-        <span class="ident">ACPINonVolatile</span>     = <span class="number">10</span>,
-        <span class="doccomment">/// Memory mapped to device I/O.</span>
-        <span class="ident">MappedIO</span>            = <span class="number">11</span>,
-        <span class="doccomment">/// Memory mapped to I/O ports.</span>
-        <span class="ident">MappedIOPortSpace</span>   = <span class="number">12</span>,
-        <span class="doccomment">/// Memory used by processor firmware code.</span>
-        <span class="ident">ProcessorCode</span>       = <span class="number">13</span>,
-        <span class="doccomment">/// Free nonvolatile memory.</span>
-        <span class="ident">Persistent</span>          = <span class="number">14</span>,
+<span class="macro">c_enum! </span>{
+    <span class="kw">pub enum </span>MemoryType(u32) {
+        <span class="doccomment">/// Memory that is never available for use
+        </span>Reserved            = <span class="number">0</span>,
+        <span class="doccomment">/// Memory used for UEFI application code.
+        </span>LoaderCode          = <span class="number">1</span>,
+        <span class="doccomment">/// Memory allocated by UEFI applications.
+        </span>LoaderData          = <span class="number">2</span>,
+        <span class="doccomment">/// Memory used for drivers that provide [`BootServices`].
+        </span>BootServicesCode    = <span class="number">3</span>,
+        <span class="doccomment">/// Memory allocated by drivers that provide [`BootServices`].
+        </span>BootServicesData    = <span class="number">4</span>,
+        <span class="doccomment">/// Memory used for drivers that provide [`RuntimeServices`].
+        </span>RuntimeServicesCode = <span class="number">5</span>,
+        <span class="doccomment">/// Memory allocated by drivers that provide [`RuntimeServices`].
+        </span>RuntimeServicesData = <span class="number">6</span>,
+        <span class="doccomment">/// Free memory.
+        </span>Conventional        = <span class="number">7</span>,
+        <span class="doccomment">/// Damaged memory modules.
+        </span>Unusable            = <span class="number">8</span>,
+        <span class="doccomment">/// Memory that can be used after the OS initializes ACPI.
+        </span>ACPIReclaim         = <span class="number">9</span>,
+        <span class="doccomment">/// Memory that must be preserved in ACPI states S1–S3.
+        </span>ACPINonVolatile     = <span class="number">10</span>,
+        <span class="doccomment">/// Memory mapped to device I/O.
+        </span>MappedIO            = <span class="number">11</span>,
+        <span class="doccomment">/// Memory mapped to I/O ports.
+        </span>MappedIOPortSpace   = <span class="number">12</span>,
+        <span class="doccomment">/// Memory used by processor firmware code.
+        </span>ProcessorCode       = <span class="number">13</span>,
+        <span class="doccomment">/// Free nonvolatile memory.
+        </span>Persistent          = <span class="number">14</span>,
 
-        <span class="doccomment">/// Beginning of range (inclusive) for OEM-specific memory types</span>
-        <span class="ident">MinOEMDefined</span>       = <span class="number">0x7000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for OEM-specific memory types</span>
-        <span class="ident">MaxOEMDefined</span>       = <span class="number">0x7fff_ffff</span>,
-        <span class="doccomment">/// Beginning of range (inclusive) for operating system-specific memory types</span>
-        <span class="ident">MinOSDefined</span>        = <span class="number">0x8000_0000</span>,
-        <span class="doccomment">/// End of range (inclusive) for operating system-specific memory types</span>
-        <span class="ident">MaxOSDefined</span>        = <span class="number">0xffff_ffff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for OEM-specific memory types
+        </span>MinOEMDefined       = <span class="number">0x7000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for OEM-specific memory types
+        </span>MaxOEMDefined       = <span class="number">0x7fff_ffff</span>,
+        <span class="doccomment">/// Beginning of range (inclusive) for operating system-specific memory types
+        </span>MinOSDefined        = <span class="number">0x8000_0000</span>,
+        <span class="doccomment">/// End of range (inclusive) for operating system-specific memory types
+        </span>MaxOSDefined        = <span class="number">0xffff_ffff</span>,
     }
 }
 
-<span class="macro">c_enum!</span> {
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AllocateType</span>(<span class="ident">u32</span>) {
-        <span class="ident">AnyAddress</span>   = <span class="number">0</span>,
-        <span class="ident">MaxAddress</span>   = <span class="number">1</span>,
-        <span class="ident">ExactAddress</span> = <span class="number">2</span>,
+<span class="macro">c_enum! </span>{
+    <span class="kw">pub enum </span>AllocateType(u32) {
+        AnyAddress   = <span class="number">0</span>,
+        MaxAddress   = <span class="number">1</span>,
+        ExactAddress = <span class="number">2</span>,
     }
 }
 
-<span class="macro">bitfield!</span> {
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryAttributes</span>(<span class="ident">u64</span>) {
-        [<span class="number">0</span>] <span class="kw">pub</span> <span class="ident">supports_uncacheable</span>,
-        [<span class="number">1</span>] <span class="kw">pub</span> <span class="ident">supports_write_combining</span>,
-        [<span class="number">2</span>] <span class="kw">pub</span> <span class="ident">supports_write_through</span>,
-        [<span class="number">4</span>] <span class="kw">pub</span> <span class="ident">supports_write_back</span>,
-        [<span class="number">5</span>] <span class="kw">pub</span> <span class="ident">supports_uncacheable_sem</span>,
-        [<span class="number">12</span>] <span class="kw">pub</span> <span class="ident">supports_write_protect</span>,
-        [<span class="number">13</span>] <span class="kw">pub</span> <span class="ident">supports_read_protect</span>,
-        [<span class="number">14</span>] <span class="kw">pub</span> <span class="ident">supports_exec_protect</span>,
-        [<span class="number">15</span>] <span class="kw">pub</span> <span class="ident">nonvolatile</span>,
-        [<span class="number">16</span>] <span class="kw">pub</span> <span class="ident">more_reliable</span>,
-        [<span class="number">17</span>] <span class="kw">pub</span> <span class="ident">supports_read_only</span>,
-        [<span class="number">18</span>] <span class="kw">pub</span> <span class="ident">specific_purpose</span>,
-        [<span class="number">19</span>] <span class="kw">pub</span> <span class="ident">supports_cpu_crypto</span>,
-        [<span class="number">63</span>] <span class="kw">pub</span> <span class="ident">runtime</span>,
-    }
-}
-
-
-<span class="macro">c_enum!</span> {
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OpenProtocolAttributes</span>(<span class="ident">u32</span>) {
-        <span class="ident">ByHandle</span>  = <span class="number">1</span> &lt;&lt; <span class="number">0</span>,
-        <span class="ident">Get</span>       = <span class="number">1</span> &lt;&lt; <span class="number">1</span>,
-        <span class="ident">Test</span>      = <span class="number">1</span> &lt;&lt; <span class="number">2</span>,
-        <span class="ident">ByChild</span>   = <span class="number">1</span> &lt;&lt; <span class="number">3</span>,
-        <span class="ident">ByDriver</span>  = <span class="number">1</span> &lt;&lt; <span class="number">4</span>,
-        <span class="ident">Exclusive</span> = <span class="number">1</span> &lt;&lt; <span class="number">5</span>,
+<span class="macro">bitfield! </span>{
+    <span class="kw">pub struct </span>MemoryAttributes(u64) {
+        [<span class="number">0</span>] <span class="kw">pub </span>supports_uncacheable,
+        [<span class="number">1</span>] <span class="kw">pub </span>supports_write_combining,
+        [<span class="number">2</span>] <span class="kw">pub </span>supports_write_through,
+        [<span class="number">4</span>] <span class="kw">pub </span>supports_write_back,
+        [<span class="number">5</span>] <span class="kw">pub </span>supports_uncacheable_sem,
+        [<span class="number">12</span>] <span class="kw">pub </span>supports_write_protect,
+        [<span class="number">13</span>] <span class="kw">pub </span>supports_read_protect,
+        [<span class="number">14</span>] <span class="kw">pub </span>supports_exec_protect,
+        [<span class="number">15</span>] <span class="kw">pub </span>nonvolatile,
+        [<span class="number">16</span>] <span class="kw">pub </span>more_reliable,
+        [<span class="number">17</span>] <span class="kw">pub </span>supports_read_only,
+        [<span class="number">18</span>] <span class="kw">pub </span>specific_purpose,
+        [<span class="number">19</span>] <span class="kw">pub </span>supports_cpu_crypto,
+        [<span class="number">63</span>] <span class="kw">pub </span>runtime,
     }
 }
 
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">proto</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Handle</span>, <span class="ident">MemoryType</span>, <span class="prelude-ty">Result</span>, <span class="ident">Status</span>, <span class="ident">SystemTable</span>, <span class="ident">GUID</span>};
-    <span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
-    <span class="kw">use</span> <span class="ident">tartan_bitfield::bitfield</span>;
-    <span class="kw">use</span> <span class="ident">tartan_c_enum::c_enum</span>;
+<span class="macro">c_enum! </span>{
+    <span class="kw">pub enum </span>OpenProtocolAttributes(u32) {
+        ByHandle  = <span class="number">1 </span>&lt;&lt; <span class="number">0</span>,
+        Get       = <span class="number">1 </span>&lt;&lt; <span class="number">1</span>,
+        Test      = <span class="number">1 </span>&lt;&lt; <span class="number">2</span>,
+        ByChild   = <span class="number">1 </span>&lt;&lt; <span class="number">3</span>,
+        ByDriver  = <span class="number">1 </span>&lt;&lt; <span class="number">4</span>,
+        Exclusive = <span class="number">1 </span>&lt;&lt; <span class="number">5</span>,
+    }
+}
 
-    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Protocol</span> {
-        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span>;
+
+<span class="kw">pub mod </span>proto {
+    <span class="kw">use super</span>::{Handle, MemoryType, <span class="prelude-ty">Result</span>, Status, SystemTable, GUID};
+    <span class="kw">use </span>core::ffi::c_void;
+    <span class="kw">use </span>tartan_bitfield::bitfield;
+    <span class="kw">use </span>tartan_c_enum::c_enum;
+
+    <span class="kw">pub trait </span>Protocol {
+        <span class="kw">const </span>PROTOCOL_ID: GUID;
     }
 
 
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleTextInput</span> {
-        <span class="ident">reset</span>: <span class="ident">usize</span>,
-        <span class="ident">read_key_stroke</span>: <span class="ident">usize</span>,
-        <span class="ident">wait_for_key</span>: <span class="ident">usize</span>,
-        <span class="ident">set_state</span>: <span class="ident">usize</span>,
-        <span class="ident">register_key_notify</span>: <span class="ident">usize</span>,
-        <span class="ident">unregister_key_notify</span>: <span class="ident">usize</span>,
+    <span class="attribute">#[repr(C)]
+    #[derive(Debug)]
+    </span><span class="kw">pub struct </span>SimpleTextInput {
+        reset: usize,
+        read_key_stroke: usize,
+        wait_for_key: usize,
+        set_state: usize,
+        register_key_notify: usize,
+        unregister_key_notify: usize,
     }
 
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleTextOutput</span> {
-        <span class="kw">pub</span> <span class="ident">reset</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-            <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>,
-            <span class="ident">extended_verification</span>: <span class="ident">bool</span>,
-        ) -&gt; <span class="ident">Status</span>,
-        <span class="kw">pub</span> <span class="ident">output_string</span>:
-            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*const</span> <span class="ident">u16</span>) -&gt; <span class="ident">Status</span>,
-        <span class="kw">pub</span> <span class="ident">test_string</span>:
-            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleTextOutput</span>, <span class="ident">string</span>: <span class="kw-2">*const</span> <span class="ident">u16</span>) -&gt; <span class="ident">Status</span>,
-        <span class="ident">query_mode</span>: <span class="ident">usize</span>,
-        <span class="ident">set_mode</span>: <span class="ident">usize</span>,
-        <span class="ident">set_attribute</span>: <span class="ident">usize</span>,
-        <span class="ident">clear_screen</span>: <span class="ident">usize</span>,
-        <span class="ident">set_cursor_position</span>: <span class="ident">usize</span>,
-        <span class="ident">enable_cursor</span>: <span class="ident">usize</span>,
-        <span class="kw">pub</span> <span class="ident">mode</span>: <span class="ident">SimpleTextOutputMode</span>,
+    <span class="attribute">#[repr(C)]
+    </span><span class="kw">pub struct </span>SimpleTextOutput {
+        <span class="kw">pub </span>reset: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+            this: <span class="kw-2">&amp;</span>SimpleTextOutput,
+            extended_verification: bool,
+        ) -&gt; Status,
+        <span class="kw">pub </span>output_string:
+            <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>SimpleTextOutput, string: <span class="kw-2">*const </span>u16) -&gt; Status,
+        <span class="kw">pub </span>test_string:
+            <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>SimpleTextOutput, string: <span class="kw-2">*const </span>u16) -&gt; Status,
+        query_mode: usize,
+        set_mode: usize,
+        set_attribute: usize,
+        clear_screen: usize,
+        set_cursor_position: usize,
+        enable_cursor: usize,
+        <span class="kw">pub </span>mode: SimpleTextOutputMode,
     }
 
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleTextOutputMode</span> {
-        <span class="kw">pub</span> <span class="ident">max_mode</span>: <span class="ident">i32</span>,
-        <span class="kw">pub</span> <span class="ident">mode</span>: <span class="ident">i32</span>,
-        <span class="kw">pub</span> <span class="ident">attribute</span>: <span class="ident">i32</span>,
-        <span class="kw">pub</span> <span class="ident">cursor_column</span>: <span class="ident">i32</span>,
-        <span class="kw">pub</span> <span class="ident">cursor_row</span>: <span class="ident">i32</span>,
-        <span class="kw">pub</span> <span class="ident">cursor_visible</span>: <span class="ident">bool</span>,
-    }
-
-
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LoadedImage</span>&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u32</span>,
-        <span class="kw">pub</span> <span class="ident">parent_handle</span>: <span class="ident">Handle</span>,
-        <span class="kw">pub</span> <span class="ident">system_table</span>: <span class="kw-2">*const</span> <span class="ident">SystemTable</span>&lt;<span class="lifetime">&#39;a</span>&gt;,
-
-        <span class="kw">pub</span> <span class="ident">device_handle</span>: <span class="ident">Handle</span>,
-        <span class="ident">device_path_protocol</span>: <span class="ident">usize</span>, <span class="comment">// TODO: type</span>
-        <span class="ident">_reserved</span>: <span class="ident">usize</span>,
-
-        <span class="kw">pub</span> <span class="ident">load_options_size</span>: <span class="ident">u32</span>,
-        <span class="kw">pub</span> <span class="ident">load_options</span>: <span class="kw-2">*const</span> <span class="ident">c_void</span>,
-
-        <span class="kw">pub</span> <span class="ident">image_base</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-        <span class="kw">pub</span> <span class="ident">image_size</span>: <span class="ident">u64</span>,
-        <span class="kw">pub</span> <span class="ident">image_code_type</span>: <span class="ident">MemoryType</span>,
-        <span class="kw">pub</span> <span class="ident">image_data_type</span>: <span class="ident">MemoryType</span>,
-        <span class="kw">pub</span> <span class="ident">unload</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">Status</span>,
-    }
-
-    <span class="kw">impl</span> <span class="ident">Protocol</span> <span class="kw">for</span> <span class="ident">LoadedImage</span>&lt;<span class="lifetime">&#39;_</span>&gt; {
-        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0x5b1b31a1_9562_11d2_8e3f_00a0c969723b</span>);
-    }
-
-    <span class="kw">impl</span> <span class="ident">LoadedImage</span>&lt;<span class="lifetime">&#39;_</span>&gt; {
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">u32</span> = <span class="number">0x1000</span>;
+    <span class="attribute">#[repr(C)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    </span><span class="kw">pub struct </span>SimpleTextOutputMode {
+        <span class="kw">pub </span>max_mode: i32,
+        <span class="kw">pub </span>mode: i32,
+        <span class="kw">pub </span>attribute: i32,
+        <span class="kw">pub </span>cursor_column: i32,
+        <span class="kw">pub </span>cursor_row: i32,
+        <span class="kw">pub </span>cursor_visible: bool,
     }
 
 
-    <span class="doccomment">/// Protocol for accessing a file system supported by UEFI (typically FAT).</span>
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleFileSystem</span> {
-        <span class="doccomment">/// Implemented revision of the SimpleFileSystem protocol.</span>
-        <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u64</span>,
-        <span class="ident">open_volume_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-            <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">SimpleFileSystem</span>,
-            <span class="ident">root</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">*const</span> <span class="ident">File</span>,
-        ) -&gt; <span class="ident">Status</span>,
+    <span class="attribute">#[repr(C)]
+    #[derive(Debug)]
+    </span><span class="kw">pub struct </span>LoadedImage&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">pub </span>revision: u32,
+        <span class="kw">pub </span>parent_handle: Handle,
+        <span class="kw">pub </span>system_table: <span class="kw-2">*const </span>SystemTable&lt;<span class="lifetime">&#39;a</span>&gt;,
+
+        <span class="kw">pub </span>device_handle: Handle,
+        device_path_protocol: usize, <span class="comment">// TODO: type
+        </span>_reserved: usize,
+
+        <span class="kw">pub </span>load_options_size: u32,
+        <span class="kw">pub </span>load_options: <span class="kw-2">*const </span>c_void,
+
+        <span class="kw">pub </span>image_base: <span class="kw-2">*mut </span>c_void,
+        <span class="kw">pub </span>image_size: u64,
+        <span class="kw">pub </span>image_code_type: MemoryType,
+        <span class="kw">pub </span>image_data_type: MemoryType,
+        <span class="kw">pub </span>unload: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(handle: Handle) -&gt; Status,
     }
 
-    <span class="kw">impl</span> <span class="ident">Protocol</span> <span class="kw">for</span> <span class="ident">SimpleFileSystem</span> {
-        <span class="kw">const</span> <span class="ident">PROTOCOL_ID</span>: <span class="ident">GUID</span> = <span class="ident">GUID::from</span>(<span class="number">0x964e5b22_6459_11d2_8e39_00a0c969723b</span>);
+    <span class="kw">impl </span>Protocol <span class="kw">for </span>LoadedImage&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">const </span>PROTOCOL_ID: GUID = GUID::from(<span class="number">0x5b1b31a1_9562_11d2_8e3f_00a0c969723b</span>);
     }
 
-    <span class="kw">impl</span> <span class="ident">SimpleFileSystem</span> {
-        <span class="doccomment">/// Minimum supported [`SimpleFileSystem::revision`]. Future versions are</span>
-        <span class="doccomment">/// guaranteed to be backwards-compatible.</span>
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">u32</span> = <span class="number">0x0001_0000</span>;
+    <span class="kw">impl </span>LoadedImage&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">pub const </span>MIN_REVISION: u32 = <span class="number">0x1000</span>;
+    }
 
-        <span class="doccomment">/// Get a handle to the root of the file system.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method can fail for many reasons, including standard I/O issues like</span>
-        <span class="doccomment">/// device errors or resource exhaustion. It will also fail if the file system on</span>
-        <span class="doccomment">/// the device is not supported by the UEFI implementation.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Panics</span>
-        <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open_volume</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span>&gt; {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">root</span> = <span class="ident">core::ptr::null</span>::&lt;<span class="ident">File</span>&gt;();
-            <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">open_volume_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;mut</span> <span class="ident">root</span>).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="ident">root</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
+
+    <span class="doccomment">/// Protocol for accessing a file system supported by UEFI (typically FAT).
+    </span><span class="attribute">#[repr(C)]
+    </span><span class="kw">pub struct </span>SimpleFileSystem {
+        <span class="doccomment">/// Implemented revision of the SimpleFileSystem protocol.
+        </span><span class="kw">pub </span>revision: u64,
+        open_volume_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+            this: <span class="kw-2">&amp;</span>SimpleFileSystem,
+            root: <span class="kw-2">&amp;mut *const </span>File,
+        ) -&gt; Status,
+    }
+
+    <span class="kw">impl </span>Protocol <span class="kw">for </span>SimpleFileSystem {
+        <span class="kw">const </span>PROTOCOL_ID: GUID = GUID::from(<span class="number">0x964e5b22_6459_11d2_8e39_00a0c969723b</span>);
+    }
+
+    <span class="kw">impl </span>SimpleFileSystem {
+        <span class="doccomment">/// Minimum supported [`SimpleFileSystem::revision`]. Future versions are
+        /// guaranteed to be backwards-compatible.
+        </span><span class="kw">pub const </span>MIN_REVISION: u32 = <span class="number">0x0001_0000</span>;
+
+        <span class="doccomment">/// Get a handle to the root of the file system.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It will also fail if the file system on
+        /// the device is not supported by the UEFI implementation.
+        ///
+        /// # Panics
+        /// Panics if the firmware does not behave according to the spec.
+        </span><span class="kw">pub fn </span>open_volume(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; core::result::Result&lt;<span class="kw-2">&amp;</span>File, Status&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>root = core::ptr::null::&lt;File&gt;();
+            <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.open_volume_)(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>root).into_result()<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(root.as_ref().unwrap())
             }
         }
     }
 
 
-    <span class="doccomment">/// Protocol for accessing a file or directory.</span>
-    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">File</span> {
-        <span class="doccomment">/// Implemented revision of the File protocol.</span>
-        <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Protocol for accessing a file or directory.
+    </span><span class="attribute">#[repr(C)]
+    </span><span class="kw">pub struct </span>File {
+        <span class="doccomment">/// Implemented revision of the File protocol.
+        </span><span class="kw">pub </span>revision: u64,
 
-        <span class="ident">open_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-            <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>,
-            <span class="ident">file</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">*const</span> <span class="ident">File</span>,
-            <span class="ident">path</span>: <span class="kw-2">*const</span> <span class="ident">u16</span>,
-            <span class="ident">mode</span>: <span class="ident">FileMode</span>,
-            <span class="ident">attributes</span>: <span class="ident">FileAttributes</span>,
-        ) -&gt; <span class="ident">Status</span>,
-        <span class="ident">close_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>) -&gt; <span class="ident">Status</span>,
-        <span class="ident">delete_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>) -&gt; <span class="ident">Status</span>,
-        <span class="ident">read_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-            <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>,
-            <span class="ident">count</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>,
-            <span class="ident">buffer</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-        ) -&gt; <span class="ident">Status</span>,
-        <span class="ident">write_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-            <span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>,
-            <span class="ident">count</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>,
-            <span class="ident">buffer</span>: <span class="kw-2">*const</span> <span class="ident">c_void</span>,
-        ) -&gt; <span class="ident">Status</span>,
-        <span class="ident">get_position_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">position</span>: <span class="kw-2">&amp;mut</span> <span class="ident">u64</span>) -&gt; <span class="ident">Status</span>,
-        <span class="ident">set_position_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">position</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Status</span>,
-        <span class="ident">get_info</span>: <span class="ident">usize</span>,
-        <span class="ident">set_info</span>: <span class="ident">usize</span>,
-        <span class="ident">flush_</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>) -&gt; <span class="ident">Status</span>,
+        open_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+            this: <span class="kw-2">&amp;</span>File,
+            file: <span class="kw-2">&amp;mut *const </span>File,
+            path: <span class="kw-2">*const </span>u16,
+            mode: FileMode,
+            attributes: FileAttributes,
+        ) -&gt; Status,
+        close_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>File) -&gt; Status,
+        delete_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>File) -&gt; Status,
+        read_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+            this: <span class="kw-2">&amp;</span>File,
+            count: <span class="kw-2">&amp;mut </span>usize,
+            buffer: <span class="kw-2">*mut </span>c_void,
+        ) -&gt; Status,
+        write_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+            this: <span class="kw-2">&amp;</span>File,
+            count: <span class="kw-2">&amp;mut </span>usize,
+            buffer: <span class="kw-2">*const </span>c_void,
+        ) -&gt; Status,
+        get_position_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>File, position: <span class="kw-2">&amp;mut </span>u64) -&gt; Status,
+        set_position_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>File, position: u64) -&gt; Status,
+        get_info: usize,
+        set_info: usize,
+        flush_: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(this: <span class="kw-2">&amp;</span>File) -&gt; Status,
 
-        <span class="comment">// Only available if revision &gt;= 0x0002_0000</span>
-        <span class="ident">open_v2</span>: <span class="ident">usize</span>,
-        <span class="ident">read_v2</span>: <span class="ident">usize</span>,
-        <span class="ident">write_v2</span>: <span class="ident">usize</span>,
-        <span class="ident">flush_v2</span>: <span class="ident">usize</span>,
+        <span class="comment">// Only available if revision &gt;= 0x0002_0000
+        </span>open_v2: usize,
+        read_v2: usize,
+        write_v2: usize,
+        flush_v2: usize,
     }
 
-    <span class="kw">impl</span> <span class="ident">File</span> {
-        <span class="doccomment">/// Minimum supported [`SimpleFileSystem::revision`]. Future versions are</span>
-        <span class="doccomment">/// guaranteed to be backwards-compatible.</span>
-        <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MIN_REVISION</span>: <span class="ident">u32</span> = <span class="number">0x0001_0000</span>;
+    <span class="kw">impl </span>File {
+        <span class="doccomment">/// Minimum supported [`SimpleFileSystem::revision`]. Future versions are
+        /// guaranteed to be backwards-compatible.
+        </span><span class="kw">pub const </span>MIN_REVISION: u32 = <span class="number">0x0001_0000</span>;
 
-        <span class="doccomment">/// Get a handle to a new file, relative to the directory represented by the</span>
-        <span class="doccomment">/// current instance.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// `path` uses the Windows path format without a drive name, e.g. `\FOO\BAR.TXT`</span>
-        <span class="doccomment">/// or `..\QUUX.DAT`.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// `attributes` is only used if the file is created.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method can fail for many reasons, including standard I/O issues like</span>
-        <span class="doccomment">/// device errors or resource exhaustion. It can also fail if access is denied or</span>
-        <span class="doccomment">/// there was an attempt to write to read-only media.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Panics</span>
-        <span class="doccomment">/// Panics if `path` is empty or does not end in a null character.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span>(
+        <span class="doccomment">/// Get a handle to a new file, relative to the directory represented by the
+        /// current instance.
+        ///
+        /// `path` uses the Windows path format without a drive name, e.g. `\FOO\BAR.TXT`
+        /// or `..\QUUX.DAT`.
+        ///
+        /// `attributes` is only used if the file is created.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It can also fail if access is denied or
+        /// there was an attempt to write to read-only media.
+        ///
+        /// # Panics
+        /// Panics if `path` is empty or does not end in a null character.
+        </span><span class="kw">pub fn </span>open(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-            <span class="ident">path</span>: <span class="kw-2">&amp;</span>[<span class="ident">u16</span>],
-            <span class="ident">mode</span>: <span class="ident">FileMode</span>,
-            <span class="ident">attributes</span>: <span class="ident">FileAttributes</span>,
-        ) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">Status</span>&gt; {
-            <span class="macro">assert!</span>(!<span class="ident">path</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;Path cannot be empty&quot;</span>);
-            <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">path</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>() == <span class="number">0</span>, <span class="string">&quot;Path must be null-terminated&quot;</span>);
+            path: <span class="kw-2">&amp;</span>[u16],
+            mode: FileMode,
+            attributes: FileAttributes,
+        ) -&gt; core::result::Result&lt;<span class="kw-2">&amp;</span>File, Status&gt; {
+            <span class="macro">assert!</span>(!path.is_empty(), <span class="string">&quot;Path cannot be empty&quot;</span>);
+            <span class="macro">assert!</span>(<span class="kw-2">*</span>path.last().unwrap() == <span class="number">0</span>, <span class="string">&quot;Path must be null-terminated&quot;</span>);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> = <span class="ident">core::ptr::null</span>::&lt;<span class="ident">File</span>&gt;();
-            <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">open_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;mut</span> <span class="ident">file</span>, <span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">mode</span>, <span class="ident">attributes</span>)
-                    .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="ident">file</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
+            <span class="kw">let </span><span class="kw-2">mut </span>file = core::ptr::null::&lt;File&gt;();
+            <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.open_)(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>file, path.as_ptr(), mode, attributes)
+                    .into_result()<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(file.as_ref().unwrap())
             }
         }
 
-        <span class="doccomment">/// Flush and close the file or directory represented by the current instance.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Panics</span>
-        <span class="doccomment">/// Panics if the firmware does not behave according to the spec.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-            <span class="kw">unsafe</span> {
-                <span class="comment">// The UEFI spec says this cannot fail</span>
-                <span class="macro">assert!</span>((<span class="self">self</span>.<span class="ident">close_</span>)(<span class="self">self</span>) == <span class="ident">Status::Success</span>);
+        <span class="doccomment">/// Flush and close the file or directory represented by the current instance.
+        ///
+        /// # Panics
+        /// Panics if the firmware does not behave according to the spec.
+        </span><span class="kw">pub fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+            <span class="kw">unsafe </span>{
+                <span class="comment">// The UEFI spec says this cannot fail
+                </span><span class="macro">assert!</span>((<span class="self">self</span>.close_)(<span class="self">self</span>) == Status::Success);
             }
         }
 
-        <span class="doccomment">/// Delete the file or directory represented by the current instance.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method cannot fail with an error, but it will return</span>
-        <span class="doccomment">/// [`Status::WarnDeleteFailure`] if the file could not be deleted.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Status</span> {
-            <span class="kw">unsafe</span> { (<span class="self">self</span>.<span class="ident">delete_</span>)(<span class="self">self</span>) }
+        <span class="doccomment">/// Delete the file or directory represented by the current instance.
+        ///
+        /// # Errors
+        /// This method cannot fail with an error, but it will return
+        /// [`Status::WarnDeleteFailure`] if the file could not be deleted.
+        </span><span class="kw">pub fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Status {
+            <span class="kw">unsafe </span>{ (<span class="self">self</span>.delete_)(<span class="self">self</span>) }
         }
 
-        <span class="doccomment">/// Read file contents or a directory entry into the buffer.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// If this is a file, it will read up to `buffer.len()` bytes. If it is a</span>
-        <span class="doccomment">/// directory, it will read a single directory entry if that entry can fit in the</span>
-        <span class="doccomment">/// buffer.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// On success, returns the number of bytes actually read.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method can fail for many reasons, including standard I/O issues like</span>
-        <span class="doccomment">/// device errors or resource exhaustion. In addition, it will return:</span>
-        <span class="doccomment">///   * [`Status::BufferTooSmall`] if this is a directory and the next entry could</span>
-        <span class="doccomment">///     not fit into the buffer.</span>
-        <span class="doccomment">///   * [`Status::DeviceError`] if the current position was already EOF.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="ident">usize</span>, <span class="ident">Status</span>&gt; {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> = <span class="ident">buffer</span>.<span class="ident">len</span>();
-            <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">read_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;mut</span> <span class="ident">count</span>, <span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>())
-                    .<span class="ident">into_result</span>()<span class="question-mark">?</span>;
+        <span class="doccomment">/// Read file contents or a directory entry into the buffer.
+        ///
+        /// If this is a file, it will read up to `buffer.len()` bytes. If it is a
+        /// directory, it will read a single directory entry if that entry can fit in the
+        /// buffer.
+        ///
+        /// On success, returns the number of bytes actually read.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. In addition, it will return:
+        ///   * [`Status::BufferTooSmall`] if this is a directory and the next entry could
+        ///     not fit into the buffer.
+        ///   * [`Status::DeviceError`] if the current position was already EOF.
+        </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>[u8]) -&gt; core::result::Result&lt;usize, Status&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>count = buffer.len();
+            <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.read_)(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>count, buffer.as_mut_ptr().cast())
+                    .into_result()<span class="question-mark">?</span>;
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">count</span>)
+            <span class="prelude-val">Ok</span>(count)
         }
 
-        <span class="doccomment">/// Write the contents of `buffer` out to the current position.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// On success, returns the number of bytes actually written, which will always</span>
-        <span class="doccomment">/// be the full buffer.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method can fail for many reasons, including standard I/O issues like</span>
-        <span class="doccomment">/// device errors or resource exhaustion. It addition, it will return:</span>
-        <span class="doccomment">///    * `Status::Unsupported` if this is a directory.</span>
-        <span class="doccomment">///    * `Status::AccessDenied` if the file is in read-only mode.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="ident">usize</span>, <span class="ident">Status</span>&gt; {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> = <span class="ident">buffer</span>.<span class="ident">len</span>();
-            <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">write_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;mut</span> <span class="ident">count</span>, <span class="ident">buffer</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>()).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
+        <span class="doccomment">/// Write the contents of `buffer` out to the current position.
+        ///
+        /// On success, returns the number of bytes actually written, which will always
+        /// be the full buffer.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It addition, it will return:
+        ///    * `Status::Unsupported` if this is a directory.
+        ///    * `Status::AccessDenied` if the file is in read-only mode.
+        </span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, buffer: <span class="kw-2">&amp;</span>[u8]) -&gt; core::result::Result&lt;usize, Status&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>count = buffer.len();
+            <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.write_)(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>count, buffer.as_ptr().cast()).into_result()<span class="question-mark">?</span>;
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">count</span>)
+            <span class="prelude-val">Ok</span>(count)
         }
 
-        <span class="doccomment">/// Get the handle&#39;s current position in the file.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This function will fail with:</span>
-        <span class="doccomment">///    * [`Status::DeviceError`] if the file has been deleted.</span>
-        <span class="doccomment">///    * [`Status::Unsupported`] if this is a directory.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">core::result::Result</span>&lt;<span class="ident">u64</span>, <span class="ident">Status</span>&gt; {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">position</span> = <span class="number">0_u64</span>;
-            <span class="kw">unsafe</span> {
-                (<span class="self">self</span>.<span class="ident">get_position_</span>)(<span class="self">self</span>, <span class="kw-2">&amp;mut</span> <span class="ident">position</span>).<span class="ident">into_result</span>()<span class="question-mark">?</span>;
+        <span class="doccomment">/// Get the handle&#39;s current position in the file.
+        ///
+        /// # Errors
+        /// This function will fail with:
+        ///    * [`Status::DeviceError`] if the file has been deleted.
+        ///    * [`Status::Unsupported`] if this is a directory.
+        </span><span class="kw">pub fn </span>get_position(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; core::result::Result&lt;u64, Status&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>position = <span class="number">0_u64</span>;
+            <span class="kw">unsafe </span>{
+                (<span class="self">self</span>.get_position_)(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>position).into_result()<span class="question-mark">?</span>;
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">position</span>)
+            <span class="prelude-val">Ok</span>(position)
         }
 
-        <span class="doccomment">/// Set the handle&#39;s current position in the file.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// If the position is `u64::MAX`, this will seek to the end of the file.</span>
-        <span class="doccomment">/// Otherwise, it seeks to the absolute position in bytes. If the position is</span>
-        <span class="doccomment">/// greater than the current file size, the file will grow to the given size.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This function will fail with:</span>
-        <span class="doccomment">///    * [`Status::DeviceError`] if the file has been deleted.</span>
-        <span class="doccomment">///    * [`Status::Unsupported`] if this is a directory.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">position</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span> {
-            <span class="kw">unsafe</span> { (<span class="self">self</span>.<span class="ident">set_position_</span>)(<span class="self">self</span>, <span class="ident">position</span>).<span class="ident">into_result</span>() }
+        <span class="doccomment">/// Set the handle&#39;s current position in the file.
+        ///
+        /// If the position is `u64::MAX`, this will seek to the end of the file.
+        /// Otherwise, it seeks to the absolute position in bytes. If the position is
+        /// greater than the current file size, the file will grow to the given size.
+        ///
+        /// # Errors
+        /// This function will fail with:
+        ///    * [`Status::DeviceError`] if the file has been deleted.
+        ///    * [`Status::Unsupported`] if this is a directory.
+        </span><span class="kw">pub fn </span>set_position(<span class="kw-2">&amp;</span><span class="self">self</span>, position: u64) -&gt; <span class="prelude-ty">Result </span>{
+            <span class="kw">unsafe </span>{ (<span class="self">self</span>.set_position_)(<span class="self">self</span>, position).into_result() }
         }
 
-        <span class="doccomment">/// Write any buffered changes.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// # Errors</span>
-        <span class="doccomment">/// This method can fail for many reasons, including standard I/O issues like</span>
-        <span class="doccomment">/// device errors or resource exhaustion. It can also fail if access is denied or</span>
-        <span class="doccomment">/// there was an attempt to write to read-only media.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flush</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span> {
-            <span class="kw">unsafe</span> { (<span class="self">self</span>.<span class="ident">flush_</span>)(<span class="self">self</span>).<span class="ident">into_result</span>() }
+        <span class="doccomment">/// Write any buffered changes.
+        ///
+        /// # Errors
+        /// This method can fail for many reasons, including standard I/O issues like
+        /// device errors or resource exhaustion. It can also fail if access is denied or
+        /// there was an attempt to write to read-only media.
+        </span><span class="kw">pub fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result </span>{
+            <span class="kw">unsafe </span>{ (<span class="self">self</span>.flush_)(<span class="self">self</span>).into_result() }
         }
     }
 
 
-    <span class="macro">c_enum!</span> {
-        <span class="doccomment">/// Controls how a file is opened.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// The UEFI spec defines separate read/write/create flags, but they are only</span>
-        <span class="doccomment">/// valid in specific combinations, so this enum defines those combinations.</span>
-        <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FileMode</span>(<span class="ident">u64</span>) {
-            <span class="doccomment">/// File will be read, and should exist already.</span>
-            <span class="ident">Read</span> = <span class="number">0x1</span>,
-            <span class="doccomment">/// File will be read and written, and should exist already.</span>
-            <span class="ident">ReadWrite</span> = <span class="number">0x3</span>,
-            <span class="doccomment">/// File will be read and written, and will be created if it does not exist.</span>
-            <span class="ident">ReadWriteCreate</span> = <span class="number">0x8000_0000_0000_0003</span>,
+    <span class="macro">c_enum! </span>{
+        <span class="doccomment">/// Controls how a file is opened.
+        ///
+        /// The UEFI spec defines separate read/write/create flags, but they are only
+        /// valid in specific combinations, so this enum defines those combinations.
+        </span><span class="kw">pub enum </span>FileMode(u64) {
+            <span class="doccomment">/// File will be read, and should exist already.
+            </span>Read = <span class="number">0x1</span>,
+            <span class="doccomment">/// File will be read and written, and should exist already.
+            </span>ReadWrite = <span class="number">0x3</span>,
+            <span class="doccomment">/// File will be read and written, and will be created if it does not exist.
+            </span>ReadWriteCreate = <span class="number">0x8000_0000_0000_0003</span>,
         }
     }
 
-    <span class="macro">bitfield!</span> {
-        <span class="doccomment">/// Basic properties of a file or directory as defined by the FAT format.</span>
-        <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FileAttributes</span>(<span class="ident">u64</span>) {
-            <span class="doccomment">/// Indicates the file should not be written.</span>
-            [<span class="number">0</span>] <span class="ident">read_only</span>,
-            <span class="doccomment">/// Indicates the file should not be visible under normal circumstances.</span>
-            [<span class="number">1</span>] <span class="ident">hidden</span>,
-            <span class="doccomment">/// Indicates the file is important to system operation.</span>
-            [<span class="number">2</span>] <span class="ident">system</span>,
-            <span class="doccomment">/// Indicates that this is a folder.</span>
-            [<span class="number">4</span>] <span class="ident">directory</span>,
-            <span class="doccomment">/// Indicates the file should needs to be backed up.</span>
-            [<span class="number">5</span>] <span class="ident">archive</span>,
+    <span class="macro">bitfield! </span>{
+        <span class="doccomment">/// Basic properties of a file or directory as defined by the FAT format.
+        </span><span class="kw">pub struct </span>FileAttributes(u64) {
+            <span class="doccomment">/// Indicates the file should not be written.
+            </span>[<span class="number">0</span>] read_only,
+            <span class="doccomment">/// Indicates the file should not be visible under normal circumstances.
+            </span>[<span class="number">1</span>] hidden,
+            <span class="doccomment">/// Indicates the file is important to system operation.
+            </span>[<span class="number">2</span>] system,
+            <span class="doccomment">/// Indicates that this is a folder.
+            </span>[<span class="number">4</span>] directory,
+            <span class="doccomment">/// Indicates the file should needs to be backed up.
+            </span>[<span class="number">5</span>] archive,
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>

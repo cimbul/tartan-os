@@ -51,58 +51,58 @@
 <span id="51">51</span>
 <span id="52">52</span>
 <span id="53">53</span>
-</pre><pre class="rust"><code><span class="doccomment">//! This module contains some compiler-rt intrinsics that are missing from the</span>
-<span class="doccomment">//! compiler-builtins crate, or otherwise don&#39;t function properly.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! This module contains some compiler-rt intrinsics that are missing from the
+//! compiler-builtins crate, or otherwise don&#39;t function properly.
 
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">compiler_builtins</span>;
+</span><span class="kw">extern crate </span>compiler_builtins;
 
 
-<span class="comment">// These are all provided by compiler-builtins, but they are hidden behind the &quot;mem&quot;</span>
-<span class="comment">// features. More specifically, they are mangled so their symbols don&#39;t match the standard</span>
-<span class="comment">// C library names. Since compiler-builtins is automatically built with the build-std</span>
-<span class="comment">// feature, we don&#39;t have a good way to enable the &quot;mem&quot; feature.</span>
-<span class="comment">//</span>
-<span class="comment">// These are also provided by the rlibc crate, and some sources suggest to use that</span>
-<span class="comment">// instead. However, the functions in that crate are NOT marked as &#39;extern &quot;C&quot;&#39;, meaning</span>
-<span class="comment">// they only work on architectures where the Rust calling convention happens to match.</span>
-<span class="comment">// Notably, that isn&#39;t true when compiling for i686-unknown-uefi (and there is no</span>
-<span class="comment">// guarantee it will continue to match on any other targets).</span>
+<span class="comment">// These are all provided by compiler-builtins, but they are hidden behind the &quot;mem&quot;
+// features. More specifically, they are mangled so their symbols don&#39;t match the standard
+// C library names. Since compiler-builtins is automatically built with the build-std
+// feature, we don&#39;t have a good way to enable the &quot;mem&quot; feature.
+//
+// These are also provided by the rlibc crate, and some sources suggest to use that
+// instead. However, the functions in that crate are NOT marked as &#39;extern &quot;C&quot;&#39;, meaning
+// they only work on architectures where the Rust calling convention happens to match.
+// Notably, that isn&#39;t true when compiling for i686-unknown-uefi (and there is no
+// guarantee it will continue to match on any other targets).
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">memcpy</span>(<span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">src</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-    <span class="ident">compiler_builtins::mem::memcpy</span>(<span class="ident">dest</span>, <span class="ident">src</span>, <span class="ident">n</span>)
+</span><span class="attribute">#[no_mangle]
+</span><span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>memcpy(dest: <span class="kw-2">*mut </span>u8, src: <span class="kw-2">*const </span>u8, n: usize) -&gt; <span class="kw-2">*mut </span>u8 {
+    compiler_builtins::mem::memcpy(dest, src, n)
 }
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">memmove</span>(<span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">src</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-    <span class="ident">compiler_builtins::mem::memmove</span>(<span class="ident">dest</span>, <span class="ident">src</span>, <span class="ident">n</span>)
+<span class="attribute">#[no_mangle]
+</span><span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>memmove(dest: <span class="kw-2">*mut </span>u8, src: <span class="kw-2">*const </span>u8, n: usize) -&gt; <span class="kw-2">*mut </span>u8 {
+    compiler_builtins::mem::memmove(dest, src, n)
 }
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">memset</span>(<span class="ident">s</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">c</span>: <span class="ident">i32</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-    <span class="ident">compiler_builtins::mem::memset</span>(<span class="ident">s</span>, <span class="ident">c</span>, <span class="ident">n</span>)
+<span class="attribute">#[no_mangle]
+</span><span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>memset(s: <span class="kw-2">*mut </span>u8, c: i32, n: usize) -&gt; <span class="kw-2">*mut </span>u8 {
+    compiler_builtins::mem::memset(s, c, n)
 }
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">memcmp</span>(<span class="ident">s1</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">s2</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">i32</span> {
-    <span class="ident">compiler_builtins::mem::memcmp</span>(<span class="ident">s1</span>, <span class="ident">s2</span>, <span class="ident">n</span>)
+<span class="attribute">#[no_mangle]
+</span><span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>memcmp(s1: <span class="kw-2">*const </span>u8, s2: <span class="kw-2">*const </span>u8, n: usize) -&gt; i32 {
+    compiler_builtins::mem::memcmp(s1, s2, n)
 }
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">bcmp</span>(<span class="ident">s1</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">s2</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">i32</span> {
-    <span class="ident">compiler_builtins::mem::bcmp</span>(<span class="ident">s1</span>, <span class="ident">s2</span>, <span class="ident">n</span>)
+<span class="attribute">#[no_mangle]
+</span><span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>bcmp(s1: <span class="kw-2">*const </span>u8, s2: <span class="kw-2">*const </span>u8, n: usize) -&gt; i32 {
+    compiler_builtins::mem::bcmp(s1, s2, n)
 }
 
 
-<span class="comment">// For some reason, the complier generates references to these intrinsics when handling</span>
-<span class="comment">// alloc errors, even though we abort on panic.</span>
+<span class="comment">// For some reason, the complier generates references to these intrinsics when handling
+// alloc errors, even though we abort on panic.
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">__aeabi_unwind_cpp_pr0</span>() {}
+</span><span class="attribute">#[no_mangle]
+#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">pub fn </span>__aeabi_unwind_cpp_pr0() {}
 
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> = <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">__aeabi_unwind_cpp_pr1</span>() {}
+<span class="attribute">#[no_mangle]
+#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">pub fn </span>__aeabi_unwind_cpp_pr1() {}
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (75b7e52e9 2022-08-13)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (c0941dfb5 2022-08-21)" ></div></body></html>
