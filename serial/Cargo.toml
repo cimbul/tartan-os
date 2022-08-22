@@ -11,6 +11,6 @@ publish = false
 [dependencies]
 # Internal
 tartan-arch = {path = "../arch"}
-tartan-c-enum = {path = "../util/c_enum"}
 # External
 tartan-bitfield = "1.0.0"
+tartan-c-enum = "1.0.0"

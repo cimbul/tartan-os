@@ -9,9 +9,8 @@ homepage = "https://github.com/cimbul/tartan-os"
 publish = false
 
 [dependencies]
-# Internal
-tartan-c-enum = {path = "../util/c_enum"}
 # External
 paste = "1.0.0"
 static_assertions = "1.1.0"
 tartan-bitfield = "1.0.0"
+tartan-c-enum = "1.0.0"

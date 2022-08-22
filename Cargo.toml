@@ -8,6 +8,5 @@ members = [
 	"pci",
 	"serial",
 	"uefi",
-	"util/c_enum",
 	"util/parsers",
 ]

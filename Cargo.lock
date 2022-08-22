@@ -395,7 +395,9 @@ dependencies = [
 
 [[package]]
 name = "tartan-c-enum"
-version = "0.1.0"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62eccc92e87c5660d84628734cfe605ecf9dfa131eba6dc3467f301cbb050265"
 
 [[package]]
 name = "tartan-devicetree"

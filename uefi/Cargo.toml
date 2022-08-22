@@ -12,7 +12,6 @@ publish = false
 # Internal
 tartan-acpi = {path = "../acpi"}
 tartan-arch = {path = "../arch"}
-tartan-c-enum = {path = "../util/c_enum"}
 tartan-devicetree = {path = "../devicetree"}
 tartan-elf = {path = "../elf"}
 tartan-pci = {path = "../pci"}
@@ -21,4 +20,5 @@ cfg-if = "0.1.10"
 crc-any = {version = "2.3.5", default-features = false}
 log = "0.4.11"
 tartan-bitfield = "1.0.0"
+tartan-c-enum = "1.0.0"
 utf16_lit = "1.0.0"
