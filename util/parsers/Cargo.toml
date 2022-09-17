@@ -9,4 +9,4 @@ homepage = "https://github.com/cimbul/tartan-os"
 publish = false
 
 [dependencies]
-nom = {version = "6.0.0", features = ["alloc"], default-features = false}
+nom = {version = "6.2.1", features = ["alloc"], default-features = false}

@@ -12,7 +12,7 @@ publish = false
 # Internal
 tartan-parsers = {path = "../util/parsers"}
 # External
-nom = {version = "6.0.0", features = ["alloc"], default-features = false}
+nom = {version = "6.2.1", features = ["alloc"], default-features = false}
 
 [dev-dependencies]
 insta = {version = "0.16.1", features = ["glob"]}
