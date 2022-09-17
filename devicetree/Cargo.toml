@@ -15,4 +15,4 @@ tartan-parsers = {path = "../util/parsers"}
 nom = {version = "7.1.1", features = ["alloc"], default-features = false}
 
 [dev-dependencies]
-insta = {version = "0.16.1", features = ["glob"]}
+insta = {version = "1.19.1", features = ["glob"]}
