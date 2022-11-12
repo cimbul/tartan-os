@@ -80,7 +80,7 @@ impl MemMapConfigAccess {
             "Function number out of range: {}",
             selector.function,
         );
-        assert!(register < Self::MAP_SIZE, "Register number out of range: {}", register);
+        assert!(register < Self::MAP_SIZE, "Register number out of range: {register}");
 
         let offset = usize::from(selector.bus) << 20
             | usize::from(selector.device) << 15

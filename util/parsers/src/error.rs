@@ -50,18 +50,18 @@ impl<I: AsBytes> fmt::Display for Position<'_, I> {
         let context_end = min(offset + 10, self.full_input.len());
         let context_slice = &self.full_input[context_start..context_end];
 
-        write!(out, "at offset {0} ({0:#x}):\n ", offset)?;
+        write!(out, "at offset {offset} ({offset:#x}):\n ")?;
         for byte in context_slice {
             let ascii_char = match byte {
                 b if b.is_ascii_graphic() => *b as char,
                 b' ' => ' ',
                 _ => '.',
             };
-            write!(out, " {:2}", ascii_char)?;
+            write!(out, " {ascii_char:2}")?;
         }
         write!(out, "\n ")?;
         for byte in context_slice {
-            write!(out, " {:02x}", byte)?;
+            write!(out, " {byte:02x}")?;
         }
         write!(
             out,
@@ -120,10 +120,10 @@ where
         for (state, kind) in &self.error.errors {
             match kind {
                 VerboseErrorKind::Context(context) => {
-                    write!(out, "In {}", context)?;
+                    write!(out, "In {context}")?;
                 }
                 VerboseErrorKind::Char(c) => {
-                    write!(out, "Expected '{}'", c)?;
+                    write!(out, "Expected '{c}'")?;
                 }
                 VerboseErrorKind::Nom(e) => {
                     write!(out, "Failed {}", e.description())?;

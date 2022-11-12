@@ -2,7 +2,6 @@
 #![cfg_attr(target_os = "tartan", no_main)]
 #![feature(alloc_error_handler)]
 #![feature(asm_const)]
-#![feature(asm_sym)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]

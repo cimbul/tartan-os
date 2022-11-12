@@ -46,7 +46,7 @@ impl<'a> fmt::Debug for Value<'a> {
         f.write_str("<")?;
         for (i, &b) in self.data.iter().enumerate() {
             let space = if i > 0 && i % 4 == 0 { " " } else { "" };
-            write!(f, "{}{:02x}", space, b)?;
+            write!(f, "{space}{b:02x}")?;
         }
         f.write_str(">")?;
 
@@ -55,7 +55,7 @@ impl<'a> fmt::Debug for Value<'a> {
             let init = &self.data[..self.data.len() - 1];
             for segment in init.split(|&c| c == 0) {
                 let string_segment = core::str::from_utf8(segment).unwrap();
-                write!(f, " \"{}\"", string_segment)?;
+                write!(f, " \"{string_segment}\"")?;
             }
         }
 

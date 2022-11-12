@@ -19,8 +19,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let aml_data = fs::read(aml_path)?;
 
     match parse_table(&aml_data) {
-        Ok(t) => println!("Successfully parsed {}:\n{:#x?}", aml_path.display(), t),
-        Err(e) => print!("Error parsing {}:\n\n{}", aml_path.display(), e),
+        Ok(t) => println!("Successfully parsed {}:\n{t:#x?}", aml_path.display()),
+        Err(e) => print!("Error parsing {}:\n\n{e}", aml_path.display()),
     }
 
     Ok(())

@@ -319,7 +319,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
                 let mut out = OutputStream::new(console_out);
                 writeln!(out, "!!! Panic !!!");
                 match info.location() {
-                    Some(location) => writeln!(out, "Location: {}", location),
+                    Some(location) => writeln!(out, "Location: {location}"),
                     None => writeln!(out, "No location information"),
                 };
                 match info.message() {

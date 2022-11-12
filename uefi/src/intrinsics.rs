@@ -229,8 +229,8 @@ mod test {
     pub fn test_u64_division() {
         #[track_caller]
         fn check(n: u64, d: u64, q: u64, r: u64) {
-            assert_eq!(n / black_box(d), q, "for {} / {}", n, d);
-            assert_eq!(n % black_box(d), r, "for {} % {}", n, d);
+            assert_eq!(n / black_box(d), q, "for {n} / {d}");
+            assert_eq!(n % black_box(d), r, "for {n} % {d}");
         }
 
         // denominator = 1

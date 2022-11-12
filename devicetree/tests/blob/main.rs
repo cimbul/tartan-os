@@ -18,12 +18,12 @@ fn parse_all() {
             let structures: Vec<_> = tree
                 .structure_iter::<VerboseError<&[u8]>>()
                 .collect();
-            assert_debug_snapshot!(format!("{}_structures", test_name), structures);
+            assert_debug_snapshot!(format!("{test_name}_structures"), structures);
 
             let mem_reservations: Vec<_> = tree
                 .memory_reservation_iter::<VerboseError<&[u8]>>()
                 .collect();
-            assert_debug_snapshot!(format!("{}_mem_resrv", test_name), mem_reservations);
+            assert_debug_snapshot!(format!("{test_name}_mem_resrv"), mem_reservations);
         });
     });
 }

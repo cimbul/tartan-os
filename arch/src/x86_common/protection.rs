@@ -696,7 +696,7 @@ impl SegmentDescriptor {
     /// # Panics
     /// Panics if the limit is greater than [`LIMIT_MAX`](Self::LIMIT_MAX).
     pub fn set_limit(&mut self, limit: u32) {
-        assert!(limit <= Self::LIMIT_MAX, "Segment limit too large: {:#x}", limit);
+        assert!(limit <= Self::LIMIT_MAX, "Segment limit too large: {limit:#x}");
 
         self.lower &= !Self::LIMIT_MASK_LOWER;
         self.lower |= Self::LIMIT_MASK_LOWER & limit;
