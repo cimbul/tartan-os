@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `arch/src/x86_common/protection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>protection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tartan_arch/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../tartan_arch/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../tartan_arch/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `arch/src/x86_common/protection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>protection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-eabf764633b9d7be.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-777f3e9583f8c92d.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e2f4109f2e82e3af.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-c360e709a65bed99.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-c2d2a5dbaed13e6b.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../tartan_arch/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1553,16 +1553,16 @@
 };
 <span class="kw">use </span>tartan_c_enum::c_enum;
 
-<span class="attribute">#[cfg(doc)]
+<span class="attr">#[cfg(doc)]
 </span><span class="kw">use </span><span class="kw">super</span>::FlagRegister;
-<span class="attribute">#[cfg(doc)]
+<span class="attr">#[cfg(doc)]
 </span><span class="kw">use </span><span class="kw">crate</span>::x86_64::protection::TaskStateSegmentHeader;
-<span class="attribute">#[cfg(doc)]
+<span class="attr">#[cfg(doc)]
 </span><span class="kw">use </span><span class="kw">crate</span>::x86_64::ExtendedFeatureEnableRegister;
 
 
 <span class="doccomment">/// `GDTR`: Points to the memory range of the global descriptor table (GDT).
-</span><span class="attribute">#[repr(C, packed)]
+</span><span class="attr">#[repr(C, packed)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GlobalDescriptorTableRegister {
     <span class="doccomment">/// The inclusive maximum address offset (i.e., size - 1) of the descriptor table.
@@ -1601,7 +1601,7 @@
     /// # Safety
     /// This register fundamentally affects memory accesses and can have an impact on
     /// memory safety.
-    </span><span class="attribute">#[allow(named_asm_labels)]
+    </span><span class="attr">#[allow(named_asm_labels)]
     </span><span class="kw">pub unsafe fn </span>set_with_segments(
         gdt_pointer: <span class="kw-2">&amp;</span><span class="self">Self</span>,
         code_selector: Selector,
@@ -1609,7 +1609,7 @@
     ) {
         <span class="comment">// TODO: Disable interrupts?
 
-        </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        </span><span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
         </span><span class="macro">asm!</span>(
             <span class="string">&quot;
             // Set the global descriptor table register
@@ -1639,7 +1639,7 @@
             out(<span class="string">&quot;eax&quot;</span>) <span class="kw">_</span>,
         );
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span><span class="macro">asm!</span>(
             <span class="string">&quot;
             // Set the global descriptor table register
@@ -1678,7 +1678,7 @@
 /// Note that this type cannot be instantiated. It simply serves as a namespace for the
 /// [`get`](Self::get) and [`set`](Self::set) methods, which work on a [`Selector`]
 /// instance.
-</span><span class="attribute">#[allow(clippy::empty_enum)]
+</span><span class="attr">#[allow(clippy::empty_enum)]
 </span><span class="kw">pub enum </span>LocalDescriptorTableRegister {}
 
 <span class="kw">impl </span>LocalDescriptorTableRegister {
@@ -1729,7 +1729,7 @@
 /// Note that this type cannot be instantiated. It simply serves as a namespace for the
 /// [`get`](Self::get) and [`set`](Self::set) methods, which work on a [`Selector`]
 /// instance.
-</span><span class="attribute">#[allow(clippy::empty_enum)]
+</span><span class="attr">#[allow(clippy::empty_enum)]
 </span><span class="kw">pub enum </span>TaskRegister {}
 
 <span class="kw">impl </span>TaskRegister {
@@ -1967,7 +1967,7 @@
         ///   * [`is_application`](Self::is_application)
         ///   * [`is_code`](Self::is_code)
         ///   * [`ExtendedFeatureEnableRegister::long_mode_active`]
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
         </span>[<span class="number">21</span>] code_mode_64,
 
@@ -1994,7 +1994,7 @@
     </span><span class="kw">pub enum </span>SystemDescriptorType(u8) {
         <span class="doccomment">/// A [`SegmentDescriptor`] for a 16-bit task state segment (TSS) that is not
         /// currently running or waiting on a call to another task.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>TaskStateAvailable16Bit = <span class="number">1</span>,
 
@@ -2003,27 +2003,27 @@
 
         <span class="doccomment">/// A [`SegmentDescriptor`] for a 16-bit task state segment (TSS) that is either
         /// running or waiting on a call to another task.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>TaskStateBusy16Bit = <span class="number">3</span>,
 
         <span class="doccomment">/// A [`GateDescriptor`] for a call to 16-bit code.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>CallGate16Bit = <span class="number">4</span>,
 
         <span class="doccomment">/// A [`GateDescriptor`] for task switching.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>TaskGate = <span class="number">5</span>,
 
         <span class="doccomment">/// A [`GateDescriptor`] for a 16-bit interrupt handler.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>InterruptGate16Bit = <span class="number">6</span>,
 
         <span class="doccomment">/// A [`GateDescriptor`] for a 16-bit trap handler.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86&quot;</span>))]
         </span>TrapGate16Bit = <span class="number">7</span>,
 
@@ -2053,7 +2053,7 @@
 <span class="kw">impl </span>SystemDescriptorType {
     <span class="doccomment">/// Indicates that this is a [`GateDescriptor`].
     </span><span class="kw">pub fn </span>is_gate(<span class="self">self</span>) -&gt; bool {
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
         </span>{
             <span class="macro">matches!</span>(
                 <span class="self">self</span>,
@@ -2067,7 +2067,7 @@
             )
         }
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span>{
             <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::CallGate | <span class="self">Self</span>::InterruptGate | <span class="self">Self</span>::TrapGate)
         }
@@ -2078,7 +2078,7 @@
 
 <span class="doccomment">/// Generic entry in a global/local/interrupt descriptor table. Can be a
 /// [`SegmentDescriptor`] or [`GateDescriptor`], depending on the type flags.
-</span><span class="attribute">#[repr(C)]
+</span><span class="attr">#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GenericDescriptor {
     lower: u32,
@@ -2086,21 +2086,21 @@
     <span class="doccomment">/// Common descriptor settings.
     </span><span class="kw">pub </span>flags: GenericDescriptorFlags,
 
-    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    <span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>upper: u32,
 
     <span class="comment">// NOTE: In some cases, The processor verifies that this isn&#39;t a 32-bit descriptor by
     // looking for the type field (bits 8..13) in this DWord and making sure it is 0.
-    </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>_reserved: u32,
 }
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">8</span>, core::mem::size_of::&lt;GenericDescriptor&gt;());
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">16</span>, core::mem::size_of::&lt;GenericDescriptor&gt;());
 
 
@@ -2134,7 +2134,7 @@
 ///       address and limit are both ignored. However, this structure is still defined as
 ///       16 bytes. This is fine, since the first 8 bytes are compatible and the rest will
 ///       be ignored.
-</span><span class="attribute">#[repr(C)]
+</span><span class="attr">#[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>SegmentDescriptor {
     lower: u32,
@@ -2142,21 +2142,21 @@
     <span class="doccomment">/// Common segment descriptor settings.
     </span><span class="kw">pub </span>flags: SegmentDescriptorFlags,
 
-    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    <span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>upper: u32,
 
     <span class="comment">// NOTE: In some cases, The processor verifies that this isn&#39;t a 32-bit descriptor by
     // looking for the type field (bits 8..13) in this DWord and making sure it is 0.
-    </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>_reserved: u32,
 }
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">8</span>, core::mem::size_of::&lt;SegmentDescriptor&gt;());
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">16</span>, core::mem::size_of::&lt;SegmentDescriptor&gt;());
 
 <span class="kw">impl </span>SegmentDescriptor {
@@ -2171,10 +2171,10 @@
 
     <span class="doccomment">/// Create a zero-initialized descriptor
     </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
         </span><span class="kw">let </span>value = <span class="self">Self </span>{ lower: <span class="number">0</span>, flags: SegmentDescriptorFlags(<span class="number">0</span>) };
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span><span class="kw">let </span>value =
             <span class="self">Self </span>{ lower: <span class="number">0</span>, flags: SegmentDescriptorFlags(<span class="number">0</span>), upper: <span class="number">0</span>, _reserved: <span class="number">0 </span>};
 
@@ -2189,7 +2189,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>address = ((<span class="self">self</span>.lower &amp; <span class="self">Self</span>::ADDRESS_MASK_LOWER) &gt;&gt; <span class="number">16</span>) <span class="kw">as </span>usize;
         address |= ((<span class="self">Self</span>::ADDRESS_MASK_FLAGS_LOWER &amp; <span class="self">self</span>.flags.value()) &lt;&lt; <span class="number">16</span>) <span class="kw">as </span>usize;
         address |= (<span class="self">Self</span>::ADDRESS_MASK_FLAGS_UPPER &amp; <span class="self">self</span>.flags.value()) <span class="kw">as </span>usize;
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span>{
             address |= (<span class="self">self</span>.upper <span class="kw">as </span>usize) &lt;&lt; <span class="number">32</span>;
         }
@@ -2198,7 +2198,7 @@
 
     <span class="doccomment">/// Update the base address.
     </span><span class="kw">pub fn </span>set_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, address: usize) {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
 
         </span><span class="self">self</span>.lower &amp;= !<span class="self">Self</span>::ADDRESS_MASK_LOWER;
         <span class="self">self</span>.lower |= (address &lt;&lt; <span class="number">16</span>) <span class="kw">as </span>u32 &amp; <span class="self">Self</span>::ADDRESS_MASK_LOWER;
@@ -2207,7 +2207,7 @@
         <span class="self">self</span>.flags.<span class="number">0 </span>|= <span class="self">Self</span>::ADDRESS_MASK_FLAGS_LOWER &amp; (address &gt;&gt; <span class="number">16</span>) <span class="kw">as </span>u32;
         <span class="self">self</span>.flags.<span class="number">0 </span>|= <span class="self">Self</span>::ADDRESS_MASK_FLAGS_UPPER &amp; address <span class="kw">as </span>u32;
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span>{
             <span class="self">self</span>.upper = (address &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32;
         }
@@ -2237,7 +2237,7 @@
     /// # Panics
     /// Panics if the limit is greater than [`LIMIT_MAX`](Self::LIMIT_MAX).
     </span><span class="kw">pub fn </span>set_limit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, limit: u32) {
-        <span class="macro">assert!</span>(limit &lt;= <span class="self">Self</span>::LIMIT_MAX, <span class="string">&quot;Segment limit too large: {:#x}&quot;</span>, limit);
+        <span class="macro">assert!</span>(limit &lt;= <span class="self">Self</span>::LIMIT_MAX, <span class="string">&quot;Segment limit too large: {limit:#x}&quot;</span>);
 
         <span class="self">self</span>.lower &amp;= !<span class="self">Self</span>::LIMIT_MASK_LOWER;
         <span class="self">self</span>.lower |= <span class="self">Self</span>::LIMIT_MASK_LOWER &amp; limit;
@@ -2300,7 +2300,7 @@
 ///   * Interrupt and trap gates, which define handlers for interrupt vectors.
 ///   * Task gates, which support hardware task switching. These are not supported in
 ///     64-bit mode.
-</span><span class="attribute">#[repr(C)]
+</span><span class="attr">#[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GateDescriptor {
     lower: u32,
@@ -2308,21 +2308,21 @@
     <span class="doccomment">/// Common gate descriptor settings.
     </span><span class="kw">pub </span>flags: GateDescriptorFlags,
 
-    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    <span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>upper: u32,
 
     <span class="comment">// NOTE: In some cases, The processor verifies that this isn&#39;t a 32-bit descriptor by
     // looking for the type field (bits 8..13) in this DWord and making sure it is 0.
-    </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+    </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
     #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
     </span>_reserved: u32,
 }
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">8</span>, core::mem::size_of::&lt;GateDescriptor&gt;());
 
-<span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
 </span><span class="macro">const_assert_eq!</span>(<span class="number">16</span>, core::mem::size_of::&lt;GateDescriptor&gt;());
 
 <span class="kw">impl </span>GateDescriptor {
@@ -2332,10 +2332,10 @@
 
     <span class="doccomment">/// Create a zero-initialized descriptor
     </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
         </span><span class="kw">let </span>value = <span class="self">Self </span>{ lower: <span class="number">0</span>, flags: GateDescriptorFlags(<span class="number">0</span>) };
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span><span class="kw">let </span>value =
             <span class="self">Self </span>{ lower: <span class="number">0</span>, flags: GateDescriptorFlags(<span class="number">0</span>), upper: <span class="number">0</span>, _reserved: <span class="number">0 </span>};
 
@@ -2349,7 +2349,7 @@
     /// the routine to be executed. For task gates, this points to a task state segment
     /// representing the task to activate.
     </span><span class="kw">pub fn </span>selector(<span class="self">self</span>) -&gt; Selector {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
         </span>Selector(((<span class="self">self</span>.lower &amp; <span class="self">Self</span>::SELECTOR_MASK) &gt;&gt; <span class="number">16</span>) <span class="kw">as </span>u16)
     }
 
@@ -2366,7 +2366,7 @@
     </span><span class="kw">pub fn </span>entry_point_offset(<span class="self">self</span>) -&gt; usize {
         <span class="kw">let </span><span class="kw-2">mut </span>offset = (<span class="self">self</span>.lower &amp; <span class="self">Self</span>::OFFSET_MASK_LOWER) <span class="kw">as </span>usize;
         offset |= (<span class="self">self</span>.flags.value() &amp; <span class="self">Self</span>::OFFSET_MASK_UPPER) <span class="kw">as </span>usize;
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span>{
             offset |= (<span class="self">self</span>.upper <span class="kw">as </span>usize) &lt;&lt; <span class="number">32</span>;
         }
@@ -2375,7 +2375,7 @@
 
     <span class="doccomment">/// Update the offset of the entry point within the referenced code segment.
     </span><span class="kw">pub fn </span>set_entry_point_offset(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: usize) {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
 
         </span><span class="self">self</span>.lower &amp;= !<span class="self">Self</span>::OFFSET_MASK_LOWER;
         <span class="self">self</span>.lower |= <span class="self">Self</span>::OFFSET_MASK_LOWER &amp; (offset <span class="kw">as </span>u32);
@@ -2383,7 +2383,7 @@
         <span class="self">self</span>.flags.<span class="number">0 </span>&amp;= !<span class="self">Self</span>::OFFSET_MASK_UPPER;
         <span class="self">self</span>.flags.<span class="number">0 </span>|= <span class="self">Self</span>::OFFSET_MASK_UPPER &amp; (offset <span class="kw">as </span>u32);
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span>{
             <span class="self">self</span>.upper = (offset &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32;
         }
@@ -2423,7 +2423,7 @@
         /// If this value is zero, then the stack segment is set to null.
         ///
         /// Only applies to interrupt and trap gates.
-        </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
+        </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, doc))]
         #[doc(cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>))]
         </span>[<span class="number">0</span>..<span class="number">2</span>] <span class="kw">pub </span>interrupt_stack_index: u8,
     }
@@ -2458,7 +2458,7 @@
 /// between the start of the permission map and the [`limit`](SegmentDescriptor::limit) of
 /// the containing TSS, then the processor acts as though the bits for all ports past
 /// `max_port_for_size(limit - offset)` are set.
-</span><span class="attribute">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>IOPermissionBitmap&lt;T = [u8]&gt;(T)
 <span class="kw">where
     </span>T: AsRef&lt;[u8]&gt; + AsMut&lt;[u8]&gt; + Eq + <span class="question-mark">?</span>Sized;
@@ -2506,7 +2506,7 @@
     /// assert_eq!(IOPermissionBitmap::max_port_for_size(usize::MAX), NonZeroU16::new(0xffff));
     /// ```
     </span><span class="kw">pub const fn </span>max_port_for_size(size: usize) -&gt; <span class="prelude-ty">Option</span>&lt;NonZeroU16&gt; {
-        <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+        <span class="attr">#[allow(clippy::cast_possible_truncation)]
         </span><span class="kw">if </span>size &lt;= <span class="number">1 </span>{
             <span class="prelude-val">None
         </span>} <span class="kw">else if </span>size &gt;= <span class="self">Self</span>::MAX_SIZE {
@@ -2548,7 +2548,7 @@
     </span><span class="kw">pub fn </span>is_port_checked(<span class="kw-2">&amp;</span><span class="self">self</span>, port: u16) -&gt; bool {
         <span class="kw">if </span><span class="self">self</span>.is_port_mapped(port) {
             <span class="kw">let </span>byte = (port / <span class="number">8</span>) <span class="kw">as </span>usize;
-            <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+            <span class="attr">#[allow(clippy::cast_possible_truncation)]
             </span><span class="kw">let </span>bit = (port % <span class="number">8</span>) <span class="kw">as </span>u8;
             get_bit(<span class="self">self</span>.<span class="number">0</span>.as_ref()[byte], bit)
         } <span class="kw">else </span>{
@@ -2570,7 +2570,7 @@
             <span class="self">self</span>.max_port(),
         );
         <span class="kw">let </span>byte = (port / <span class="number">8</span>) <span class="kw">as </span>usize;
-        <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+        <span class="attr">#[allow(clippy::cast_possible_truncation)]
         </span><span class="kw">let </span>bit = (port % <span class="number">8</span>) <span class="kw">as </span>u8;
         <span class="kw">let </span>map = <span class="self">self</span>.<span class="number">0</span>.as_mut();
         map[byte] = set_bit(map[byte], bit, value);
@@ -2578,22 +2578,22 @@
 }
 
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>core::mem;
 
-    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     </span><span class="kw">fn </span>seg_desc_from_bytes(bytes: [u8; <span class="number">16</span>]) -&gt; SegmentDescriptor {
         <span class="kw">unsafe </span>{ mem::transmute(bytes) }
     }
 
-    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     </span><span class="kw">fn </span>bytes_from_seg_desc(desc: SegmentDescriptor) -&gt; [u8; <span class="number">16</span>] {
         <span class="kw">unsafe </span>{ mem::transmute(desc) }
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>test_descriptor_limit() {
@@ -2679,7 +2679,7 @@
         ]);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     #[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     #[rustfmt::skip]
@@ -2693,7 +2693,7 @@
         desc.set_limit(<span class="number">0x0010_0000</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>test_descriptor_address() {
@@ -2779,17 +2779,17 @@
         ]);
     }
 
-    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     </span><span class="kw">fn </span>gate_desc_from_bytes(bytes: [u8; <span class="number">16</span>]) -&gt; GateDescriptor {
         <span class="kw">unsafe </span>{ mem::transmute(bytes) }
     }
 
-    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     </span><span class="kw">fn </span>bytes_from_gate_desc(desc: GateDescriptor) -&gt; [u8; <span class="number">16</span>] {
         <span class="kw">unsafe </span>{ mem::transmute(desc) }
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>test_descriptor_offset() {
@@ -2875,7 +2875,7 @@
         ]);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>test_descriptor_selector() {
@@ -2961,7 +2961,7 @@
         ]);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[allow(clippy::bool_assert_comparison)]
     </span><span class="kw">fn </span>test_is_port_checked() {
         <span class="kw">let </span>map = IOPermissionBitmap([]);
@@ -3033,7 +3033,7 @@
         <span class="macro">assert_eq!</span>(map.is_port_checked(u16::MAX), <span class="bool-val">true</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_set_port_checked() {
         <span class="kw">let </span><span class="kw-2">mut </span>map = IOPermissionBitmap([<span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0xff</span>]);
         map.set_port_checked(<span class="number">0</span>, <span class="bool-val">true</span>);
@@ -3052,28 +3052,28 @@
         <span class="macro">assert_eq!</span>(map.<span class="number">0</span>, [<span class="number">0xff</span>, <span class="number">0x7f</span>, <span class="number">0xff</span>]);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_set_port_checked_out_of_range_3byte() {
         <span class="kw">let </span><span class="kw-2">mut </span>map = IOPermissionBitmap([<span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0xff</span>]);
         map.set_port_checked(<span class="number">16</span>, <span class="bool-val">true</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_set_port_checked_out_of_range_2byte() {
         <span class="kw">let </span><span class="kw-2">mut </span>map = IOPermissionBitmap([<span class="number">0x00</span>, <span class="number">0xff</span>]);
         map.set_port_checked(<span class="number">8</span>, <span class="bool-val">true</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_set_port_checked_out_of_range_1byte() {
         <span class="kw">let </span><span class="kw-2">mut </span>map = IOPermissionBitmap([<span class="number">0xff</span>]);
         map.set_port_checked(<span class="number">0</span>, <span class="bool-val">true</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_set_port_checked_out_of_range_empty() {
         <span class="kw">let </span><span class="kw-2">mut </span>map = IOPermissionBitmap([]);
@@ -3081,4 +3081,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tartan_arch" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (c97d02cdb 2022-10-05)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tartan_arch" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (42325c525 2022-11-11)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>

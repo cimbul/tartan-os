@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-eabf764633b9d7be.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-777f3e9583f8c92d.css"><link rel="stylesheet" disabled href="../../static.files/dark-e2f4109f2e82e3af.css"><link rel="stylesheet" disabled href="../../static.files/ayu-c360e709a65bed99.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c2d2a5dbaed13e6b.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -624,23 +624,23 @@
         CursorMut(Pin::new_unchecked(<span class="kw-2">&amp;mut *</span>header_ptr))
     }
 
-    <span class="attribute">#[cfg(test)]
+    <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="attribute">#![allow(clippy::transmute_ptr_to_ptr)]
+        <span class="attr">#![allow(clippy::transmute_ptr_to_ptr)]
         </span>Cursor(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;</span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
 
     <span class="kw">fn </span>front_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="attribute">#![allow(clippy::transmute_ptr_to_ptr)]
+        <span class="attr">#![allow(clippy::transmute_ptr_to_ptr)]
         </span>CursorMut(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;mut </span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
 }
 
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">struct </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt;);
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt; {
         <span class="self">self</span>.<span class="number">0
@@ -667,7 +667,7 @@
         }
     }
 
-    <span class="attribute">#[cfg(test)]
+    <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>into_cursor(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
         Cursor(<span class="self">self</span>.<span class="number">0</span>.into_ref())
     }
@@ -823,19 +823,19 @@
 }
 
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">extern crate </span>alloc;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[track_caller]
+    <span class="attr">#[track_caller]
     </span><span class="kw">fn </span>assert_aligns_up(alignment: usize, input: usize, expected_output: usize) {
         <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, alignment).unwrap();
         <span class="macro">assert_eq!</span>(align_up(input, layout), expected_output);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_align_up() {
         <span class="comment">// Alignment must be a power of 2 while &lt;= isize::MAX. This should be reasonable
         // on all practical targets.
@@ -877,21 +877,21 @@
         assert_aligns_up(max_align, max_align, max_align);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_align_up_overflow_2() {
         <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, <span class="number">2</span>).unwrap();
         align_up(usize::MAX, layout);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_align_up_overflow_512() {
         <span class="kw">let </span>layout = Layout::from_size_align(<span class="number">1</span>, <span class="number">0x200</span>).unwrap();
         align_up(usize::MAX - <span class="number">0x1fe</span>, layout);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>test_align_up_overflow_max() {
         <span class="kw">let </span>max_align = <span class="number">1_usize</span>.reverse_bits();
@@ -903,12 +903,12 @@
         <span class="kw">use super</span>::<span class="kw-2">*</span>;
         <span class="kw">use </span>alloc::vec::Vec;
 
-        <span class="attribute">#[track_caller]
+        <span class="attr">#[track_caller]
         </span><span class="kw">fn </span>assert_same_address&lt;A&gt;(a: <span class="kw-2">*const </span>A, b: usize) {
             <span class="macro">assert_eq!</span>(a <span class="kw">as </span>usize, b);
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         </span><span class="kw">fn </span>test_from_block() {
             <span class="comment">// When creating a block from a slice
             </span><span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::&lt;usize&gt;::zeroed(); <span class="number">0x20</span>];
@@ -916,10 +916,10 @@
             <span class="kw">let </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
             <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front();
 
-            <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+            <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
             </span><span class="kw">let </span>expected_data_size = <span class="number">120</span>; <span class="comment">// (0x20 - 2) * 4
 
-            </span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+            </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
             </span><span class="kw">let </span>expected_data_size = <span class="number">240</span>; <span class="comment">// (0x20 - 2) * 8
 
             // Then the first header should be placed at the beginning and have all the
@@ -935,7 +935,7 @@
             assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0x1f</span>]);
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         #[should_panic]
         </span><span class="kw">fn </span>test_from_block_empty() {
             <span class="comment">// When creating from a slice without enough space for either header
@@ -944,7 +944,7 @@
             <span class="comment">// Then the call should panic
         </span>}
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         #[should_panic]
         </span><span class="kw">fn </span>test_from_block_size_1() {
             <span class="comment">// When creating from a slice without enough space for the end header
@@ -953,7 +953,7 @@
             <span class="comment">// Then the call should panic
         </span>}
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         </span><span class="kw">fn </span>test_from_block_size_2() {
             <span class="comment">// When creating from a slice with exactly enough space for the start and
             // end headers
@@ -973,7 +973,7 @@
             assert_same_address(cursor.current().get_ref(), addrs[<span class="number">1</span>]);
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         </span><span class="kw">fn </span>test_split() {
             <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
             <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
@@ -1004,7 +1004,7 @@
             assert_same_address(cursor.current().get_ref(), addrs[<span class="number">0x1f</span>]);
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         </span><span class="kw">fn </span>test_split_minimal() {
             <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">3</span>];
             <span class="kw">let </span>addrs: Vec&lt;<span class="kw">_</span>&gt; = data.iter().map(|p| p <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_ as </span>usize).collect();
@@ -1033,7 +1033,7 @@
             assert_same_address(cursor.<span class="number">0</span>.get_ref(), addrs[<span class="number">2</span>]);
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         </span><span class="kw">fn </span>test_split_no_op() {
             <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
             <span class="kw">let </span><span class="kw-2">mut </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
@@ -1054,7 +1054,7 @@
             <span class="macro">assert!</span>(cursor.current().is_end());
         }
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         #[should_panic]
         </span><span class="kw">fn </span>test_split_unaligned() {
             <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
@@ -1068,7 +1068,7 @@
             <span class="comment">// Then the call should panic
         </span>}
 
-        <span class="attribute">#[test]
+        <span class="attr">#[test]
         #[should_panic]
         </span><span class="kw">fn </span>test_split_too_large() {
             <span class="kw">let </span><span class="kw-2">mut </span>data = [MaybeUninit::zeroed(); <span class="number">0x20</span>];
@@ -1083,4 +1083,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (c97d02cdb 2022-10-05)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (42325c525 2022-11-11)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>

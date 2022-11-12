@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/main.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tartan_kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/main.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-eabf764633b9d7be.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-777f3e9583f8c92d.css"><link rel="stylesheet" disabled href="../../static.files/dark-e2f4109f2e82e3af.css"><link rel="stylesheet" disabled href="../../static.files/ayu-c360e709a65bed99.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c2d2a5dbaed13e6b.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -193,12 +193,10 @@
 <span id="193">193</span>
 <span id="194">194</span>
 <span id="195">195</span>
-<span id="196">196</span>
-</pre><pre class="rust"><code><span class="attribute">#![no_std]
+</pre><pre class="rust"><code><span class="attr">#![no_std]
 #![cfg_attr(target_os = <span class="string">&quot;tartan&quot;</span>, no_main)]
 #![feature(alloc_error_handler)]
 #![feature(asm_const)]
-#![feature(asm_sym)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![feature(panic_info_message)]
@@ -222,7 +220,7 @@
 
 <span class="comment">// Reserve space for the initial stack in the BSS section of the executable image, which
 // will be allocated by the loader.
-</span><span class="attribute">#[cfg(target_os = <span class="string">&quot;tartan&quot;</span>)]
+</span><span class="attr">#[cfg(target_os = <span class="string">&quot;tartan&quot;</span>)]
 </span><span class="macro">core::arch::global_asm!</span>(
     <span class="string">&quot;
     .section .bss
@@ -235,22 +233,22 @@ stack_top:
 </span>);
 
 
-<span class="attribute">#[used]
+<span class="attr">#[used]
 </span><span class="kw">static </span><span class="kw-2">mut </span>X: usize = <span class="number">0</span>;
 
 <span class="comment">// Dummy implementation when building for host
-</span><span class="attribute">#[start]
+</span><span class="attr">#[start]
 #[cfg(not(target_os = <span class="string">&quot;tartan&quot;</span>))]
 </span><span class="kw">fn </span>_start(<span class="kw">_</span>: isize, <span class="kw">_</span>: <span class="kw-2">*const *const </span>u8) -&gt; isize {
     kernel_main()
 }
 
-<span class="attribute">#[naked]
+<span class="attr">#[naked]
 #[no_mangle]
 #[cfg(target_os = <span class="string">&quot;tartan&quot;</span>)]
 </span><span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>_start() -&gt; ! {
     <span class="kw">unsafe </span>{
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
         </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             mov esp, offset stack_top  // Set up initial stack
@@ -262,7 +260,7 @@ stack_top:
             options(noreturn),
         );
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
         </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             mov rsp, offset stack_top  // Set up initial stack
@@ -274,7 +272,7 @@ stack_top:
             options(noreturn),
         );
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
         </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             ldr sp, =stack_top  // Set up initial stack
@@ -285,7 +283,7 @@ stack_top:
             options(noreturn),
         );
 
-        <span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+        <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
         </span><span class="macro">core::arch::asm!</span>(
             <span class="string">&quot;
             ldr x0, =stack_top  // Set up initial stack
@@ -331,12 +329,12 @@ stack_top:
 }
 
 
-<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+<span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
 </span><span class="kw">fn </span>find_uart() -&gt; <span class="kw">impl </span>UART {
     tartan_serial::model_16550::UART16550::new(<span class="number">0x3f8</span>)
 }
 
-<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;aarch64&quot;</span>))]
+<span class="attr">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;aarch64&quot;</span>))]
 </span><span class="kw">fn </span>find_uart() -&gt; <span class="kw">impl </span>UART {
     <span class="kw">use </span>tartan_serial::model_pl011::{RegisterBlock, UARTPL011};
 
@@ -348,22 +346,22 @@ stack_top:
 }
 
 
-<span class="attribute">#[cfg_attr(not(test), global_allocator)]
+<span class="attr">#[cfg_attr(not(test), global_allocator)]
 </span><span class="kw">static </span><span class="kw-2">mut </span>ALLOCATOR: allocator::Allocator = allocator::Allocator::uninitialized();
 
 <span class="kw">static </span><span class="kw-2">mut </span>HEAP: [MaybeUninit&lt;usize&gt;; <span class="number">0x8000</span>] = [MaybeUninit::uninit(); <span class="number">0x8000</span>];
 
-<span class="attribute">#[cfg(not(test))]
+<span class="attr">#[cfg(not(test))]
 #[alloc_error_handler]
 </span><span class="kw">fn </span>alloc_error(layout: core::alloc::Layout) -&gt; ! {
     <span class="macro">panic!</span>(<span class="string">&quot;Allocating {} bytes failed&quot;</span>, layout.size());
 }
 
-<span class="attribute">#[cfg(not(test))]
+<span class="attr">#[cfg(not(test))]
 #[panic_handler]
 </span><span class="kw">fn </span>panic_handler(info: <span class="kw-2">&amp;</span>core::panic::PanicInfo) -&gt; ! {
     <span class="comment">// Not much we can do with Err results in a panic handler
-    </span><span class="attribute">#![allow(unused_must_use)]
+    </span><span class="attr">#![allow(unused_must_use)]
 
     </span><span class="kw">let </span><span class="kw-2">mut </span>serial = find_uart();
     serial.reset();
@@ -380,15 +378,15 @@ stack_top:
         <span class="prelude-val">None </span>=&gt; <span class="macro">writeln!</span>(out, <span class="string">&quot;No additional message&quot;</span>),
     };
 
-    <span class="attribute">#[allow(clippy::empty_loop)]
+    <span class="attr">#[allow(clippy::empty_loop)]
     </span><span class="kw">loop </span>{}
 }
 
-<span class="attribute">#[cfg(not(test))]
+<span class="attr">#[cfg(not(test))]
 #[lang = <span class="string">&quot;eh_personality&quot;</span>]
 </span><span class="kw">fn </span>eh_personality() -&gt; ! {
-    <span class="attribute">#[allow(clippy::empty_loop)]
+    <span class="attr">#[allow(clippy::empty_loop)]
     </span><span class="kw">loop </span>{}
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (c97d02cdb 2022-10-05)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (42325c525 2022-11-11)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>

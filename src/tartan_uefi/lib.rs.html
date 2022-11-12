@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `uefi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tartan_uefi/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tartan_uefi/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tartan_uefi/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `uefi/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-eabf764633b9d7be.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-777f3e9583f8c92d.css"><link rel="stylesheet" disabled href="../../static.files/dark-e2f4109f2e82e3af.css"><link rel="stylesheet" disabled href="../../static.files/ayu-c360e709a65bed99.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-74087aa2e88f4475.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c2d2a5dbaed13e6b.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../tartan_uefi/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1296,7 +1296,7 @@
 //!
 //! See EDK `MdePkg/Include/Uefi/UefiSpec.h`
 
-</span><span class="attribute">#![no_std]
+</span><span class="attr">#![no_std]
 #![feature(fn_traits)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
@@ -1317,7 +1317,7 @@
 
 <span class="kw">pub mod </span>allocator;
 <span class="kw">pub mod </span>global;
-<span class="attribute">#[macro_use]
+<span class="attr">#[macro_use]
 </span><span class="kw">pub mod </span>io;
 
 
@@ -1325,7 +1325,7 @@
 </span><span class="kw">pub const </span>PAGE_SIZE: usize = <span class="number">4096</span>;
 
 
-<span class="attribute">#[repr(transparent)]
+<span class="attr">#[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>Handle(usize);
 
@@ -1355,17 +1355,17 @@
     <span class="kw">pub const </span>LATEST: Revision = Revision::V2_80;
 
     <span class="kw">pub fn </span>major_version(<span class="self">self</span>) -&gt; u16 {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
         </span>(<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">16</span>) <span class="kw">as </span>u16
     }
 
     <span class="kw">pub fn </span>minor_version(<span class="self">self</span>) -&gt; u16 {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
         </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u16) / <span class="number">10
     </span>}
 
     <span class="kw">pub fn </span>fix_version(<span class="self">self</span>) -&gt; u16 {
-        <span class="attribute">#![allow(clippy::cast_possible_truncation)]
+        <span class="attr">#![allow(clippy::cast_possible_truncation)]
         </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u16) % <span class="number">10
     </span>}
 }
@@ -1382,11 +1382,11 @@
     }
 }
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_revision {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_components() {
         <span class="macro">assert_eq!</span>(Revision::V1_02.major_version(), <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(Revision::V1_02.minor_version(), <span class="number">0</span>);
@@ -1460,7 +1460,7 @@
     }
 
     <span class="doccomment">/// Wraps success *and* warning codes in [`Ok`], and error codes in [`Err`].
-    </span><span class="attribute">#[allow(clippy::missing_errors_doc)]
+    </span><span class="attr">#[allow(clippy::missing_errors_doc)]
     </span><span class="kw">pub fn </span>into_result(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result </span>{
         <span class="kw">if </span><span class="self">self</span>.is_error() {
             <span class="prelude-val">Err</span>(<span class="self">self</span>)
@@ -1476,11 +1476,11 @@
     }
 }
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_status {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_equality() {
         <span class="kw">let </span>status = Status(<span class="number">1</span>);
         <span class="macro">assert_eq!</span>(status, Status::WarnUnknownGlyph);
@@ -1488,7 +1488,7 @@
         <span class="macro">assert_ne!</span>(status, Status::LoadError);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[allow(clippy::bool_assert_comparison)]
     #[allow(clippy::branches_sharing_code)]
     </span><span class="kw">fn </span>test_is_error() {
@@ -1517,7 +1517,7 @@
         }
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     #[allow(clippy::bool_assert_comparison)]
     #[allow(clippy::branches_sharing_code)]
     </span><span class="kw">fn </span>test_is_warning() {
@@ -1546,7 +1546,7 @@
         }
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_into_result() {
         <span class="macro">assert_eq!</span>(Status::Success.into_result(), <span class="prelude-val">Ok</span>(Status::Success));
         <span class="macro">assert_eq!</span>(Status::WarnFileSystem.into_result(), <span class="prelude-val">Ok</span>(Status::WarnFileSystem));
@@ -1645,7 +1645,7 @@
 }
 
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>TableHeader {
     <span class="kw">pub </span>signature: u64,
     <span class="kw">pub </span>revision: Revision,
@@ -1655,7 +1655,7 @@
 }
 
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>SystemTable&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub </span>header: TableHeader,
     <span class="kw">pub </span>firmware_vendor: <span class="kw-2">*const </span>u16,
@@ -1692,7 +1692,7 @@
     /// the caller&#39;s responsibility to make sure any dangling references are cleared or
     /// unused.
     </span><span class="kw">pub unsafe fn </span>exit_boot_services(<span class="kw-2">&amp;mut </span><span class="self">self</span>, image_handle: Handle) -&gt; MemoryMap {
-        <span class="attribute">#![allow(clippy::missing_panics_doc)]
+        <span class="attr">#![allow(clippy::missing_panics_doc)]
         </span><span class="kw">let </span>boot_services = <span class="self">self</span>.boot_services.unwrap();
         <span class="kw">let </span>memory_map = boot_services.get_memory_map();
         <span class="comment">// This shouldn&#39;t fail since we just got the memory map
@@ -1712,7 +1712,7 @@
 }
 
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>RuntimeServices {
     <span class="kw">pub </span>header: TableHeader,
 
@@ -1752,7 +1752,7 @@
 }
 
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>BootServices {
     <span class="kw">pub </span>header: TableHeader,
 
@@ -2008,13 +2008,13 @@
 }
 
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GUID(u32, u16, u16, [u8; <span class="number">8</span>]);
 
 <span class="kw">impl </span>GUID {
     <span class="kw">pub const fn </span>from(n: u128) -&gt; <span class="self">Self </span>{
-        <span class="attribute">#[allow(clippy::cast_possible_truncation)]
+        <span class="attr">#[allow(clippy::cast_possible_truncation)]
         </span>GUID(
             (n &gt;&gt; <span class="number">96</span>) <span class="kw">as </span>u32,
             (n &gt;&gt; <span class="number">80</span>) <span class="kw">as </span>u16,
@@ -2030,11 +2030,11 @@
     }
 }
 
-<span class="attribute">#[cfg(test)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_guid {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_from_u128() {
         <span class="kw">let </span>guid = GUID::from(<span class="number">0x01020304_0506_0708_0910_111213141516</span>);
         <span class="macro">assert_eq!</span>(guid.<span class="number">0</span>, <span class="number">0x0102_0304</span>);
@@ -2043,7 +2043,7 @@
         <span class="macro">assert_eq!</span>(guid.<span class="number">3</span>, <span class="kw-2">*</span><span class="string">b&quot;\x09\x10\x11\x12\x13\x14\x15\x16&quot;</span>);
     }
 
-    <span class="attribute">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_equality() {
         <span class="kw">let </span>guid_a = GUID::from(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
         <span class="kw">let </span>guid_b = GUID::from(<span class="number">0xcf04d973_15f7_400b_b53b_82929911d09c</span>);
@@ -2054,13 +2054,13 @@
     }
 }
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>ConfigurationTable {
     <span class="kw">pub </span>vendor_guid: GUID,
     vendor_table: usize,
 }
 
-<span class="attribute">#[rustfmt::skip]
+<span class="attr">#[rustfmt::skip]
 </span><span class="kw">impl </span>ConfigurationTable {
     <span class="kw">pub const </span>ACPI_20_GUID:    GUID = GUID::from(<span class="number">0x8868e871_e4f1_11d3_bc22_0080c73c8881</span>);
     <span class="kw">pub const </span>ACPI_GUID:       GUID = GUID::from(<span class="number">0xeb9d2d30_2d88_11d3_9a16_0090273fc14d</span>);
@@ -2071,7 +2071,7 @@
     <span class="comment">// TODO: ... more defined in sect. 4.6
 </span>}
 
-<span class="attribute">#[repr(C)]
+<span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>MemoryDescriptor {
     <span class="kw">pub </span>memory_type: MemoryType,
     <span class="comment">// NOTE: Addresses represented as u64 even on 32-bit systems
@@ -2107,7 +2107,7 @@
         <span class="self">self</span>.verify_map();
     }
 
-    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    <span class="attr">#[allow(clippy::missing_panics_doc)]
     </span><span class="kw">pub fn </span>verify_version(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
             <span class="self">self</span>.descriptor_version &gt;= <span class="self">Self</span>::MIN_VERSION,
@@ -2117,7 +2117,7 @@
         );
     }
 
-    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    <span class="attr">#[allow(clippy::missing_panics_doc)]
     </span><span class="kw">pub fn </span>verify_descriptor_size(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
             <span class="self">self</span>.descriptor_size &gt;= size_of::&lt;MemoryDescriptor&gt;(),
@@ -2135,7 +2135,7 @@
         );
     }
 
-    <span class="attribute">#[allow(clippy::missing_panics_doc)]
+    <span class="attr">#[allow(clippy::missing_panics_doc)]
     </span><span class="kw">pub fn </span>verify_map(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert!</span>(
             <span class="self">self</span>.raw_map.len() % <span class="self">self</span>.descriptor_size == <span class="number">0</span>,
@@ -2154,7 +2154,7 @@
 
     <span class="doccomment">/// Iterate over memory descriptors contained in the map.
     </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>MemoryDescriptor&gt; {
-        <span class="attribute">#![allow(clippy::cast_ptr_alignment)]
+        <span class="attr">#![allow(clippy::cast_ptr_alignment)]
 
         </span><span class="comment">// SAFETY: We check the pointer alignment in the verify() call. Since
         // MemoryDescriptor is only composed of unsigned integer types, it is safe to
@@ -2268,7 +2268,7 @@
     }
 
 
-    <span class="attribute">#[repr(C)]
+    <span class="attr">#[repr(C)]
     #[derive(Debug)]
     </span><span class="kw">pub struct </span>SimpleTextInput {
         reset: usize,
@@ -2279,7 +2279,7 @@
         unregister_key_notify: usize,
     }
 
-    <span class="attribute">#[repr(C)]
+    <span class="attr">#[repr(C)]
     </span><span class="kw">pub struct </span>SimpleTextOutput {
         <span class="kw">pub </span>reset: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
             this: <span class="kw-2">&amp;</span>SimpleTextOutput,
@@ -2298,7 +2298,7 @@
         <span class="kw">pub </span>mode: SimpleTextOutputMode,
     }
 
-    <span class="attribute">#[repr(C)]
+    <span class="attr">#[repr(C)]
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     </span><span class="kw">pub struct </span>SimpleTextOutputMode {
         <span class="kw">pub </span>max_mode: i32,
@@ -2310,7 +2310,7 @@
     }
 
 
-    <span class="attribute">#[repr(C)]
+    <span class="attr">#[repr(C)]
     #[derive(Debug)]
     </span><span class="kw">pub struct </span>LoadedImage&lt;<span class="lifetime">&#39;a</span>&gt; {
         <span class="kw">pub </span>revision: u32,
@@ -2341,7 +2341,7 @@
 
 
     <span class="doccomment">/// Protocol for accessing a file system supported by UEFI (typically FAT).
-    </span><span class="attribute">#[repr(C)]
+    </span><span class="attr">#[repr(C)]
     </span><span class="kw">pub struct </span>SimpleFileSystem {
         <span class="doccomment">/// Implemented revision of the SimpleFileSystem protocol.
         </span><span class="kw">pub </span>revision: u64,
@@ -2380,7 +2380,7 @@
 
 
     <span class="doccomment">/// Protocol for accessing a file or directory.
-    </span><span class="attribute">#[repr(C)]
+    </span><span class="attr">#[repr(C)]
     </span><span class="kw">pub struct </span>File {
         <span class="doccomment">/// Implemented revision of the File protocol.
         </span><span class="kw">pub </span>revision: u64,
@@ -2587,4 +2587,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tartan_uefi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (c97d02cdb 2022-10-05)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_uefi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (42325c525 2022-11-11)" data-search-js="search-39ee4160c7dc16c9.js" data-settings-js="settings-3a0b9947ba1bd99a.js" data-settings-css="settings-a66f7524084a489a.css" ></div></body></html>
