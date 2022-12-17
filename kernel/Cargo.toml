@@ -17,4 +17,4 @@ tartan-serial = {path = "../serial"}
 memoffset = "0.6.5"
 paste = "1.0.9"
 static_assertions = "1.1.0"
-tartan-bitfield = "1.0.0"
+tartan-bitfield = "1.2.0"

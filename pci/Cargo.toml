@@ -13,4 +13,4 @@ publish = false
 tartan-arch = {path = "../arch"}
 # External
 log = "0.4.17"
-tartan-bitfield = "1.0.0"
+tartan-bitfield = "1.2.0"

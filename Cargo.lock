@@ -217,9 +217,9 @@ dependencies = [
 
 [[package]]
 name = "tartan-bitfield"
-version = "1.0.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d4b889b4c66103534c5ca5a66a2ea0ad339fa4f174069e64052cfb22d84170b"
+checksum = "bfa876904e2a36ff0362a6fc808b105300aa7bad584edab5c5111f1e198b726c"
 dependencies = [
  "paste",
 ]

@@ -12,5 +12,5 @@ publish = false
 # Internal
 tartan-arch = {path = "../arch"}
 # External
-tartan-bitfield = "1.0.0"
+tartan-bitfield = "1.2.0"
 tartan-c-enum = "1.0.0"

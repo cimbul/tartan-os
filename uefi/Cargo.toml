@@ -19,6 +19,6 @@ tartan-pci = {path = "../pci"}
 cfg-if = "1.0.0"
 crc-any = {version = "2.4.3", default-features = false}
 log = "0.4.17"
-tartan-bitfield = "1.0.0"
+tartan-bitfield = "1.2.0"
 tartan-c-enum = "1.0.0"
 utf16_lit = "2.0.2"

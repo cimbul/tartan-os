@@ -13,7 +13,7 @@ publish = false
 tartan-parsers = {path = "../util/parsers"}
 # External
 static_assertions = "1.1.0"
-tartan-bitfield = "1.0.0"
+tartan-bitfield = "1.2.0"
 tartan-c-enum = "1.0.0"
 nom = {version = "7.1.1", features = ["alloc"], default-features = false}
 
