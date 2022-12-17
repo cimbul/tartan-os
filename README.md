@@ -17,7 +17,7 @@ my knowledge about OS internals and hardware that's newer than the PC/AT. 🙃
 
 Tested on macOS and Linux.
 
-  * Rust 1.67.0 _nightly_ toolchain
+  * Rust 1.68.0 _nightly_ toolchain
   * [QEMU](https://www.qemu.org/) 5.1
   * bash, for the QEMU launcher script
   * Python 3.2+ for booting 32-bit Arm only

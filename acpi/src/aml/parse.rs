@@ -165,9 +165,8 @@ pub mod state {
             P: Parser<ParserState<'a>, O, E>,
             E: AMLParseError<'a>,
         {
-            let new_scope_abs = match new_scope.resolve_as_decl(&self.current_scope) {
-                Some(s) => s,
-                None => return err(self, ErrorKind::Verify),
+            let Some(new_scope_abs) = new_scope.resolve_as_decl(&self.current_scope) else {
+                return err(self, ErrorKind::Verify)
             };
 
             let previous_scope = self.current_scope.clone();
@@ -861,9 +860,8 @@ mod package {
         let mut consuming_inner_parser = all_consuming(inner_parser);
         move |outer_state: ParserState<'a>| {
             let (outer_state, package_length) = PackageLength::parse(outer_state)?;
-            let body_length = match package_length.body_length {
-                Some(l) => l,
-                None => return err(outer_state, ErrorKind::Verify),
+            let Some(body_length) = package_length.body_length else {
+                return err(outer_state, ErrorKind::Verify)
             };
             let (outer_state, package_data) =
                 ParserState::lift(bytes::take(body_length))(outer_state)?;
@@ -968,9 +966,8 @@ pub mod term {
 
                 // Copy the method signature if the original name is a method
                 if let Some(arg_count) = i.get_arg_count(&source) {
-                    let alias_abs = match alias.resolve_as_decl(&i.current_scope) {
-                        Some(n) => n,
-                        None => return err(i, ErrorKind::Verify),
+                    let Some(alias_abs) = alias.resolve_as_decl(&i.current_scope) else {
+                        return err(i, ErrorKind::Verify)
                     };
 
                     i.method_signatures.push(MethodSignature {
@@ -1267,9 +1264,8 @@ pub mod term {
 
                 if object_type == ObjectType::Method {
                     // Add the new method signature
-                    let abs_name = match name.resolve_as_decl(&i.current_scope) {
-                        Some(n) => n,
-                        None => return err(i, ErrorKind::Verify),
+                    let Some(abs_name) = name.resolve_as_decl(&i.current_scope) else {
+                        return err(i, ErrorKind::Verify)
                     };
                     i.method_signatures.push(MethodSignature {
                         name: abs_name,
@@ -1339,9 +1335,8 @@ pub mod term {
 
                 // Compute the absolute method name
                 let outer_scope = i.current_scope.clone();
-                let abs_name = match name.resolve_as_decl(&outer_scope) {
-                    Some(n) => n,
-                    None => return err(i, ErrorKind::Verify),
+                let Some(abs_name) = name.resolve_as_decl(&outer_scope) else {
+                    return err(i, ErrorKind::Verify)
                 };
 
                 // Add the new method signature
@@ -1517,14 +1512,12 @@ pub mod term {
     impl<'a> Parse<'a> for FieldFlags {
         parser_fn!(parse('a i) -> Self {
             let (i, b) = num::le_u8(i)?;
-            let access_type = match AccessType::try_from(b & 0x0f) {
-                Ok(a) => a,
-                Err(_) => return err(i, ErrorKind::Tag),
+            let Ok(access_type) = AccessType::try_from(b & 0x0f) else {
+                return err(i, ErrorKind::Tag)
             };
             let lock = b & 0x10 != 0;
-            let update_rule = match UpdateRule::try_from((b & 0b0110_0000) >> 5) {
-                Ok(u) => u,
-                Err(_) => return err(i, ErrorKind::Tag),
+            let Ok(update_rule) = UpdateRule::try_from((b & 0b0110_0000) >> 5) else {
+                return err(i, ErrorKind::Tag)
             };
             Ok((i, FieldFlags { access_type, lock, update_rule }))
         });
@@ -1655,9 +1648,8 @@ pub mod term {
                 let (i, first) = num::le_u8(i)?;
                 let (i, second) = num::le_u8(i)?;
 
-                let access_type = match AccessType::try_from(first & 0x0f) {
-                    Ok(a) => a,
-                    Err(_) => return err(i, ErrorKind::Tag),
+                let Ok(access_type) = AccessType::try_from(first & 0x0f) else {
+                    return err(i, ErrorKind::Tag)
                 };
 
                 let access_attrib = match first >> 6 {
@@ -1710,9 +1702,8 @@ pub mod term {
                 let (i, attrib_byte) = num::le_u8(i)?;
                 let (i, length) = num::le_u8(i)?;
 
-                let access_type = match AccessType::try_from(type_byte & 0x0f) {
-                    Ok(a) => a,
-                    Err(_) => return err(i, ErrorKind::Tag),
+                let Ok(access_type) = AccessType::try_from(type_byte & 0x0f) else {
+                    return err(i, ErrorKind::Tag)
                 };
 
                 // It's not clear whether it is legal to encode `Bytes`/`RawBytes`/
@@ -2141,9 +2132,8 @@ pub mod term {
         invoke(i) -> ReferenceExpressionOpcode<'a> {
             let (i, name) = NameString::parse(i)?;
 
-            let arg_count = match i.get_arg_count(&name) {
-                Some(c) => c,
-                None => return err(i, ErrorKind::Verify),
+            let Some(arg_count) = i.get_arg_count(&name) else {
+                return err(i, ErrorKind::Verify)
             };
 
             let (i, args) = multi::count(TermArg::parse, arg_count.into())(i)?;

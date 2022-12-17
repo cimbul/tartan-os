@@ -322,8 +322,7 @@ impl Selector {
     pub fn set_offset(&mut self, offset: u16) {
         assert!(
             offset & !Self::OFFSET_MASK == 0,
-            "Descriptor offset {} is not aligned on an 8-byte boundary",
-            offset,
+            "Descriptor offset {offset} is not aligned on an 8-byte boundary"
         );
         self.0 &= !Self::OFFSET_MASK;
         self.0 |= offset;

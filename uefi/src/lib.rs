@@ -343,9 +343,8 @@ pub trait Table {
         let actual_remainder = crc.get_crc();
         assert!(
             actual_remainder == orig_remainder,
-            "Calculated CRC {:x} does not match listed value {:x}",
-            actual_remainder,
-            orig_remainder,
+            "Calculated CRC {actual_remainder:x} does not match listed value \
+             {orig_remainder:x}"
         );
     }
 }

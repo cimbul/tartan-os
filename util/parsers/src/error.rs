@@ -41,9 +41,8 @@ impl<I: AsBytes> fmt::Display for Position<'_, I> {
         // NOTE: nom's Offset implementation can panic. Avoid it.
         let full_input_pos = self.full_input.as_ptr() as usize;
         let state_pos = self.state.as_bytes().as_ptr() as usize;
-        let offset = match state_pos.checked_sub(full_input_pos) {
-            Some(o) => o,
-            None => return writeln!(out, "at unknown/invalid offset"),
+        let Some(offset) = state_pos.checked_sub(full_input_pos) else {
+            return writeln!(out, "at unknown/invalid offset")
         };
 
         let context_start = offset.saturating_sub(10);

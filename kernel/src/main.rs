@@ -119,7 +119,7 @@ fn kernel_main() -> ! {
 
     let mut heap_message = String::from("This came from...");
     heap_message.push_str("the heap!");
-    writeln!(out, "{}", heap_message).unwrap();
+    writeln!(out, "{heap_message}").unwrap();
 
     cpu::print_state(&mut out).unwrap();
     pci::print_devices(&mut out).unwrap();
@@ -175,7 +175,7 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
 
     writeln!(out, "!!! Panic !!!");
     match info.location() {
-        Some(location) => writeln!(out, "Location: {}", location),
+        Some(location) => writeln!(out, "Location: {location}"),
         None => writeln!(out, "No location information"),
     };
     match info.message() {

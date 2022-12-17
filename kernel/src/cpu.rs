@@ -15,7 +15,7 @@ pub fn print_state(out: &mut dyn fmt::Write) -> fmt::Result {
     writeln!(out, "CPUID max ext.: {:x?}", features::max_cpuid_index_extended())?;
 
     let basic_features = features::BasicFeatures::get();
-    writeln!(out, "{:#x?}", basic_features)?;
+    writeln!(out, "{basic_features:#x?}")?;
     writeln!(out, "{:#x?}", features::ExtendedFeatures::get())?;
     writeln!(out, "{:#x?}", features::AddressSpaceSizes::get())?;
 
@@ -72,8 +72,8 @@ fn describe_segment_register(
     };
 
     writeln!(out)?;
-    writeln!(out, "{}:", name)?;
-    writeln!(out, "{:#x?}", selector)?;
+    writeln!(out, "{name}:")?;
+    writeln!(out, "{selector:#x?}")?;
 
     let descriptor = selector.descriptor_address() as *const GenericDescriptor;
     let descriptor_flags = unsafe { (*descriptor).flags };
