@@ -1,6 +1,6 @@
 # Tartan OS
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/cimbul/tartan-os/Build)](https://github.com/cimbul/tartan-os/actions?query=workflow%3ABuild)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/cimbul/tartan-os/build.yml?branch=main)](https://github.com/cimbul/tartan-os/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/cimbul/tartan-os)](./LICENSE)
 
 A toy OS written in Rust. The name is a reference to the old logo of a certain rust
