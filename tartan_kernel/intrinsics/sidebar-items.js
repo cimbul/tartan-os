@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["bcmp",""],["memcmp",""],["memcpy",""],["memmove",""],["memset",""]]};
+window.SIDEBAR_ITEMS = {"fn":["bcmp","memcmp","memcpy","memmove","memset"]};

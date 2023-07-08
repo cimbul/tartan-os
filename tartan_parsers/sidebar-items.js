@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["opcode","Combinator for productions that use a deterministic opcode"],["result_iterator","Create an iterator that repeatedly executes the parser."]],"macro":[["struct_parser","Parse struct fields in order using an initializer-like syntax"]],"mod":[["error","Helpers for reporting parsing errors"]]};
+window.SIDEBAR_ITEMS = {"fn":["opcode","result_iterator"],"macro":["struct_parser"],"mod":["error"]};

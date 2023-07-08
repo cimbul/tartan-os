@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["StructureData","An event that signals the start/end of a node or a property of one while walking the device tree."]],"struct":[["Tree","Represents a full flattened device tree blob (DTB)."]]};
+window.SIDEBAR_ITEMS = {"enum":["StructureData"],"struct":["Tree"]};

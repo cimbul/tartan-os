@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MethodSignature","Expected argument count for a method in the ACPI namespace."],["ParserState","Input data plus context needed to disambiguate grammar"]],"trait":[["ReplaceableParseError","Helper trait used to convert a parser error from one input type to another."]]};
+window.SIDEBAR_ITEMS = {"struct":["MethodSignature","ParserState"],"trait":["ReplaceableParseError"]};

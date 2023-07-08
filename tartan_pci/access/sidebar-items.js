@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["io","Support for the I/O based configuration access method on x86/x86-64."]],"struct":[["ConfigSelector","Logical PCI address for a function of a specific segment/bus/device."],["MemMapConfigAccess","Access to memory-mapped PCI configuration space"]],"trait":[["ConfigAccess","Provides methods to access PCI configuration space."]]};
+window.SIDEBAR_ITEMS = {"mod":["io"],"struct":["ConfigSelector","MemMapConfigAccess"],"trait":["ConfigAccess"]};

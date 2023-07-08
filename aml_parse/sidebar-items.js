@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["main",""]],"struct":[["UsageError",""]]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"struct":["UsageError"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["BootAllocator",""]]};
+window.SIDEBAR_ITEMS = {"struct":["BootAllocator"]};

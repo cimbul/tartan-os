@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ArgObject","Symbol for a positional argument passed to the current method."],["LocalObject","Symbol for a variable local to the current method."]],"struct":[["DebugObject","Symbol representing debugger output device."]]};
+window.SIDEBAR_ITEMS = {"enum":["ArgObject","LocalObject"],"struct":["DebugObject"]};

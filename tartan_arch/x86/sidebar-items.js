@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["protection","Support for protected mode operation."]]};
+window.SIDEBAR_ITEMS = {"mod":["protection"]};

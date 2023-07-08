@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["protection","Support for protected mode operation."]],"struct":[["ControlRegister8","`CR8`: System control register for controlling interrupts based on priority."],["ExtendedFeatureEnableRegister","`IA32_EFER`: Model-specific register that controls features relating to 64-bit operation."]]};
+window.SIDEBAR_ITEMS = {"mod":["protection"],"struct":["ControlRegister8","ExtendedFeatureEnableRegister"]};

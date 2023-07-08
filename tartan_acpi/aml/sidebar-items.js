@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["data","Data resources"],["misc","Special symbols"],["name","Names of objects, arguments, and references"],["parse","Parsers for AML bytecode."],["term","Top-level terms and opcodes."]],"struct":[["AMLTable","An ACPI table that contains AML, such as the DSDT or an SSDT."]]};
+window.SIDEBAR_ITEMS = {"mod":["data","misc","name","parse","term"],"struct":["AMLTable"]};
