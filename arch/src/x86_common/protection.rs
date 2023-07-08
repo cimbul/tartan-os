@@ -711,7 +711,7 @@ impl fmt::Debug for SegmentDescriptor {
             .field("address", &self.address())
             .field("limit", &self.limit())
             .field("flags", &self.flags)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -854,7 +854,7 @@ impl fmt::Debug for GateDescriptor {
             .field("selector", &self.selector())
             .field("entry_point_offset", &self.entry_point_offset())
             .field("flags", &self.flags)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

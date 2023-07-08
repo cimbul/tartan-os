@@ -40,7 +40,10 @@ static mut LOGGER: Logger = Logger(None);
 
 
 #[no_mangle]
-fn efi_main(image_handle: Handle, system_table: &'static mut SystemTable) -> Status {
+extern "C" fn efi_main(
+    image_handle: Handle,
+    system_table: &'static mut SystemTable,
+) -> Status {
     unsafe {
         SYSTEM_TABLE = Some(system_table);
 
@@ -355,6 +358,6 @@ fn eh_personality() -> ! {
 // Hack to get the binary to build on the host target. It obviously doesn't do anything.
 #[cfg(not(any(test, target_os = "uefi")))]
 #[no_mangle]
-fn main(_: isize, _: *const *const u8) -> isize {
+extern "C" fn main(_: isize, _: *const *const u8) -> isize {
     100
 }

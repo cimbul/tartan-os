@@ -165,8 +165,9 @@ pub mod state {
             P: Parser<ParserState<'a>, O, E>,
             E: AMLParseError<'a>,
         {
-            let Some(new_scope_abs) = new_scope.resolve_as_decl(&self.current_scope) else {
-                return err(self, ErrorKind::Verify)
+            let Some(new_scope_abs) = new_scope.resolve_as_decl(&self.current_scope)
+            else {
+                return err(self, ErrorKind::Verify);
             };
 
             let previous_scope = self.current_scope.clone();
@@ -861,7 +862,7 @@ mod package {
         move |outer_state: ParserState<'a>| {
             let (outer_state, package_length) = PackageLength::parse(outer_state)?;
             let Some(body_length) = package_length.body_length else {
-                return err(outer_state, ErrorKind::Verify)
+                return err(outer_state, ErrorKind::Verify);
             };
             let (outer_state, package_data) =
                 ParserState::lift(bytes::take(body_length))(outer_state)?;

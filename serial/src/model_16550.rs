@@ -122,7 +122,7 @@ impl<A: RegisterAccess> UART16550<A> {
 impl UART16550<ActualRegisterAccess> {
     /// Create a driver for the UART with the given base I/O address
     pub fn new(base_port: u16) -> Self {
-        Self { access: ActualRegisterAccess::default(), base_port }
+        Self { access: ActualRegisterAccess, base_port }
     }
 }
 
