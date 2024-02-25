@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tartan_acpi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../tartan_acpi/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tartan_acpi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../tartan_acpi/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2951,9 +2953,8 @@
 //! AMLCode := DefBlockHeader TermList
 //! ```
 //!
-//! Everything in `DefBlockHeader` just repeats the fixed
-//! [`DescriptionHeader`](crate::DescriptionHeader) struct used in other tables,
-//! so there&#39;s no reason to write a parser for it.
+//! Everything in `DefBlockHeader` just repeats the fixed [`DescriptionHeader`] struct
+//! used in other tables, so there's no reason to write a parser for it.
 
 </span><span class="attr">#![allow(clippy::wildcard_imports)]
 
@@ -2986,12 +2987,12 @@
 /// Returns an error if the AML contents cannot be parsed.
 </span><span class="kw">pub fn </span>parse_table(
     data: <span class="kw-2">&amp;</span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;AMLTable&lt;<span class="lifetime">&#39;_</span>&gt;, ErrorWithPosition&lt;<span class="lifetime">&#39;_</span>, ParserState&lt;<span class="lifetime">&#39;_</span>&gt;&gt;&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;AMLTable&lt;<span class="lifetime">'_</span>&gt;, ErrorWithPosition&lt;<span class="lifetime">'_</span>, ParserState&lt;<span class="lifetime">'_</span>&gt;&gt;&gt; {
     <span class="kw">const </span>HEADER_SIZE: usize = mem::size_of::&lt;DescriptionHeader&gt;();
 
     <span class="kw">let </span>state = ParserState::new(data);
     <span class="kw">let </span><span class="kw-2">mut </span>body_parser =
-        context(<span class="string">&quot;table body&quot;</span>, all_consuming(multi::many0(TermObject::parse)));
+        context(<span class="string">"table body"</span>, all_consuming(multi::many0(TermObject::parse)));
     <span class="kw">let </span>parser = || {
         <span class="kw">let </span>(state, header_slice) = ParserState::lift(bytes::take(HEADER_SIZE))(state)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>header_array = [<span class="number">0_u8</span>; HEADER_SIZE];
@@ -3021,7 +3022,7 @@
 
 
 <span class="doccomment">/// An object that can be parsed from AML bytecode
-</span><span class="kw">pub trait </span>Parse&lt;<span class="lifetime">&#39;a</span>&gt;
+</span><span class="kw">pub trait </span>Parse&lt;<span class="lifetime">'a</span>&gt;
 <span class="kw">where
     </span><span class="self">Self</span>: Sized,
 {
@@ -3029,19 +3030,19 @@
     ///
     /// # Errors
     /// Returns an error if the data cannot be parsed.
-    </span><span class="kw">fn </span>parse&lt;E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;&gt;(i: ParserState&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; AMLParseResult&lt;<span class="self">Self</span>, E&gt;;
+    </span><span class="kw">fn </span>parse&lt;E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;&gt;(i: ParserState&lt;<span class="lifetime">'a</span>&gt;) -&gt; AMLParseResult&lt;<span class="self">Self</span>, E&gt;;
 }
 
 
 <span class="doccomment">/// Alias for type returned by AML parsers
-</span><span class="kw">pub type </span>AMLParseResult&lt;<span class="lifetime">&#39;a</span>, T, E&gt; = IResult&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;, T, E&gt;;
+</span><span class="kw">pub type </span>AMLParseResult&lt;<span class="lifetime">'a</span>, T, E&gt; = IResult&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;, T, E&gt;;
 
 
-<span class="doccomment">/// Trait &quot;alias&quot; for error type used by AML parsers
-</span><span class="kw">pub trait </span>AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;: ReplaceableParseError&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], ParserState&lt;<span class="lifetime">&#39;a</span>&gt;&gt; {}
+<span class="doccomment">/// Trait "alias" for error type used by AML parsers
+</span><span class="kw">pub trait </span>AMLParseError&lt;<span class="lifetime">'a</span>&gt;: ReplaceableParseError&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ParserState&lt;<span class="lifetime">'a</span>&gt;&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>T <span class="kw">where
-    </span>T: ReplaceableParseError&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], ParserState&lt;<span class="lifetime">&#39;a</span>&gt;&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; AMLParseError&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>T <span class="kw">where
+    </span>T: ReplaceableParseError&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ParserState&lt;<span class="lifetime">'a</span>&gt;&gt;
 {
 }
 
@@ -3074,14 +3075,14 @@
 
     <span class="doccomment">/// Input data plus context needed to disambiguate grammar
     </span><span class="attr">#[derive(Debug, Default, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub struct </span>ParserState&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub </span>data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+    </span><span class="kw">pub struct </span>ParserState&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">pub </span>data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
         <span class="kw">pub </span>current_scope: Vec&lt;NameSeg&gt;,
         <span class="kw">pub </span>method_signatures: Vec&lt;MethodSignature&gt;,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ParserState&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub fn </span>new(data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; <span class="self">Self </span>{
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ParserState&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">pub fn </span>new(data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{ data, current_scope: <span class="macro">vec!</span>[], method_signatures: <span class="macro">vec!</span>[] }
         }
 
@@ -3105,10 +3106,10 @@
             <span class="self">self</span>,
             new_scope: <span class="kw-2">&amp;</span>NameString,
             <span class="kw-2">mut </span>parser: P,
-        ) -&gt; AMLParseResult&lt;<span class="lifetime">&#39;a</span>, O, E&gt;
+        ) -&gt; AMLParseResult&lt;<span class="lifetime">'a</span>, O, E&gt;
         <span class="kw">where
-            </span>P: Parser&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;, O, E&gt;,
-            E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;,
+            </span>P: Parser&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;, O, E&gt;,
+            E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;,
         {
             <span class="kw">let </span><span class="prelude-val">Some</span>(new_scope_abs) = new_scope.resolve_as_decl(<span class="kw-2">&amp;</span><span class="self">self</span>.current_scope)
             <span class="kw">else </span>{
@@ -3128,10 +3129,10 @@
         <span class="doccomment">/// Wraps a byte-oriented parser to work with `ParserState`
         </span><span class="kw">pub fn </span>lift&lt;P, O, E&gt;(
             <span class="kw-2">mut </span>parser: P,
-        ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
+        ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">'a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
         <span class="kw">where
-            </span>P: Parser&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], O, E::From&gt;,
-            E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;,
+            </span>P: Parser&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], O, E::From&gt;,
+            E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;,
         {
             <span class="kw">move </span>|input| <span class="kw">match </span>parser.parse(input.data) {
                 <span class="prelude-val">Ok</span>((output_data, output_value)) =&gt; {
@@ -3148,22 +3149,22 @@
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; AsBytes <span class="kw">for </span>ParserState&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; AsBytes <span class="kw">for </span>ParserState&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
             <span class="self">self</span>.data
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; <span class="kw">for </span>ParserState&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">fn </span>from(data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; <span class="self">Self </span>{
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; <span class="kw">for </span>ParserState&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">fn </span>from(data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; <span class="self">Self </span>{
             <span class="self">Self</span>::new(data)
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InputIter <span class="kw">for </span>ParserState&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">type </span>Item = &lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] <span class="kw">as </span>InputIter&gt;::Item;
-        <span class="kw">type </span>Iter = &lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] <span class="kw">as </span>InputIter&gt;::Iter;
-        <span class="kw">type </span>IterElem = &lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] <span class="kw">as </span>InputIter&gt;::IterElem;
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; InputIter <span class="kw">for </span>ParserState&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">type </span>Item = &lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] <span class="kw">as </span>InputIter&gt;::Item;
+        <span class="kw">type </span>Iter = &lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] <span class="kw">as </span>InputIter&gt;::Iter;
+        <span class="kw">type </span>IterElem = &lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] <span class="kw">as </span>InputIter&gt;::IterElem;
         <span class="kw">fn </span>iter_indices(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::Iter {
             <span class="self">self</span>.data.iter_indices()
         }
@@ -3178,7 +3179,7 @@
         }
     }
 
-    <span class="kw">impl </span>InputLength <span class="kw">for </span>ParserState&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">impl </span>InputLength <span class="kw">for </span>ParserState&lt;<span class="lifetime">'_</span>&gt; {
         <span class="kw">fn </span>input_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
             <span class="self">self</span>.data.input_len()
         }
@@ -3202,7 +3203,7 @@
 
     <span class="kw">impl</span>&lt;F, T&gt; ReplaceableParseError&lt;F, T&gt; <span class="kw">for </span>() {
         <span class="kw">type </span>From = ();
-        <span class="kw">fn </span>replace_input(<span class="kw">_</span>: <span class="self">Self</span>::From, <span class="kw">_</span>: T) -&gt; <span class="self">Self </span>{}
+        <span class="kw">fn </span>replace_input((): <span class="self">Self</span>::From, <span class="kw">_</span>: T) -&gt; <span class="self">Self </span>{}
     }
 
     <span class="kw">impl</span>&lt;F, T: Clone&gt; ReplaceableParseError&lt;F, T&gt; <span class="kw">for </span>VerboseError&lt;T&gt; {
@@ -3241,8 +3242,8 @@
             -&gt; <span class="macro-nonterminal">$out</span>:ty
             = <span class="macro-nonterminal">$nom_parser</span>:expr
         ] =&gt; {
-            <span class="kw">pub fn </span><span class="macro-nonterminal">$parser</span>&lt;<span class="lifetime">&#39;a</span>, E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;&gt;(
-                i: ParserState&lt;<span class="lifetime">&#39;a</span>&gt;
+            <span class="kw">pub fn </span><span class="macro-nonterminal">$parser</span>&lt;<span class="lifetime">'a</span>, E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;&gt;(
+                i: ParserState&lt;<span class="lifetime">'a</span>&gt;
             ) -&gt; AMLParseResult&lt;<span class="macro-nonterminal">$out</span>, E&gt; {
                 <span class="comment">// Hopefully rustc is smart enough to optimize away the closure
                 </span>ParserState::lift(<span class="macro-nonterminal">$nom_parser</span>)(i)
@@ -3291,8 +3292,9 @@
             <span class="macro-nonterminal">$imp</span>:block
         ] =&gt; {
             $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>]</span>)*
-            <span class="macro-nonterminal">$vis </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>&lt;<span class="lifetime">&#39;a</span>, E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;&gt;(
-                <span class="macro-nonterminal">$input</span>: ParserState&lt;<span class="lifetime">&#39;a</span>&gt;
+            <span class="attr">#[allow(clippy::missing_errors_doc)]
+            </span><span class="macro-nonterminal">$vis </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>&lt;<span class="lifetime">'a</span>, E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;&gt;(
+                <span class="macro-nonterminal">$input</span>: ParserState&lt;<span class="lifetime">'a</span>&gt;
             ) -&gt; AMLParseResult&lt;<span class="macro-nonterminal">$ret_typ</span>, E&gt; <span class="macro-nonterminal">$imp
         </span>};
 
@@ -3311,11 +3313,11 @@
     }
 
     <span class="doccomment">/// Recognizes a single byte. Possibly slightly more efficient than `bytes::tag()`
-    /// with a one-byte string, but I didn&#39;t actually profile it.
-    </span><span class="kw">pub fn </span>tag_byte&lt;<span class="lifetime">&#39;a</span>, E: ParseError&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;&gt;&gt;(
+    /// with a one-byte string, but I didn't actually profile it.
+    </span><span class="kw">pub fn </span>tag_byte&lt;<span class="lifetime">'a</span>, E: ParseError&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;&gt;&gt;(
         b: u8,
-    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; AMLParseResult&lt;u8, E&gt; {
-        <span class="kw">move </span>|i: ParserState&lt;<span class="lifetime">&#39;_</span>&gt;| {
+    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">'a</span>&gt;) -&gt; AMLParseResult&lt;u8, E&gt; {
+        <span class="kw">move </span>|i: ParserState&lt;<span class="lifetime">'_</span>&gt;| {
             <span class="kw">if </span>i.data.is_empty() {
                 err(i, ErrorKind::Tag)
             } <span class="kw">else if </span>i.data[<span class="number">0</span>] == b {
@@ -3329,16 +3331,16 @@
 
     <span class="doccomment">/// Combinator for two-byte extended opcodes
     ///
-    /// Grammar defined under §20.2.3 (&quot;Data Objects Encoding&quot;):
+    /// Grammar defined under §20.2.3 ("Data Objects Encoding"):
     /// ```text
     /// ExtOpPrefix := 0x5B
     /// ```
-    </span><span class="kw">pub fn </span>ext_op&lt;<span class="lifetime">&#39;a</span>, O, E, P&gt;(
+    </span><span class="kw">pub fn </span>ext_op&lt;<span class="lifetime">'a</span>, O, E, P&gt;(
         p: P,
-    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
+    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">'a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
     <span class="kw">where
-        </span>P: Parser&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;, O, E&gt;,
-        E: ParseError&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+        </span>P: Parser&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;, O, E&gt;,
+        E: ParseError&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;&gt;,
     {
         preceded(tag_byte(<span class="number">0x5b</span>), p)
     }
@@ -3353,7 +3355,7 @@
             <span class="comment">// Make sure we stopped at a null (not a non-ASCII byte or early end) and
             // consume it
             </span><span class="kw">let </span>(i, <span class="kw">_</span>) = tag_byte(<span class="number">0x00</span>)(i)<span class="question-mark">?</span>;
-            <span class="comment">// SAFETY: We just checked that this is ASCII, so it&#39;s also valid UTF-8
+            <span class="comment">// SAFETY: We just checked that this is ASCII, so it's also valid UTF-8
             </span><span class="kw">let </span>str_utf8 = <span class="kw">unsafe </span>{
                 core::str::from_utf8_unchecked(str_bytes)
             };
@@ -3380,16 +3382,16 @@
     /// DigitChar    := ‘0’-‘9’
     /// NameChar     := DigitChar | LeadNameChar
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>NameSeg {
-        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">&#39;a </span>i) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>NameSeg {
+        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">'a </span>i) -&gt; <span class="self">Self </span>{
             <span class="kw">const fn </span>is_lead_name_char(b: u8) -&gt; bool {
                 <span class="attr">#![allow(clippy::manual_range_contains)] </span><span class="comment">// Spurious: not allowed in const
-                </span>b &gt;= <span class="string">b&#39;A&#39; </span>&amp;&amp; b &lt;= <span class="string">b&#39;Z&#39; </span>|| b == <span class="string">b&#39;_&#39;
+                </span>b &gt;= <span class="string">b'A' </span>&amp;&amp; b &lt;= <span class="string">b'Z' </span>|| b == <span class="string">b'_'
             </span>}
 
             <span class="kw">const fn </span>is_name_char(b: u8) -&gt; bool {
                 <span class="attr">#![allow(clippy::manual_range_contains)] </span><span class="comment">// Spurious: not allowed in const
-                </span>is_lead_name_char(b) || b &gt;= <span class="string">b&#39;0&#39; </span>&amp;&amp; b &lt;= <span class="string">b&#39;9&#39;
+                </span>is_lead_name_char(b) || b &gt;= <span class="string">b'0' </span>&amp;&amp; b &lt;= <span class="string">b'9'
             </span>}
 
             <span class="kw">const fn </span>is_name_seg(n: <span class="kw-2">&amp;</span>[u8]) -&gt; bool {
@@ -3426,9 +3428,9 @@
     ///
     /// SegCount         := ByteData
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>NameString {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>NameString {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= <span class="macro">struct_parser! </span>{
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= <span class="macro">struct_parser! </span>{
                 NameString {
                     anchor: PathAnchor::parse,
                     path: alt((
@@ -3445,7 +3447,7 @@
     <span class="macro">parser_fn! </span>{
         <span class="doccomment">/// See grammar for [`NameString`]
         </span>dual_name -&gt; Vec&lt;NameSeg&gt; = opcode(
-            <span class="string">&quot;name segments (2)&quot;</span>,
+            <span class="string">"name segments (2)"</span>,
             tag_byte(<span class="number">0x2e</span>),
             multi::count(NameSeg::parse, <span class="number">2</span>),
         )
@@ -3454,7 +3456,7 @@
     <span class="macro">parser_fn! </span>{
         <span class="doccomment">/// See grammar for [`NameString`]
         </span>multi_name -&gt; Vec&lt;NameSeg&gt; = opcode(
-            <span class="string">&quot;name segments&quot;</span>,
+            <span class="string">"name segments"</span>,
             tag_byte(<span class="number">0x2f</span>),
             flat_map(num::le_u8, |n| multi::count(NameSeg::parse, n.into())),
         )
@@ -3462,13 +3464,13 @@
 
 
     <span class="doccomment">/// See grammar for [`NameString`].
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>PathAnchor {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>PathAnchor {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 <span class="comment">// Single root anchor, or
-                </span>value(<span class="self">Self</span>::Root, tag_byte(<span class="string">b&#39;\\&#39;</span>)),
+                </span>value(<span class="self">Self</span>::Root, tag_byte(<span class="string">b'\\'</span>)),
                 <span class="comment">// 0-n parent prefix anchors
-                </span>map(multi::many0_count(tag_byte(<span class="string">b&#39;^&#39;</span>)), <span class="self">Self</span>::Parent),
+                </span>map(multi::many0_count(tag_byte(<span class="string">b'^'</span>)), <span class="self">Self</span>::Parent),
             ))
         }
     }
@@ -3479,9 +3481,9 @@
     /// ```text
     /// SimpleName := NameString | ArgObj | LocalObj
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>SimpleName {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>SimpleName {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 map(NameString::parse, <span class="self">Self</span>::Name),
                 map(ArgObject::parse, <span class="self">Self</span>::Arg),
                 map(LocalObject::parse, <span class="self">Self</span>::Local),
@@ -3499,9 +3501,9 @@
     /// Despite the order given in the grammar, we have to try `Type6Opcode` **before**
     /// `SimpleName`. `Type6Opcode` includes method calls, which would never be reached if
     /// `SimpleName` slurped up the method name first.
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>SuperName&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>SuperName&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 value(<span class="self">Self</span>::Debug, DebugObject::parse),
                 map(ReferenceExpressionOpcode::parse, |r| <span class="self">Self</span>::Reference(Box::new(r))),
                 map(SimpleName::parse, <span class="self">Self</span>::Name),
@@ -3515,10 +3517,10 @@
         /// This is needed by some operators where invocations are not allowed, but bare
         /// `NameString` references are---including method references. The standard
         /// `SuperName` parser would try to parse it as an invocation first.
-        </span><span class="kw">pub </span>super_name_minus_invoke -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; = alt((
+        </span><span class="kw">pub </span>super_name_minus_invoke -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; = alt((
             map(SimpleName::parse, SuperName::Name),
             value(SuperName::Debug, DebugObject::parse),
-            <span class="comment">// We don&#39;t need a special RefExpOp parser that excludes invocations. They
+            <span class="comment">// We don't need a special RefExpOp parser that excludes invocations. They
             // will be slurped up by the SimpleName parser first.
             </span>map(ReferenceExpressionOpcode::parse, |r| SuperName::Reference(Box::new(r))),
         ))
@@ -3582,15 +3584,15 @@
     /// OnesOp            := 0xFF
     /// RevisionOp        := ExtOpPrefix 0x30
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>ComputationalData&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
-                map(opcode(<span class="string">&quot;u8 literal&quot;</span>,     tag_byte(<span class="number">0x0a</span>), num::le_u8),  <span class="self">Self</span>::Byte),
-                map(opcode(<span class="string">&quot;u16 literal&quot;</span>,    tag_byte(<span class="number">0x0b</span>), num::le_u16), <span class="self">Self</span>::Word),
-                map(opcode(<span class="string">&quot;u32 literal&quot;</span>,    tag_byte(<span class="number">0x0c</span>), num::le_u32), <span class="self">Self</span>::DWord),
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+                map(opcode(<span class="string">"u8 literal"</span>,     tag_byte(<span class="number">0x0a</span>), num::le_u8),  <span class="self">Self</span>::Byte),
+                map(opcode(<span class="string">"u16 literal"</span>,    tag_byte(<span class="number">0x0b</span>), num::le_u16), <span class="self">Self</span>::Word),
+                map(opcode(<span class="string">"u32 literal"</span>,    tag_byte(<span class="number">0x0c</span>), num::le_u32), <span class="self">Self</span>::DWord),
                 <span class="comment">// NOTE: These two are out of order, but this is how the spec lists it
-                </span>map(opcode(<span class="string">&quot;u64 literal&quot;</span>,    tag_byte(<span class="number">0x0e</span>), num::le_u64), <span class="self">Self</span>::QWord),
-                map(opcode(<span class="string">&quot;string literal&quot;</span>, tag_byte(<span class="number">0x0d</span>), c_ascii_str), <span class="self">Self</span>::String),
+                </span>map(opcode(<span class="string">"u64 literal"</span>,    tag_byte(<span class="number">0x0e</span>), num::le_u64), <span class="self">Self</span>::QWord),
+                map(opcode(<span class="string">"string literal"</span>, tag_byte(<span class="number">0x0d</span>), c_ascii_str), <span class="self">Self</span>::String),
                 value(<span class="self">Self</span>::Zero, tag_byte(<span class="number">0x00</span>)),
                 value(<span class="self">Self</span>::One, tag_byte(<span class="number">0x01</span>)),
                 value(<span class="self">Self</span>::Ones, tag_byte(<span class="number">0xff</span>)),
@@ -3607,10 +3609,10 @@
     /// BufferOp   := 0x11
     /// BufferSize := TermArg =&gt; Integer
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>Buffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>Buffer&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
-                <span class="string">&quot;buffer&quot;</span>,
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
+                <span class="string">"buffer"</span>,
                 tag_byte(<span class="number">0x11</span>),
                 in_package(<span class="macro">struct_parser! </span>{
                     Buffer {
@@ -3629,10 +3631,10 @@
     /// PackageOp   := 0x12
     /// NumElements := ByteData
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>Package&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>Package&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
-                <span class="string">&quot;package&quot;</span>,
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
+                <span class="string">"package"</span>,
                 tag_byte(<span class="number">0x12</span>),
                 in_package(<span class="macro">struct_parser! </span>{
                     Package {
@@ -3651,10 +3653,10 @@
     /// VarPackageOp   := 0x13
     /// VarNumElements := TermArg =&gt; Integer
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>VarPackage&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>VarPackage&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
-                <span class="string">&quot;package (variable-length)&quot;</span>,
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= opcode(
+                <span class="string">"package (variable-length)"</span>,
                 tag_byte(<span class="number">0x13</span>),
                 in_package(<span class="macro">struct_parser! </span>{
                     VarPackage {
@@ -3672,9 +3674,9 @@
     /// PackageElementList := Nothing | &lt;PackageElement PackageElementList&gt;
     /// PackageElement     := DataRefObject | NameString
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>PackageElement&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>PackageElement&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 map(DataRefObject::parse, <span class="self">Self</span>::Ref),
                 map(NameString::parse, <span class="self">Self</span>::Name),
             ))
@@ -3686,9 +3688,9 @@
     /// ```text
     /// DataObject := ComputationalData | DefPackage | DefVarPackage
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>DataObject&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DataObject&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 map(ComputationalData::parse, <span class="self">Self</span>::Data),
                 map(Package::parse, <span class="self">Self</span>::Package),
                 map(VarPackage::parse, <span class="self">Self</span>::VarPackage),
@@ -3711,19 +3713,19 @@
     ///
     /// However, it is unclear how these two types would be encoded in AML and how they
     /// would be distinguished from each other, or from the integral constants under
-    /// `ComputationalData`. Consequently, they aren&#39;t implemented
+    /// `ComputationalData`. Consequently, they aren't implemented
     ///
     /// TODO: Figure out why this production exists, and get rid of it if it is no
     /// different than [`DataObject`].
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DataRefObject&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= map(DataObject::parse, DataRefObject::Data)
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= map(DataObject::parse, DataRefObject::Data)
         }
     }
 }
 
 
-<span class="doccomment">/// Variable-length &quot;package&quot; encoding, defined in §20.2.4
+<span class="doccomment">/// Variable-length "package" encoding, defined in §20.2.4
 </span><span class="kw">mod </span>package {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>nom::Parser;
@@ -3740,7 +3742,7 @@
         </span><span class="kw">pub </span>body_length: <span class="prelude-ty">Option</span>&lt;u32&gt;,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>PackageLength {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>PackageLength {
         <span class="macro">parser_fn! </span>{
             <span class="doccomment">/// Grammar:
             /// ```text
@@ -3759,7 +3761,7 @@
             /// If multiple bytes are used, the least-significant nibble comes from the
             /// lower nibble `PkgLeadByte`, then the next two nibbles come from the next byte,
             /// and so on.
-            </span>parse(<span class="lifetime">&#39;a </span>i) -&gt; PackageLength {
+            </span>parse(<span class="lifetime">'a </span>i) -&gt; PackageLength {
                 <span class="kw">let </span>(i, head_byte) = num::le_u8(i)<span class="question-mark">?</span>;
                 <span class="kw">let </span>tail_byte_count = head_byte &gt;&gt; <span class="number">6</span>;
                 <span class="kw">let </span>length_low = u32::from(head_byte &amp; <span class="number">0x0f</span>);
@@ -3777,7 +3779,7 @@
                         <span class="kw">let </span>(i, tail_bytes) = num::le_u24(i)<span class="question-mark">?</span>;
                         (i, tail_bytes &lt;&lt; <span class="number">4</span>)
                     }
-                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Somehow got a value &gt;= 4 from a two bit field&quot;</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Somehow got a value &gt;= 4 from a two bit field"</span>),
                 };
                 <span class="kw">let </span>total_length = length_high | length_low;
                 <span class="kw">let </span>body_length = total_length.checked_sub((tail_byte_count + <span class="number">1</span>).into());
@@ -3787,7 +3789,7 @@
     }
 
     <span class="macro">parser_fn! </span>{
-        <span class="doccomment">/// Parse a length value uses &quot;package&quot; encoding but is not actually followed by
+        <span class="doccomment">/// Parse a length value uses "package" encoding but is not actually followed by
         /// content.
         </span><span class="kw">pub </span>standalone_package_length -&gt; u32 = map(
             PackageLength::parse,
@@ -3796,15 +3798,15 @@
     }
 
     <span class="doccomment">/// Execute a parser inside a length-prefixed package
-    </span><span class="kw">pub fn </span>in_package&lt;<span class="lifetime">&#39;a</span>, P, O, E&gt;(
+    </span><span class="kw">pub fn </span>in_package&lt;<span class="lifetime">'a</span>, P, O, E&gt;(
         inner_parser: P,
-    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
+    ) -&gt; <span class="kw">impl </span>FnMut(ParserState&lt;<span class="lifetime">'a</span>&gt;) -&gt; AMLParseResult&lt;O, E&gt;
     <span class="kw">where
-        </span>P: Parser&lt;ParserState&lt;<span class="lifetime">&#39;a</span>&gt;, O, E&gt;,
-        E: AMLParseError&lt;<span class="lifetime">&#39;a</span>&gt;,
+        </span>P: Parser&lt;ParserState&lt;<span class="lifetime">'a</span>&gt;, O, E&gt;,
+        E: AMLParseError&lt;<span class="lifetime">'a</span>&gt;,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>consuming_inner_parser = all_consuming(inner_parser);
-        <span class="kw">move </span>|outer_state: ParserState&lt;<span class="lifetime">&#39;a</span>&gt;| {
+        <span class="kw">move </span>|outer_state: ParserState&lt;<span class="lifetime">'a</span>&gt;| {
             <span class="kw">let </span>(outer_state, package_length) = PackageLength::parse(outer_state)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="prelude-val">Some</span>(body_length) = package_length.body_length <span class="kw">else </span>{
                 <span class="kw">return </span>err(outer_state, ErrorKind::Verify);
@@ -3843,9 +3845,9 @@
     /// TermList := Nothing | &lt;TermObj TermList&gt;
     /// Object   := NameSpaceModifierObj | NamedObj
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>TermObject&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>TermObject&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 map(NameSpaceModifier::parse, |x| <span class="self">Self</span>::Modifier(Box::new(x))),
                 map(NamedObject::parse,       |x| <span class="self">Self</span>::Named(Box::new(x))),
                 map(StatementOpcode::parse,   |x| <span class="self">Self</span>::Statement(Box::new(x))),
@@ -3863,14 +3865,14 @@
     /// ```
     ///
     /// Note that this syntax does not list `NameString`s as valid `TermArgs`, except as
-    /// part of `MethodInvocation` under `Type6Opcode`. However, it&#39;s abundantly clear
+    /// part of `MethodInvocation` under `Type6Opcode`. However, it's abundantly clear
     /// that names can be used as references to their values anywhere a term argument is
     /// expected. Tests with the ACPICA compiler confirm this. However, bare names are
-    /// *not* allowed in `TermObj` positions, so it isn&#39;t appropriate to add them to
+    /// *not* allowed in `TermObj` positions, so it isn't appropriate to add them to
     /// `Type2Opcode` ([`ExpressionOpcode`]), and we have to add it to `TermArg` instead.
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>TermArg&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>TermArg&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 map(ExpressionOpcode::parse, |x| <span class="self">Self</span>::Expression(Box::new(x))),
                 map(DataObject::parse,       |x| <span class="self">Self</span>::Data(Box::new(x))),
                 map(ArgObject::parse,            <span class="self">Self</span>::Arg),
@@ -3886,9 +3888,9 @@
     /// ```text
     /// NameSpaceModifierObj := DefAlias | DefName | DefScope
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 parse_alias,
                 parse_name,
                 parse_scope,
@@ -3903,8 +3905,8 @@
         /// DefAlias := AliasOp NameString NameString
         /// AliasOp  := 0x06
         /// ```
-        </span>parse_alias -&gt; NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;alias definition&quot;</span>,
+        </span>parse_alias -&gt; NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"alias definition"</span>,
             tag_byte(<span class="number">0x06</span>),
             |i| {
                 <span class="kw">let </span>(i, source) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -3934,8 +3936,8 @@
         /// DefName := NameOp NameString DataRefObject
         /// NameOp  := 0x08
         /// ```
-        </span>parse_name -&gt; NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;name definition&quot;</span>,
+        </span>parse_name -&gt; NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"name definition"</span>,
             tag_byte(<span class="number">0x08</span>),
             <span class="macro">struct_parser! </span>{
                 NameSpaceModifier::Name(
@@ -3953,8 +3955,8 @@
         /// DefScope := ScopeOp PkgLength NameString TermList
         /// ScopeOp  := 0x10
         /// ```
-        </span>parse_scope -&gt; NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;scope&quot;</span>,
+        </span>parse_scope -&gt; NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"scope"</span>,
             tag_byte(<span class="number">0x10</span>),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -3985,9 +3987,9 @@
     ///   * `DefIndexField`
     ///   * `DefMethod`
     ///   * `DefMutex`
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>NamedObject&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 bank_field,
                 create_bit_field,
                 create_byte_field,
@@ -4019,8 +4021,8 @@
         /// BankFieldOp  := ExtOpPrefix 0x87
         /// BankValue    := TermArg =&gt; Integer
         /// ```
-        </span>bank_field -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;bank field group&quot;</span>,
+        </span>bank_field -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"bank field group"</span>,
             ext_op(tag_byte(<span class="number">0x87</span>)),
             in_package(<span class="macro">struct_parser! </span>{
                 NamedObject::BankField {
@@ -4043,8 +4045,8 @@
         /// SourceBuff           := TermArg =&gt; Buffer
         /// BitIndex             := TermArg =&gt; Integer
         /// ```
-        </span>create_bit_field -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;bit field&quot;</span>,
+        </span>create_bit_field -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"bit field"</span>,
             tag_byte(<span class="number">0x8d</span>),
             <span class="macro">struct_parser! </span>{
                 NamedObject::CreateBitField {
@@ -4060,7 +4062,7 @@
         [$(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)* <span class="macro-nonterminal">$parser_name</span>:ident <span class="macro-nonterminal">$</span><span class="kw">struct</span>:<span class="macro-nonterminal">ident $desc</span>:literal <span class="macro-nonterminal">$tag</span>:literal] =&gt; {
             <span class="macro">parser_fn! </span>{
                 $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>]</span>)*
-                <span class="macro-nonterminal">$parser_name </span>-&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
+                <span class="macro-nonterminal">$parser_name </span>-&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
                     <span class="macro-nonterminal">$desc</span>,
                     tag_byte(<span class="macro-nonterminal">$tag</span>),
                     <span class="macro">struct_parser! </span>{
@@ -4083,7 +4085,7 @@
         /// CreateByteFieldOp    := 0x8C
         /// ByteIndex            := TermArg =&gt; Integer
         /// ```
-        </span>create_byte_field CreateByteField <span class="string">&quot;u8 field&quot; </span><span class="number">0x8c
+        </span>create_byte_field CreateByteField <span class="string">"u8 field" </span><span class="number">0x8c
     </span>}
 
     <span class="macro">parse_create_sized_field! </span>{
@@ -4093,7 +4095,7 @@
         /// DefCreateWordField   := CreateWordFieldOp SourceBuff ByteIndex NameString
         /// CreateWordFieldOp    := 0x8B
         /// ```
-        </span>create_word_field CreateWordField <span class="string">&quot;u16 field&quot; </span><span class="number">0x8b
+        </span>create_word_field CreateWordField <span class="string">"u16 field" </span><span class="number">0x8b
     </span>}
 
     <span class="macro">parse_create_sized_field! </span>{
@@ -4103,7 +4105,7 @@
         /// DefCreateDWordField  := CreateDWordFieldOp SourceBuff ByteIndex NameString
         /// CreateDWordFieldOp   := 0x8A
         /// ```
-        </span>create_dword_field CreateDWordField <span class="string">&quot;u32 field&quot; </span><span class="number">0x8a
+        </span>create_dword_field CreateDWordField <span class="string">"u32 field" </span><span class="number">0x8a
     </span>}
 
     <span class="macro">parse_create_sized_field! </span>{
@@ -4113,7 +4115,7 @@
         /// DefCreateQWordField  := CreateQWordFieldOp SourceBuff ByteIndex NameString
         /// CreateQWordFieldOp   := 0x8F
         /// ```
-        </span>create_qword_field CreateQWordField <span class="string">&quot;u64 field&quot; </span><span class="number">0x8f
+        </span>create_qword_field CreateQWordField <span class="string">"u64 field" </span><span class="number">0x8f
     </span>}
 
     <span class="macro">parser_fn! </span>{
@@ -4124,8 +4126,8 @@
         /// CreateFieldOp        := ExtOpPrefix 0x13
         /// NumBits              := TermArg =&gt; Integer
         /// ```
-        </span>create_field -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;custom-length field&quot;</span>,
+        </span>create_field -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"custom-length field"</span>,
             ext_op(tag_byte(<span class="number">0x13</span>)),
             <span class="macro">struct_parser! </span>{
                 NamedObject::CreateField {
@@ -4145,8 +4147,8 @@
         /// DefDataRegion        := DataRegionOp NameString TermArg TermArg TermArg
         /// DataRegionOp         := ExtOpPrefix 0x88
         /// ```
-        </span>data_table_region -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;data region&quot;</span>,
+        </span>data_table_region -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"data region"</span>,
             ext_op(tag_byte(<span class="number">0x88</span>)),
             <span class="macro">struct_parser! </span>{
                 NamedObject::DataTableRegion {
@@ -4166,8 +4168,8 @@
         /// DefDevice            := DeviceOp PkgLength NameString TermList
         /// DeviceOp             := ExtOpPrefix 0x82
         /// ```
-        </span>device -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;device&quot;</span>,
+        </span>device -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"device"</span>,
             ext_op(tag_byte(<span class="number">0x82</span>)),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4184,8 +4186,8 @@
         /// DefEvent             := EventOp NameString
         /// EventOp              := ExtOpPrefix 0x02
         /// ```
-        </span>event -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;event&quot;</span>,
+        </span>event -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"event"</span>,
             ext_op(tag_byte(<span class="number">0x02</span>)),
             map(NameString::parse, NamedObject::Event),
         )
@@ -4200,8 +4202,8 @@
         /// ObjectType           := ByteData
         /// ArgumentCount        := ByteData (0 – 7)
         /// ```
-        </span>external -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;external declaration&quot;</span>,
+        </span>external -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"external declaration"</span>,
             tag_byte(<span class="number">0x15</span>),
             |i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4231,8 +4233,8 @@
         /// DefField             := FieldOp PkgLength NameString FieldFlags FieldList
         /// FieldOp              := ExtOpPrefix 0x81
         /// ```
-        </span>field -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;field group&quot;</span>,
+        </span>field -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"field group"</span>,
             ext_op(tag_byte(<span class="number">0x81</span>)),
             in_package(<span class="macro">struct_parser! </span>{
                 NamedObject::Field {
@@ -4251,8 +4253,8 @@
         /// DefIndexField        := IndexFieldOp PkgLength NameString NameString FieldFlags FieldList
         /// IndexFieldOp         := ExtOpPrefix 0x86
         /// ```
-        </span>index_field -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;indexed field group&quot;</span>,
+        </span>index_field -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"indexed field group"</span>,
             ext_op(tag_byte(<span class="number">0x86</span>)),
             in_package(<span class="macro">struct_parser! </span>{
                 NamedObject::IndexField {
@@ -4272,8 +4274,8 @@
         /// DefMethod            := MethodOp PkgLength NameString MethodFlags TermList
         /// MethodOp             := 0x14
         /// ```
-        </span>method -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;method definition&quot;</span>,
+        </span>method -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"method definition"</span>,
             tag_byte(<span class="number">0x14</span>),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4294,8 +4296,8 @@
                 <span class="comment">// NOTE: Method scopes are weird. They are temporary, but still global.
                 // Any objects they create are visible from outside... but only until the
                 // method exits. If some insane person defined a method inside a method,
-                // we will leave it inside our method signature list, but that doesn&#39;t
-                // guarantee it&#39;s actually accessible. Leave that problem for runtime.
+                // we will leave it inside our method signature list, but that doesn't
+                // guarantee it's actually accessible. Leave that problem for runtime.
                 </span>i.current_scope = abs_name;
                 <span class="kw">let </span>(<span class="kw-2">mut </span>i, body) = multi::many0(TermObject::parse)(i)<span class="question-mark">?</span>;
                 i.current_scope = outer_scope;
@@ -4320,8 +4322,8 @@
         ///     // bit 0-3: SyncLevel (0x00-0x0f)
         ///     // bit 4-7: Reserved (must be 0)
         /// ```
-        </span>mutex -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;mutex&quot;</span>,
+        </span>mutex -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"mutex"</span>,
             ext_op(tag_byte(<span class="number">0x01</span>)),
             <span class="macro">struct_parser! </span>{
                 NamedObject::Mutex {
@@ -4341,8 +4343,8 @@
         /// RegionOffset         := TermArg =&gt; Integer
         /// RegionLen            := TermArg =&gt; Integer
         /// ```
-        </span>operation_region -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;region declaration&quot;</span>,
+        </span>operation_region -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"region declaration"</span>,
             ext_op(tag_byte(<span class="number">0x80</span>)),
             <span class="macro">struct_parser! </span>{
                 NamedObject::OperationRegion {
@@ -4364,8 +4366,8 @@
         /// SystemLevel          := ByteData
         /// ResourceOrder        := WordData
         /// ```
-        </span>power_resource -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;power resource&quot;</span>,
+        </span>power_resource -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"power resource"</span>,
             ext_op(tag_byte(<span class="number">0x84</span>)),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4393,8 +4395,8 @@
         /// PblkAddr             := DWordData
         /// PblkLen              := ByteData
         /// ```
-        </span>processor -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;processor&quot;</span>,
+        </span>processor -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"processor"</span>,
             ext_op(tag_byte(<span class="number">0x83</span>)),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4421,8 +4423,8 @@
         /// DefThermalZone       := ThermalZoneOp PkgLength NameString TermList
         /// ThermalZoneOp        := ExtOpPrefix 0x85
         /// ```
-        </span>thermal_zone -&gt; NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;thermal zone&quot;</span>,
+        </span>thermal_zone -&gt; NamedObject&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"thermal zone"</span>,
             ext_op(tag_byte(<span class="number">0x85</span>)),
             in_package(|i| {
                 <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
@@ -4455,8 +4457,8 @@
     ///     //          2    WriteAsZeros
     ///     // bit 7:   Reserved (must be 0)
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>FieldFlags {
-        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">&#39;a </span>i) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>FieldFlags {
+        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">'a </span>i) -&gt; <span class="self">Self </span>{
             <span class="kw">let </span>(i, b) = num::le_u8(i)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="prelude-val">Ok</span>(access_type) = AccessType::try_from(b &amp; <span class="number">0x0f</span>) <span class="kw">else </span>{
                 <span class="kw">return </span>err(i, ErrorKind::Tag)
@@ -4532,15 +4534,15 @@
     ///   * The ACPICA parser expects `BufferData` to be a `DefBuffer` op.
     ///   * The `ConnectField` op in split into two enum variants to avoid another level
     ///     of indirection.
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>FieldElement&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>FieldElement&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
-                context(<span class="string">&quot;named field&quot;</span>, <span class="macro">struct_parser!</span>(<span class="self">Self</span>::Named {
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+                context(<span class="string">"named field"</span>, <span class="macro">struct_parser!</span>(<span class="self">Self</span>::Named {
                         name: NameSeg::parse,
                         bit_length: standalone_package_length,
                 })),
                 opcode(
-                    <span class="string">&quot;reserved field&quot;</span>,
+                    <span class="string">"reserved field"</span>,
                     tag_byte(<span class="number">0x00</span>),
                     <span class="macro">struct_parser!</span>(<span class="self">Self</span>::Reserved {
                         bit_length: standalone_package_length,
@@ -4549,7 +4551,7 @@
                 access_field,
                 extended_access_field,
                 opcode(
-                    <span class="string">&quot;connect field&quot;</span>,
+                    <span class="string">"connect field"</span>,
                     tag_byte(<span class="number">0x02</span>),
                     alt((
                         map(NameString::parse, <span class="self">Self</span>::ConnectNamed),
@@ -4573,7 +4575,7 @@
         ///     //            1 = AccessAttrib = AttribBytes (x)
         ///     //            2 = AccessAttrib = AttribRawBytes (x)
         ///     //            3 = AccessAttrib = AttribRawProcessBytes (x)
-        ///     //            x&#39; is encoded as bits 0:7 of the AccessAttrib byte.
+        ///     //            x' is encoded as bits 0:7 of the AccessAttrib byte.
         ///
         /// AccessAttrib  := ByteData
         ///     // If AccessType is BufferAcc for the SMB or
@@ -4587,8 +4589,8 @@
         ///     //    0x0C   AttribProcessCall
         ///     //    0x0D   AttribBlockProcessCall
         /// ```
-        </span>access_field -&gt; FieldElement&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;field access modifiers&quot;</span>,
+        </span>access_field -&gt; FieldElement&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"field access modifiers"</span>,
             tag_byte(<span class="number">0x01</span>),
             |i| {
                 <span class="kw">let </span>(i, first) = num::le_u8(i)<span class="question-mark">?</span>;
@@ -4613,7 +4615,7 @@
                         <span class="number">0xd </span>=&gt; AccessAttrib::BlockProcessCall,
                         <span class="kw">_ </span>=&gt; <span class="kw">return </span>err(i, ErrorKind::Tag)
                     }
-                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Somehow got a value &gt;= 4 from a two bit field&quot;</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Somehow got a value &gt;= 4 from a two bit field"</span>),
                 };
 
                 <span class="prelude-val">Ok</span>((i, FieldElement::AccessAs(access_type, access_attrib)))
@@ -4624,9 +4626,9 @@
     <span class="macro">parser_fn! </span>{
         <span class="doccomment">/// The AML spec is kind of a mess here, and this production seems to encode the
         /// exact same information as `AccessField`, just not packed into bitfields. There
-        /// also isn&#39;t anything explicitly preventing `ExtendedAccessField` from using the
+        /// also isn't anything explicitly preventing `ExtendedAccessField` from using the
         /// same packed representation that `AccessField` does, or from using the
-        /// &quot;non-extended&quot; attribute values from the `AccessAttrib` production.
+        /// "non-extended" attribute values from the `AccessAttrib` production.
         ///
         /// Grammar:
         ///
@@ -4640,8 +4642,8 @@
         ///
         /// The ACPICA AML parser expects `AccessLength` to be a byte. See
         /// `source/components/parser/psargs.c`.
-        </span>extended_access_field -&gt; FieldElement&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;field access modifiers (extended)&quot;</span>,
+        </span>extended_access_field -&gt; FieldElement&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"field access modifiers (extended)"</span>,
             tag_byte(<span class="number">0x03</span>),
             |i| {
                 <span class="kw">let </span>(i, type_byte) = num::le_u8(i)<span class="question-mark">?</span>;
@@ -4652,9 +4654,9 @@
                     <span class="kw">return </span>err(i, ErrorKind::Tag)
                 };
 
-                <span class="comment">// It&#39;s not clear whether it is legal to encode `Bytes`/`RawBytes`/
+                <span class="comment">// It's not clear whether it is legal to encode `Bytes`/`RawBytes`/
                 // `RawProcessBytes` the way that the `AccessField` production does. Assume
-                // that it isn&#39;t, and fail if the compiler tries.
+                // that it isn't, and fail if the compiler tries.
                 </span><span class="kw">if </span>type_byte &gt;&gt; <span class="number">6 </span>!= <span class="number">0 </span>{
                     <span class="kw">return </span>err(i, ErrorKind::Tag);
                 }
@@ -4664,7 +4666,7 @@
                     <span class="number">0x0e </span>=&gt; AccessAttrib::RawBytes(length),
                     <span class="number">0x0f </span>=&gt; AccessAttrib::RawProcessBytes(length),
                     <span class="comment">// Also not clear whether the values from the `AccessAttrib` production
-                    // are legal here. Again, assume that they aren&#39;t.
+                    // are legal here. Again, assume that they aren't.
                     </span><span class="kw">_ </span>=&gt; <span class="kw">return </span>err(i, ErrorKind::Tag),
                 };
 
@@ -4684,9 +4686,9 @@
     ///     //          1 Serialized
     ///     // bit 4-7: SyncLevel (0x00-0x0f)
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>MethodFlags {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>MethodFlags {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= map(
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= map(
                 num::le_u8,
                 |b| MethodFlags {
                     arg_count:  b &amp; <span class="number">0b0000_0111</span>,
@@ -4715,8 +4717,8 @@
     ///     // 0x0A       PCC
     ///     // 0x80-0xFF: OEM Defined
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>RegionSpace {
-        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">&#39;a </span>i) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>RegionSpace {
+        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">'a </span>i) -&gt; <span class="self">Self </span>{
             <span class="kw">let </span>(i, b) = num::le_u8(i)<span class="question-mark">?</span>;
             <span class="kw">let </span>value = <span class="kw">match </span>b {
                 <span class="number">0x0 </span>=&gt; <span class="self">Self</span>::SystemMemory,
@@ -4745,9 +4747,9 @@
     ///                DefLoad | DefNoop | DefNotify | DefRelease | DefReset | DefReturn |
     ///                DefSignal | DefSleep | DefStall | DefWhile
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>StatementOpcode&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 break_op,
                 break_point,
                 continue_op,
@@ -4772,7 +4774,7 @@
         /// DefBreak        := BreakOp
         /// BreakOp         := 0xA5
         /// ```
-        </span>break_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = value(StatementOpcode::Break, tag_byte(<span class="number">0xa5</span>))
+        </span>break_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = value(StatementOpcode::Break, tag_byte(<span class="number">0xa5</span>))
     }
 
     <span class="macro">parser_fn! </span>{
@@ -4780,7 +4782,7 @@
         /// DefBreakPoint   := BreakPointOp
         /// BreakPointOp    := 0xCC
         /// ```
-        </span>break_point -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = value(StatementOpcode::BreakPoint, tag_byte(<span class="number">0xcc</span>))
+        </span>break_point -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = value(StatementOpcode::BreakPoint, tag_byte(<span class="number">0xcc</span>))
     }
 
     <span class="macro">parser_fn! </span>{
@@ -4788,7 +4790,7 @@
         /// DefContinue     := ContinueOp
         /// ContinueOp      := 0x9F
         /// ```
-        </span>continue_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = value(StatementOpcode::Continue, tag_byte(<span class="number">0x9f</span>))
+        </span>continue_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = value(StatementOpcode::Continue, tag_byte(<span class="number">0x9f</span>))
     }
 
     <span class="macro">parser_fn! </span>{
@@ -4799,8 +4801,8 @@
         /// FatalCode       := DWordData
         /// FatalArg        := TermArg =&gt; Integer
         /// ```
-        </span>fatal -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;fatal statement&quot;</span>,
+        </span>fatal -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"fatal statement"</span>,
             ext_op(tag_byte(<span class="number">0x32</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Fatal {
@@ -4820,8 +4822,8 @@
         /// DefElse         := Nothing | &lt;ElseOp PkgLength TermList&gt;
         /// ElseOp          := 0xA1
         /// ```
-        </span>if_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;if statement&quot;</span>,
+        </span>if_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"if statement"</span>,
             tag_byte(<span class="number">0xa0</span>),
             |i| {
                 <span class="kw">let </span>(i, (predicate, if_true)) = in_package(tuple((
@@ -4829,7 +4831,7 @@
                     multi::many0(TermObject::parse),
                 )))(i)<span class="question-mark">?</span>;
                 <span class="kw">let </span>(i, if_false) = opt(in_package(opcode(
-                    <span class="string">&quot;else branch&quot;</span>,
+                    <span class="string">"else branch"</span>,
                     tag_byte(<span class="number">0xa1</span>),
                     multi::many0(TermObject::parse),
                 )))(i)<span class="question-mark">?</span>;
@@ -4849,8 +4851,8 @@
         /// LoadOp          := ExtOpPrefix 0x20
         /// DDBHandleObject := SuperName
         /// ```
-        </span>load -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;load statement&quot;</span>,
+        </span>load -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"load statement"</span>,
             ext_op(tag_byte(<span class="number">0x20</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Load {
@@ -4866,7 +4868,7 @@
         /// DefNoop         := NoopOp
         /// NoopOp          := 0xA3
         /// ```
-        </span>no_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = value(StatementOpcode::NoOp, tag_byte(<span class="number">0xa3</span>))
+        </span>no_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = value(StatementOpcode::NoOp, tag_byte(<span class="number">0xa3</span>))
     }
 
     <span class="macro">parser_fn! </span>{
@@ -4876,8 +4878,8 @@
         /// NotifyObject    := SuperName =&gt; ThermalZone | Processor | Device
         /// NotifyValue     := TermArg =&gt; Integer
         /// ```
-        </span>notify -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;notify statement&quot;</span>,
+        </span>notify -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"notify statement"</span>,
             tag_byte(<span class="number">0x86</span>),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Notify {
@@ -4894,8 +4896,8 @@
         /// ReleaseOp       := ExtOpPrefix 0x27
         /// MutexObject     := SuperName
         /// ```
-        </span>release -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;release statement&quot;</span>,
+        </span>release -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"release statement"</span>,
             ext_op(tag_byte(<span class="number">0x27</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Release { mutex: SuperName::parse }
@@ -4909,8 +4911,8 @@
         /// ResetOp         := ExtOpPrefix 0x26
         /// EventObject     := SuperName
         /// ```
-        </span>reset -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;reset statement&quot;</span>,
+        </span>reset -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"reset statement"</span>,
             ext_op(tag_byte(<span class="number">0x26</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Reset { event: SuperName::parse }
@@ -4924,8 +4926,8 @@
         /// ReturnOp        := 0xA4
         /// ArgObject       := TermArg =&gt; DataRefObject
         /// ```
-        </span>return_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;return statement&quot;</span>,
+        </span>return_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"return statement"</span>,
             tag_byte(<span class="number">0xa4</span>),
             map(TermArg::parse, StatementOpcode::Return)
         )
@@ -4936,8 +4938,8 @@
         /// DefSignal       := SignalOp EventObject
         /// SignalOp        := ExtOpPrefix 0x24
         /// ```
-        </span>signal -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;signal statement&quot;</span>,
+        </span>signal -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"signal statement"</span>,
             ext_op(tag_byte(<span class="number">0x24</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Signal { event: SuperName::parse }
@@ -4951,8 +4953,8 @@
         /// SleepOp         := ExtOpPrefix 0x22
         /// MsecTime        := TermArg =&gt; Integer
         /// ```
-        </span>sleep -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;sleep statement&quot;</span>,
+        </span>sleep -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"sleep statement"</span>,
             ext_op(tag_byte(<span class="number">0x22</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Sleep { milliseconds: TermArg::parse }
@@ -4966,8 +4968,8 @@
         /// StallOp         := ExtOpPrefix 0x21
         /// UsecTime        := TermArg =&gt; ByteData
         /// ```
-        </span>stall -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;stall statement&quot;</span>,
+        </span>stall -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"stall statement"</span>,
             ext_op(tag_byte(<span class="number">0x21</span>)),
             <span class="macro">struct_parser! </span>{
                 StatementOpcode::Stall { microseconds: TermArg::parse }
@@ -4980,8 +4982,8 @@
         /// DefWhile        := WhileOp PkgLength Predicate TermList
         /// WhileOp         := 0xA2
         /// ```
-        </span>while_op -&gt; StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;while loop&quot;</span>,
+        </span>while_op -&gt; StatementOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"while loop"</span>,
             tag_byte(<span class="number">0xa2</span>),
             in_package(<span class="macro">struct_parser! </span>{
                 StatementOpcode::While {
@@ -5001,9 +5003,9 @@
     ///
     /// An explanation in the ASL grammar seems to indicate that `UserTermObj` is
     /// synonymous with `MethodInvocation`.
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 ref_of,
                 deref,
                 index,
@@ -5020,8 +5022,8 @@
         ///
         /// Although the grammar suggests all SuperNames are accepted, the ACPICA parser
         /// does not allow method invocations or nested `RefOf` operators.
-        </span>ref_of -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;reference-of operator&quot;</span>,
+        </span>ref_of -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"reference-of operator"</span>,
             tag_byte(<span class="number">0x71</span>),
             map(
                 verify(
@@ -5044,8 +5046,8 @@
         /// DerefOfOp           := 0x83
         /// ObjReference        := TermArg =&gt; ??ObjectReference | String
         /// ```
-        </span>deref -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;dereference operator&quot;</span>,
+        </span>deref -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"dereference operator"</span>,
             tag_byte(<span class="number">0x83</span>),
             map(TermArg::parse, ReferenceExpressionOpcode::Deref),
         )
@@ -5058,8 +5060,8 @@
         /// BuffPkgStrObj       := TermArg =&gt; Buffer, Package or String
         /// IndexValue          := TermArg =&gt; Integer
         /// ```
-        </span>index -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;index operator&quot;</span>,
+        </span>index -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"index operator"</span>,
             tag_byte(<span class="number">0x88</span>),
             <span class="macro">struct_parser! </span>{
                 ReferenceExpressionOpcode::Index {
@@ -5075,7 +5077,7 @@
         <span class="doccomment">/// ```text
         /// MethodInvocation := NameString TermArgList
         /// ```
-        </span>invoke(i) -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+        </span>invoke(i) -&gt; ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; {
             <span class="kw">let </span>(i, name) = NameString::parse(i)<span class="question-mark">?</span>;
 
             <span class="kw">let </span><span class="prelude-val">Some</span>(arg_count) = i.get_arg_count(<span class="kw-2">&amp;</span>name) <span class="kw">else </span>{
@@ -5104,10 +5106,10 @@
     ///                DefToBCD | DefToBuffer | DefToDecimalString | DefToHexString |
     ///                DefToInteger | DefToString | DefWait | DefXOr | MethodInvocation
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
-                <span class="comment">// Broken up in groups of 20 to avoid alt()&#39;s parameter limit
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+                <span class="comment">// Broken up in groups of 20 to avoid alt()'s parameter limit
                 </span>alt((
                     map(ReferenceExpressionOpcode::parse, <span class="self">Self</span>::RefExpression),
                     map(Buffer::parse, <span class="self">Self</span>::Buffer),
@@ -5170,7 +5172,7 @@
         [$( <span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta] </span>)* <span class="macro-nonterminal">$parser</span>:ident <span class="macro-nonterminal">$op</span>:ident <span class="macro-nonterminal">$desc</span>:literal <span class="macro-nonterminal">$tag</span>:literal] =&gt; {
             <span class="macro">parser_fn! </span>{
                 $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>]</span>)*
-                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
+                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
                     <span class="macro-nonterminal">$desc</span>,
                     tag_byte(<span class="macro-nonterminal">$tag</span>),
                     <span class="macro">struct_parser! </span>{
@@ -5187,7 +5189,7 @@
         /// AddOp               := 0x72
         /// Operand             := TermArg =&gt; Integer
         /// ```
-        </span>add Add <span class="string">&quot;add operator&quot; </span><span class="number">0x72
+        </span>add Add <span class="string">"add operator" </span><span class="number">0x72
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5195,7 +5197,7 @@
         /// DefAnd              := AndOp Operand Operand Target
         /// AndOp               := 0x7B
         /// ```
-        </span>bitwise_and BitwiseAnd <span class="string">&quot;bitwise AND operator&quot; </span><span class="number">0x7b
+        </span>bitwise_and BitwiseAnd <span class="string">"bitwise AND operator" </span><span class="number">0x7b
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5203,7 +5205,7 @@
         /// DefOr               := OrOp Operand Operand Target
         /// OrOp                := 0x7D
         /// ```
-        </span>bitwise_or BitwiseOr <span class="string">&quot;bitwise OR operator&quot; </span><span class="number">0x7d
+        </span>bitwise_or BitwiseOr <span class="string">"bitwise OR operator" </span><span class="number">0x7d
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5211,7 +5213,7 @@
         /// DefXOr              := XorOp Operand Operand Target
         /// XorOp               := 0x7F
         /// ```
-        </span>bitwise_xor BitwiseXor <span class="string">&quot;bitwise XOR operator&quot; </span><span class="number">0x7f
+        </span>bitwise_xor BitwiseXor <span class="string">"bitwise XOR operator" </span><span class="number">0x7f
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5220,7 +5222,7 @@
         /// ConcatOp            := 0x73
         /// Data                := TermArg =&gt; ComputationalData
         /// ```
-        </span>concat Concat <span class="string">&quot;concat operator&quot; </span><span class="number">0x73
+        </span>concat Concat <span class="string">"concat operator" </span><span class="number">0x73
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5229,7 +5231,7 @@
         /// ConcatResOp         := 0x84
         /// BufData             := TermArg =&gt; Buffer
         /// ```
-        </span>concat_res ConcatRes <span class="string">&quot;concat resource template operator&quot; </span><span class="number">0x84
+        </span>concat_res ConcatRes <span class="string">"concat resource template operator" </span><span class="number">0x84
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5237,7 +5239,7 @@
         /// DefMod              := ModOp Dividend Divisor Target
         /// ModOp               := 0x85
         /// ```
-        </span>mod_op Mod <span class="string">&quot;modulus operator&quot; </span><span class="number">0x85
+        </span>mod_op Mod <span class="string">"modulus operator" </span><span class="number">0x85
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5245,7 +5247,7 @@
         /// DefMultiply         := MultiplyOp Operand Operand Target
         /// MultiplyOp          := 0x77
         /// ```
-        </span>multiply Multiply <span class="string">&quot;multiplication operator&quot; </span><span class="number">0x77
+        </span>multiply Multiply <span class="string">"multiplication operator" </span><span class="number">0x77
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5253,7 +5255,7 @@
         /// DefNAnd             := NandOp Operand Operand Target
         /// NandOp              := 0x7C
         /// ```
-        </span>nand Nand <span class="string">&quot;bitwise NAND operator&quot; </span><span class="number">0x7c
+        </span>nand Nand <span class="string">"bitwise NAND operator" </span><span class="number">0x7c
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5261,7 +5263,7 @@
         /// DefNOr              := NorOp Operand Operand Target
         /// NorOp               := 0x7E
         /// ```
-        </span>nor Nor <span class="string">&quot;bitwise NOR operator&quot; </span><span class="number">0x7e
+        </span>nor Nor <span class="string">"bitwise NOR operator" </span><span class="number">0x7e
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5270,7 +5272,7 @@
         /// ShiftLeftOp         := 0x79
         /// ShiftCount          := TermArg =&gt; Integer
         /// ```
-        </span>shift_left ShiftLeft <span class="string">&quot;left shift operator&quot; </span><span class="number">0x79
+        </span>shift_left ShiftLeft <span class="string">"left shift operator" </span><span class="number">0x79
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5278,7 +5280,7 @@
         /// DefShiftRight       := ShiftRightOp Operand ShiftCount Target
         /// ShiftRightOp        := 0x7A
         /// ```
-        </span>shift_right ShiftRight <span class="string">&quot;right shift operator&quot; </span><span class="number">0x7a
+        </span>shift_right ShiftRight <span class="string">"right shift operator" </span><span class="number">0x7a
     </span>}
 
     <span class="macro">binary_op_parser! </span>{
@@ -5286,7 +5288,7 @@
         /// DefSubtract         := SubtractOp Operand Operand Target
         /// SubtractOp          := 0x74
         /// ```
-        </span>subtract Subtract <span class="string">&quot;subtraction operator&quot; </span><span class="number">0x74
+        </span>subtract Subtract <span class="string">"subtraction operator" </span><span class="number">0x74
     </span>}
 
     <span class="macro">macro_rules! </span>unary_op_parser {
@@ -5297,7 +5299,7 @@
         [$( <span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta] </span>)* <span class="macro-nonterminal">$parser</span>:ident <span class="macro-nonterminal">$op</span>:ident <span class="macro-nonterminal">$desc</span>:literal <span class="macro-nonterminal">$tag</span>:expr] =&gt; {
             <span class="macro">parser_fn! </span>{
                 $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>]</span>)*
-                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
+                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
                     <span class="macro-nonterminal">$desc</span>,
                     <span class="macro-nonterminal">$tag</span>,
                     <span class="macro">struct_parser! </span>{
@@ -5313,7 +5315,7 @@
         /// DefNot              := NotOp Operand Target
         /// NotOp               := 0x80
         /// ```
-        </span>bitwise_not BitwiseNot <span class="string">&quot;bitwise NOT operator&quot; </span><span class="number">0x80
+        </span>bitwise_not BitwiseNot <span class="string">"bitwise NOT operator" </span><span class="number">0x80
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5321,7 +5323,7 @@
         /// DefFindSetLeftBit   := FindSetLeftBitOp Operand Target
         /// FindSetLeftBitOp    := 0x81
         /// ```
-        </span>find_set_left_bit FindSetLeftBit <span class="string">&quot;find left bit operator&quot; </span><span class="number">0x81
+        </span>find_set_left_bit FindSetLeftBit <span class="string">"find left bit operator" </span><span class="number">0x81
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5329,7 +5331,7 @@
         /// DefFindSetRightBit  := FindSetRightBitOp Operand Target
         /// FindSetRightBitOp   := 0x82
         /// ```
-        </span>find_set_right_bit FindSetRightBit <span class="string">&quot;find right bit operator&quot; </span><span class="number">0x82
+        </span>find_set_right_bit FindSetRightBit <span class="string">"find right bit operator" </span><span class="number">0x82
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5337,7 +5339,7 @@
         /// DefFromBCD          := FromBCDOp BCDValue Target
         /// FromBCDOp           := ExtOpPrefix 0x28
         /// ```
-        </span>from_bcd FromBCD <span class="string">&quot;from BCD conversion&quot; </span>ext_op(tag_byte(<span class="number">0x28</span>))
+        </span>from_bcd FromBCD <span class="string">"from BCD conversion" </span>ext_op(tag_byte(<span class="number">0x28</span>))
     }
 
     <span class="macro">unary_op_parser! </span>{
@@ -5346,7 +5348,7 @@
         /// ToBCDOp             := ExtOpPrefix 0x29
         /// BCDValue            := TermArg =&gt; Integer
         /// ```
-        </span>to_bcd ToBCD <span class="string">&quot;to BCD conversion&quot; </span>ext_op(tag_byte(<span class="number">0x29</span>))
+        </span>to_bcd ToBCD <span class="string">"to BCD conversion" </span>ext_op(tag_byte(<span class="number">0x29</span>))
     }
 
     <span class="macro">unary_op_parser! </span>{
@@ -5354,7 +5356,7 @@
         /// DefToBuffer         := ToBufferOp Operand Target
         /// ToBufferOp          := 0x96
         /// ```
-        </span>to_buffer ToBuffer <span class="string">&quot;buffer conversion&quot; </span><span class="number">0x96
+        </span>to_buffer ToBuffer <span class="string">"buffer conversion" </span><span class="number">0x96
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5362,7 +5364,7 @@
         /// DefToDecimalString  := ToDecimalStringOp Operand Target
         /// ToDecimalStringOp   := 0x97
         /// ```
-        </span>to_decimal_string ToDecimalString <span class="string">&quot;decimal string conversion&quot; </span><span class="number">0x97
+        </span>to_decimal_string ToDecimalString <span class="string">"decimal string conversion" </span><span class="number">0x97
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5370,7 +5372,7 @@
         /// DefToHexString      := ToHexStringOp Operand Target
         /// ToHexStringOp       := 0x98
         /// ```
-        </span>to_hex_string ToHexString <span class="string">&quot;hex string conversion&quot; </span><span class="number">0x98
+        </span>to_hex_string ToHexString <span class="string">"hex string conversion" </span><span class="number">0x98
     </span>}
 
     <span class="macro">unary_op_parser! </span>{
@@ -5378,14 +5380,14 @@
         /// DefToInteger        := ToIntegerOp Operand Target
         /// ToIntegerOp         := 0x99
         /// ```
-        </span>to_integer ToInteger <span class="string">&quot;integer conversion&quot; </span><span class="number">0x99
+        </span>to_integer ToInteger <span class="string">"integer conversion" </span><span class="number">0x99
     </span>}
 
     <span class="macro">macro_rules! </span>logical_op_parser {
         [$( <span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta] </span>)* <span class="macro-nonterminal">$parser</span>:ident <span class="macro-nonterminal">$op</span>:ident <span class="macro-nonterminal">$desc</span>:literal <span class="macro-nonterminal">$tag</span>:literal] =&gt; {
             <span class="macro">parser_fn! </span>{
                 $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>]</span>)*
-                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
+                <span class="macro-nonterminal">$parser </span>-&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
                     <span class="macro-nonterminal">$desc</span>,
                     tag_byte(<span class="macro-nonterminal">$tag</span>),
                     <span class="macro">struct_parser! </span>{
@@ -5401,7 +5403,7 @@
         /// DefLEqual           := LequalOp Operand Operand
         /// LequalOp            := 0x93
         /// ```text
-        </span>equal Equal <span class="string">&quot;equality operator&quot; </span><span class="number">0x93
+        </span>equal Equal <span class="string">"equality operator" </span><span class="number">0x93
     </span>}
 
     <span class="macro">logical_op_parser! </span>{
@@ -5409,7 +5411,7 @@
         /// DefLGreater         := LgreaterOp Operand Operand
         /// LgreaterOp          := 0x94
         /// ```text
-        </span>greater Greater <span class="string">&quot;greater-than operator&quot; </span><span class="number">0x94
+        </span>greater Greater <span class="string">"greater-than operator" </span><span class="number">0x94
     </span>}
 
     <span class="macro">logical_op_parser! </span>{
@@ -5417,7 +5419,7 @@
         /// DefLLess            := LlessOp Operand Operand
         /// LlessOp             := 0x95
         /// ```text
-        </span>less Less <span class="string">&quot;less-than operator&quot; </span><span class="number">0x95
+        </span>less Less <span class="string">"less-than operator" </span><span class="number">0x95
     </span>}
 
     <span class="macro">logical_op_parser! </span>{
@@ -5425,7 +5427,7 @@
         /// DefLAnd             := LandOp Operand Operand
         /// LandOp              := 0x90
         /// ```text
-        </span>logical_and LogicalAnd <span class="string">&quot;logical AND operator &quot; </span><span class="number">0x90
+        </span>logical_and LogicalAnd <span class="string">"logical AND operator " </span><span class="number">0x90
     </span>}
 
     <span class="macro">logical_op_parser! </span>{
@@ -5433,11 +5435,11 @@
         /// DefLOr              := LorOp Operand Operand
         /// LorOp               := 0x91
         /// ```text
-        </span>logical_or LogicalOr <span class="string">&quot;logical OR operator&quot; </span><span class="number">0x91
+        </span>logical_or LogicalOr <span class="string">"logical OR operator" </span><span class="number">0x91
     </span>}
 
     <span class="macro">parser_fn! </span>{
-        <span class="doccomment">/// This implements both pure &quot;not&quot; **and** the inverted comparison operators,
+        <span class="doccomment">/// This implements both pure "not" **and** the inverted comparison operators,
         /// which are really just parser optimizations.
         ///
         /// ```text
@@ -5450,22 +5452,22 @@
         /// DefLNotEqual        := LnotEqualOp Operand Operand
         /// LnotEqualOp         := LnotOp LequalOp
         /// ```text
-        </span>inverted_logical_ops -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;logical NOT operator&quot;</span>,
+        </span>inverted_logical_ops -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"logical NOT operator"</span>,
             tag_byte(<span class="number">0x92</span>),
             alt((
                 opcode(
-                    <span class="string">&quot;less-than operator&quot;</span>,
+                    <span class="string">"less-than operator"</span>,
                     tag_byte(<span class="number">0x95</span>),
                     <span class="macro">struct_parser!</span>(ExpressionOpcode::GreaterEqual(TermArg::parse, TermArg::parse)),
                 ),
                 opcode(
-                    <span class="string">&quot;greater-than operator&quot;</span>,
+                    <span class="string">"greater-than operator"</span>,
                     tag_byte(<span class="number">0x94</span>),
                     <span class="macro">struct_parser!</span>(ExpressionOpcode::LessEqual(TermArg::parse, TermArg::parse)),
                 ),
                 opcode(
-                    <span class="string">&quot;equality operator&quot;</span>,
+                    <span class="string">"equality operator"</span>,
                     tag_byte(<span class="number">0x93</span>),
                     <span class="macro">struct_parser!</span>(ExpressionOpcode::NotEqual(TermArg::parse, TermArg::parse)),
                 ),
@@ -5479,8 +5481,8 @@
         /// DefDecrement        := DecrementOp SuperName
         /// DecrementOp         := 0x76
         /// ```
-        </span>decrement -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;decrement operator&quot;</span>,
+        </span>decrement -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"decrement operator"</span>,
             tag_byte(<span class="number">0x76</span>),
             map(SuperName::parse, ExpressionOpcode::Decrement),
         )
@@ -5491,8 +5493,8 @@
         /// DefIncrement        := IncrementOp SuperName
         /// IncrementOp         := 0x75
         /// ```
-        </span>increment -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;increment operator&quot;</span>,
+        </span>increment -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"increment operator"</span>,
             tag_byte(<span class="number">0x75</span>),
             map(SuperName::parse, ExpressionOpcode::Increment),
         )
@@ -5503,8 +5505,8 @@
         /// DefSizeOf           := SizeOfOp SuperName
         /// SizeOfOp            := 0x87
         /// ```
-        </span>size_of -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;size-of operator&quot;</span>,
+        </span>size_of -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"size-of operator"</span>,
             tag_byte(<span class="number">0x87</span>),
             map(SuperName::parse, ExpressionOpcode::SizeOf),
         )
@@ -5519,8 +5521,8 @@
         ///
         /// NOTE: SuperName includes MethodInvocation, which is *not* legal for the
         /// ObjectType operator. It is otherwise identical to the grammar above.
-        </span>object_type -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;object type operator&quot;</span>,
+        </span>object_type -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"object type operator"</span>,
             tag_byte(<span class="number">0x8e</span>),
             map(super_name_minus_invoke, ExpressionOpcode::ObjectType),
         )
@@ -5531,7 +5533,7 @@
         /// DefTimer            := TimerOp
         /// TimerOp             := 0x5B 0x33
         /// ```
-        </span>timer -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = value(
+        </span>timer -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = value(
             ExpressionOpcode::Timer,
             ext_op(tag_byte(<span class="number">0x33</span>))
         )
@@ -5543,8 +5545,8 @@
         /// AcquireOp           := ExtOpPrefix 0x23
         /// Timeout             := WordData
         /// ```
-        </span>acquire -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;acquire expression&quot;</span>,
+        </span>acquire -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"acquire expression"</span>,
             ext_op(tag_byte(<span class="number">0x23</span>)),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Acquire {
@@ -5560,8 +5562,8 @@
         /// DefWait             := WaitOp EventObject Operand
         /// WaitOp              := ExtOpPrefix 0x25
         /// ```
-        </span>wait -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;wait expression&quot;</span>,
+        </span>wait -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"wait expression"</span>,
             ext_op(tag_byte(<span class="number">0x25</span>)),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Wait {
@@ -5581,8 +5583,8 @@
         /// Like [`ReferenceExpressionOpcode::RefOf`], method invocations and nested
         /// `RefOf` calls are not allowed in the first argument even though the spec
         /// suggests they are.
-        </span>cond_ref_of -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;reference-of operator (conditional)&quot;</span>,
+        </span>cond_ref_of -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"reference-of operator (conditional)"</span>,
             ext_op(tag_byte(<span class="number">0x12</span>)),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::CondRefOf(
@@ -5606,8 +5608,8 @@
         /// DefCopyObject       := CopyObjectOp TermArg SimpleName
         /// CopyObjectOp        := 0x9D
         /// ```
-        </span>copy_object -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;copy expression&quot;</span>,
+        </span>copy_object -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"copy expression"</span>,
             tag_byte(<span class="number">0x9d</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::CopyObject(TermArg::parse, SimpleName::parse)
@@ -5624,8 +5626,8 @@
         /// Remainder           := Target
         /// Quotient            := Target
         /// ```
-        </span>divide -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;division operator&quot;</span>,
+        </span>divide -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"division operator"</span>,
             tag_byte(<span class="number">0x78</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Divide {
@@ -5643,8 +5645,8 @@
         /// DefLoadTable        := LoadTableOp TermArg TermArg TermArg TermArg TermArg TermArg
         /// LoadTableOp         := ExtOpPrefix 0x1F
         /// ```
-        </span>load_table -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;load table expression&quot;</span>,
+        </span>load_table -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"load table expression"</span>,
             ext_op(tag_byte(<span class="number">0x1f</span>)),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::LoadTable {
@@ -5666,8 +5668,8 @@
         /// SearchPkg           := TermArg =&gt; Package
         /// StartIndex          := TermArg =&gt; Integer
         /// ```
-        </span>match_op -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;match expression&quot;</span>,
+        </span>match_op -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"match expression"</span>,
             tag_byte(<span class="number">0x89</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Match {
@@ -5686,8 +5688,8 @@
         /// MidOp               := 0x9E
         /// MidObj              := TermArg =&gt; Buffer | String
         /// ```
-        </span>mid -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;mid operator&quot;</span>,
+        </span>mid -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"mid operator"</span>,
             tag_byte(<span class="number">0x9e</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Mid {
@@ -5705,8 +5707,8 @@
         /// DefStore            := StoreOp TermArg SuperName
         /// StoreOp             := 0x70
         /// ```
-        </span>store -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;store expression&quot;</span>,
+        </span>store -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"store expression"</span>,
             tag_byte(<span class="number">0x70</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::Store(TermArg::parse, SuperName::parse)
@@ -5720,8 +5722,8 @@
         /// LengthArg           := TermArg =&gt; Integer
         /// ToStringOp          := 0x9C
         /// ```
-        </span>to_string -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = opcode(
-            <span class="string">&quot;string conversion&quot;</span>,
+        </span>to_string -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = opcode(
+            <span class="string">"string conversion"</span>,
             tag_byte(<span class="number">0x9c</span>),
             <span class="macro">struct_parser! </span>{
                 ExpressionOpcode::ToString {
@@ -5744,8 +5746,8 @@
     ///     // 4 MGE
     ///     // 5 MGT
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>MatchOpcode {
-        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">&#39;a </span>i) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>MatchOpcode {
+        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">'a </span>i) -&gt; <span class="self">Self </span>{
             <span class="kw">let </span>(i, b) = num::le_u8(i)<span class="question-mark">?</span>;
             <span class="kw">let </span>value = <span class="kw">match </span>b {
                 <span class="number">0 </span>=&gt; <span class="self">Self</span>::True,
@@ -5783,8 +5785,8 @@
     ///   16  Debug Object
     ///   &gt;16 Reserved
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>ObjectType {
-        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">&#39;a </span>i) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>ObjectType {
+        <span class="macro">parser_fn!</span>(parse(<span class="lifetime">'a </span>i) -&gt; <span class="self">Self </span>{
             <span class="kw">let </span>(i, b) = num::le_u8(i)<span class="question-mark">?</span>;
             <span class="kw">let </span>value = <span class="kw">match </span>b {
                 <span class="number">0  </span>=&gt; <span class="self">Self</span>::Uninitialized,
@@ -5830,9 +5832,9 @@
     /// Arg5Op := 0x6D
     /// Arg6Op := 0x6E
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>ArgObject {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>ArgObject {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 value(<span class="self">Self</span>::Arg0, tag_byte(<span class="number">0x68</span>)),
                 value(<span class="self">Self</span>::Arg1, tag_byte(<span class="number">0x69</span>)),
                 value(<span class="self">Self</span>::Arg2, tag_byte(<span class="number">0x6a</span>)),
@@ -5859,9 +5861,9 @@
     /// Local6Op := 0x66
     /// Local7Op := 0x67
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>LocalObject {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>LocalObject {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>= alt((
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>= alt((
                 value(<span class="self">Self</span>::Local0, tag_byte(<span class="number">0x60</span>)),
                 value(<span class="self">Self</span>::Local1, tag_byte(<span class="number">0x61</span>)),
                 value(<span class="self">Self</span>::Local2, tag_byte(<span class="number">0x62</span>)),
@@ -5881,9 +5883,9 @@
     /// DebugObj := DebugOp
     /// DebugOp  := ExtOpPrefix 0x31
     /// ```
-    </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Parse&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>DebugObject {
+    </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Parse&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DebugObject {
         <span class="macro">parser_fn! </span>{
-            parse&lt;<span class="lifetime">&#39;a</span>&gt; -&gt; <span class="self">Self </span>=
+            parse&lt;<span class="lifetime">'a</span>&gt; -&gt; <span class="self">Self </span>=
                 ext_op(value(DebugObject, tag_byte(<span class="number">0x31</span>)))
         }
     }

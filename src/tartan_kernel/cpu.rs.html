@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/cpu.rs`."><title>cpu.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/cpu.rs`."><title>cpu.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tartan_kernel/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -90,67 +92,67 @@
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
 
 
-<span class="attr">#[cfg(not(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>)))]
+<span class="attr">#[cfg(not(any(target_arch = <span class="string">"x86"</span>, target_arch = <span class="string">"x86_64"</span>)))]
 </span><span class="kw">pub fn </span>print_state(<span class="kw">_</span>: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write) -&gt; fmt::Result {
     <span class="comment">// TODO
     </span><span class="prelude-val">Ok</span>(())
 }
 
-<span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+<span class="attr">#[cfg(any(target_arch = <span class="string">"x86"</span>, target_arch = <span class="string">"x86_64"</span>))]
 </span><span class="kw">pub fn </span>print_state(out: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write) -&gt; fmt::Result {
     <span class="kw">use </span>tartan_arch::x86_common::{<span class="self">self</span>, features, interrupt, paging, protection};
 
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;CPUID max basic: {:x?}&quot;</span>, features::max_cpuid_index_basic())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;CPUID max ext.: {:x?}&quot;</span>, features::max_cpuid_index_extended())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"CPUID max basic: {:x?}"</span>, features::max_cpuid_index_basic())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"CPUID max ext.: {:x?}"</span>, features::max_cpuid_index_extended())<span class="question-mark">?</span>;
 
     <span class="kw">let </span>basic_features = features::BasicFeatures::get();
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{basic_features:#x?}&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, features::ExtendedFeatures::get())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, features::AddressSpaceSizes::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{basic_features:#x?}"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, features::ExtendedFeatures::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, features::AddressSpaceSizes::get())<span class="question-mark">?</span>;
 
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::FlagRegister::get())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ControlRegister0::get())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ControlRegister4::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_common::FlagRegister::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_common::ControlRegister0::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_common::ControlRegister4::get())<span class="question-mark">?</span>;
 
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, paging::ControlRegister2::get())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, paging::ControlRegister3::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, paging::ControlRegister2::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, paging::ControlRegister3::get())<span class="question-mark">?</span>;
 
     <span class="attr">#[allow(clippy::if_not_else)]
     </span><span class="kw">if </span>!basic_features.extended_state_save() {
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;ExtendedControlRegister0 unsupported&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"ExtendedControlRegister0 unsupported"</span>)<span class="question-mark">?</span>;
     } <span class="kw">else if </span>!basic_features.extended_state_save_enabled() {
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;ExtendedControlRegister0 disabled&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"ExtendedControlRegister0 disabled"</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_common::ExtendedControlRegister0::get())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_common::ExtendedControlRegister0::get())<span class="question-mark">?</span>;
     }
 
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">use </span>tartan_arch::x86_64;
 
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_64::ControlRegister8::get())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, x86_64::ExtendedFeatureEnableRegister::get())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_64::ControlRegister8::get())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, x86_64::ExtendedFeatureEnableRegister::get())<span class="question-mark">?</span>;
     }
 
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, interrupt::InterruptDescriptorTableRegister::get())<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, protection::GlobalDescriptorTableRegister::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, interrupt::InterruptDescriptorTableRegister::get())<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, protection::GlobalDescriptorTableRegister::get())<span class="question-mark">?</span>;
     describe_segment_register(
         out,
-        <span class="string">&quot;LDTR&quot;</span>,
+        <span class="string">"LDTR"</span>,
         protection::LocalDescriptorTableRegister::get(),
     )<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;TR&quot;</span>, protection::TaskRegister::get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;CS&quot;</span>, protection::SegmentRegister::Code.get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;DS&quot;</span>, protection::SegmentRegister::Data.get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;SS&quot;</span>, protection::SegmentRegister::Stack.get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;ES&quot;</span>, protection::SegmentRegister::Extra.get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;FS&quot;</span>, protection::SegmentRegister::ExtraF.get())<span class="question-mark">?</span>;
-    describe_segment_register(out, <span class="string">&quot;GS&quot;</span>, protection::SegmentRegister::ExtraG.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"TR"</span>, protection::TaskRegister::get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"CS"</span>, protection::SegmentRegister::Code.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"DS"</span>, protection::SegmentRegister::Data.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"SS"</span>, protection::SegmentRegister::Stack.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"ES"</span>, protection::SegmentRegister::Extra.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"FS"</span>, protection::SegmentRegister::ExtraF.get())<span class="question-mark">?</span>;
+    describe_segment_register(out, <span class="string">"GS"</span>, protection::SegmentRegister::ExtraG.get())<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))]
+<span class="attr">#[cfg(any(target_arch = <span class="string">"x86"</span>, target_arch = <span class="string">"x86_64"</span>))]
 </span><span class="kw">fn </span>describe_segment_register(
     out: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>fmt::Write,
     name: <span class="kw-2">&amp;</span>str,
@@ -161,17 +163,17 @@
     };
 
     <span class="macro">writeln!</span>(out)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{name}:&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(out, <span class="string">&quot;{selector:#x?}&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{name}:"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(out, <span class="string">"{selector:#x?}"</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>descriptor = selector.descriptor_address() <span class="kw">as </span><span class="kw-2">*const </span>GenericDescriptor;
     <span class="kw">let </span>descriptor_flags = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>descriptor).flags };
     <span class="kw">if </span>descriptor_flags.is_gate() {
         <span class="kw">let </span>gate_descriptor = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(descriptor <span class="kw">as </span><span class="kw-2">*const </span>GateDescriptor) };
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span>gate_descriptor)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, <span class="kw-2">*</span>gate_descriptor)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
         <span class="kw">let </span>seg_descriptor = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(descriptor <span class="kw">as </span><span class="kw-2">*const </span>SegmentDescriptor) };
-        <span class="macro">writeln!</span>(out, <span class="string">&quot;{:#x?}&quot;</span>, <span class="kw-2">*</span>seg_descriptor)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(out, <span class="string">"{:#x?}"</span>, <span class="kw-2">*</span>seg_descriptor)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())

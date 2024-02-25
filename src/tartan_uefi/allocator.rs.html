@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `uefi/src/allocator.rs`."><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_uefi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tartan_uefi/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `uefi/src/allocator.rs`."><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_uefi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tartan_uefi/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -130,18 +132,18 @@
         //    align the pointer
         </span><span class="kw">let </span>(saved_ptr_layout, saved_ptr_offset) = orig_layout
             .extend(<span class="self">Self</span>::VOID_PTR_LAYOUT)
-            .expect(<span class="string">&quot;Could not construct extended layout for alignment structure&quot;</span>);
+            .expect(<span class="string">"Could not construct extended layout for alignment structure"</span>);
         <span class="kw">let </span>adjusted_size = saved_ptr_layout.size() + saved_ptr_layout.align();
         <span class="kw">let </span>adjusted_layout =
             Layout::from_size_align(adjusted_size, saved_ptr_layout.align())
-                .expect(<span class="string">&quot;Could not construct extended layout for alignable allocation&quot;</span>);
+                .expect(<span class="string">"Could not construct extended layout for alignable allocation"</span>);
         (adjusted_layout, saved_ptr_offset)
     }
 
     <span class="kw">unsafe fn </span>alloc(layout: Layout) -&gt; <span class="kw-2">*mut </span>u8 {
-        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">&quot;System table not initialized&quot;</span>);
+        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">"System table not initialized"</span>);
         <span class="kw">let </span>boot_services =
-            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">&quot;Boot services unavailable&quot;</span>);
+            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">"Boot services unavailable"</span>);
 
         <span class="kw">let </span>(adjusted_layout, saved_ptr_offset) =
             <span class="kw">if </span>layout.align() &lt;= <span class="self">Self</span>::UEFI_ALIGNMENT {
@@ -158,7 +160,7 @@
             <span class="kw-2">&amp;mut </span>buffer,
         )
         .into_result()
-        .expect(<span class="string">&quot;allocate_pool() failed&quot;</span>);
+        .expect(<span class="string">"allocate_pool() failed"</span>);
 
         <span class="kw">if </span>adjusted_layout.align() &gt; <span class="self">Self</span>::UEFI_ALIGNMENT {
             <span class="kw">let </span>orig_address = buffer <span class="kw">as </span>usize;
@@ -169,7 +171,7 @@
                 buffer = shifted_ptr <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
             }
             <span class="comment">// Store the original pointer after the object we are allocating. This happens
-            // even if we didn&#39;t have make an alignment shift, because dealloc() has no
+            // even if we didn't have make an alignment shift, because dealloc() has no
             // way of telling whether we did.
             </span><span class="kw">let </span>saved_ptr_ptr = (buffer <span class="kw">as </span>usize + saved_ptr_offset) <span class="kw">as </span><span class="kw-2">*mut *mut </span>c_void;
             <span class="kw-2">*</span>saved_ptr_ptr = orig_address <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
@@ -179,15 +181,15 @@
     }
 
     <span class="kw">unsafe fn </span>dealloc(buffer: <span class="kw-2">*mut </span>u8, layout: Layout) {
-        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">&quot;System table not initialized&quot;</span>);
+        <span class="kw">let </span>system_table = SYSTEM_TABLE.expect(<span class="string">"System table not initialized"</span>);
         <span class="kw">let </span>boot_services =
-            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">&quot;Boot services unavailable&quot;</span>);
+            (<span class="kw-2">*</span>system_table).boot_services.expect(<span class="string">"Boot services unavailable"</span>);
 
         <span class="kw">let </span>original_ptr: <span class="kw-2">*mut </span>c_void = <span class="kw">if </span>layout.align() &lt;= <span class="self">Self</span>::UEFI_ALIGNMENT {
             <span class="comment">// We gave Rust the pointer that came from allocate_pool() directly
             </span>buffer.cast()
         } <span class="kw">else </span>{
-            <span class="comment">// This pointer was manually aligned, which means it isn&#39;t the same as the
+            <span class="comment">// This pointer was manually aligned, which means it isn't the same as the
             // pointer that allocate_pool() gave us. We have to recover the original
             // pointer to pass to free_pool().
             </span><span class="kw">let </span>(<span class="kw">_</span>, saved_ptr_offset) = <span class="self">Self</span>::extend_layout_for_alignment(layout);
@@ -197,7 +199,7 @@
 
         (boot_services.free_pool)(original_ptr)
             .into_result()
-            .expect(<span class="string">&quot;Could not free memory&quot;</span>);
+            .expect(<span class="string">"Could not free memory"</span>);
     }
 }
 

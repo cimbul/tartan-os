@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml.rs`."><title>aml.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_acpi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tartan_acpi/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `acpi/src/aml.rs`."><title>aml.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_acpi" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tartan_acpi/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1009,11 +1011,11 @@
 
 <span class="doccomment">/// An ACPI table that contains AML, such as the DSDT or an SSDT.
 </span><span class="attr">#[derive(Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>AMLTable&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub struct </span>AMLTable&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Common ACPI table header
     </span><span class="kw">pub </span>header: DescriptionHeader,
     <span class="doccomment">/// Top-level AML objects defined in the table
-    </span><span class="kw">pub </span>body: Vec&lt;term::TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    </span><span class="kw">pub </span>body: Vec&lt;term::TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
 
@@ -1042,7 +1044,7 @@
     /// ```
     /// # use tartan_acpi::aml::name::{NameSeg, to_path};
     /// #
-    /// assert_eq!(to_path(&amp;[b&quot;ABCD&quot;, b&quot;EFGH&quot;]), vec![NameSeg(*b&quot;ABCD&quot;), NameSeg(*b&quot;EFGH&quot;)]);
+    /// assert_eq!(to_path(&amp;[b"ABCD", b"EFGH"]), vec![NameSeg(*b"ABCD"), NameSeg(*b"EFGH")]);
     /// ```
     </span><span class="kw">pub fn </span>to_path&lt;T: Copy + Into&lt;NameSeg&gt;&gt;(path: <span class="kw-2">&amp;</span>[T]) -&gt; Vec&lt;NameSeg&gt; {
         path.iter().map(|s| (<span class="kw-2">*</span>s).into()).collect()
@@ -1058,14 +1060,14 @@
 
     <span class="kw">impl </span>fmt::Display <span class="kw">for </span>NameSeg {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-            <span class="kw">let </span>str_name = core::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).unwrap_or(<span class="string">&quot;&lt;invalid&gt;&quot;</span>);
+            <span class="kw">let </span>str_name = core::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).unwrap_or(<span class="string">"&lt;invalid&gt;"</span>);
             f.write_str(str_name)
         }
     }
 
     <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>NameSeg {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-            <span class="macro">write!</span>(f, <span class="string">&quot;NameSeg[{:?}]&quot;</span>, <span class="self">self</span>.to_string())
+            <span class="macro">write!</span>(f, <span class="string">"NameSeg[{:?}]"</span>, <span class="self">self</span>.to_string())
         }
     }
 
@@ -1107,19 +1109,19 @@
         /// ```
         /// # use tartan_acpi::aml::name::{NameString, to_path};
         /// #
-        /// let scope = to_path(&amp;[b&quot;A___&quot;, b&quot;B___&quot;]);
+        /// let scope = to_path(&amp;[b"A___", b"B___"]);
         ///
-        /// let child = NameString::new(&amp;[b&quot;X___&quot;]);
-        /// let up_1  = NameString::new_parent(1, &amp;[b&quot;X___&quot;]);
-        /// let up_2  = NameString::new_parent(2, &amp;[b&quot;X___&quot;]);
-        /// let up_3  = NameString::new_parent(3, &amp;[b&quot;X___&quot;]);
-        /// let abs   = NameString::new_root(&amp;[b&quot;Y___&quot;, b&quot;Z___&quot;]);
+        /// let child = NameString::new(&amp;[b"X___"]);
+        /// let up_1  = NameString::new_parent(1, &amp;[b"X___"]);
+        /// let up_2  = NameString::new_parent(2, &amp;[b"X___"]);
+        /// let up_3  = NameString::new_parent(3, &amp;[b"X___"]);
+        /// let abs   = NameString::new_root(&amp;[b"Y___", b"Z___"]);
         ///
-        /// assert_eq!(child.resolve_as_decl(&amp;scope), Some(to_path(&amp;[b&quot;A___&quot;, b&quot;B___&quot;, b&quot;X___&quot;])));
-        /// assert_eq!(up_1.resolve_as_decl(&amp;scope),  Some(to_path(&amp;[b&quot;A___&quot;, b&quot;X___&quot;])));
-        /// assert_eq!(up_2.resolve_as_decl(&amp;scope),  Some(to_path(&amp;[b&quot;X___&quot;])));
+        /// assert_eq!(child.resolve_as_decl(&amp;scope), Some(to_path(&amp;[b"A___", b"B___", b"X___"])));
+        /// assert_eq!(up_1.resolve_as_decl(&amp;scope),  Some(to_path(&amp;[b"A___", b"X___"])));
+        /// assert_eq!(up_2.resolve_as_decl(&amp;scope),  Some(to_path(&amp;[b"X___"])));
         /// assert_eq!(up_3.resolve_as_decl(&amp;scope),  None);
-        /// assert_eq!(abs.resolve_as_decl(&amp;scope),   Some(to_path(&amp;[b&quot;Y___&quot;, b&quot;Z___&quot;])));
+        /// assert_eq!(abs.resolve_as_decl(&amp;scope),   Some(to_path(&amp;[b"Y___", b"Z___"])));
         /// ```
         ///
         /// # Errors
@@ -1145,28 +1147,28 @@
         /// ```
         /// # use tartan_acpi::aml::name::{NameSeg, NameString, to_path};
         /// #
-        /// let scope = to_path(&amp;[b&quot;A___&quot;, b&quot;B___&quot;]);
+        /// let scope = to_path(&amp;[b"A___", b"B___"]);
         ///
-        /// let simple = NameString::new(&amp;[b&quot;X___&quot;]);
-        /// let multi  = NameString::new(&amp;[b&quot;X___&quot;, b&quot;Y___&quot;]);
-        /// let up_1   = NameString::new_parent(1, &amp;[b&quot;X___&quot;]);
-        /// let up_2   = NameString::new_parent(2, &amp;[b&quot;X___&quot;]);
-        /// let up_3   = NameString::new_parent(3, &amp;[b&quot;X___&quot;]);
+        /// let simple = NameString::new(&amp;[b"X___"]);
+        /// let multi  = NameString::new(&amp;[b"X___", b"Y___"]);
+        /// let up_1   = NameString::new_parent(1, &amp;[b"X___"]);
+        /// let up_2   = NameString::new_parent(2, &amp;[b"X___"]);
+        /// let up_3   = NameString::new_parent(3, &amp;[b"X___"]);
         ///
         /// // Look up unanchored one-segment names in parent scopes
         /// assert_eq!(
         ///     simple.resolve_as_ref(&amp;scope),
         ///     vec![
-        ///         to_path(&amp;[b&quot;A___&quot;, b&quot;B___&quot;, b&quot;X___&quot;]),
-        ///         to_path(&amp;[b&quot;A___&quot;, b&quot;X___&quot;]),
-        ///         to_path(&amp;[b&quot;X___&quot;]),
+        ///         to_path(&amp;[b"A___", b"B___", b"X___"]),
+        ///         to_path(&amp;[b"A___", b"X___"]),
+        ///         to_path(&amp;[b"X___"]),
         ///     ],
         /// );
         ///
         /// // Others only resolve against current scope
-        /// assert_eq!(multi.resolve_as_ref(&amp;scope), vec![to_path(&amp;[b&quot;A___&quot;, b&quot;B___&quot;, b&quot;X___&quot;, b&quot;Y___&quot;])]);
-        /// assert_eq!(up_1.resolve_as_ref(&amp;scope),  vec![to_path(&amp;[b&quot;A___&quot;, b&quot;X___&quot;])]);
-        /// assert_eq!(up_2.resolve_as_ref(&amp;scope),  vec![to_path(&amp;[b&quot;X___&quot;])]);
+        /// assert_eq!(multi.resolve_as_ref(&amp;scope), vec![to_path(&amp;[b"A___", b"B___", b"X___", b"Y___"])]);
+        /// assert_eq!(up_1.resolve_as_ref(&amp;scope),  vec![to_path(&amp;[b"A___", b"X___"])]);
+        /// assert_eq!(up_2.resolve_as_ref(&amp;scope),  vec![to_path(&amp;[b"X___"])]);
         /// assert_eq!(up_3.resolve_as_ref(&amp;scope),  Vec::&lt;Vec&lt;NameSeg&gt;&gt;::new());
         /// ```
         ///
@@ -1197,23 +1199,23 @@
         /// # use tartan_acpi::aml::name::NameString;
         /// #
         /// let a = NameString::empty();
-        /// assert_eq!(format!(&quot;{}&quot;, a), &quot;&quot;);
+        /// assert_eq!(format!("{}", a), "");
         ///
-        /// let b = NameString::new(&amp;[b&quot;ASDF&quot;, b&quot;_123&quot;]);
-        /// assert_eq!(format!(&quot;{}&quot;, b), &quot;ASDF._123&quot;);
+        /// let b = NameString::new(&amp;[b"ASDF", b"_123"]);
+        /// assert_eq!(format!("{}", b), "ASDF._123");
         ///
-        /// let c = NameString::new_parent(2, &amp;[b&quot;FOO_&quot;, b&quot;BAR_&quot;]);
-        /// assert_eq!(format!(&quot;{}&quot;, c), &quot;^^FOO_.BAR_&quot;);
+        /// let c = NameString::new_parent(2, &amp;[b"FOO_", b"BAR_"]);
+        /// assert_eq!(format!("{}", c), "^^FOO_.BAR_");
         ///
-        /// let d = NameString::new_root(&amp;[b&quot;X___&quot;]);
-        /// assert_eq!(format!(&quot;{}&quot;, d), &quot;\\X___&quot;);
+        /// let d = NameString::new_root(&amp;[b"X___"]);
+        /// assert_eq!(format!("{}", d), "\\X___");
         /// ```
         </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-            <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.anchor)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.anchor)<span class="question-mark">?</span>;
             <span class="kw">if </span>!<span class="self">self</span>.path.is_empty() {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.path[<span class="number">0</span>])<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.path[<span class="number">0</span>])<span class="question-mark">?</span>;
                 <span class="kw">for </span>n <span class="kw">in </span><span class="self">self</span>.path.iter().skip(<span class="number">1</span>) {
-                    <span class="macro">write!</span>(f, <span class="string">&quot;.{n}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">".{n}"</span>)<span class="question-mark">?</span>;
                 }
             }
             <span class="prelude-val">Ok</span>(())
@@ -1222,7 +1224,7 @@
 
     <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>NameString {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-            <span class="macro">write!</span>(f, <span class="string">&quot;NameString[{:?}]&quot;</span>, <span class="self">self</span>.to_string())
+            <span class="macro">write!</span>(f, <span class="string">"NameString[{:?}]"</span>, <span class="self">self</span>.to_string())
         }
     }
 
@@ -1240,10 +1242,10 @@
     <span class="kw">impl </span>fmt::Display <span class="kw">for </span>PathAnchor {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
             <span class="kw">match </span><span class="self">self </span>{
-                PathAnchor::Root =&gt; f.write_str(<span class="string">&quot;\\&quot;</span>),
+                PathAnchor::Root =&gt; f.write_str(<span class="string">"\\"</span>),
                 PathAnchor::Parent(n) =&gt; {
                     <span class="kw">for _ in </span><span class="number">0</span>..(<span class="kw-2">*</span>n) {
-                        f.write_str(<span class="string">&quot;^&quot;</span>)<span class="question-mark">?</span>;
+                        f.write_str(<span class="string">"^"</span>)<span class="question-mark">?</span>;
                     }
                     <span class="prelude-val">Ok</span>(())
                 }
@@ -1267,23 +1269,23 @@
 
     <span class="doccomment">/// A named object, variable, reference expression, or debug object.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>SuperName&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>SuperName&lt;<span class="lifetime">'a</span>&gt; {
         Name(SimpleName),
         Debug,
-        Reference(Box&lt;ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        Reference(Box&lt;ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;&gt;),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(n: SimpleName) -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; = SuperName::Name(n));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(n: NameString) -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; = SimpleName::from(n).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(a: ArgObject) -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; = SimpleName::from(a).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(l: LocalObject) -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; = SimpleName::from(l).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(n: SimpleName) -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; = SuperName::Name(n));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(n: NameString) -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; = SimpleName::from(n).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(a: ArgObject) -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; = SimpleName::from(a).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(l: LocalObject) -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; = SimpleName::from(l).into());
     <span class="macro">from_impl!</span>(
-        &lt;<span class="lifetime">&#39;a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; SuperName&lt;<span class="lifetime">&#39;a</span>&gt; =
+        &lt;<span class="lifetime">'a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; SuperName&lt;<span class="lifetime">'a</span>&gt; =
             SuperName::Reference(Box::new(r)));
 
 
     <span class="doccomment">/// Location to store the result of an operation
-    </span><span class="kw">pub type </span>Target&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="prelude-ty">Option</span>&lt;SuperName&lt;<span class="lifetime">&#39;a</span>&gt;&gt;;
+    </span><span class="kw">pub type </span>Target&lt;<span class="lifetime">'a</span>&gt; = <span class="prelude-ty">Option</span>&lt;SuperName&lt;<span class="lifetime">'a</span>&gt;&gt;;
 }
 
 
@@ -1296,77 +1298,77 @@
 
     <span class="doccomment">/// Single value resolved at compile time.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>ComputationalData&lt;<span class="lifetime">'a</span>&gt; {
         Byte(u8),
         Word(u16),
         DWord(u32),
         QWord(u64),
-        String(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str),
+        String(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str),
         Zero,
         One,
         Ones,
         Revision,
-        Buffer(Buffer&lt;<span class="lifetime">&#39;a</span>&gt;),
+        Buffer(Buffer&lt;<span class="lifetime">'a</span>&gt;),
     }
 
     <span class="doccomment">/// Block of raw bytes, optionally initialized in whole or in part.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub struct </span>Buffer&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub </span>size: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-        <span class="kw">pub </span>initializer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+    </span><span class="kw">pub struct </span>Buffer&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">pub </span>size: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+        <span class="kw">pub </span>initializer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
     }
 
     <span class="doccomment">/// Group of related data elements, optionally inititalized in whole or in part.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub struct </span>Package&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub struct </span>Package&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">pub </span>count: u8,
-        <span class="kw">pub </span>initializers: Vec&lt;PackageElement&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+        <span class="kw">pub </span>initializers: Vec&lt;PackageElement&lt;<span class="lifetime">'a</span>&gt;&gt;,
     }
 
     <span class="doccomment">/// Group of related data elements, with a number of elements only known at runtime.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub struct </span>VarPackage&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub </span>count: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-        <span class="kw">pub </span>initializers: Vec&lt;PackageElement&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    </span><span class="kw">pub struct </span>VarPackage&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">pub </span>count: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+        <span class="kw">pub </span>initializers: Vec&lt;PackageElement&lt;<span class="lifetime">'a</span>&gt;&gt;,
     }
 
 
     <span class="doccomment">/// A name or reference that constitutes part of a [`Package`] (or [`VarPackage`]).
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>PackageElement&lt;<span class="lifetime">&#39;a</span>&gt; {
-        Ref(DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt;),
+    </span><span class="kw">pub enum </span>PackageElement&lt;<span class="lifetime">'a</span>&gt; {
+        Ref(DataRefObject&lt;<span class="lifetime">'a</span>&gt;),
         Name(NameString),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(r: DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; PackageElement&lt;<span class="lifetime">&#39;a</span>&gt; = PackageElement::Ref(r));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(n: NameString) -&gt; PackageElement&lt;<span class="lifetime">&#39;a</span>&gt; = PackageElement::Name(n));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(r: DataRefObject&lt;<span class="lifetime">'a</span>&gt;) -&gt; PackageElement&lt;<span class="lifetime">'a</span>&gt; = PackageElement::Ref(r));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(n: NameString) -&gt; PackageElement&lt;<span class="lifetime">'a</span>&gt; = PackageElement::Name(n));
 
 
     <span class="doccomment">/// Data resolved at compile time, possibly grouped in a package.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>DataObject&lt;<span class="lifetime">&#39;a</span>&gt; {
-        Data(ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt;),
-        Package(Package&lt;<span class="lifetime">&#39;a</span>&gt;),
-        VarPackage(VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;),
+    </span><span class="kw">pub enum </span>DataObject&lt;<span class="lifetime">'a</span>&gt; {
+        Data(ComputationalData&lt;<span class="lifetime">'a</span>&gt;),
+        Package(Package&lt;<span class="lifetime">'a</span>&gt;),
+        VarPackage(VarPackage&lt;<span class="lifetime">'a</span>&gt;),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::Data(d));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: Package&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::Package(p));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::VarPackage(p));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::Data(d));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: Package&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::Package(p));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: VarPackage&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::VarPackage(p));
 
 
     <span class="comment">// TODO: Description
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; {
-        Data(DataObject&lt;<span class="lifetime">&#39;a</span>&gt;),
+    </span><span class="kw">pub enum </span>DataRefObject&lt;<span class="lifetime">'a</span>&gt; {
+        Data(DataObject&lt;<span class="lifetime">'a</span>&gt;),
         ObjectReference(u64),
         DefinitionBlockHandle(u64),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(d: DataObject&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataRefObject::Data(d));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::from(d).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: Package&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::from(p).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(d: DataObject&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">'a</span>&gt; = DataRefObject::Data(d));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::from(d).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: Package&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: VarPackage&lt;<span class="lifetime">'a</span>&gt;) -&gt; DataRefObject&lt;<span class="lifetime">'a</span>&gt; = DataObject::from(p).into());
 }
 
 
@@ -1383,125 +1385,125 @@
 
     <span class="doccomment">/// Top-level, most general term type where the value (if any) is discarded.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>TermObject&lt;<span class="lifetime">&#39;a</span>&gt; {
-        Modifier(Box&lt;NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
-        Named(Box&lt;NamedObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
-        Statement(Box&lt;StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
-        Expression(Box&lt;ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+    </span><span class="kw">pub enum </span>TermObject&lt;<span class="lifetime">'a</span>&gt; {
+        Modifier(Box&lt;NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt;&gt;),
+        Named(Box&lt;NamedObject&lt;<span class="lifetime">'a</span>&gt;&gt;),
+        Statement(Box&lt;StatementOpcode&lt;<span class="lifetime">'a</span>&gt;&gt;),
+        Expression(Box&lt;ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;&gt;),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(m: NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = TermObject::Modifier(Box::new(m)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(n: NamedObject&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = TermObject::Named(Box::new(n)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(s: StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = TermObject::Statement(Box::new(s)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(e: ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = TermObject::Expression(Box::new(e)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(r).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(b: Buffer&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(b).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: Package&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(p).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(m: NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = TermObject::Modifier(Box::new(m)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(n: NamedObject&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = TermObject::Named(Box::new(n)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(s: StatementOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = TermObject::Statement(Box::new(s)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(e: ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = TermObject::Expression(Box::new(e)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(r).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(b: Buffer&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(b).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: Package&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: VarPackage&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermObject&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(p).into());
 
 
     <span class="doccomment">/// Term that resolves to a value.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>TermArg&lt;<span class="lifetime">&#39;a</span>&gt; {
-        Expression(Box&lt;ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
-        Data(Box&lt;DataObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+    </span><span class="kw">pub enum </span>TermArg&lt;<span class="lifetime">'a</span>&gt; {
+        Expression(Box&lt;ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;&gt;),
+        Data(Box&lt;DataObject&lt;<span class="lifetime">'a</span>&gt;&gt;),
         Arg(ArgObject),
         Local(LocalObject),
         Name(NameString),
     }
 
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(e: ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = TermArg::Expression(Box::new(e)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(r).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(b: Buffer&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(b).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(e: ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = TermArg::Expression(Box::new(e)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(r).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(b: Buffer&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(b).into());
     <span class="comment">// NOTE: Package and VarPackage could be converted through DataObject instead
-    </span><span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: Package&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(p).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::from(p).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(d: DataObject&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = TermArg::Data(Box::new(d)));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = DataObject::from(d).into());
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(a: ArgObject) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = TermArg::Arg(a));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(l: LocalObject) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = TermArg::Local(l));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(n: NameString) -&gt; TermArg&lt;<span class="lifetime">&#39;a</span>&gt; = TermArg::Name(n));
+    </span><span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: Package&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: VarPackage&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::from(p).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(d: DataObject&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = TermArg::Data(Box::new(d)));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(d: ComputationalData&lt;<span class="lifetime">'a</span>&gt;) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = DataObject::from(d).into());
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(a: ArgObject) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = TermArg::Arg(a));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(l: LocalObject) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = TermArg::Local(l));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(n: NameString) -&gt; TermArg&lt;<span class="lifetime">'a</span>&gt; = TermArg::Name(n));
 
 
     <span class="doccomment">/// Term that attaches a name to its argument.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>NameSpaceModifier&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>NameSpaceModifier&lt;<span class="lifetime">'a</span>&gt; {
         <span class="doccomment">/// Create a new `alias` for existing named `source` object.
         </span>Alias { source: NameString, alias: NameString },
 
         <span class="doccomment">/// Attach a name to an anonymous data or reference.
-        </span>Name(NameString, DataRefObject&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Name(NameString, DataRefObject&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate the contained terms within a new scope.
-        </span>Scope(NameString, Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        </span>Scope(NameString, Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;),
     }
 
 
     <span class="doccomment">/// Term that defines an object with a name.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>NamedObject&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>NamedObject&lt;<span class="lifetime">'a</span>&gt; {
         <span class="doccomment">/// Declare fields that can only be accessed after writing to a bank selector
         </span>BankField {
             region_name: NameString,
             bank_name: NameString,
-            bank_value: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            bank_value: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             flags: FieldFlags,
-            elements: Vec&lt;FieldElement&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            elements: Vec&lt;FieldElement&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a single-bit field within a buffer
         </span>CreateBitField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            bit_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            bit_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Create a one-byte-wide field within a buffer
         </span>CreateByteField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            byte_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            byte_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Declare a four-byte-wide field within a buffer
         </span>CreateDWordField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            byte_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            byte_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Declare an arbitrary-width field within a buffer
         </span>CreateField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            bit_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            num_bits: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            bit_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            num_bits: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Declare an eight-byte-wide field within a buffer
         </span>CreateQWordField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            byte_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            byte_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Declare a two-byte-wide field within a buffer
         </span>CreateWordField {
-            source_buffer: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            byte_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source_buffer: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            byte_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
             name: NameString,
         },
 
         <span class="doccomment">/// Allow an ACPI table indexed in the XSDT to be used as a set of fields
         </span>DataTableRegion {
             name: NameString,
-            signature: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            oem_id: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            oem_table_id: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            signature: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            oem_id: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            oem_table_id: TermArg&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Declare a device and its associated fields, methods, and sub-devices
-        </span>Device { name: NameString, body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
+        </span>Device { name: NameString, body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt; },
 
         <span class="doccomment">/// Declare a waitable synchronization object
         </span>Event(NameString),
@@ -1513,7 +1515,7 @@
         </span>Field {
             region_name: NameString,
             flags: FieldFlags,
-            elements: Vec&lt;FieldElement&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            elements: Vec&lt;FieldElement&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a group of field that must be accessed by writing to an index
@@ -1522,11 +1524,11 @@
             index_name: NameString,
             data_name: NameString,
             flags: FieldFlags,
-            elements: Vec&lt;FieldElement&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            elements: Vec&lt;FieldElement&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a control method
-        </span>Method { name: NameString, flags: MethodFlags, body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
+        </span>Method { name: NameString, flags: MethodFlags, body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt; },
 
         <span class="doccomment">/// Declare an acquirable mutex
         </span>Mutex { name: NameString, sync_level: u8 },
@@ -1535,8 +1537,8 @@
         </span>OperationRegion {
             name: NameString,
             region_space: RegionSpace,
-            offset: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            length: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            offset: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            length: TermArg&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Declare a power resource object
@@ -1544,7 +1546,7 @@
             name: NameString,
             system_level: u8,
             resource_order: u16,
-            body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a processor and associated register block
@@ -1553,11 +1555,11 @@
             id: u8,
             register_block_addr: u32,
             register_block_length: u8,
-            body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Declare a thermal zone namespace
-        </span>ThermalZone { name: NameString, body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
+        </span>ThermalZone { name: NameString, body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt; },
     }
 
 
@@ -1590,7 +1592,7 @@
 
     <span class="doccomment">/// A substructure of a field.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>FieldElement&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>FieldElement&lt;<span class="lifetime">'a</span>&gt; {
         <span class="doccomment">/// A named bitfield.
         </span>Named { name: NameSeg, bit_length: u32 },
 
@@ -1607,7 +1609,7 @@
 
         <span class="doccomment">/// Indicates that **following** fields should be accessed with the GPIO/Serial
         /// descriptor contained in the given buffer.
-        </span>ConnectBuffer(Buffer&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ConnectBuffer(Buffer&lt;<span class="lifetime">'a</span>&gt;),
     }
 
     <span class="doccomment">/// Additional information about how a field is accessed.
@@ -1660,9 +1662,9 @@
     }
 
 
-    <span class="doccomment">/// Terminal operation that does not evaluate to a value, a.k.a. &quot;Type 1 Opcode.&quot;
+    <span class="doccomment">/// Terminal operation that does not evaluate to a value, a.k.a. "Type 1 Opcode."
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>StatementOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>StatementOpcode&lt;<span class="lifetime">'a</span>&gt; {
         <span class="doccomment">/// Break from a loop
         </span>Break,
 
@@ -1673,255 +1675,255 @@
         </span>Continue,
 
         <span class="doccomment">/// Signal an error that requires a system shutdown
-        </span>Fatal { fatal_type: u8, code: u32, arg: TermArg&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Fatal { fatal_type: u8, code: u32, arg: TermArg&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Branch on a predicate
         </span>If {
-            predicate: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            if_true: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
-            if_false: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+            predicate: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            if_true: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;,
+            if_false: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt;,
         },
 
         <span class="doccomment">/// Load a dynamically-generated SSDT from a field, region, or buffer
-        </span>Load { name: NameString, definition_block_handle: SuperName&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Load { name: NameString, definition_block_handle: SuperName&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Do nothing
         </span>NoOp,
 
         <span class="doccomment">/// Send a signal value to a device/processor/zone
-        </span>Notify { device_or_zone: SuperName&lt;<span class="lifetime">&#39;a</span>&gt;, value: TermArg&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Notify { device_or_zone: SuperName&lt;<span class="lifetime">'a</span>&gt;, value: TermArg&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Release a held mutex
-        </span>Release { mutex: SuperName&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Release { mutex: SuperName&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Clear the signalled state of an event object
-        </span>Reset { event: SuperName&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Reset { event: SuperName&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Exit the current method and yield the given value to the caller
-        </span>Return(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Return(TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Signal to one thread waiting on the event
-        </span>Signal { event: SuperName&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Signal { event: SuperName&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Delay for at least the given milliseconds, releasing the processor
-        </span>Sleep { milliseconds: TermArg&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Sleep { milliseconds: TermArg&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Delay for at least the given microseconds, but do *not* release the processor
-        </span>Stall { microseconds: TermArg&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Stall { microseconds: TermArg&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Execute a series of statements as long as the predicate is true
-        </span>While { predicate: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, body: Vec&lt;TermObject&lt;<span class="lifetime">&#39;a</span>&gt;&gt; },
+        </span>While { predicate: TermArg&lt;<span class="lifetime">'a</span>&gt;, body: Vec&lt;TermObject&lt;<span class="lifetime">'a</span>&gt;&gt; },
     }
 
 
     <span class="doccomment">/// Terminal operation that evaluates to a reference.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub enum </span>ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; {
         <span class="doccomment">/// Create a reference to the given name
-        </span>RefOf(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>RefOf(SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Get the target of a reference
-        </span>Deref(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Deref(TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Create a reference to an index within a buffer
-        </span>Index { source: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, result: Target&lt;<span class="lifetime">&#39;a</span>&gt; },
+        </span>Index { source: TermArg&lt;<span class="lifetime">'a</span>&gt;, index: TermArg&lt;<span class="lifetime">'a</span>&gt;, result: Target&lt;<span class="lifetime">'a</span>&gt; },
 
         <span class="doccomment">/// Execute a control method
-        </span>Invoke(NameString, Vec&lt;TermArg&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+        </span>Invoke(NameString, Vec&lt;TermArg&lt;<span class="lifetime">'a</span>&gt;&gt;),
     }
 
 
     <span class="doccomment">/// Terminal operation that evaluates to a value or reference.
     </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-    </span><span class="kw">pub enum </span>ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; {
-        RefExpression(ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;),
-        Buffer(Buffer&lt;<span class="lifetime">&#39;a</span>&gt;),
-        Package(Package&lt;<span class="lifetime">&#39;a</span>&gt;),
-        VarPackage(VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;),
+    </span><span class="kw">pub enum </span>ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; {
+        RefExpression(ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;),
+        Buffer(Buffer&lt;<span class="lifetime">'a</span>&gt;),
+        Package(Package&lt;<span class="lifetime">'a</span>&gt;),
+        VarPackage(VarPackage&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Try to acquire a mutex, returning *true* if the attempt times out
         </span>Acquire {
-            mutex: SuperName&lt;<span class="lifetime">&#39;a</span>&gt;,
+            mutex: SuperName&lt;<span class="lifetime">'a</span>&gt;,
             timeout: u16,
         },
 
         <span class="doccomment">/// Add two integers
-        </span>Add(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Add(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Compute a bitwise AND of two integers
-        </span>BitwiseAnd(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>BitwiseAnd(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Concatenate two strings or buffers
-        </span>Concat(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Concat(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Concatenate two buffers containing resource templates
-        </span>ConcatRes(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ConcatRes(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Try to create a reference, returning false if it is not possible
-        </span>CondRefOf(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>CondRefOf(SuperName&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Update the destination with a copy of the given value, *without* converting
         /// its type. Compare with [`ExpressionOpcode::Store`].
-        </span>CopyObject(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, SimpleName),
+        </span>CopyObject(TermArg&lt;<span class="lifetime">'a</span>&gt;, SimpleName),
 
         <span class="doccomment">/// Decrement an integer variable
-        </span>Decrement(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Decrement(SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Perform integer (quotient-remainder) division
         </span>Divide {
-            dividend: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            divisor: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            remainder: Target&lt;<span class="lifetime">&#39;a</span>&gt;,
-            quotient: Target&lt;<span class="lifetime">&#39;a</span>&gt;,
+            dividend: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            divisor: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            remainder: Target&lt;<span class="lifetime">'a</span>&gt;,
+            quotient: Target&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Get the index of the most-significant set bit in a value
-        </span>FindSetLeftBit(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>FindSetLeftBit(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Get the index of the least-significant set bit in a value
-        </span>FindSetRightBit(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>FindSetRightBit(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Decode a series of binary-coded decimal nibbles into an integer
-        </span>FromBCD(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>FromBCD(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Increment an integer variable
-        </span>Increment(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Increment(SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if both arguments are non-zero integers
-        </span>LogicalAnd(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>LogicalAnd(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if both values are equal
-        </span>Equal(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Equal(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is greater than the right value
-        </span>Greater(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Greater(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is greater than or equal to the right
         /// value
-        </span>GreaterEqual(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>GreaterEqual(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is less than the right value
-        </span>Less(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Less(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is less than or equal to the right value
-        </span>LessEqual(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>LessEqual(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the value is zero
-        </span>LogicalNot(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>LogicalNot(TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Evaluate to true if the left value is not equal to the right value
-        </span>NotEqual(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>NotEqual(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Find an ACPI table indexed by the XSDT
         </span>LoadTable {
-            signature: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            oem_id: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            oem_table_id: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            root_path: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            parameter_path: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            parameter_data: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            signature: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            oem_id: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            oem_table_id: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            root_path: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            parameter_path: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            parameter_data: TermArg&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Evaluate to true if either of the values is a non-zero integer
-        </span>LogicalOr(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>LogicalOr(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Search a package and return the index of the first contained value that
         /// matches both specified conditions
         </span>Match {
-            search_package: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            a: (MatchOpcode, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
-            b: (MatchOpcode, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;),
-            start_index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            search_package: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            a: (MatchOpcode, TermArg&lt;<span class="lifetime">'a</span>&gt;),
+            b: (MatchOpcode, TermArg&lt;<span class="lifetime">'a</span>&gt;),
+            start_index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Copy a slice of a string or buffer.
         </span>Mid {
-            source: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            index: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            length: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            result: Target&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            index: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            length: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            result: Target&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Compute the remainder of dividing the first integer by the second
-        </span>Mod(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Mod(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Multiply two integers
-        </span>Multiply(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Multiply(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise NAND of two integers
-        </span>Nand(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Nand(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise NOR of two integers
-        </span>Nor(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Nor(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Invert the bits of an integer
-        </span>BitwiseNot(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>BitwiseNot(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Get an integer representing the type of the given value. See [`ObjectType`].
-        </span>ObjectType(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ObjectType(SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Compute the bitwise OR of the two integers
-        </span>BitwiseOr(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>BitwiseOr(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Multiply an integer by the specified power of two
-        </span>ShiftLeft(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ShiftLeft(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Divide an integer by the specified power of two
-        </span>ShiftRight(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ShiftRight(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Get the length of a string, buffer, or package
-        </span>SizeOf(SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>SizeOf(SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Update the destination with the given value, converting it to the type of the
         /// previous value. Compare with [`ExpressionOpcode::CopyObject`].
-        </span>Store(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, SuperName&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Store(TermArg&lt;<span class="lifetime">'a</span>&gt;, SuperName&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Subtract an integer from another, ignoring underflow
-        </span>Subtract(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>Subtract(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Get the current value of the system timer in 100ns
         </span>Timer,
 
         <span class="doccomment">/// Encode an integer into a sequence of binary-coded decimal nibbles
-        </span>ToBCD(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ToBCD(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Convert a value to a buffer
-        </span>ToBuffer(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ToBuffer(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Encode a value as an ASCII decimal number
-        </span>ToDecimalString(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ToDecimalString(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Encode a value as an ASCII hexadecimal number
-        </span>ToHexString(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ToHexString(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Convert a value to an integer, either by parsing a string or taking the first
         /// bytes of a buffer.
-        </span>ToInteger(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>ToInteger(TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
 
         <span class="doccomment">/// Copy an ASCII string from a buffer into a string value
         </span>ToString {
-            source: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            length: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
-            result: Target&lt;<span class="lifetime">&#39;a</span>&gt;,
+            source: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            length: TermArg&lt;<span class="lifetime">'a</span>&gt;,
+            result: Target&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Try to wait for another thread to signal an event object, returning true if
         /// the attempt times out
         </span>Wait {
-            event: SuperName&lt;<span class="lifetime">&#39;a</span>&gt;,
-            timeout: TermArg&lt;<span class="lifetime">&#39;a</span>&gt;,
+            event: SuperName&lt;<span class="lifetime">'a</span>&gt;,
+            timeout: TermArg&lt;<span class="lifetime">'a</span>&gt;,
         },
 
         <span class="doccomment">/// Compute the bitwise XOR of two integers
-        </span>BitwiseXor(TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, TermArg&lt;<span class="lifetime">&#39;a</span>&gt;, Target&lt;<span class="lifetime">&#39;a</span>&gt;),
+        </span>BitwiseXor(TermArg&lt;<span class="lifetime">'a</span>&gt;, TermArg&lt;<span class="lifetime">'a</span>&gt;, Target&lt;<span class="lifetime">'a</span>&gt;),
     }
 
     <span class="macro">from_impl!</span>(
-        &lt;<span class="lifetime">&#39;a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; =
+        &lt;<span class="lifetime">'a</span>&gt;(r: ReferenceExpressionOpcode&lt;<span class="lifetime">'a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; =
             ExpressionOpcode::RefExpression(r));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(b: Buffer&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::Buffer(b));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: Package&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::Package(p));
-    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">&#39;a</span>&gt;(p: VarPackage&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">&#39;a</span>&gt; = ExpressionOpcode::VarPackage(p));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(b: Buffer&lt;<span class="lifetime">'a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::Buffer(b));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: Package&lt;<span class="lifetime">'a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::Package(p));
+    <span class="macro">from_impl!</span>(&lt;<span class="lifetime">'a</span>&gt;(p: VarPackage&lt;<span class="lifetime">'a</span>&gt;) -&gt; ExpressionOpcode&lt;<span class="lifetime">'a</span>&gt; = ExpressionOpcode::VarPackage(p));
 
 
 

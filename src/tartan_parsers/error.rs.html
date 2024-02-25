@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `util/parsers/src/error.rs`."><title>error.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_parsers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tartan_parsers/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `util/parsers/src/error.rs`."><title>error.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_parsers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tartan_parsers/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -133,15 +135,13 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::cmp::min;
 <span class="kw">use </span>core::fmt;
 <span class="kw">use </span>nom::error::{ContextError, ErrorKind, ParseError, VerboseError, VerboseErrorKind};
 <span class="kw">use </span>nom::{AsBytes, IResult};
 
 
-<span class="doccomment">/// Trait alias combining the nom error traits [`ParseError`](nom::error::ParseError) and
-/// [`ContextError`](nom::error::ContextError).
+<span class="doccomment">/// Trait alias combining the nom error traits [`ParseError`] and [`ContextError`].
 </span><span class="attr">#[allow(clippy::module_name_repetitions)]
 </span><span class="kw">pub trait </span>GeneralParseError&lt;I&gt;
 <span class="kw">where
@@ -161,47 +161,47 @@
 
 <span class="doccomment">/// Helper struct that prints human-readable position information when formatted with
 /// `Display`.
-</span><span class="kw">pub struct </span>Position&lt;<span class="lifetime">&#39;a</span>, I: AsBytes = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; {
+</span><span class="kw">pub struct </span>Position&lt;<span class="lifetime">'a</span>, I: AsBytes = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; {
     <span class="doccomment">/// The state of the parser at the time we are interested in
-    </span><span class="kw">pub </span>state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>I,
+    </span><span class="kw">pub </span>state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>I,
     <span class="doccomment">/// The complete input we are trying to parse
-    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;I: AsBytes&gt; fmt::Display <span class="kw">for </span>Position&lt;<span class="lifetime">&#39;_</span>, I&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+<span class="kw">impl</span>&lt;I: AsBytes&gt; fmt::Display <span class="kw">for </span>Position&lt;<span class="lifetime">'_</span>, I&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
         <span class="kw">if </span><span class="self">self</span>.full_input.is_empty() {
-            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;in empty input&quot;</span>);
+            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">"in empty input"</span>);
         }
 
-        <span class="comment">// NOTE: nom&#39;s Offset implementation can panic. Avoid it.
+        <span class="comment">// NOTE: nom's Offset implementation can panic. Avoid it.
         </span><span class="kw">let </span>full_input_pos = <span class="self">self</span>.full_input.as_ptr() <span class="kw">as </span>usize;
         <span class="kw">let </span>state_pos = <span class="self">self</span>.state.as_bytes().as_ptr() <span class="kw">as </span>usize;
         <span class="kw">let </span><span class="prelude-val">Some</span>(offset) = state_pos.checked_sub(full_input_pos) <span class="kw">else </span>{
-            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;at unknown/invalid offset&quot;</span>);
+            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">"at unknown/invalid offset"</span>);
         };
 
         <span class="kw">let </span>context_start = offset.saturating_sub(<span class="number">10</span>);
         <span class="kw">let </span>context_end = min(offset + <span class="number">10</span>, <span class="self">self</span>.full_input.len());
         <span class="kw">let </span>context_slice = <span class="kw-2">&amp;</span><span class="self">self</span>.full_input[context_start..context_end];
 
-        <span class="macro">write!</span>(out, <span class="string">&quot;at offset {offset} ({offset:#x}):\n &quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(out, <span class="string">"at offset {offset} ({offset:#x}):\n "</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>byte <span class="kw">in </span>context_slice {
             <span class="kw">let </span>ascii_char = <span class="kw">match </span>byte {
                 b <span class="kw">if </span>b.is_ascii_graphic() =&gt; <span class="kw-2">*</span>b <span class="kw">as </span>char,
-                <span class="string">b&#39; &#39; </span>=&gt; <span class="string">&#39; &#39;</span>,
-                <span class="kw">_ </span>=&gt; <span class="string">&#39;.&#39;</span>,
+                <span class="string">b' ' </span>=&gt; <span class="string">' '</span>,
+                <span class="kw">_ </span>=&gt; <span class="string">'.'</span>,
             };
-            <span class="macro">write!</span>(out, <span class="string">&quot; {ascii_char:2}&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(out, <span class="string">" {ascii_char:2}"</span>)<span class="question-mark">?</span>;
         }
-        <span class="macro">write!</span>(out, <span class="string">&quot;\n &quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(out, <span class="string">"\n "</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>byte <span class="kw">in </span>context_slice {
-            <span class="macro">write!</span>(out, <span class="string">&quot; {byte:02x}&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(out, <span class="string">" {byte:02x}"</span>)<span class="question-mark">?</span>;
         }
         <span class="macro">write!</span>(
             out,
-            <span class="string">&quot;\n  {caret:&gt;caret_offset$}\n&quot;</span>,
-            caret = <span class="string">&#39;^&#39;</span>,
+            <span class="string">"\n  {caret:&gt;caret_offset$}\n"</span>,
+            caret = <span class="string">'^'</span>,
             caret_offset = (offset - context_start) * <span class="number">3 </span>+ <span class="number">1</span>,
         )
     }
@@ -211,23 +211,23 @@
 <span class="doccomment">/// A parser error with position info useful for printing human-readable messages.
 </span><span class="attr">#[derive(Debug, Clone)]
 #[allow(clippy::module_name_repetitions)]
-</span><span class="kw">pub struct </span>ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;
+</span><span class="kw">pub struct </span>ErrorWithPosition&lt;<span class="lifetime">'a</span>, I = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt;
 <span class="kw">where
-    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; + AsBytes,
 {
     <span class="doccomment">/// The error returned by the parser
     </span><span class="kw">pub </span>error: VerboseError&lt;I&gt;,
     <span class="doccomment">/// The complete input we were trying to parse
-    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+    </span><span class="kw">pub </span>full_input: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, I&gt; ErrorWithPosition&lt;<span class="lifetime">'a</span>, I&gt;
 <span class="kw">where
-    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; + AsBytes,
 {
     <span class="doccomment">/// Associate a parse error with its full input, to reference the affected position
     /// in error messages.
-    </span><span class="kw">pub fn </span>new(wrapped_error: nom::Err&lt;VerboseError&lt;I&gt;&gt;, full_input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(wrapped_error: nom::Err&lt;VerboseError&lt;I&gt;&gt;, full_input: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>wrapped_error {
             nom::Err::Error(error) | nom::Err::Failure(error) =&gt; {
                 ErrorWithPosition { error, full_input }
@@ -243,28 +243,28 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; fmt::Display <span class="kw">for </span>ErrorWithPosition&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, I&gt; fmt::Display <span class="kw">for </span>ErrorWithPosition&lt;<span class="lifetime">'a</span>, I&gt;
 <span class="kw">where
-    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; + AsBytes,
+    </span>I: From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; + AsBytes,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, out: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
         <span class="kw">if </span><span class="self">self</span>.error.errors.is_empty() {
-            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">&quot;Unknown parsing error&quot;</span>);
+            <span class="kw">return </span><span class="macro">writeln!</span>(out, <span class="string">"Unknown parsing error"</span>);
         }
 
         <span class="kw">for </span>(state, kind) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.error.errors {
             <span class="kw">match </span>kind {
                 VerboseErrorKind::Context(context) =&gt; {
-                    <span class="macro">write!</span>(out, <span class="string">&quot;In {context}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(out, <span class="string">"In {context}"</span>)<span class="question-mark">?</span>;
                 }
                 VerboseErrorKind::Char(c) =&gt; {
-                    <span class="macro">write!</span>(out, <span class="string">&quot;Expected &#39;{c}&#39;&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(out, <span class="string">"Expected '{c}'"</span>)<span class="question-mark">?</span>;
                 }
                 VerboseErrorKind::Nom(e) =&gt; {
-                    <span class="macro">write!</span>(out, <span class="string">&quot;Failed {}&quot;</span>, e.description())<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(out, <span class="string">"Failed {}"</span>, e.description())<span class="question-mark">?</span>;
                 }
             }
-            <span class="macro">write!</span>(out, <span class="string">&quot; {}&quot;</span>, Position { state, full_input: <span class="self">self</span>.full_input })<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(out, <span class="string">" {}"</span>, Position { state, full_input: <span class="self">self</span>.full_input })<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())

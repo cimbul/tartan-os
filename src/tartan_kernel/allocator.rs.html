@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/allocator.rs`."><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (85bf07972 2023-07-06)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tartan_kernel/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/allocator.rs`."><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (381d69953 2024-02-24)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tartan_kernel/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -550,21 +552,21 @@
 
 <span class="doccomment">/// Simple kernel allocator that keeps a singly-linked list of blocks and finds the first
 /// fit.
-</span><span class="kw">pub struct </span>Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
-    block_list: <span class="prelude-ty">Option</span>&lt;RefCell&lt;BlockList&lt;<span class="lifetime">&#39;a</span>&gt;&gt;&gt;,
+</span><span class="kw">pub struct </span>Allocator&lt;<span class="lifetime">'a</span>&gt; {
+    block_list: <span class="prelude-ty">Option</span>&lt;RefCell&lt;BlockList&lt;<span class="lifetime">'a</span>&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Allocator&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">pub const fn </span>uninitialized() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ block_list: <span class="prelude-val">None </span>}
     }
 
-    <span class="kw">pub fn </span>init(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_list: BlockList&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">pub fn </span>init(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_list: BlockList&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="self">self</span>.block_list = <span class="prelude-val">Some</span>(RefCell::new(block_list));
     }
 }
 
-<span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; GlobalAlloc <span class="kw">for </span>Allocator&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">unsafe impl</span>&lt;<span class="lifetime">'a</span>&gt; GlobalAlloc <span class="kw">for </span>Allocator&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">unsafe fn </span>alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, layout: Layout) -&gt; <span class="kw-2">*mut </span>u8 {
         <span class="kw">let </span>layout = layout.align_to(align_of::&lt;BlockHeader&gt;()).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>cursor = <span class="self">self</span>.block_list.as_ref().unwrap().borrow_mut().front_mut();
@@ -596,12 +598,12 @@
 </span>}
 
 
-<span class="kw">pub struct </span>BlockList&lt;<span class="lifetime">&#39;a</span>&gt; {
-    data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;],
+<span class="kw">pub struct </span>BlockList&lt;<span class="lifetime">'a</span>&gt; {
+    data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;],
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; BlockList&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>from_block(data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;]) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; BlockList&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>from_block(data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[MaybeUninit&lt;usize&gt;]) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>start_header = BlockHeader::default();
         start_header.set_data_size((data.len() - <span class="number">2</span>) * size_of::&lt;BlockHeader&gt;());
         start_header.set_free(<span class="bool-val">true</span>);
@@ -614,7 +616,7 @@
         <span class="self">Self </span>{ data }
     }
 
-    <span class="kw">unsafe fn </span>cursor_from_data_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_ptr: <span class="kw-2">*mut </span>u8) -&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">unsafe fn </span>cursor_from_data_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_ptr: <span class="kw-2">*mut </span>u8) -&gt; CursorMut&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">let </span>header_addr = data_ptr <span class="kw">as </span>usize - size_of::&lt;BlockHeader&gt;();
         <span class="macro">debug_assert!</span>(header_addr % align_of::&lt;BlockHeader&gt;() == <span class="number">0</span>);
 
@@ -625,12 +627,12 @@
     }
 
     <span class="attr">#[cfg(test)]
-    </span><span class="kw">fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
         <span class="attr">#![allow(clippy::transmute_ptr_to_ptr)]
         </span>Cursor(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;</span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
 
-    <span class="kw">fn </span>front_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>front_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; CursorMut&lt;<span class="lifetime">'a</span>&gt; {
         <span class="attr">#![allow(clippy::transmute_ptr_to_ptr)]
         </span>CursorMut(<span class="kw">unsafe </span>{ Pin::new_unchecked(transmute(<span class="kw-2">&amp;mut </span><span class="self">self</span>.data[<span class="number">0</span>])) })
     }
@@ -638,11 +640,11 @@
 
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">struct </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt;);
+</span><span class="kw">struct </span>Cursor&lt;<span class="lifetime">'a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>BlockHeader&gt;);
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BlockHeader&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>BlockHeader&gt; {
         <span class="self">self</span>.<span class="number">0
     </span>}
 
@@ -654,10 +656,10 @@
 }
 
 
-<span class="kw">struct </span>CursorMut&lt;<span class="lifetime">&#39;a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>BlockHeader&gt;);
+<span class="kw">struct </span>CursorMut&lt;<span class="lifetime">'a</span>&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>BlockHeader&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; CursorMut&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>current(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>BlockHeader&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CursorMut&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>current(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>BlockHeader&gt; {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0
     </span>}
 
@@ -668,7 +670,7 @@
     }
 
     <span class="attr">#[cfg(test)]
-    </span><span class="kw">fn </span>into_cursor(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">fn </span>into_cursor(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
         Cursor(<span class="self">self</span>.<span class="number">0</span>.into_ref())
     }
 
@@ -742,7 +744,7 @@
     }
 
     <span class="kw">fn </span>set_data_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: usize) {
-        <span class="macro">assert!</span>(value &amp; !<span class="self">Self</span>::SIZE_MASK == <span class="number">0</span>, <span class="string">&quot;Size is not 2-byte aligned&quot;</span>);
+        <span class="macro">assert!</span>(value &amp; !<span class="self">Self</span>::SIZE_MASK == <span class="number">0</span>, <span class="string">"Size is not 2-byte aligned"</span>);
         <span class="self">self</span>.<span class="number">0 </span>&amp;= !<span class="self">Self</span>::SIZE_MASK;
         <span class="self">self</span>.<span class="number">0 </span>|= value;
     }
@@ -800,7 +802,7 @@
     }
 }
 
-<span class="comment">// Several calculations in BlockHeader&#39;s methods assume this
+<span class="comment">// Several calculations in BlockHeader's methods assume this
 </span><span class="macro">const_assert!</span>(size_of::&lt;BlockHeader&gt;() % align_of::&lt;BlockHeader&gt;() == <span class="number">0</span>);
 
 
@@ -810,7 +812,7 @@
     <span class="comment">// TODO: Return Option&lt;usize&gt; instead?
     </span><span class="macro">assert!</span>(
         addr &lt;= aligned,
-        <span class="string">&quot;Aligning {:#x} to {:#x} would overflow&quot;</span>,
+        <span class="string">"Aligning {:#x} to {:#x} would overflow"</span>,
         addr,
         layout.align()
     );
@@ -916,10 +918,10 @@
             <span class="kw">let </span>blocks = BlockList::from_block(<span class="kw-2">&amp;mut </span>data);
             <span class="kw">let </span><span class="kw-2">mut </span>cursor = blocks.front();
 
-            <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+            <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
             </span><span class="kw">let </span>expected_data_size = <span class="number">120</span>; <span class="comment">// (0x20 - 2) * 4
 
-            </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+            </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
             </span><span class="kw">let </span>expected_data_size = <span class="number">240</span>; <span class="comment">// (0x20 - 2) * 8
 
             // Then the first header should be placed at the beginning and have all the
