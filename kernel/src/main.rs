@@ -7,12 +7,13 @@
 #![feature(panic_info_message)]
 #![feature(rustc_private)]
 #![feature(start)]
+#![allow(internal_features)]
 
 extern crate alloc;
 
 use alloc::string::String;
-use core::fmt::Write;
 use core::mem::MaybeUninit;
+use core::{fmt::Write, ptr::addr_of_mut};
 use tartan_serial::{LineMode, UARTWriteAdapter, UART};
 
 
@@ -114,7 +115,10 @@ fn kernel_main() -> ! {
     writeln!(out, "Hello, world!").unwrap();
 
     unsafe {
-        ALLOCATOR.init(allocator::BlockList::from_block(&mut HEAP));
+        // TODO: Figure out how Rust expects us to do this now
+        // https://github.com/rust-lang/rust/issues/114447
+        // https://github.com/rust-lang/rust/issues/53639
+        ALLOCATOR.init(allocator::BlockList::from_block(&mut *addr_of_mut!(HEAP)));
     }
 
     let mut heap_message = String::from("This came from...");

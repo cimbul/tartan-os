@@ -2,7 +2,6 @@
 //! Devicetree spec.
 
 use crate::{MemoryReservation, Value};
-use core::convert::TryInto;
 use core::mem::{size_of, size_of_val};
 use core::slice;
 use core::str;

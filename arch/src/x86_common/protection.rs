@@ -1138,7 +1138,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Segment limit too large: 0x100000")]
     #[cfg(target_arch = "x86_64")]
     #[rustfmt::skip]
     fn test_descriptor_limit_out_of_range() {
@@ -1511,28 +1511,36 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "Port 10 is beyond the maximum value Some(f) supported by this map"
+    )]
     fn test_set_port_checked_out_of_range_3byte() {
         let mut map = IOPermissionBitmap([0x00, 0x00, 0xff]);
         map.set_port_checked(16, true);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "Port 8 is beyond the maximum value Some(7) supported by this map"
+    )]
     fn test_set_port_checked_out_of_range_2byte() {
         let mut map = IOPermissionBitmap([0x00, 0xff]);
         map.set_port_checked(8, true);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "Port 0 is beyond the maximum value None supported by this map"
+    )]
     fn test_set_port_checked_out_of_range_1byte() {
         let mut map = IOPermissionBitmap([0xff]);
         map.set_port_checked(0, true);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "Port 0 is beyond the maximum value None supported by this map"
+    )]
     fn test_set_port_checked_out_of_range_empty() {
         let mut map = IOPermissionBitmap([]);
         map.set_port_checked(0, true);

@@ -6,9 +6,8 @@
 //! AMLCode := DefBlockHeader TermList
 //! ```
 //!
-//! Everything in `DefBlockHeader` just repeats the fixed
-//! [`DescriptionHeader`](crate::DescriptionHeader) struct used in other tables,
-//! so there's no reason to write a parser for it.
+//! Everything in `DefBlockHeader` just repeats the fixed [`DescriptionHeader`] struct
+//! used in other tables, so there's no reason to write a parser for it.
 
 #![allow(clippy::wildcard_imports)]
 
@@ -257,7 +256,7 @@ pub mod state {
 
     impl<F, T> ReplaceableParseError<F, T> for () {
         type From = ();
-        fn replace_input(_: Self::From, _: T) -> Self {}
+        fn replace_input((): Self::From, _: T) -> Self {}
     }
 
     impl<F, T: Clone> ReplaceableParseError<F, T> for VerboseError<T> {
@@ -346,6 +345,7 @@ mod util {
             $imp:block
         ] => {
             $(#[$meta])*
+            #[allow(clippy::missing_errors_doc)]
             $vis fn $name<'a, E: AMLParseError<'a>>(
                 $input: ParserState<'a>
             ) -> AMLParseResult<$ret_typ, E> $imp

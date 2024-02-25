@@ -131,6 +131,7 @@ pub enum Kind {
 
 /// Exception vector table that contains code to handle each exception [`Kind`].
 #[repr(align(0x10))]
+#[allow(dead_code)]
 pub struct VectorTable([u8; 0x20]);
 
 

@@ -4,8 +4,7 @@ use nom::error::{ContextError, ErrorKind, ParseError, VerboseError, VerboseError
 use nom::{AsBytes, IResult};
 
 
-/// Trait alias combining the nom error traits [`ParseError`](nom::error::ParseError) and
-/// [`ContextError`](nom::error::ContextError).
+/// Trait alias combining the nom error traits [`ParseError`] and [`ContextError`].
 #[allow(clippy::module_name_repetitions)]
 pub trait GeneralParseError<I>
 where

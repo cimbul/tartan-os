@@ -6,6 +6,7 @@
 #![feature(panic_info_message)]
 #![feature(rustc_private)]
 #![feature(test)]
+#![allow(internal_features)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::upper_case_acronyms)]
@@ -18,6 +19,7 @@ mod intrinsics;
 use core::alloc::Layout;
 #[cfg(not(test))]
 use core::panic::PanicInfo;
+use core::ptr::addr_of;
 #[cfg(not(test))]
 use tartan_uefi::allocator::BootAllocator;
 
@@ -48,7 +50,11 @@ extern "C" fn efi_main(
         SYSTEM_TABLE = Some(system_table);
 
         LOGGER.0 = Some(OutputStream::new(system_table.console_out.unwrap()));
-        log::set_logger(&LOGGER).unwrap();
+
+        // TODO: Figure out how Rust expects us to do this now
+        // https://github.com/rust-lang/rust/issues/114447
+        // https://github.com/rust-lang/rust/issues/53639
+        log::set_logger(&*addr_of!(LOGGER)).unwrap();
         log::set_max_level(log::LevelFilter::max());
     }
 

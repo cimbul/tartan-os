@@ -43,33 +43,6 @@ pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
 
 /// This is a Microsoft C Runtime Library function that LLVM expects to be available when
 /// it is making PE files for Arm.
-#[cfg(all(target_os = "uefi", target_arch = "aarch64"))]
-#[no_mangle]
-#[naked]
-pub unsafe extern "C" fn __chkstk() {
-    // Input:    x15 = number of 16-byte units in stack
-    // Output:   x15 = same as input
-    // Clobbers: x16, x17
-    core::arch::asm!(
-        "
-        mov  x16, 0    // Stack offset
-        mov  x17, x15  // Remaining 16-byte units
-
-    1:  // Repeatedly touch the guard page to trigger faults and allocate more stack
-        sub  x16, x16, 4096   // Page size in bytes
-        ldr  xzr, [sp, x16]
-        subs x17, x17, 256    // Page size in 16-byte units
-        b.gt 1b
-
-        ret
-        ",
-        options(noreturn),
-    )
-}
-
-
-/// This is a Microsoft C Runtime Library function that LLVM expects to be available when
-/// it is making PE files for Arm.
 #[cfg(all(target_os = "uefi", target_arch = "arm"))]
 #[no_mangle]
 #[naked]
@@ -111,6 +84,12 @@ cfg_if::cfg_if! {
         #[no_mangle]
         pub unsafe extern "C" fn __u64tos(i: u64) -> f32 {
             __floatundisf(i)
+        }
+
+        /// Convert 64-bit signed int to double-precision float
+        #[no_mangle]
+        pub unsafe extern "C" fn __i64tod(i: i64) -> f64 {
+            __floatunsidf(i)
         }
 
         /// Division with remainder for unsigned 32-bit integers
@@ -198,6 +177,7 @@ cfg_if::cfg_if! {
             // functions above.
             fn __floatundidf(i: u64) -> f64;
             fn __floatundisf(i: u64) -> f32;
+            fn __floatunsidf(i: i64) -> f64;
         }
     }
 }

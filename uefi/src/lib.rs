@@ -12,7 +12,6 @@
 extern crate alloc;
 
 use ::alloc::vec::Vec;
-use core::convert::TryInto;
 use core::ffi::c_void;
 use core::fmt;
 use core::mem::{align_of, size_of};
@@ -316,7 +315,7 @@ pub trait Table {
 
         let header = self.header();
         let size = header.header_size as usize;
-        let start_address = (self as *const Self).cast::<u8>();
+        let start_address = core::ptr::from_ref(self).cast::<u8>();
         let crc_field_address = core::ptr::addr_of!(header.crc32).cast::<u8>();
 
         let mut crc = CRCu32::crc32();

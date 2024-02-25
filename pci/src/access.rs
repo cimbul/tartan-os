@@ -114,7 +114,6 @@ impl ConfigAccess for MemMapConfigAccess {
 pub mod io {
     use crate::access::{ConfigAccess, ConfigSelector};
     use crate::MAX_DEVICE;
-    use core::convert::TryFrom;
     use tartan_arch::x86_common::io;
     use tartan_bitfield::bitfield;
 

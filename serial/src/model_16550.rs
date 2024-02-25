@@ -5,7 +5,6 @@
 #![allow(unused)]
 
 use crate::{baud_from_divisor, divisor_from_baud, LineMode, Parity, WordLength, UART};
-use core::convert::TryInto;
 use tartan_arch::x86_common::io;
 use tartan_bitfield::bitfield;
 use tartan_c_enum::c_enum;

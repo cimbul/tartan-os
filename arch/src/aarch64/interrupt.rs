@@ -398,12 +398,14 @@ pub enum Source {
 /// useful to instantiate this type directly. Use [`aarch64_exception_vector_table`]
 /// instead.
 #[repr(align(0x80))]
+#[allow(dead_code)]
 pub struct VectorEntry([u8; 0x80]);
 
 
 /// Exception vector table that contains code to handle exceptions from each combination
 /// of [`Kind`] and [`Source`].
 #[repr(align(0x800))]
+#[allow(dead_code)]
 pub struct VectorTable([VectorEntry; 16]);
 
 
