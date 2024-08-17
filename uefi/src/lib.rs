@@ -1047,7 +1047,7 @@ pub mod proto {
     /// Protocol for accessing a file system supported by UEFI (typically FAT).
     #[repr(C)]
     pub struct SimpleFileSystem {
-        /// Implemented revision of the SimpleFileSystem protocol.
+        /// Implemented revision of the `SimpleFileSystem` protocol.
         pub revision: u64,
         open_volume_: unsafe extern "C" fn(
             this: &SimpleFileSystem,

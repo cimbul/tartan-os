@@ -1,10 +1,8 @@
 #![no_std]
 #![cfg_attr(target_os = "tartan", no_main)]
 #![feature(alloc_error_handler)]
-#![feature(asm_const)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
-#![feature(panic_info_message)]
 #![feature(rustc_private)]
 #![feature(start)]
 #![allow(internal_features)]
@@ -182,10 +180,7 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
         Some(location) => writeln!(out, "Location: {location}"),
         None => writeln!(out, "No location information"),
     };
-    match info.message() {
-        Some(arguments) => core::fmt::write(&mut out, *arguments),
-        None => writeln!(out, "No additional message"),
-    };
+    writeln!(&mut out, "{}", info.message());
 
     #[allow(clippy::empty_loop)]
     loop {}

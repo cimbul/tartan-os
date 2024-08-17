@@ -3,7 +3,6 @@
 #![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
 #![feature(naked_functions)]
-#![feature(panic_info_message)]
 #![feature(rustc_private)]
 #![feature(test)]
 #![allow(internal_features)]
@@ -331,10 +330,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
                     Some(location) => writeln!(out, "Location: {location}"),
                     None => writeln!(out, "No location information"),
                 };
-                match info.message() {
-                    Some(arguments) => core::fmt::write(&mut out, *arguments),
-                    None => writeln!(out, "No additional message"),
-                };
+                writeln!(&mut out, "{}", info.message());
             }
         }
     }

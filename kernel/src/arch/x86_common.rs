@@ -151,7 +151,7 @@ pub fn initialize_segments() {
     // Set the GDTR to use our global descriptor table, and point the segment selectors
     // (CS, DS, SS, etc.) to the new descriptors.
     let gdtr = GlobalDescriptorTableRegister {
-        address: unsafe { addr_of!(GLOBAL_DESCRIPTOR_TABLE) as usize },
+        address: addr_of!(GLOBAL_DESCRIPTOR_TABLE) as usize,
         limit: (size_of::<GlobalDescriptorTable>() - 1).try_into().unwrap(),
     };
     unsafe {
@@ -224,7 +224,7 @@ fn make_task_state_descriptor() -> SegmentDescriptor {
 
     let mut descriptor = SegmentDescriptor::default();
     descriptor.flags = flags;
-    descriptor.set_address(unsafe { addr_of!(TASK_STATE_SEGMENT) as usize });
+    descriptor.set_address(addr_of!(TASK_STATE_SEGMENT) as usize);
     descriptor.set_limit((size_of::<TaskStateSegmentHeader>() - 1).try_into().unwrap());
     descriptor
 }
@@ -312,7 +312,7 @@ pub fn initialize_interrupts() {
 
     // Point the IDTR to our IDT
     let idtr = InterruptDescriptorTableRegister {
-        address: unsafe { addr_of!(INTERRUPT_DESCRIPTOR_TABLE) as usize },
+        address: addr_of!(INTERRUPT_DESCRIPTOR_TABLE) as usize,
         limit: (size_of::<InterruptDescriptorTable>() - 1).try_into().unwrap(),
     };
     unsafe { InterruptDescriptorTableRegister::set(&idtr) };

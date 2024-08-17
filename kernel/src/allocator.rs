@@ -85,12 +85,21 @@ impl<'a> BlockList<'a> {
     #[cfg(test)]
     fn front(&self) -> Cursor<'a> {
         #![allow(clippy::transmute_ptr_to_ptr)]
-        Cursor(unsafe { Pin::new_unchecked(transmute(&self.data[0])) })
+        Cursor(unsafe {
+            Pin::new_unchecked(transmute::<&core::mem::MaybeUninit<usize>, &BlockHeader>(
+                &self.data[0],
+            ))
+        })
     }
 
     fn front_mut(&mut self) -> CursorMut<'a> {
         #![allow(clippy::transmute_ptr_to_ptr)]
-        CursorMut(unsafe { Pin::new_unchecked(transmute(&mut self.data[0])) })
+        CursorMut(unsafe {
+            Pin::new_unchecked(transmute::<
+                &mut core::mem::MaybeUninit<usize>,
+                &mut BlockHeader,
+            >(&mut self.data[0]))
+        })
     }
 }
 
@@ -228,7 +237,7 @@ impl BlockHeader {
         self.next_ptr().map(|p| unsafe { Pin::new_unchecked(&*p) })
     }
 
-    fn next_mut(self: &Pin<&mut Self>) -> Option<Pin<&mut Self>> {
+    fn next_mut<'a>(self: &Pin<&'a mut Self>) -> Option<Pin<&'a mut Self>> {
         self.as_ref().next_ptr().map(|p| unsafe { Pin::new_unchecked(&mut *p) })
     }
 
@@ -397,7 +406,7 @@ mod test {
         #[should_panic]
         fn test_from_block_empty() {
             // When creating from a slice without enough space for either header
-            BlockList::from_block(&mut [MaybeUninit::zeroed(); 0]);
+            BlockList::from_block(&mut ([] as [MaybeUninit<usize>; 0]));
 
             // Then the call should panic
         }
