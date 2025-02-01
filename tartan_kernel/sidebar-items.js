@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["_start","alloc_error","eh_personality","find_uart","kernel_main","panic_handler"],"mod":["allocator","arch","cpu","intrinsics","pci"],"static":["ALLOCATOR","HEAP","X"]};
+window.SIDEBAR_ITEMS = {"fn":["alloc_error","eh_personality","find_uart","kernel_main","main","panic_handler"],"mod":["allocator","arch","cpu","intrinsics","pci"],"static":["ALLOCATOR","HEAP","X"]};

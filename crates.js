@@ -1,1 +1,2 @@
 window.ALL_CRATES = ["aml_parse","tartan_acpi","tartan_arch","tartan_devicetree","tartan_elf","tartan_kernel","tartan_parsers","tartan_pci","tartan_serial","tartan_uefi"];
+//{"start":21,"fragment_lengths":[11,14,14,20,13,16,17,13,16,14]}

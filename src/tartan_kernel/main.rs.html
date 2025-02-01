@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/main.rs`."><title>main.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-b25d77b18a16a9a4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (506052d49 2024-08-16)" data-channel="nightly" data-search-js="search-ef54e092fea9c776.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-cb0df477c2d67d00.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel/src/main.rs`."><title>main.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tartan_kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (854f22563 2025-01-31)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-302de22f.js"></script><script defer src="../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tartan_kernel/</div>main.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -186,19 +187,12 @@
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-</pre></div><pre class="rust"><code><span class="attr">#![no_std]
+<a href="#189" id="189">189</a></pre></div><pre class="rust"><code><span class="attr">#![no_std]
 #![cfg_attr(target_os = <span class="string">"tartan"</span>, no_main)]
 #![feature(alloc_error_handler)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![feature(rustc_private)]
-#![feature(start)]
 #![allow(internal_features)]
 
 </span><span class="kw">extern crate </span>alloc;
@@ -235,9 +229,8 @@ stack_top:
 </span><span class="kw">static </span><span class="kw-2">mut </span>X: usize = <span class="number">0</span>;
 
 <span class="comment">// Dummy implementation when building for host
-</span><span class="attr">#[start]
-#[cfg(not(target_os = <span class="string">"tartan"</span>))]
-</span><span class="kw">fn </span>_start(<span class="kw">_</span>: isize, <span class="kw">_</span>: <span class="kw-2">*const *const </span>u8) -&gt; isize {
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"tartan"</span>))]
+</span><span class="kw">fn </span>main() {
     kernel_main()
 }
 
@@ -247,7 +240,7 @@ stack_top:
 </span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>_start() -&gt; ! {
     <span class="kw">unsafe </span>{
         <span class="attr">#[cfg(target_arch = <span class="string">"x86"</span>)]
-        </span><span class="macro">core::arch::asm!</span>(
+        </span><span class="macro">core::arch::naked_asm!</span>(
             <span class="string">"
             mov esp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -255,11 +248,10 @@ stack_top:
             jmp 2b
             "</span>,
             sym kernel_main,
-            options(noreturn),
         );
 
         <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
-        </span><span class="macro">core::arch::asm!</span>(
+        </span><span class="macro">core::arch::naked_asm!</span>(
             <span class="string">"
             mov rsp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -267,22 +259,20 @@ stack_top:
             jmp 2b
             "</span>,
             sym kernel_main,
-            options(noreturn),
         );
 
         <span class="attr">#[cfg(target_arch = <span class="string">"arm"</span>)]
-        </span><span class="macro">core::arch::asm!</span>(
+        </span><span class="macro">core::arch::naked_asm!</span>(
             <span class="string">"
             ldr sp, =stack_top  // Set up initial stack
             blx {}              // Call real main function
         1:  b 1b                // Spin if main function ever returns
             "</span>,
             sym kernel_main,
-            options(noreturn),
         );
 
         <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
-        </span><span class="macro">core::arch::asm!</span>(
+        </span><span class="macro">core::arch::naked_asm!</span>(
             <span class="string">"
             ldr x0, =stack_top  // Set up initial stack
             mov sp, x0
@@ -291,7 +281,6 @@ stack_top:
             b 1b
             "</span>,
             sym kernel_main,
-            options(noreturn),
         );
     }
 }
@@ -306,7 +295,8 @@ stack_top:
 
     <span class="macro">writeln!</span>(out, <span class="string">"Hello, world!"</span>).unwrap();
 
-    <span class="kw">unsafe </span>{
+    <span class="attr">#[allow(static_mut_refs)]
+    </span><span class="kw">unsafe </span>{
         <span class="comment">// TODO: Figure out how Rust expects us to do this now
         // https://github.com/rust-lang/rust/issues/114447
         // https://github.com/rust-lang/rust/issues/53639
