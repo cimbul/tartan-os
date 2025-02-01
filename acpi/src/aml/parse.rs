@@ -83,7 +83,7 @@ where
     ///
     /// # Errors
     /// Returns an error if the data cannot be parsed.
-    fn parse<E: AMLParseError<'a>>(i: ParserState<'a>) -> AMLParseResult<Self, E>;
+    fn parse<E: AMLParseError<'a>>(i: ParserState<'a>) -> AMLParseResult<'a, Self, E>;
 }
 
 
@@ -182,7 +182,7 @@ pub mod state {
         /// Wraps a byte-oriented parser to work with `ParserState`
         pub fn lift<P, O, E>(
             mut parser: P,
-        ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
+        ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<'a, O, E>
         where
             P: Parser<&'a [u8], O, E::From>,
             E: AMLParseError<'a>,
@@ -202,7 +202,7 @@ pub mod state {
         }
     }
 
-    impl<'a> AsBytes for ParserState<'a> {
+    impl AsBytes for ParserState<'_> {
         fn as_bytes(&self) -> &[u8] {
             self.data
         }
@@ -297,7 +297,7 @@ mod num {
         ] => {
             pub fn $parser<'a, E: AMLParseError<'a>>(
                 i: ParserState<'a>
-            ) -> AMLParseResult<$out, E> {
+            ) -> AMLParseResult<'a, $out, E> {
                 // Hopefully rustc is smart enough to optimize away the closure
                 ParserState::lift($nom_parser)(i)
             }
@@ -348,7 +348,7 @@ mod util {
             #[allow(clippy::missing_errors_doc)]
             $vis fn $name<'a, E: AMLParseError<'a>>(
                 $input: ParserState<'a>
-            ) -> AMLParseResult<$ret_typ, E> $imp
+            ) -> AMLParseResult<'a, $ret_typ, E> $imp
         };
 
         // Use lifetime from scope
@@ -361,7 +361,7 @@ mod util {
             $(#[$meta])*
             $vis fn $name<E: AMLParseError<$a>>(
                 $input: ParserState<$a>
-            ) -> AMLParseResult<$ret_typ, E> $imp
+            ) -> AMLParseResult<$a, $ret_typ, E> $imp
         };
     }
 
@@ -369,7 +369,7 @@ mod util {
     /// with a one-byte string, but I didn't actually profile it.
     pub fn tag_byte<'a, E: ParseError<ParserState<'a>>>(
         b: u8,
-    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<u8, E> {
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<'a, u8, E> {
         move |i: ParserState<'_>| {
             if i.data.is_empty() {
                 err(i, ErrorKind::Tag)
@@ -390,7 +390,7 @@ mod util {
     /// ```
     pub fn ext_op<'a, O, E, P>(
         p: P,
-    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<'a, O, E>
     where
         P: Parser<ParserState<'a>, O, E>,
         E: ParseError<ParserState<'a>>,
@@ -401,7 +401,7 @@ mod util {
     parser_fn! {
         /// Recognizes a null-terminated (C-style), possibly-empty 7-bit ASCII string.
         /// Strips the null terminator.
-        pub c_ascii_str(i) -> &str {
+        pub c_ascii_str(i) -> &'a str {
             let (i, str_bytes) = ParserState::lift(
                 bytes::take_till(|b: u8| b == 0 || !b.is_ascii())
             )(i)?;
@@ -585,7 +585,7 @@ pub mod name {
         /// ```text
         /// Target := SuperName | NullName
         /// ```
-        pub parse_target -> Target = alt((
+        pub parse_target -> Target<'a> = alt((
             value(None, tag_byte(0x00)),
             map(SuperName::parse, Some),
         ))
@@ -853,7 +853,7 @@ mod package {
     /// Execute a parser inside a length-prefixed package
     pub fn in_package<'a, P, O, E>(
         inner_parser: P,
-    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<O, E>
+    ) -> impl FnMut(ParserState<'a>) -> AMLParseResult<'a, O, E>
     where
         P: Parser<ParserState<'a>, O, E>,
         E: AMLParseError<'a>,

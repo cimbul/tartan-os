@@ -22,7 +22,7 @@ impl<'a> Allocator<'a> {
     }
 }
 
-unsafe impl<'a> GlobalAlloc for Allocator<'a> {
+unsafe impl GlobalAlloc for Allocator<'_> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let layout = layout.align_to(align_of::<BlockHeader>()).unwrap();
         let mut cursor = self.block_list.as_ref().unwrap().borrow_mut().front_mut();

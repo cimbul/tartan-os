@@ -14,6 +14,7 @@
   "linker-flavor": "lld-link",
   "linker-is-gnu": false,
   "lld-flavor": "link",
+  "llvm-floatabi": "soft",
   "llvm-target": "thumbv7-unknown-windows-eabi",
   "max-atomic-width": 64,
   "os": "uefi",

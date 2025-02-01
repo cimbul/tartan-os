@@ -82,10 +82,10 @@ impl MemMapConfigAccess {
         );
         assert!(register < Self::MAP_SIZE, "Register number out of range: {register}");
 
-        let offset = usize::from(selector.bus) << 20
-            | usize::from(selector.device) << 15
-            | usize::from(selector.function) << 12
-            | usize::from(register) << 2;
+        let offset = (usize::from(selector.bus) << 20)
+            | (usize::from(selector.device) << 15)
+            | (usize::from(selector.function) << 12)
+            | (usize::from(register) << 2);
         let address = self.base_address + offset;
 
         address as *mut u32

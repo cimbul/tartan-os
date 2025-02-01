@@ -8,6 +8,7 @@
   "linker": "rust-lld",
   "linker-flavor": "ld.lld",
   "linker-is-gnu": true,
+  "llvm-floatabi": "soft",
   "llvm-target": "arm-unknown-none",
   "max-atomic-width": 64,
 	"os": "tartan",

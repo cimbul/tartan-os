@@ -147,7 +147,7 @@ impl Header {
     const MAGIC: [u8; 4] = [0xd0, 0x0d, 0xfe, 0xed];
     const VERSION: u32 = 17;
 
-    pub fn parse<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    pub fn parse<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         preceded(
             bytes::tag(Self::MAGIC),
             verify(
@@ -228,7 +228,7 @@ enum StructureToken<'a> {
 }
 
 impl<'a> StructureToken<'a> {
-    fn parse<E: GeneralParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse<E: GeneralParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         alt((
             Self::parse_begin_node,
             Self::parse_end_node,
@@ -240,7 +240,7 @@ impl<'a> StructureToken<'a> {
 
     fn parse_begin_node<E: GeneralParseError<&'a [u8]>>(
         i: &'a [u8],
-    ) -> IResult<&[u8], Self, E> {
+    ) -> IResult<&'a [u8], Self, E> {
         opcode(
             "begin node",
             bytes::tag(1_u32.to_be_bytes()),
@@ -248,13 +248,15 @@ impl<'a> StructureToken<'a> {
         )(i)
     }
 
-    fn parse_end_node<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse_end_node<E: ParseError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&'a [u8], Self, E> {
         value(Self::EndNode, bytes::tag(2_u32.to_be_bytes()))(i)
     }
 
     fn parse_property<E: GeneralParseError<&'a [u8]>>(
         i: &'a [u8],
-    ) -> IResult<&[u8], Self, E> {
+    ) -> IResult<&'a [u8], Self, E> {
         opcode(
             "property",
             bytes::tag(3_u32.to_be_bytes()),
@@ -267,11 +269,11 @@ impl<'a> StructureToken<'a> {
         )(i)
     }
 
-    fn parse_no_op<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse_no_op<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         value(Self::NoOp, bytes::tag(4_u32.to_be_bytes()))(i)
     }
 
-    fn parse_end<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Self, E> {
+    fn parse_end<E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         value(Self::End, bytes::tag(9_u32.to_be_bytes()))(i)
     }
 }
@@ -279,7 +281,7 @@ impl<'a> StructureToken<'a> {
 
 fn parse_c_string<'a, E: GeneralParseError<&'a [u8]>>(
     i: &'a [u8],
-) -> IResult<&[u8], &str, E> {
+) -> IResult<&'a [u8], &'a str, E> {
     let null_terminated_bytes =
         terminated(bytes::take_until(&[0_u8] as &[u8]), bytes::tag([0_u8]));
     map_parser(null_terminated_bytes, |b| match str::from_utf8(b) {
@@ -292,10 +294,10 @@ fn parse_c_string<'a, E: GeneralParseError<&'a [u8]>>(
 fn alignment_padded<'a, P, O, E>(
     alignment_bytes: usize,
     parser: P,
-) -> impl Fn(&'a [u8]) -> IResult<&[u8], O, E>
+) -> impl Fn(&'a [u8]) -> IResult<&'a [u8], O, E>
 where
     E: ParseError<&'a [u8]>,
-    P: Fn(&'a [u8]) -> IResult<&[u8], O, E>,
+    P: Fn(&'a [u8]) -> IResult<&'a [u8], O, E>,
 {
     move |i| {
         let (i, o) = parser(i)?;

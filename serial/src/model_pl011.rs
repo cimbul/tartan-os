@@ -22,7 +22,7 @@ impl UARTPL011<'_> {
     }
 }
 
-impl<'a> UART for UARTPL011<'a> {
+impl UART for UARTPL011<'_> {
     fn reset(&mut self) {
         // Disable and flush before reprogramming
         let mut control = self.register_block.control();

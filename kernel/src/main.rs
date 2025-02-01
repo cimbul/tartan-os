@@ -4,7 +4,6 @@
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![feature(rustc_private)]
-#![feature(start)]
 #![allow(internal_features)]
 
 extern crate alloc;
@@ -41,9 +40,8 @@ stack_top:
 static mut X: usize = 0;
 
 // Dummy implementation when building for host
-#[start]
 #[cfg(not(target_os = "tartan"))]
-fn _start(_: isize, _: *const *const u8) -> isize {
+fn main() {
     kernel_main()
 }
 
@@ -53,7 +51,7 @@ fn _start(_: isize, _: *const *const u8) -> isize {
 extern "C" fn _start() -> ! {
     unsafe {
         #[cfg(target_arch = "x86")]
-        core::arch::asm!(
+        core::arch::naked_asm!(
             "
             mov esp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -61,11 +59,10 @@ extern "C" fn _start() -> ! {
             jmp 2b
             ",
             sym kernel_main,
-            options(noreturn),
         );
 
         #[cfg(target_arch = "x86_64")]
-        core::arch::asm!(
+        core::arch::naked_asm!(
             "
             mov rsp, offset stack_top  // Set up initial stack
             call {}                    // Call real main function
@@ -73,22 +70,20 @@ extern "C" fn _start() -> ! {
             jmp 2b
             ",
             sym kernel_main,
-            options(noreturn),
         );
 
         #[cfg(target_arch = "arm")]
-        core::arch::asm!(
+        core::arch::naked_asm!(
             "
             ldr sp, =stack_top  // Set up initial stack
             blx {}              // Call real main function
         1:  b 1b                // Spin if main function ever returns
             ",
             sym kernel_main,
-            options(noreturn),
         );
 
         #[cfg(target_arch = "aarch64")]
-        core::arch::asm!(
+        core::arch::naked_asm!(
             "
             ldr x0, =stack_top  // Set up initial stack
             mov sp, x0
@@ -97,7 +92,6 @@ extern "C" fn _start() -> ! {
             b 1b
             ",
             sym kernel_main,
-            options(noreturn),
         );
     }
 }
@@ -112,6 +106,7 @@ fn kernel_main() -> ! {
 
     writeln!(out, "Hello, world!").unwrap();
 
+    #[allow(static_mut_refs)]
     unsafe {
         // TODO: Figure out how Rust expects us to do this now
         // https://github.com/rust-lang/rust/issues/114447

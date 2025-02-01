@@ -50,7 +50,7 @@ pub unsafe extern "C" fn __chkstk() {
     // Input:    r4 = number of 4-byte units in stack
     // Output:   r4 = number of *individual* bytes in stack
     // Clobbers: r12
-    core::arch::asm!(
+    core::arch::naked_asm!(
         "
         push {{r0, r4}} // r0 be used as scratch register for throw-away loads
         mov  r12, #-8   // Stack offset; initial value accounts for saved registers
@@ -65,7 +65,6 @@ pub unsafe extern "C" fn __chkstk() {
         lsl  r4,  2     // Convert 4-byte units to single bytes, as expected by caller
         blx  lr
         ",
-        options(noreturn),
     )
 }
 
@@ -96,7 +95,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_udiv() {
-            core::arch::asm!(
+            core::arch::naked_asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r1
@@ -106,7 +105,6 @@ cfg_if::cfg_if! {
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_uidivmod
                 ",
-                options(noreturn),
             );
         }
 
@@ -114,7 +112,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_udiv64() {
-            core::arch::asm!(
+            core::arch::naked_asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r2 (lower 32b)
@@ -128,7 +126,6 @@ cfg_if::cfg_if! {
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_uldivmod
                 ",
-                options(noreturn),
             );
         }
 
@@ -136,7 +133,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_sdiv() {
-            core::arch::asm!(
+            core::arch::naked_asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r1
@@ -146,7 +143,6 @@ cfg_if::cfg_if! {
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_idivmod
                 ",
-                options(noreturn),
             );
         }
 
@@ -154,7 +150,7 @@ cfg_if::cfg_if! {
         #[no_mangle]
         #[naked]
         pub unsafe extern "C" fn __rt_sdiv64() {
-            core::arch::asm!(
+            core::arch::naked_asm!(
                 "
                 // Swap arguments, because MS CRT and ARM RTABI use opposite orders
                 // r0 <-> r2 (lower 32b)
@@ -168,7 +164,6 @@ cfg_if::cfg_if! {
                 // Jump directly to the corresponding ARM RTABI function
                 b    __aeabi_ldivmod
                 ",
-                options(noreturn),
             );
         }
 

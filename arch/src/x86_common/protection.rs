@@ -299,9 +299,9 @@ impl Selector {
     /// Create a new selector with the given field values
     pub const fn new(offset: u16, privilege_level: u8, local: bool) -> Self {
         // TODO: Rework bitfield crate to allow creating in const contexts
-        let value = offset & Self::OFFSET_MASK
-            | (privilege_level & 0b11) as u16
-            | (local as u16) << 2;
+        let value = (offset & Self::OFFSET_MASK)
+            | ((privilege_level & 0b11) as u16)
+            | ((local as u16) << 2);
         Self(value)
     }
 
@@ -814,7 +814,7 @@ impl GateDescriptor {
     /// Update the selector pointing to the segment to be accessed through this gate.
     pub fn set_selector(&mut self, selector: Selector) {
         self.lower &= !Self::SELECTOR_MASK;
-        self.lower |= Self::SELECTOR_MASK & u32::from(selector.value()) << 16;
+        self.lower |= Self::SELECTOR_MASK & (u32::from(selector.value()) << 16);
     }
 
     /// Offset of the entry point in code segment referenced by

@@ -1,7 +1,6 @@
 //! Support for the [Devicetree](https://www.devicetree.org/) specification.
 
 #![no_std]
-#![feature(const_size_of_val)]
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::must_use_candidate)]
@@ -20,7 +19,7 @@ pub struct Value<'a> {
     pub data: &'a [u8],
 }
 
-impl<'a> Value<'a> {
+impl Value<'_> {
     /// Returns true if this looks like a null-terminated ASCII string or an array of
     /// them.
     fn is_string_like(&self) -> bool {
@@ -40,7 +39,7 @@ impl<'a> Value<'a> {
     }
 }
 
-impl<'a> fmt::Debug for Value<'a> {
+impl fmt::Debug for Value<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Write 32-bit hex "cells"
         f.write_str("<")?;

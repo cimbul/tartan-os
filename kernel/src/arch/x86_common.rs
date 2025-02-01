@@ -1,6 +1,6 @@
 //! Shared architecture-specific bindings for 32-bit and 64-bit Intel x86-based processors
 
-use core::arch::asm;
+use core::arch::naked_asm;
 use core::mem::size_of;
 use core::ptr::addr_of;
 use memoffset::offset_of;
@@ -243,25 +243,23 @@ pub fn initialize_interrupts() {
                     // panics.
 
                     #[cfg(target_arch = "x86")]
-                    asm!(
+                    naked_asm!(
                         "
                         push {}
                         call {}
                         ",
                         const $vector,
                         sym handle_unknown_interrupt,
-                        options(noreturn),
                     );
 
                     #[cfg(target_arch = "x86_64")]
-                    asm!(
+                    naked_asm!(
                         "
                         mov rdi, {}
                         call {}
                         ",
                         const $vector,
                         sym handle_unknown_interrupt,
-                        options(noreturn),
                     );
                 }
 
