@@ -598,7 +598,7 @@ impl BootServices {
                 allocate_type,
                 memory_type,
                 page_count,
-                &mut physical_address,
+                &raw mut physical_address,
             )
             .into_result()?;
         }
@@ -831,7 +831,7 @@ impl MemoryMap {
         );
 
         assert!(
-            self.descriptor_size % align_of::<MemoryDescriptor>() == 0,
+            self.descriptor_size.is_multiple_of(align_of::<MemoryDescriptor>()),
             "Descriptor size {} not a multiple of the MemoryDescriptor struct alignment \
              {}",
             self.descriptor_size,
@@ -842,7 +842,7 @@ impl MemoryMap {
     #[allow(clippy::missing_panics_doc)]
     pub fn verify_map(&self) {
         assert!(
-            self.raw_map.len() % self.descriptor_size == 0,
+            self.raw_map.len().is_multiple_of(self.descriptor_size),
             "Memory map total size {} is not a multiple of descriptor size {}",
             self.raw_map.len(),
             self.descriptor_size,

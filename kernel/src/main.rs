@@ -2,7 +2,6 @@
 #![cfg_attr(target_os = "tartan", no_main)]
 #![feature(alloc_error_handler)]
 #![feature(lang_items)]
-#![feature(naked_functions)]
 #![feature(rustc_private)]
 #![allow(internal_features)]
 
@@ -45,55 +44,53 @@ fn main() {
     kernel_main()
 }
 
-#[naked]
+#[unsafe(naked)]
 #[no_mangle]
 #[cfg(target_os = "tartan")]
 extern "C" fn _start() -> ! {
-    unsafe {
-        #[cfg(target_arch = "x86")]
-        core::arch::naked_asm!(
-            "
-            mov esp, offset stack_top  // Set up initial stack
-            call {}                    // Call real main function
-        2:  hlt                        // Halt if main function ever returns
-            jmp 2b
-            ",
-            sym kernel_main,
-        );
+    #[cfg(target_arch = "x86")]
+    core::arch::naked_asm!(
+        "
+        mov esp, offset stack_top  // Set up initial stack
+        call {}                    // Call real main function
+    2:  hlt                        // Halt if main function ever returns
+        jmp 2b
+        ",
+        sym kernel_main,
+    );
 
-        #[cfg(target_arch = "x86_64")]
-        core::arch::naked_asm!(
-            "
-            mov rsp, offset stack_top  // Set up initial stack
-            call {}                    // Call real main function
-        2:  hlt                        // Halt if main function ever returns
-            jmp 2b
-            ",
-            sym kernel_main,
-        );
+    #[cfg(target_arch = "x86_64")]
+    core::arch::naked_asm!(
+        "
+        mov rsp, offset stack_top  // Set up initial stack
+        call {}                    // Call real main function
+    2:  hlt                        // Halt if main function ever returns
+        jmp 2b
+        ",
+        sym kernel_main,
+    );
 
-        #[cfg(target_arch = "arm")]
-        core::arch::naked_asm!(
-            "
-            ldr sp, =stack_top  // Set up initial stack
-            blx {}              // Call real main function
-        1:  b 1b                // Spin if main function ever returns
-            ",
-            sym kernel_main,
-        );
+    #[cfg(target_arch = "arm")]
+    core::arch::naked_asm!(
+        "
+        ldr sp, =stack_top  // Set up initial stack
+        blx {}              // Call real main function
+    1:  b 1b                // Spin if main function ever returns
+        ",
+        sym kernel_main,
+    );
 
-        #[cfg(target_arch = "aarch64")]
-        core::arch::naked_asm!(
-            "
-            ldr x0, =stack_top  // Set up initial stack
-            mov sp, x0
-            bl {}               // Call real main function
-        1:  wfe                 // Halt if main function ever returns
-            b 1b
-            ",
-            sym kernel_main,
-        );
-    }
+    #[cfg(target_arch = "aarch64")]
+    core::arch::naked_asm!(
+        "
+        ldr x0, =stack_top  // Set up initial stack
+        mov sp, x0
+        bl {}               // Call real main function
+    1:  wfe                 // Halt if main function ever returns
+        b 1b
+        ",
+        sym kernel_main,
+    );
 }
 
 fn kernel_main() -> ! {

@@ -2,29 +2,49 @@
   "abi-return-struct-as-int": true,
   "allows-weak-linkage": false,
   "arch": "aarch64",
-  "data-layout": "e-m:w-p:64:64-i32:32-i64:64-i128:128-n32:64-S128-Fn32",
+  "archive-format": "coff",
+  "binary-format": "coff",
+  "crt-objects-fallback": "false",
+  "data-layout": "e-m:w-p270:32:32-p271:32:32-p272:64:64-p:64:64-i32:32-i64:64-i128:128-n32:64-S128-Fn32",
   "debuginfo-kind": "pdb",
   "disable-redzone": true,
+  "dll-tls-export": false,
   "emit-debug-gdb-scripts": false,
+  "entry-name": "efi_main",
   "exe-suffix": ".efi",
+  "features": "+v8a",
   "is-like-msvc": true,
   "is-like-windows": true,
   "linker": "rust-lld",
-  "linker-flavor": "lld-link",
+  "linker-flavor": "msvc-lld",
   "linker-is-gnu": false,
   "lld-flavor": "link",
   "llvm-target": "aarch64-unknown-windows",
   "max-atomic-width": 128,
+  "metadata": {
+    "description": "ARM64 UEFI",
+    "host_tools": false,
+    "std": null,
+    "tier": 2
+  },
   "os": "uefi",
   "panic-strategy": "abort",
+  "post-link-args": {
+    "msvc": [
+      "/DEBUG:DWARF"
+    ],
+    "msvc-lld": [
+      "/DEBUG:DWARF"
+    ]
+  },
   "pre-link-args": {
-    "lld-link": [
+    "msvc": [
       "/NOLOGO",
       "/entry:efi_main",
       "/subsystem:efi_application",
       "/machine:arm64"
     ],
-    "msvc": [
+    "msvc-lld": [
       "/NOLOGO",
       "/entry:efi_main",
       "/subsystem:efi_application",
@@ -39,5 +59,5 @@
   "supported-split-debuginfo": [
     "packed"
   ],
-  "target-pointer-width": "64"
+  "target-pointer-width": 64
 }

@@ -49,7 +49,7 @@ impl BootAllocator {
         (boot_services.allocate_pool)(
             MemoryType::LoaderData,
             adjusted_layout.size(),
-            &mut buffer,
+            &raw mut buffer,
         )
         .into_result()
         .expect("allocate_pool() failed");

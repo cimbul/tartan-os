@@ -2,7 +2,6 @@
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(not(test), feature(lang_items))]
 #![feature(alloc_error_handler)]
-#![feature(naked_functions)]
 #![feature(rustc_private)]
 #![feature(test)]
 #![allow(internal_features)]

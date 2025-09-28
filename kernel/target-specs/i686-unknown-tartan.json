@@ -1,29 +1,32 @@
 {
-	"arch": "x86",
-	"cpu": "pentium4",
-	"data-layout": "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:64-i128:128-f64:32:64-f80:32-n8:16:32-S128",
-	"env": "",
-	"executables": true,
-	"features": "-mmx,-sse,+soft-float",
-	"linker": "rust-lld",
-	"linker-flavor": "ld.lld",
-	"linker-is-gnu": true,
-	"llvm-target": "i686-unknown-none",
-	"max-atomic-width": 64,
-	"os": "tartan",
-	"panic-strategy": "abort",
-	"pre-link-args": {
-		"ld.lld": [
-			"--build-id",
-			"--hash-style=gnu",
-			"--Bstatic"
-		]
-	},
-	"stack-probes": {
-		"kind": "call"
-	},
-	"target-c-int-width": "32",
-	"target-endian": "little",
-	"target-pointer-width": "32",
-	"vendor": "unknown"
+  "arch": "x86",
+  "code-model": "kernel",
+  "cpu": "pentium4",
+  "crt-objects-fallback": "false",
+  "data-layout": "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:64-i128:128-f64:32:64-f80:32-n8:16:32-S128",
+  "disable-redzone": true,
+  "features": "-mmx,-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2,+soft-float",
+  "linker": "rust-lld",
+  "linker-flavor": "gnu-lld",
+  "llvm-target": "i686-unknown-none",
+  "max-atomic-width": 64,
+  "metadata": {
+    "description": "Freestanding/bare-metal i686",
+    "host_tools": false,
+    "std": false,
+    "tier": 3
+  },
+  "os": "tartan",
+  "panic-strategy": "abort",
+  "plt-by-default": false,
+  "relro-level": "full",
+  "rustc-abi": "x86-softfloat",
+  "stack-probes": {
+    "kind": "inline"
+  },
+  "supported-sanitizers": [
+    "kcfi",
+    "kernel-address"
+  ],
+  "target-pointer-width": 32
 }

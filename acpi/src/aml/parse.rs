@@ -2073,7 +2073,7 @@ pub mod term {
         /// RefOfOp             := 0x71
         /// ```
         ///
-        /// Although the grammar suggests all SuperNames are accepted, the ACPICA parser
+        /// Although the grammar suggests all `SuperNames` are accepted, the ACPICA parser
         /// does not allow method invocations or nested `RefOf` operators.
         ref_of -> ReferenceExpressionOpcode<'a> = opcode(
             "reference-of operator",
@@ -2572,8 +2572,8 @@ pub mod term {
         /// ObjectTypeOp        := 0x8E
         /// ```
         ///
-        /// NOTE: SuperName includes MethodInvocation, which is *not* legal for the
-        /// ObjectType operator. It is otherwise identical to the grammar above.
+        /// NOTE: `SuperName` includes `MethodInvocation`, which is *not* legal for the
+        /// `ObjectType` operator. It is otherwise identical to the grammar above.
         object_type -> ExpressionOpcode<'a> = opcode(
             "object type operator",
             tag_byte(0x8e),

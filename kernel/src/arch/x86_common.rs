@@ -236,7 +236,7 @@ pub fn initialize_interrupts() {
     macro_rules! forward_interrupt {
         [$vector:literal] => {
             paste! {
-                #[naked]
+                #[unsafe(naked)]
                 unsafe extern "C" fn [< forward_interrupt_ $vector >]() {
                     // TODO: Save register state before calling handler, and support
                     // returning. This isn't critical at the moment since the handler just

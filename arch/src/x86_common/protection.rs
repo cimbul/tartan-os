@@ -37,7 +37,7 @@ impl GlobalDescriptorTableRegister {
         unsafe {
             asm!(
                 "sgdt [{0}]",
-                in(reg) &mut value,
+                in(reg) &raw mut value,
             );
         }
         value

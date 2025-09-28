@@ -75,9 +75,10 @@ impl Default for LineMode {
 
 
 /// Parity setting for line protocol.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Parity {
     /// No parity bit.
+    #[default]
     None,
     /// Set parity so that there are an odd number of high bits in the word.
     Odd,
@@ -113,12 +114,6 @@ impl Parity {
 
     fn sticky_flag(self) -> bool {
         self == Self::High || self == Self::Low
-    }
-}
-
-impl Default for Parity {
-    fn default() -> Self {
-        Self::None
     }
 }
 

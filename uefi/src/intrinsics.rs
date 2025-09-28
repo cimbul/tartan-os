@@ -45,7 +45,7 @@ pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, n: usize) -> i32 {
 /// it is making PE files for Arm.
 #[cfg(all(target_os = "uefi", target_arch = "arm"))]
 #[no_mangle]
-#[naked]
+#[unsafe(naked)]
 pub unsafe extern "C" fn __chkstk() {
     // Input:    r4 = number of 4-byte units in stack
     // Output:   r4 = number of *individual* bytes in stack
@@ -88,12 +88,24 @@ cfg_if::cfg_if! {
         /// Convert 64-bit signed int to double-precision float
         #[no_mangle]
         pub unsafe extern "C" fn __i64tod(i: i64) -> f64 {
-            __floatunsidf(i)
+            __floatdidf(i)
+        }
+
+        /// Convert 64-bit signed int to single-precision float
+        #[no_mangle]
+        pub unsafe extern "C" fn __i64tos(i: i64) -> f32 {
+            __floatdisf(i)
+        }
+
+        // Convert double-precision float to 64-bit signed int
+        #[no_mangle]
+        pub unsafe extern "C" fn __dtoi64(f: f64) -> i64 {
+            __fixdfdi(f)
         }
 
         /// Division with remainder for unsigned 32-bit integers
         #[no_mangle]
-        #[naked]
+        #[unsafe(naked)]
         pub unsafe extern "C" fn __rt_udiv() {
             core::arch::naked_asm!(
                 "
@@ -110,7 +122,7 @@ cfg_if::cfg_if! {
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
-        #[naked]
+        #[unsafe(naked)]
         pub unsafe extern "C" fn __rt_udiv64() {
             core::arch::naked_asm!(
                 "
@@ -131,7 +143,7 @@ cfg_if::cfg_if! {
 
         /// Division with remainder for signed 32-bit integers
         #[no_mangle]
-        #[naked]
+        #[unsafe(naked)]
         pub unsafe extern "C" fn __rt_sdiv() {
             core::arch::naked_asm!(
                 "
@@ -148,7 +160,7 @@ cfg_if::cfg_if! {
 
         /// Division with remainder for unsigned 64-bit integers
         #[no_mangle]
-        #[naked]
+        #[unsafe(naked)]
         pub unsafe extern "C" fn __rt_sdiv64() {
             core::arch::naked_asm!(
                 "
@@ -172,7 +184,9 @@ cfg_if::cfg_if! {
             // functions above.
             fn __floatundidf(i: u64) -> f64;
             fn __floatundisf(i: u64) -> f32;
-            fn __floatunsidf(i: i64) -> f64;
+            fn __floatdidf(i: i64) -> f64;
+            fn __floatdisf(i: i64) -> f32;
+            fn __fixdfdi(f: f64) -> i64;
         }
     }
 }

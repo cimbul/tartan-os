@@ -74,7 +74,7 @@ impl<'a> BlockList<'a> {
 
     unsafe fn cursor_from_data_ptr(&mut self, data_ptr: *mut u8) -> CursorMut<'a> {
         let header_addr = data_ptr as usize - size_of::<BlockHeader>();
-        debug_assert!(header_addr % align_of::<BlockHeader>() == 0);
+        debug_assert!(header_addr.is_multiple_of(align_of::<BlockHeader>()));
 
         let header_ptr = header_addr as *mut BlockHeader;
         debug_assert!(self.data.as_ptr_range().contains(&(header_addr as *const _)));
@@ -141,7 +141,7 @@ impl<'a> CursorMut<'a> {
 
     fn split_exact(&mut self, new_data_size: usize) {
         assert!(self.0.free());
-        assert!(new_data_size % align_of::<BlockHeader>() == 0);
+        assert!(new_data_size.is_multiple_of(align_of::<BlockHeader>()));
 
         assert!(new_data_size <= self.0.data_size());
         let spare_space = self.0.data_size() - new_data_size;
@@ -268,7 +268,7 @@ impl BlockHeader {
 }
 
 // Several calculations in BlockHeader's methods assume this
-const_assert!(size_of::<BlockHeader>() % align_of::<BlockHeader>() == 0);
+const_assert!(size_of::<BlockHeader>().is_multiple_of(align_of::<BlockHeader>()));
 
 
 fn align_up(addr: usize, layout: Layout) -> usize {

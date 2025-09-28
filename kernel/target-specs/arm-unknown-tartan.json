@@ -1,20 +1,25 @@
 {
+  "abi": "eabi",
   "arch": "arm",
+  "c-enum-min-bits": 8,
+  "crt-objects-fallback": "false",
   "data-layout": "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64",
   "disable-redzone": true,
-  "env": "",
-  "executables": true,
-  "features": "+strict-align,+v6",
+  "emit-debug-gdb-scripts": false,
+  "features": "+v7,+thumb2,+soft-float,-neon,+strict-align",
   "linker": "rust-lld",
-  "linker-flavor": "ld.lld",
-  "linker-is-gnu": true,
+  "linker-flavor": "gnu-lld",
   "llvm-floatabi": "soft",
-  "llvm-target": "arm-unknown-none",
+  "llvm-target": "armv7a-none-eabi",
   "max-atomic-width": 64,
-	"os": "tartan",
-	"panic-strategy": "abort",
-  "target-c-int-width": "32",
-  "target-endian": "little",
-  "target-pointer-width": "32",
-  "vendor": "unknown"
+  "metadata": {
+    "description": "Bare Armv7-A",
+    "host_tools": false,
+    "std": false,
+    "tier": 2
+  },
+  "os": "tartan",
+  "panic-strategy": "abort",
+  "relocation-model": "static",
+  "target-pointer-width": 32
 }
